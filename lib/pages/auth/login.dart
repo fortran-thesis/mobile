@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -20,6 +21,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -207,7 +209,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         /// Sign Up Button
                         InkWell(
                           onTap: () {
-
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpScreen(),
+                              ),
+                            );
                           },
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
