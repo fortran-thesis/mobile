@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
@@ -21,6 +22,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    // Dispose of the controllers when the widget is removed from the widget tree
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: InkWell(
                       onTap: () {
-
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const EmailRecoverAccountScreen(pageTitle: 'Forgot Username',),
+                          ),
+                        );
                       },
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
@@ -155,7 +168,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: InkWell(
                       onTap: () {
-
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const EmailRecoverAccountScreen(pageTitle: 'Forgot Password',),
+                          ),
+                        );
                       },
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
@@ -298,6 +315,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   /// End of Google Login Button
 
                   /// Terms and Policy Agreement
+                  /// This section provides a link to the Terms of Agreement and Privacy Policy.
+                  /// It uses a TextRich with recognizers to handle taps on the links.
                   Align(
                     alignment: Alignment.center,
                     child: Padding(

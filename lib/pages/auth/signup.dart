@@ -2,10 +2,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/pages/auth/login.dart';
-
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
+
+/// This is the Sign Up screen for the Moldify app.
+/// It allows users to create a new account by providing their username, email, password, and confirming the password.
+/// It also includes a checkbox for agreeing to the terms and conditions,
+/// and options for signing up with Google.
 
 class SignUpScreen extends StatefulWidget{
   const SignUpScreen({super.key});
@@ -19,7 +23,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  bool _agreedToTerms = false; // Added state variable for the checkbox
+  bool _agreedToTerms = false;
+
+  @override
+  void dispose() {
+    // Dispose of the controllers when the widget is removed from the widget tree
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,8 +194,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         buttonText: 'Sign Up',
                         onPressed: () {
                           // Handle login logic here,
-                          // You might want to check if _agreedToTerms is true
-                          // before proceeding with signup
                         },
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
@@ -303,6 +315,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        /// Checkbox for Terms and Conditions
                         Checkbox(
                           value: _agreedToTerms,
                           onChanged: (bool? value) {
@@ -314,6 +327,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           visualDensity: VisualDensity.compact,
                         ),
                         const SizedBox(width: 4),
+                        /// Terms and Conditions Text
+                        /// Using Text.rich to allow for clickable links
+                        /// and to maintain the same style as the rest of the text
                         Expanded(
                           child: Text.rich(
                             TextSpan(
