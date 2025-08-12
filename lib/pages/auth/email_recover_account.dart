@@ -74,7 +74,6 @@ class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-
               /// -------- Email Recovery Header Image --------
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
