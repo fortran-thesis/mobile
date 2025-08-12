@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:moldify/pages/auth/set_new_password.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../misc/appbar/secondary_appbar.dart';
@@ -86,6 +87,14 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
 
   @override
   void dispose() {
+    // Dispose of all TextEditingControllers
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    // Dispose of all FocusNodes
+    for (var focusNode in _focusNodes) {
+      focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -125,7 +134,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                     currentStep: currentStep,
                   ),
 
-                  /// -------- Mail Address Header --------
+                  /// -------- Get Code Header --------
                   Padding(
                     padding: const EdgeInsets.only(top: 10.0),
                     child: Text(
@@ -145,7 +154,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                         color: MoldifyColors.MoldifyBlack,
                       )
                   ),
-                  /// -------- End of Mail Address Header --------
+                  /// -------- End Get Code Address Header --------
 
                   /// -------- OTP Input Boxes --------
                   Padding(
@@ -205,12 +214,12 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                             // Handle forgot username logic
 
                           } else if (widget.pageTitle == 'Forgot Password') {
-                            // Handle forgot password logic
-                            // Navigator.of(context).push(
-                            //   MaterialPageRoute(
-                            //     builder: (context) => CodeRecoverAccountScreen(pageTitle: 'Forgot Password'),
-                            //   ),
-                            // );
+                            //Handle forgot password logic
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => SetNewPasswordScreen(),
+                              ),
+                            );
                           }
                         },
                         buttonText: 'Verify Code',
