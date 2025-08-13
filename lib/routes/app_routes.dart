@@ -13,7 +13,7 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       builder: (context) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
         switch (settings.name) {
           case RouteNames.login:

@@ -31,5 +31,26 @@ class AuthService {
     };
   }
 
-  // Add more methods like signup, logout, etc.
+  Future<Map<String, dynamic>> loginOAuth(String token) async {
+    final response = await _apiService.post(
+      '/login/oauth',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'token': token,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+    final String? cookie = response.headers['set-cookie'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+      'cookie': cookie,
+    };
+  }
 }

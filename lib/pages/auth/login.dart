@@ -10,6 +10,9 @@ import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
 import '../../core/utils/route_utils.dart';
 import '../../providers/auth_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// This is the login screen of the app.
 /// It allows users to log in with their username and password.
@@ -39,6 +42,60 @@ class _LoginScreenState extends State<LoginScreen> {
     usernameController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => isLoading = true);
+    print('Google sign-in started');
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      print('Google user: ' + (googleUser?.email ?? 'null'));
+      if (googleUser == null) {
+        print('Google sign-in cancelled by user');
+        setState(() => isLoading = false);
+        return; // User cancelled
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      print('Google auth: accessToken=' + (googleAuth.accessToken ?? 'null') + ', idToken=' + (googleAuth.idToken ?? 'null'));
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      print('Firebase userCredential: ' + (userCredential.user?.email ?? 'null'));
+      final token = await userCredential.user?.getIdToken(true);
+      print('Firebase token: ' + (token ?? 'null'));
+
+      if (token == null) {
+        print('Failed to get Google token');
+        setState(() {
+          isLoading = false;
+          errorMessage = 'Failed to get Google token';
+        });
+        return;
+      }
+
+      print('Calling loginOAuth with token');
+      final result = await _loginBloc.loginOAuth(token);
+      print('loginOAuth result: $result');
+      if (!result['success']) {
+        print('Google sign-in failed: ' + (result['error'] ?? 'Unknown error'));
+        setState(() {
+          isLoading = false;
+          errorMessage = result['error'] ?? 'Google sign-in failed';
+        });
+        return;
+      }
+      setState(() => isLoading = false);
+      print('Navigating to home');
+      Navigator.of(context).pushReplacementNamed(RouteNames.home);
+    } catch (e) {
+      print('Google sign-in exception: $e');
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Google sign-in failed: $e';
+      });
+    }
   }
 
   @override
@@ -211,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           if (!mounted) return;
 
-                          final authProvider = Provider.of<AuthProvider>(
+                          final authProvider = Provider.of<AppAuthProvider>(
                               context, listen: false);
                           final cookieString = result['cookie'];
                           final sessionValue = cookieString
@@ -316,9 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
                     child: BuildButton(
                         buttonText: 'Google',
-                        onPressed: () {
-                          // Handle Google login logic here
-                        },
+                        onPressed: _handleGoogleSignIn,
                         backgroundColor: Colors.transparent,
                         textColor: MoldifyColors.primaryColor,
                         buttonHeight: 45,

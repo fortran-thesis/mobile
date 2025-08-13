@@ -1,13 +1,16 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'routes/app_routes.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(
     ChangeNotifierProvider(
-      create: (_) => AuthProvider()..loadCookie(),
+      create: (_) => AppAuthProvider()..loadCookie(),
       child: const MyApp(),
     ),
   );

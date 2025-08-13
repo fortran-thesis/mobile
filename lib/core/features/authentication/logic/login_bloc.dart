@@ -9,4 +9,10 @@ class LoginBloc {
     // handle result, update state, etc.
     return result; // or your own logic
   }
+
+  Future<Map<String, dynamic>> loginOAuth(String token) async {
+    final result = await authService.loginOAuth(token);
+    // handle result, update state, etc.
+    return result; // or your own logic
+  }
 }
