@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:moldify/main.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/signup.dart';
+import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -196,9 +198,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
                     child: BuildButton(
-                        buttonText: 'Log In',
+                        buttonText: 'Log In1',
                         onPressed: () {
                           // Handle login logic here
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const MainPage(),
+                            ),
+                          );
                         },
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,

@@ -6,6 +6,9 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
 import '../misc/textboxes/textboxes.dart';
 
+/// SetNewPasswordScreen is a screen for setting a new password during the account recovery process.
+/// It allows users to enter a new password and confirm it.
+
 class SetNewPasswordScreen extends StatefulWidget{
   const SetNewPasswordScreen({super.key});
 

@@ -7,6 +7,9 @@ import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
 
+/// CodeRecoverAccountScreen is a screen for recovering accounts via a code sent to the user's email.
+/// It allows users to enter a 4-digit code to recover their username or password.
+
 class CodeRecoverAccountScreen extends StatefulWidget {
   final String pageTitle;
 
