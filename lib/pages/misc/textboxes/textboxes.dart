@@ -73,7 +73,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
         fontFamily: 'Bricolage-Grotesque-Regular',
       ),
       maxLines: widget.isMultiline == true ? null : 1,
-      minLines: widget.isMultiline == true ? 4 : 1,
+      minLines: widget.isMultiline == true ? 7 : 1,
       decoration: InputDecoration(
         counterText: '',
         enabledBorder: OutlineInputBorder(

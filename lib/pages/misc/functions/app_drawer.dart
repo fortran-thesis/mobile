@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/home/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -123,7 +124,11 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SendFeedbackScreen(),
+                  ),
+                );
               },
             ),
 

@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+
+import '../misc/appbar/secondary_appbar.dart';
+import '../misc/buttons/primary_button.dart';
+import '../misc/colors.dart';
+import '../misc/textboxes/textboxes.dart';
+
+class SendFeedbackScreen extends StatefulWidget {
+  const SendFeedbackScreen({Key? key}) : super(key: key);
+
+  @override
+  _SendFeedbackScreenState createState() => _SendFeedbackScreenState();
+}
+
+class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
+  final TextEditingController feedbackController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MoldifyColors.backgroundColor,
+      appBar: SecondaryAppBar(
+        title: 'Send Feedback',
+        color: MoldifyColors.primaryColor,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// -------- Send Feedback Header Image --------
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: SvgPicture.asset(
+                'assets/images/feedback_phone_curve.svg',
+                width: MediaQuery.of(context).size.width,
+                fit: BoxFit.cover,
+              ),
+            ),
+            /// -------- End of Send Feedback Header Image --------
+            Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 20.0),
+                  /// -------- Send Feedback Header --------
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Text(
+                        'SUBMIT FEEDBACK',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontFamily: 'Montserrat-Black',
+                          color: MoldifyColors.primaryColor,
+                        )
+                    ),
+                  ),
+                  Text(
+                      'Feature or improvement ideas? Share your feedback today.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Bricolage-Grotesque-Regular',
+                        color: MoldifyColors.MoldifyBlack,
+                      )
+                  ),
+                  /// -------- End of Send Feedback Header --------
+
+                  /// Feedback Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40.0),
+                    child: const Text(
+                      'How can we make our app better?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  /// Feedback TextBox
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 50.0),
+                    child: BuildTextBox(
+                      hintText: 'Please add your feedback here',
+                      controller: feedbackController,
+                      showPassword: false,
+                      isMultiline: true,
+                    ),
+                  ),
+
+                  /// Send Code Button
+                  BuildButton(
+                      onPressed: () {
+
+                      },
+                      buttonText: 'Submit Feedback',
+                      backgroundColor: MoldifyColors.primaryColor,
+                      textColor: MoldifyColors.backgroundColor,
+                      buttonHeight: 45,
+                      buttonWidth: MediaQuery.of(context).size.width,
+                      buttonRadius: 10
+                  )
+                ]
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
