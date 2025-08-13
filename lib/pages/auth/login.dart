@@ -1,11 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:moldify/pages/auth/email_recover_account.dart';
-import 'package:moldify/pages/auth/signup.dart';
+import 'package:moldify/core/features/authentication/logic/login_bloc.dart';
+import 'package:moldify/core/features/authentication/services/auth_service.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:provider/provider.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
+import '../../core/constants/route_names.dart';
+import '../../core/utils/route_utils.dart';
+import '../../providers/auth_provider.dart';
 
 /// This is the login screen of the app.
 /// It allows users to log in with their username and password.
@@ -20,8 +24,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService();
+  late final LoginBloc _loginBloc = LoginBloc(_authService);
+
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+
+  bool isLoading = false;
+  String? errorMessage;
 
   @override
   void dispose() {
@@ -117,13 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const EmailRecoverAccountScreen(pageTitle: 'Forgot Username',),
-                          ),
-                        );
-                      },
+                      onTap: () => navigateTo(context, RouteNames.codeRecoverAccount, arguments: {'pageTitle': 'Forgot Username'}),
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
                       highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
@@ -167,13 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const EmailRecoverAccountScreen(pageTitle: 'Forgot Password',),
-                          ),
-                        );
-                      },
+                      onTap: () => navigateTo(context, RouteNames.codeRecoverAccount, arguments: {'pageTitle': 'Forgot Password'}),
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
                       highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
@@ -197,8 +195,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Log In',
-                        onPressed: () {
-                          // Handle login logic here
+                        onPressed: () async {
+                          setState(() => isLoading = true);
+
+                          final result = await _loginBloc.login(
+                            usernameController.text,
+                            passwordController.text,
+                          );
+                          setState(() => isLoading = false);
+
+                          if (!result['success']) {
+                            setState(() => errorMessage = result['error']);
+                            return;
+                          }
+
+                          if (!mounted) return;
+
+                          final authProvider = Provider.of<AuthProvider>(
+                              context, listen: false);
+                          final cookieString = result['cookie'];
+                          final sessionValue = cookieString
+                              .split(';')
+                              .first
+                              .split('=')
+                              .last;
+                          await authProvider.saveCookie(sessionValue);
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              RouteNames.home, (route) => false);
                         },
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
@@ -225,13 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         /// Sign Up Button
                         InkWell(
-                          onTap: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => const SignUpScreen(),
-                              ),
-                            );
-                          },
+                          onTap: () => navigateTo(context, RouteNames.signup),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
                           highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.2),

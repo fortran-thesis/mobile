@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:moldify/pages/auth/code_recover_account.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../misc/appbar/secondary_appbar.dart';
@@ -149,17 +149,15 @@ class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
                         onPressed: () {
                           if (widget.pageTitle == 'Forgot Username') {
                             // Handle forgot username logic
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => CodeRecoverAccountScreen(pageTitle: 'Forgot Username'),
-                              ),
+                            Navigator.of(context).pushNamed(
+                              RouteNames.codeRecoverAccount,
+                              arguments: {'pageTitle': 'Forgot Username'},
                             );
                           } else if (widget.pageTitle == 'Forgot Password') {
                             // Handle forgot password logic
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => CodeRecoverAccountScreen(pageTitle: 'Forgot Password'),
-                              ),
+                            Navigator.of(context).pushNamed(
+                              RouteNames.codeRecoverAccount,
+                              arguments: {'pageTitle': 'Forgot Password'},
                             );
                           }
                         },
