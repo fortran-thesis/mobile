@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/pages/home/report_bug.dart';
 import 'package:moldify/pages/home/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -147,7 +149,11 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ReportBugScreen(),
+                  ),
+                );
               },
             ),
 
@@ -220,7 +226,10 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen(),
+                  ),
+                );
               },
             ),
             SizedBox(
