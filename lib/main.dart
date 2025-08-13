@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/identification/main_camera.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -63,7 +64,7 @@ class _MainPageState extends State<MainPage> {
         backgroundColor: MoldifyColors.primaryColor,
         shape: const CircleBorder(),
         child: Icon(
-          Icons.photo_camera,
+          FontAwesomeIcons.camera,
           size: 24,
           color: selectedPosition == 1
               ? MoldifyColors.accentColor
@@ -90,12 +91,12 @@ class _MainPageState extends State<MainPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _tabItem(
-              icon: Icons.home,
+              icon: FontAwesomeIcons.house,
               isSelected: selectedPosition == 0,
               onTap: () => setState(() => selectedPosition = 0),
             ),
             _tabItem(
-              icon: Icons.auto_graph_outlined,
+              icon: FontAwesomeIcons.chartSimple,
               isSelected: selectedPosition == 2,
               onTap: () => setState(() => selectedPosition = 2),
             ),
@@ -117,7 +118,7 @@ class _MainPageState extends State<MainPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.0),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 1),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +128,7 @@ class _MainPageState extends State<MainPage> {
               color: isSelected
                   ? MoldifyColors.accentColor
                   : MoldifyColors.backgroundColor,
-              size: 24,
+              size: 20.0,
             ),
           ],
         ),

@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
                     child: BuildButton(
-                        buttonText: 'Log In1',
+                        buttonText: 'Log In',
                         onPressed: () {
                           // Handle login logic here
                           Navigator.of(context).pushReplacement(

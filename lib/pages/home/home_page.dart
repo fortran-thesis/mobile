@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/functions/app_drawer.dart'; // Added import
 
 class HomeScreen extends StatefulWidget{
   const HomeScreen({super.key});
@@ -12,13 +14,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
+      drawer: const AppDrawer(),
       body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0, top: 20.0),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
           child: Column(
             children: [
               Row(
                 children: [
-
+                  Builder(
+                    builder: (BuildContext newContext) {
+                      return IconButton(
+                          onPressed: () {
+                            Scaffold.of(newContext).openDrawer();
+                          },
+                          icon: const Icon(
+                              FontAwesomeIcons.bars,
+                              color: MoldifyColors.primaryColor,
+                              size: 20.0
+                          )
+                      );
+                    }
+                  ),
+                  const Spacer(),
+                  IconButton(
+                      onPressed: () {},
+                      icon: const Icon
+                        (
+                          FontAwesomeIcons.solidBell,
+                          color: MoldifyColors.primaryColor,
+                          size: 20.0
+                      )
+                  ),
+                ],
+              ),
+              const Row(
+                children: [
+                  // You can add more widgets here if needed
                 ],
               )
             ],
