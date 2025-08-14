@@ -152,7 +152,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                   Text(
                       'Please enter the 4-digit code sent to your email.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )
@@ -178,7 +178,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                             'If you did not receive the code,',
                             style: TextStyle(
                               fontFamily: 'Bricolage-Grotesque-SemiBold',
-                              fontSize: 12,
+                              fontSize: 14,
                               color: MoldifyColors.MoldifyBlack,
                             ),
                           ),
@@ -198,7 +198,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                                 'Resend',
                                 style: TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-ExtraBold',
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: MoldifyColors.accentColor,
                                 ),
                               ),

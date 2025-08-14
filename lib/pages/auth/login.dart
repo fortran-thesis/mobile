@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: 'Please enter username and password.',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.backgroundColor,
                               ),
                             ),
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Username',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -223,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Don\'t have an account?',
                           style: TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 12,
+                            fontSize: 14,
                             color: MoldifyColors.MoldifyBlack,
                           ),
                         ),
@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Sign Up',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.accentColor,
                                 decoration: TextDecoration.underline,
                                 decorationColor: MoldifyColors.accentColor,
@@ -281,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'or continue with',
                             style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: MoldifyColors.MoldifyBlack
                             ),
                           ),
@@ -331,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextSpan(
                           style: const TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 10,
+                            fontSize: 12,
                             color: MoldifyColors.MoldifyBlack,
                           ),
                           children: [

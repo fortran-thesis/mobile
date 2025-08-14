@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/auth/login.dart';
-import 'package:moldify/pages/home/report_bug.dart';
-import 'package:moldify/pages/home/send_feedback.dart';
+import 'package:moldify/pages/support/report_a_curator.dart';
+import 'package:moldify/pages/support/report_bug.dart';
+import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../../settings/main_account_settings.dart';
 
@@ -85,7 +86,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Bricolage-Grotesque-Bold',
                     color: MoldifyColors.primaryColor,
-                    fontSize: 12
+                    fontSize: 14
                   ),
                 ),
                 onTap: () {
@@ -105,7 +106,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {
@@ -133,7 +134,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {
@@ -156,7 +157,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {
@@ -179,11 +180,15 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.of(context).push (
+                    MaterialPageRoute(
+                      builder: (context) => const ReportACuratorScreen(),
+                    ),
+                  );
                 },
               ),
               Padding(
@@ -206,7 +211,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {
@@ -237,7 +242,7 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
-                      fontSize: 12
+                      fontSize: 14
                   ),
                 ),
                 onTap: () {

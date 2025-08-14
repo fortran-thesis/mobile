@@ -82,7 +82,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   Text(
                       'Please enter your new password to update account.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )
@@ -95,7 +95,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     child: const Text(
                       'New Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -118,7 +118,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     child: const Text(
                       'Confirm New Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),

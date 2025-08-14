@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -55,7 +54,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'Old Password',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),
@@ -107,7 +106,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'New Password',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),
@@ -130,7 +129,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'Confirm New Password',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),

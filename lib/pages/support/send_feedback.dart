@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import '../misc/appbar/secondary_appbar.dart';
@@ -58,7 +59,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
                   Text(
                       'Feature or improvement ideas? Share your feedback today.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )
@@ -71,7 +72,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
                     child: const Text(
                       'How can we make our app better?',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -80,7 +81,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
 
                   /// Feedback TextBox
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 50.0),
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                     child: BuildTextBox(
                       hintText: 'Please add your feedback here',
                       controller: feedbackController,
@@ -89,17 +90,59 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
                     ),
                   ),
 
-                  /// Send Code Button
-                  BuildButton(
-                      onPressed: () {
+                  /// Privacy Policy Agreement
+                  Align(
+                    alignment: Alignment.center,
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child:
+                        Text.rich(
+                          TextSpan(
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 12,
+                              color: MoldifyColors.MoldifyBlack,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'Submitting this form indicates your agreement to Moldify’s data processing as stated in our ',
+                              ),
+                              /// Privacy Policy link
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: const TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Bold',
+                                  color: MoldifyColors.accentColor,
+                                  decoration: TextDecoration.underline,
+                                  decorationThickness: 2,
+                                  decorationColor: MoldifyColors.accentColor,
+                                ),
+                                recognizer: TapGestureRecognizer()..onTap = () {
+                                  // Handle Privacy Policy tap here
+                                },
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                        )
+                    ),
+                  ),
 
-                      },
-                      buttonText: 'Submit Feedback',
-                      backgroundColor: MoldifyColors.primaryColor,
-                      textColor: MoldifyColors.backgroundColor,
-                      buttonHeight: 45,
-                      buttonWidth: MediaQuery.of(context).size.width,
-                      buttonRadius: 10
+                  /// Send Code Button
+                  Padding(
+                    padding: const EdgeInsets.only(top: 50.0),
+                    child: BuildButton(
+                        onPressed: () {
+
+                        },
+                        buttonText: 'Submit Feedback',
+                        backgroundColor: MoldifyColors.primaryColor,
+                        textColor: MoldifyColors.backgroundColor,
+                        buttonHeight: 45,
+                        buttonWidth: MediaQuery.of(context).size.width,
+                        buttonRadius: 10
+                    ),
                   )
                 ]
               ),
