@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
+
+/// This screen allows users to send feedback about the app.
 
 class SendFeedbackScreen extends StatefulWidget {
   const SendFeedbackScreen({Key? key}) : super(key: key);

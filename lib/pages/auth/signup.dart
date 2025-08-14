@@ -189,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   /// Signup Button
                   Padding(
-                    padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
+                    padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Sign Up',
                         onPressed: () {

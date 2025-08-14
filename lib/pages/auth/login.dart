@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moldify/main.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/signup.dart';
-import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -41,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// ----------- H E A D E R ------------
             Stack(
               children: [
@@ -196,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   /// Login Button
                   Padding(
-                    padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
+                    padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Log In',
                         onPressed: () {

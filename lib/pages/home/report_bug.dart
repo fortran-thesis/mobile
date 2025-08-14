@@ -6,6 +6,8 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
 
+/// ReportBugScreen is a screen that allows users to report bugs in the application.
+
 class ReportBugScreen extends StatefulWidget {
   const ReportBugScreen({Key? key}) : super(key: key);
 
@@ -15,6 +17,7 @@ class ReportBugScreen extends StatefulWidget {
 
 class _ReportBugScreenState extends State<ReportBugScreen> {
   final TextEditingController reportBugController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +30,7 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// -------- Send Feedback Header Image --------
+            /// -------- Report Bug Header Image --------
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: SvgPicture.asset(
@@ -36,13 +39,13 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                 fit: BoxFit.cover,
               ),
             ),
-            /// -------- End of Send Feedback Header Image --------
+            /// -------- End of Report Bug Header Image --------
             Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 20.0),
-                    /// -------- Send Feedback Header --------
+                    /// -------- Report Bug Header --------
                     Padding(
                       padding: const EdgeInsets.only(top: 10.0),
                       child: Text(
@@ -62,7 +65,7 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                           color: MoldifyColors.MoldifyBlack,
                         )
                     ),
-                    /// -------- End of Send Feedback Header --------
+                    /// -------- End of Report Bug Header --------
 
                     /// Feedback Label
                     Padding(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/functions/app_drawer.dart'; // Added import
+import 'package:moldify/pages/misc/functions/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget{
   const HomeScreen({super.key});
@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Row(
                 children: [
-                  // You can add more widgets here if needed
+
                 ],
               )
             ],
