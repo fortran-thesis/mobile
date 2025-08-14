@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/secondary_appbar.dart';
 import 'package:moldify/pages/misc/images/profile_image.dart';
+import 'package:moldify/pages/settings/change_password.dart';
 import 'package:moldify/pages/settings/edit_profile.dart';
 import '../misc/colors.dart';
 import '../misc/tiles/account_settings_tiles.dart';
@@ -147,9 +148,13 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                     child: BuildAccountSettingsTiles(
                       leftIcon: FontAwesomeIcons.lock,
                       rightIcon: FontAwesomeIcons.angleRight,
-                      title: 'Edit Password',
+                      title: 'Change Password',
                       onTap: () {
-
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ChangePasswordScreen(),
+                          ),
+                        );
                       },
                     ),
                   ),

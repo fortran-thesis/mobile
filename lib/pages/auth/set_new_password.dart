@@ -102,7 +102,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     ),
                   ),
 
-                  /// Password TextBox
+                  /// New Password TextBox
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: BuildTextBox(
