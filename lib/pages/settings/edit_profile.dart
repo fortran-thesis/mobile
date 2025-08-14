@@ -38,7 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               /// ----------- Edit Profile Header -----------
               Text(
-                  'EDIT PROFILE',
+                  'Edit Profile',
                   style: TextStyle(
                     fontSize: 36,
                     fontFamily: 'Montserrat-Black',

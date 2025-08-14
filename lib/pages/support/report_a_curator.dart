@@ -64,7 +64,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
             children: [
               /// ----------- Report A Problem Header -----------
               Text(
-                  'REPORT A PROBLEM',
+                  'Report A Problem',
                   style: TextStyle(
                     fontSize: 36,
                     fontFamily: 'Montserrat-Black',

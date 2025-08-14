@@ -32,7 +32,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               /// ----------- Edit Profile Header -----------
               Text(
-                  'CHANGE PASSWORD',
+                  'Change Password',
                   style: TextStyle(
                     fontSize: 36,
                     fontFamily: 'Montserrat-Black',
