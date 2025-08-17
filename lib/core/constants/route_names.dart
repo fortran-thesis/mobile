@@ -7,5 +7,6 @@ class RouteNames {
   static const String codeRecoverAccount = '/code-recover-account';
   static const String emailRecoverAccount = '/email-recover-account';
   static const String main = '/main';
+  static const String setNewPassword = '/set-new-password';
   // Add more route names as needed
 }

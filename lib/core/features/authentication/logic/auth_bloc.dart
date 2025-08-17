@@ -3,9 +3,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../services/auth_service.dart';
 
-class LoginBloc {
+class AuthBloc {
   final AuthService authService;
-  LoginBloc(this.authService);
+  AuthBloc(this.authService);
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     final result = await authService.login(username, password);
@@ -95,5 +95,95 @@ class LoginBloc {
         'sessionValue': null,
       };
     }
+  }
+
+  Future<Map<String, dynamic>> registerUser(String username, String email, String password) async {
+    final result = await authService.registerUser(username, email, password);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Registration failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
+  }
+
+  Future<Map<String, dynamic>> forgotUsername(String email) async {
+    final result = await authService.forgotUsername(email);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Forgot username failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
+  }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final result = await authService.forgotPassword(email);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Forgot password failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
+  }
+
+  Future<Map<String, dynamic>> verifyCode(String email, String code) async {
+    final result = await authService.verifyCode(email, code);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Verification failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
+  }
+
+  Future<Map<String,dynamic>> verifiedForgotUsername({required String token}) async {
+    final result = await authService.verifiedForgotUsername(token);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Verification failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
+  }
+
+  Future<Map<String,dynamic>> verifiedForgotPassword(String token, String newPass) async {
+    final result = await authService.verifiedForgotPassword(token, newPass);
+    if (!result['success']) {
+      return {
+        'success': false,
+        'error': result['error'] ?? 'Verification failed',
+      };
+    }
+    return {
+      'success': true,
+      'data': result['data'],
+      'error': null,
+    };
   }
 }

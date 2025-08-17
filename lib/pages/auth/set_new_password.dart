@@ -5,12 +5,16 @@ import 'package:moldify/pages/misc/colors.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
 import '../misc/textboxes/textboxes.dart';
+import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
+import 'package:moldify/core/features/authentication/services/auth_service.dart';
+import 'package:moldify/core/constants/route_names.dart';
 
 /// SetNewPasswordScreen is a screen for setting a new password during the account recovery process.
 /// It allows users to enter a new password and confirm it.
 
 class SetNewPasswordScreen extends StatefulWidget{
-  const SetNewPasswordScreen({super.key});
+  final String token;
+  const SetNewPasswordScreen({super.key, required this.token});
 
   @override
   State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
@@ -18,6 +22,7 @@ class SetNewPasswordScreen extends StatefulWidget{
 class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   final newPasswordController = TextEditingController();
   final confirmNewPasswordController = TextEditingController();
+  final AuthBloc _authBloc = AuthBloc(AuthService());
   /// currentStep keeps track of the current step in the recovery process.
   int currentStep = 2;
   /// totalSteps is the total number of steps in the recovery process.
@@ -29,6 +34,31 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
     newPasswordController.dispose();
     confirmNewPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleChangePassword() async {
+    final newPassword = newPasswordController.text;
+    final confirmPassword = confirmNewPasswordController.text;
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
+    final result = await _authBloc.verifiedForgotPassword(widget.token, newPassword);
+    if (!result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Failed to reset password'), backgroundColor: Colors.red,)
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password changed successfully!'), backgroundColor: Colors.green,)
+      );
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        RouteNames.login,
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 
   @override
@@ -139,9 +169,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
-                        onPressed: () {
-
-                        },
+                        onPressed: _handleChangePassword,
                         buttonText: 'Change Password',
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,

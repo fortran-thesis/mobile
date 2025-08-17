@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
-import 'package:moldify/pages/auth/login.dart';
-import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';

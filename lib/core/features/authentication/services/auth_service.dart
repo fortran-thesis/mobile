@@ -53,4 +53,134 @@ class AuthService {
       'cookie': cookie,
     };
   }
+
+  Future<Map<String, dynamic>> registerUser(String username, String email, String password) async {
+    final response = await _apiService.post(
+      '/register',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'username': username,
+        'email': email,
+        'password': password,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
+
+  Future<Map<String, dynamic>> verifyCode(String email, String code) async {
+    final response = await _apiService.post(
+      '/verify-code',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'email': email,
+        'code': code,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
+
+  Future<Map<String, dynamic>> forgotUsername(String email) async {
+    final response = await _apiService.post(
+      '/forgot-username',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'email': email,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
+
+  Future<Map<String,dynamic>> forgotPassword(String email) async {
+    final response = await _apiService.post(
+      '/forgot-password',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'email': email,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
+
+  Future<Map<String,dynamic>> verifiedForgotUsername(String token) async {
+    final response = await _apiService.post(
+      '/forgot-username/verify',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'token': token,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
+
+  Future<Map<String,dynamic>> verifiedForgotPassword(String token, String newPass) async {
+    final response = await _apiService.post(
+      '/forgot-password/verify',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'token': token,
+        'newPassword': newPass,
+      },
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final bool success = jsonResponse['success'] ?? false;
+    final dynamic data = jsonResponse['data'];
+    final dynamic error = jsonResponse['error'];
+
+    return {
+      'success': success,
+      'data': data,
+      'error': error,
+    };
+  }
 }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/utils/route_utils.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/functions/step_indicator.dart';
 import '../misc/textboxes/textboxes.dart';
+import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
+import 'package:moldify/core/features/authentication/services/auth_service.dart';
 
 /// EmailRecoverAccountScreen is a screen for recovering accounts via email.
 /// It allows users to enter their email address to recover their username or password.
@@ -29,6 +32,10 @@ class EmailRecoverAccountScreen extends StatefulWidget{
 }
 class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
   final emailController = TextEditingController();
+  final AuthBloc _authBloc = AuthBloc(AuthService());
+  bool isLoading = false;
+  String? errorMessage;
+  String? successMessage;
   /// currentStep keeps track of the current step in the recovery process.
   int currentStep = 0;
   /// totalSteps is the total number of steps in the recovery process.
@@ -146,28 +153,70 @@ class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
 
                     /// Send Code Button
                     BuildButton(
-                        onPressed: () {
-                          if (widget.pageTitle == 'Forgot Username') {
-                            // Handle forgot username logic
-                            Navigator.of(context).pushNamed(
-                              RouteNames.codeRecoverAccount,
-                              arguments: {'pageTitle': 'Forgot Username'},
-                            );
-                          } else if (widget.pageTitle == 'Forgot Password') {
-                            // Handle forgot password logic
-                            Navigator.of(context).pushNamed(
-                              RouteNames.codeRecoverAccount,
-                              arguments: {'pageTitle': 'Forgot Password'},
-                            );
+                      onPressed: () async {
+                        setState(() {
+                          isLoading = true;
+                          errorMessage = null;
+                          successMessage = null;
+                        });
+                        final email = emailController.text.trim();
+                        if (email.isEmpty) {
+                          setState(() {
+                            isLoading = false;
+                            errorMessage = 'Please enter your email.';
+                          });
+                          return;
+                        }
+                        Map<String, dynamic> result;
+                        if (title == 'Forgot Username') {
+                          result = await _authBloc.authService.forgotUsername(email);
+                        } else if (title == 'Forgot Password') {
+                          result = await _authBloc.authService.forgotPassword(email);
+                        } else {
+                          setState(() {
+                            isLoading = false;
+                            errorMessage = 'Unknown recovery type.';
+                          });
+                          return;
+                        }
+                        setState(() {
+                          isLoading = false;
+                          if (result['success'] == true) {
+                            successMessage = result['message'] ?? 'Recovery email sent!';
+                            errorMessage = null;
+                            navigateTo(context, RouteNames.codeRecoverAccount, arguments: {
+                              'email': email,
+                              'pageTitle': title,
+                            });
+                          } else {
+                            errorMessage = result['error'] ?? 'Failed to send recovery email.';
+                            successMessage = null;
                           }
-                        },
-                        buttonText: 'Send Code',
-                        backgroundColor: MoldifyColors.primaryColor,
-                        textColor: MoldifyColors.backgroundColor,
-                        buttonHeight: 45,
-                        buttonWidth: MediaQuery.of(context).size.width,
-                        buttonRadius: 10
-                    )
+                        });
+                      },
+                      buttonText: isLoading ? 'Sending...' : 'Send Code',
+                      backgroundColor: MoldifyColors.primaryColor,
+                      textColor: MoldifyColors.backgroundColor,
+                      buttonHeight: 45,
+                      buttonWidth: MediaQuery.of(context).size.width,
+                      buttonRadius: 10,
+                    ),
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          errorMessage!,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    if (successMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          successMessage!,
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ),
                   ],
                 )
               ),

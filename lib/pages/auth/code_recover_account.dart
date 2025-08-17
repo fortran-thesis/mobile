@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/utils/route_utils.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
+import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
+import 'package:moldify/core/features/authentication/services/auth_service.dart';
 
 /// CodeRecoverAccountScreen is a screen for recovering accounts via a code sent to the user's email.
 /// It allows users to enter a 4-digit code to recover their username or password.
 
 class CodeRecoverAccountScreen extends StatefulWidget {
   final String pageTitle;
+  final String email;
 
   const CodeRecoverAccountScreen({
     super.key,
+    required this.email,
     required this.pageTitle
   });
 
@@ -31,6 +37,11 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
   /// title is the app bar title of the page, which is set based on the pageTitle passed to the widget.
   /// It can be 'Forgot Username', 'Forgot Password'.
   late final String title;
+
+  final AuthBloc _authBloc = AuthBloc(AuthService());
+  bool isLoading = false;
+  String? errorMessage;
+  String? successMessage;
 
   /// It initializes the title and totalSteps based on the pageTitle passed to the widget.
   /// If the pageTitle is 'Forgot Username', it sets the title to 'Forgot Username' and totalSteps to 2.
@@ -63,6 +74,8 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
       FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
     }
   }
+
+  String getOtp() => _controllers.map((c) => c.text).join();
 
   /// This method builds the OTP input boxes.
   /// It generates a list of `Expanded` widgets, each containing a `BuildTextBox` for the OTP input.
@@ -99,6 +112,75 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
       focusNode.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _handleForgotUsername(String token) async {
+    Map<String, dynamic> username = await _authBloc.verifiedForgotUsername(token: token);
+    if (username['success'] != true) {
+      setState(() {
+        isLoading = false;
+        errorMessage = username['error'] ?? 'Failed to verify code.';
+        successMessage = null;
+      });
+      return;
+    }
+    setState(() {
+      isLoading = false;
+      errorMessage = null;
+      successMessage = 'Code verified! You may check your email again to see your username!';
+    });
+    // Reset navigation stack to login
+    Future.delayed(Duration(milliseconds: 2000), () {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/login',
+        (Route<dynamic> route) => false,
+      );
+    });
+  }
+
+  Future<void> _handleVerifyCode() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+      successMessage = null;
+    });
+    final code = getOtp();
+    final email = widget.email;
+    if (code.length != 4) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Please enter the 4-digit code.';
+      });
+      return;
+    }
+    Map<String, dynamic> result = await _authBloc.verifyCode(email, code);
+    if (result['success'] != true) {
+      setState(() {
+        isLoading = false;
+        errorMessage = result['error'] ?? 'Invalid code.';
+        successMessage = null;
+      });
+      return;
+    }
+    if (title == 'Forgot Password') {
+      setState(() {
+        isLoading = false;
+        errorMessage = null;
+        successMessage = 'Code verified! You can now set a new password.';
+      });
+      navigateTo(context, RouteNames.setNewPassword, arguments: {
+        'token': result['data'],
+      });
+      return;
+    } else if (title == 'Forgot Username') {
+      setState(() {
+        isLoading = false;
+        errorMessage = null;
+        successMessage = 'Code verified! You may check your email to see your username!';
+      });
+      await _handleForgotUsername(result['data']);
+    }
+
   }
 
   @override
@@ -212,19 +294,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
-                        onPressed: () {
-                          if (widget.pageTitle == 'Forgot Username') {
-                            // Handle forgot username logic
-
-                          } else if (widget.pageTitle == 'Forgot Password') {
-                            //Handle forgot password logic
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => SetNewPasswordScreen(),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _handleVerifyCode,
                         buttonText: 'Verify Code',
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
@@ -232,7 +302,35 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                         buttonWidth: MediaQuery.of(context).size.width,
                         buttonRadius: 10
                     ),
-                  )
+                  ),
+
+                  /// Loading Indicator
+                  if (isLoading)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+
+                    /// Error Message
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          errorMessage!,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    /// Success Message
+                    if (successMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          successMessage!,
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ),
 
                 ],
               ),

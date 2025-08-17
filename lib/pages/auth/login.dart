@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:moldify/core/features/authentication/logic/login_bloc.dart';
+import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +10,6 @@ import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
 import '../../core/utils/route_utils.dart';
 import '../../providers/auth_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 /// This is the login screen of the app.
 /// It allows users to log in with their username and password.
@@ -27,7 +25,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
-  late final LoginBloc _loginBloc = LoginBloc(_authService);
+  late final AuthBloc _loginBloc = AuthBloc(_authService);
 
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
@@ -164,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: InkWell(
-                      onTap: () => navigateTo(context, RouteNames.codeRecoverAccount, arguments: {'pageTitle': 'Forgot Username'}),
+                      onTap: () => navigateTo(context, RouteNames.emailRecoverAccount, arguments: {'pageTitle': 'Forgot Username'}),
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
                       highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
@@ -208,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: InkWell(
-                      onTap: () => navigateTo(context, RouteNames.codeRecoverAccount, arguments: {'pageTitle': 'Forgot Password'}),
+                      onTap: () => navigateTo(context, RouteNames.emailRecoverAccount, arguments: {'pageTitle': 'Forgot Password'}),
                       borderRadius: BorderRadius.circular(8),
                       splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
                       highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),

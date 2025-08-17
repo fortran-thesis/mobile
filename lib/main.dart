@@ -9,7 +9,6 @@ import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/identification/main_camera.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
-import 'pages/auth/login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -141,7 +140,7 @@ class _MainPageState extends State<MainPage> {
               icon,
               color: isSelected
                   ? MoldifyColors.accentColor
-                  : Colors.white,
+                  : MoldifyColors.backgroundColor,
               size: 20.0,
             ),
           ],

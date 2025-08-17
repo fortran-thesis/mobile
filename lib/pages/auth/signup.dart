@@ -5,6 +5,11 @@ import 'package:moldify/pages/auth/login.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
+import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
+import 'package:moldify/core/features/authentication/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../core/constants/route_names.dart';
+import '../../providers/auth_provider.dart';
 
 /// This is the Sign Up screen for the Moldify app.
 /// It allows users to create a new account by providing their username, email, password, and confirming the password.
@@ -19,11 +24,16 @@ class SignUpScreen extends StatefulWidget{
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final AuthService _authService = AuthService();
+  late final AuthBloc _loginBloc = AuthBloc(_authService);
+
   final usernameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   bool _agreedToTerms = false;
+  bool isLoading = false;
+  String? errorMessage;
 
   @override
   void dispose() {
@@ -33,6 +43,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => isLoading = true);
+    final result = await _loginBloc.loginWithGoogle();
+    setState(() => isLoading = false);
+    if (!result['success']) {
+      setState(() => errorMessage = result['error']);
+      return;
+    }
+    if (!context.mounted) return;
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    if (result['sessionValue'] != null) {
+      await authProvider.saveCookie(result['sessionValue']);
+    }
+    Navigator.of(context).pushReplacementNamed(RouteNames.main);
+  }
+
+  Future<void> _handleUserSignUp() async {
+    setState(() => isLoading = true);
+    if( usernameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty) {
+      setState(() {
+        errorMessage = 'All fields are required.';
+        isLoading = false;
+      });
+      return;
+    }
+    if( passwordController.text != confirmPasswordController.text) {
+      setState(() {
+        errorMessage = 'Passwords do not match.';
+        isLoading = false;
+      });
+      return;
+    }
+    final result = await _loginBloc.registerUser(
+      usernameController.text,
+      emailController.text,
+      passwordController.text,
+    );
+    setState(() => isLoading = false);
+    if (!result['success']) {
+      setState(() => errorMessage = result['error']);
+      return;
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).pushReplacementNamed(RouteNames.login);
   }
 
   @override
@@ -192,9 +251,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Sign Up',
-                        onPressed: () {
-                          // Handle login logic here,
-                        },
+                        onPressed: _handleUserSignUp,
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
                         buttonHeight: 45,
@@ -294,9 +351,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
                     child: BuildButton(
                         buttonText: 'Google',
-                        onPressed: () {
-                          // Handle Google login logic here
-                        },
+                        onPressed: _handleGoogleSignIn,
                         backgroundColor: Colors.transparent,
                         textColor: MoldifyColors.primaryColor,
                         buttonHeight: 45,

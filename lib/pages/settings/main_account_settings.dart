@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/core/utils/image_utils.dart';
 import 'package:moldify/pages/misc/appbar/secondary_appbar.dart';
 import 'package:moldify/pages/misc/images/profile_image.dart';
 import 'package:moldify/pages/settings/change_password.dart';
 import 'package:moldify/pages/settings/edit_profile.dart';
+import 'package:provider/provider.dart';
+
 import '../misc/colors.dart';
 import '../misc/tiles/account_settings_tiles.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 /// MainAccountSettingsScreen is the main screen for account settings.
 /// It displays the user's profile image, username, email, and various account settings options.
@@ -20,14 +27,29 @@ class MainAccountSettingsScreen extends StatefulWidget {
 }
 
 class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
+  late UserBloc _userBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _userBloc = UserBloc(userService: UserService());
+    // Use post-frame callback to access Provider context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      print('MainAccountSettingsScreen: Dispatching FetchUserProfile with sessionCookie: $sessionCookie');
+      _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+    });
+  }
+
+  @override
+  void dispose() {
+    _userBloc.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    /// Responsive design for profile image
-    /// The profile image will take 50% of the screen width
-    /// and maintain a height of 180px with a width of 170px.
-    /// The overhang will be 50% of the profile image height.
-    /// This ensures that the profile image is responsive and looks good on different screen sizes.
     final screenWidth = MediaQuery.of(context).size.width;
     final double profileImageWidth = screenWidth * 0.50; // 50% of screen width
     final double profileImageHeight = profileImageWidth * (180.0 / 170.0);
@@ -35,164 +57,186 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
     /// to ensure it looks good on different screen sizes.
     final double responsiveOverhang = profileImageHeight * (50.0 / 180.0);
 
-    /// This is temporary, will be replaced with the actual username and email
-    /// when the user is logged in.
-    String username = '';
-    String email = '';
-
-    return Scaffold(
-      backgroundColor: MoldifyColors.backgroundColor,
-      extendBodyBehindAppBar: true,
-      appBar: SecondaryAppBar(
-        title: 'Account Settings',
-        color: MoldifyColors.backgroundColor,
-        themeColor: MoldifyColors.backgroundColor,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ----------- H E A D E R ------------
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                SvgPicture.asset(
-                  'assets/images/Yellow.svg',
-                  width: MediaQuery.of(context).size.width,
-                  fit: BoxFit.cover,
-                ),
-                SvgPicture.asset(
-                  'assets/images/Green.svg',
-                  width: MediaQuery.of(context).size.width,
-                  fit: BoxFit.cover,
-                ),
-
-                /// Profile Picture
-                /// Url is null, so it will use the default profile image
-                /// Call the [profilePhotoFile] function to get the profile image URL
-                /// and pass it to the BuildProfileImage widget.
-                Positioned(
-                  bottom: -responsiveOverhang,
-                  left: 0,
-                  right: 0,
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: BuildProfileImage(
-                      null,
-                      height: profileImageHeight,
-                      width: profileImageWidth,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            /// ----------- E N D  H E A D E R ------------
-            Padding(
-              padding: EdgeInsets.only(top: responsiveOverhang + 20.0, left: 15, right: 15, bottom: 30),
+    return BlocProvider<UserBloc>.value(
+      value: _userBloc,
+      child: Scaffold(
+        backgroundColor: MoldifyColors.backgroundColor,
+        extendBodyBehindAppBar: true,
+        appBar: SecondaryAppBar(
+          title: 'Account Settings',
+          color: MoldifyColors.backgroundColor,
+          themeColor: MoldifyColors.backgroundColor,
+        ),
+        body: BlocBuilder<UserBloc, UserState>(
+          builder: (context, state) {
+            String username = '';
+            String email = '';
+            String? photoUrl;
+            if (state is UserProfileLoaded) {
+              username = state.profile.username;
+              email = state.profile.email;
+              photoUrl = state.profile.photoUrl;
+            }
+            return SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// ----------- U S E R  I N F O ------------
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      username.isEmpty ? 'Guest User' : username,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat-Black',
-                        fontSize: 24,
-                        color: MoldifyColors.primaryColor,
+                  /// ----------- H E A D E R ------------
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/images/Yellow.svg',
+                        width: MediaQuery.of(context).size.width,
+                        fit: BoxFit.cover,
                       ),
-                      overflow: TextOverflow.visible,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      email.isEmpty ? 'emailguest@sample.com' : email,
-                      style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 16,
-                        color: MoldifyColors.MoldifyBlack,
+                      SvgPicture.asset(
+                        'assets/images/Green.svg',
+                        width: MediaQuery.of(context).size.width,
+                        fit: BoxFit.cover,
                       ),
-                      overflow: TextOverflow.visible,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30.0, bottom: 20),
-                    child: Container(
-                      height: 1.0,
-                      width: MediaQuery.of(context).size.width,
-                      color: MoldifyColors.MoldifySoftGrey,
-                    ),
-                  ),
-                  /// ----------- E N D  U S E R  I N F O ------------
 
-                  ///Edit Profile Tile
-                  BuildAccountSettingsTiles(
-                      leftIcon: FontAwesomeIcons.userPen,
-                      rightIcon: FontAwesomeIcons.angleRight,
-                      title: 'Edit Profile',
-                      onTap: () {
-                        Navigator.of(context).push (
-                          MaterialPageRoute(
-                            builder: (context) => const EditProfileScreen(),
+                      /// Profile Picture
+                      /// Url is null, so it will use the default profile image
+                      /// Call the [profilePhotoFile] function to get the profile image URL
+                      /// and pass it to the BuildProfileImage widget.
+                      Positioned(
+                        bottom: -responsiveOverhang,
+                        left: 0,
+                        right: 0,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: BuildProfileImage(
+                            imageFromUrlOrNull(photoUrl),
+                            height: profileImageHeight,
+                            width: profileImageWidth,
                           ),
-                        );
-                      },
+                        ),
+                      ),
+                    ],
                   ),
-
-                  ///Edit Password Tile
+                  /// ----------- E N D  H E A D E R ------------
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: BuildAccountSettingsTiles(
-                      leftIcon: FontAwesomeIcons.lock,
-                      rightIcon: FontAwesomeIcons.angleRight,
-                      title: 'Change Password',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const ChangePasswordScreen(),
+                    padding: EdgeInsets.only(top: responsiveOverhang + 20.0, left: 15, right: 15, bottom: 30),
+                    child: Column(
+                      children: [
+                        /// ----------- U S E R  I N F O ------------
+                        Align(
+                          alignment: Alignment.center,
+                          child: state is UserProfileLoading
+                              ? CircularProgressIndicator()
+                              : Text(
+                            username,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat-Black',
+                              fontSize: 24,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            overflow: TextOverflow.visible,
+                            textAlign: TextAlign.center,
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                    child: Container(
-                      height: 1.0,
-                      width: MediaQuery.of(context).size.width,
-                      color: MoldifyColors.MoldifySoftGrey,
-                    ),
-                  ),
+                        ),
+                        Align(
+                          alignment: Alignment.center,
+                          child: state is UserProfileLoading
+                              ? SizedBox.shrink()
+                              : Text(
+                            email,
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 16,
+                              color: MoldifyColors.MoldifyBlack,
+                            ),
+                            overflow: TextOverflow.visible,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (state is UserProfileError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              state.message,
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 30.0, bottom: 20),
+                          child: Container(
+                            height: 1.0,
+                            width: MediaQuery.of(context).size.width,
+                            color: MoldifyColors.MoldifySoftGrey,
+                          ),
+                        ),
+                        /// ----------- E N D  U S E R  I N F O ------------
 
-                  /// My Archive Tile
-                  BuildAccountSettingsTiles(
-                    leftIcon: FontAwesomeIcons.boxArchive,
-                    rightIcon: FontAwesomeIcons.angleRight,
-                    title: 'My Archive',
-                    onTap: () {
+                        ///Edit Profile Tile
+                        BuildAccountSettingsTiles(
+                          leftIcon: FontAwesomeIcons.userPen,
+                          rightIcon: FontAwesomeIcons.angleRight,
+                          title: 'Edit Profile',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
 
-                    },
-                  ),
+                        ///Edit Password Tile
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          child: BuildAccountSettingsTiles(
+                            leftIcon: FontAwesomeIcons.lock,
+                            rightIcon: FontAwesomeIcons.angleRight,
+                            title: 'Change Password',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                          child: Container(
+                            height: 1.0,
+                            width: MediaQuery.of(context).size.width,
+                            color: MoldifyColors.MoldifySoftGrey,
+                          ),
+                        ),
 
-                  /// My History Tile
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: BuildAccountSettingsTiles(
-                      leftIcon: FontAwesomeIcons.clockRotateLeft,
-                      rightIcon: FontAwesomeIcons.angleRight,
-                      title: 'My History',
-                      onTap: () {
+                        /// My Archive Tile
+                        BuildAccountSettingsTiles(
+                          leftIcon: FontAwesomeIcons.boxArchive,
+                          rightIcon: FontAwesomeIcons.angleRight,
+                          title: 'My Archive',
+                          onTap: () {
 
-                      },
+                          },
+                        ),
+
+                        /// My History Tile
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          child: BuildAccountSettingsTiles(
+                            leftIcon: FontAwesomeIcons.clockRotateLeft,
+                            rightIcon: FontAwesomeIcons.angleRight,
+                            title: 'My History',
+                            onTap: () {
+
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
