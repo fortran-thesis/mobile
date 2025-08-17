@@ -68,12 +68,12 @@ class _BuildTextBoxState extends State<BuildTextBox> {
       focusNode: widget.focusNode,
       autofocus: widget.autoFocus ?? false,
       style: TextStyle(
-        fontSize: widget.fontSize ?? 12,
+        fontSize: widget.fontSize ?? 14,
         color: MoldifyColors.MoldifyBlack,
         fontFamily: 'Bricolage-Grotesque-Regular',
       ),
       maxLines: widget.isMultiline == true ? null : 1,
-      minLines: widget.isMultiline == true ? 4 : 1,
+      minLines: widget.isMultiline == true ? 7 : 1,
       decoration: InputDecoration(
         counterText: '',
         enabledBorder: OutlineInputBorder(
@@ -86,7 +86,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
         ),
         hintText: widget.hintText,
         hintStyle: const TextStyle(
-          fontSize: 12,
+          fontSize: 14,
           color: MoldifyColors.MoldifyGrey,
           fontFamily: 'Bricolage-Grotesque-Regular',
         ),
@@ -94,7 +94,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
         fillColor: MoldifyColors.taupe,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 10.0,
-          vertical: 5.0,
+          vertical: 10.0,
         ),
         suffixIcon: widget.showPassword
             ? IconButton(

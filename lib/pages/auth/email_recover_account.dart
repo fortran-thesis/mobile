@@ -114,7 +114,7 @@ class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
                     Text(
                       'Please enter the email associated to your account.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )
@@ -127,7 +127,7 @@ class _EmailRecoverAccountScreenState extends State<EmailRecoverAccountScreen> {
                       child: const Text(
                         'Email',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontFamily: 'Bricolage-Grotesque-SemiBold',
                           color: MoldifyColors.primaryColor,
                         ),

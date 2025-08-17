@@ -10,7 +10,6 @@ import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
 import '../../core/utils/route_utils.dart';
 import '../../providers/auth_provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -106,7 +105,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// ----------- H E A D E R ------------
             Stack(
               children: [
@@ -139,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: 'Please enter username and password.',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.backgroundColor,
                               ),
                             ),
@@ -163,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Username',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -207,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -249,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   /// Login Button
                   Padding(
-                    padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
+                    padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Log In',
                         onPressed: () async {
@@ -298,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           'Don\'t have an account?',
                           style: TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 12,
+                            fontSize: 14,
                             color: MoldifyColors.MoldifyBlack,
                           ),
                         ),
@@ -316,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Sign Up',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.accentColor,
                                 decoration: TextDecoration.underline,
                                 decorationColor: MoldifyColors.accentColor,
@@ -350,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'or continue with',
                             style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: MoldifyColors.MoldifyBlack
                             ),
                           ),
@@ -398,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextSpan(
                           style: const TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 10,
+                            fontSize: 12,
                             color: MoldifyColors.MoldifyBlack,
                           ),
                           children: [

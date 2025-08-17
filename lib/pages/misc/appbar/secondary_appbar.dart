@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -7,20 +6,24 @@ import 'package:moldify/pages/misc/colors.dart';
 /// Parameters:
 /// - [title]: The title text to display in the app bar.
 /// - [color]: The background color of the app bar title text.
+/// - [themeColor]: An optional color for the app bar icon theme, defaults to primary color if not provided.
 
 class SecondaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Color color;
+  final Color? themeColor;
 
   const SecondaryAppBar({
     Key? key,
     required this.title,
     required this.color,
+    this.themeColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      scrolledUnderElevation: 0,
       title: Text(
           title,
           style: TextStyle(
@@ -33,7 +36,7 @@ class SecondaryAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: true,
       backgroundColor: Colors.transparent,
       iconTheme: IconThemeData(
-          color: MoldifyColors.primaryColor
+          color: themeColor ?? MoldifyColors.primaryColor
       ),
     );
   }

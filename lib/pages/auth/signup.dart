@@ -75,7 +75,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               text: 'Please enter details to create an account.',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.backgroundColor,
                               ),
                             ),
@@ -101,7 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: const Text(
                       'Username',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: const Text(
                       'Email',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -147,7 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: const Text(
                       'Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -170,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: const Text(
                       'Confirm Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
@@ -189,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   /// Signup Button
                   Padding(
-                    padding: const EdgeInsets.only(top: 40.0, bottom: 3.0),
+                    padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Sign Up',
                         onPressed: () {
@@ -213,7 +213,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           'Already have an account? ',
                           style: TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 12,
+                            fontSize: 14,
                             color: MoldifyColors.MoldifyBlack,
                           ),
                         ),
@@ -237,7 +237,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               'Log In',
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: MoldifyColors.accentColor,
                                 decoration: TextDecoration.underline,
                                 decorationColor: MoldifyColors.accentColor,
@@ -271,7 +271,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             'or continue with',
                             style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: MoldifyColors.MoldifyBlack
                             ),
                           ),

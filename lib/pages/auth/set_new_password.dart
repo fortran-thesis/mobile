@@ -6,6 +6,9 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
 import '../misc/textboxes/textboxes.dart';
 
+/// SetNewPasswordScreen is a screen for setting a new password during the account recovery process.
+/// It allows users to enter a new password and confirm it.
+
 class SetNewPasswordScreen extends StatefulWidget{
   const SetNewPasswordScreen({super.key});
 
@@ -79,7 +82,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   Text(
                       'Please enter your new password to update account.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )
@@ -92,14 +95,14 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     child: const Text(
                       'New Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
                     ),
                   ),
 
-                  /// Password TextBox
+                  /// New Password TextBox
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: BuildTextBox(
@@ -115,7 +118,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     child: const Text(
                       'Confirm New Password',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),
