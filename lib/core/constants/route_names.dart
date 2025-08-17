@@ -6,6 +6,6 @@ class RouteNames {
   static const String signup = '/signup';
   static const String codeRecoverAccount = '/code-recover-account';
   static const String emailRecoverAccount = '/email-recover-account';
-  static const String home = '/home';
+  static const String main = '/main';
   // Add more route names as needed
 }

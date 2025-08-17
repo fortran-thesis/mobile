@@ -14,11 +14,11 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onRightIconPressed;
 
   const PrimaryAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.rightIcon,
     this.onRightIconPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -14,11 +14,11 @@ class SecondaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? themeColor;
 
   const SecondaryAppBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.color,
     this.themeColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

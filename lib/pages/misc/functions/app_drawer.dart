@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/auth/login.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../../settings/main_account_settings.dart';
+import 'package:provider/provider.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 /// AppDrawer is a custom side bar widget that provides navigation options
 /// for the Moldify application.
@@ -241,11 +244,12 @@ class AppDrawer extends StatelessWidget {
                       fontSize: 14
                   ),
                 ),
-                onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginScreen(),
-                    ),
-                  );
+                onTap: () async {
+                  final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                  await authProvider.logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+                  }
                 },
               ),
               SizedBox(

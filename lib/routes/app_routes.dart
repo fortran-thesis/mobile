@@ -7,7 +7,7 @@ import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
-import 'package:moldify/pages/home/home_screen.dart';
+import '../main.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -18,7 +18,7 @@ class AppRoutes {
         switch (settings.name) {
           case RouteNames.login:
             if (isAuthenticated) {
-              return HomeScreen();
+              return MainPage();
             }
             return LoginScreen();
           case RouteNames.signup:
@@ -31,12 +31,11 @@ class AppRoutes {
             return CodeRecoverAccountScreen(pageTitle: pageTitle);
           case RouteNames.intro:
             if (isAuthenticated) {
-              return HomeScreen();
+              return MainPage();
             }
             return IntroScreen();
-          case RouteNames.home:
-            return HomeScreen();
-
+          case RouteNames.main:
+            return MainPage();
           // Add more cases for other routes using RouteNames
           default:
             return Scaffold(

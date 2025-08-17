@@ -141,7 +141,7 @@ class _MainPageState extends State<MainPage> {
               icon,
               color: isSelected
                   ? MoldifyColors.accentColor
-                  : MoldifyColors.backgroundColor,
+                  : Colors.white,
               size: 20.0,
             ),
           ],
@@ -150,5 +150,3 @@ class _MainPageState extends State<MainPage> {
     );
   }
 }
-
-

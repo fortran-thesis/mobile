@@ -25,5 +25,10 @@ class AppAuthProvider extends ChangeNotifier {
     _cookie = null;
     notifyListeners();
   }
+
+  Future<void> logout() async {
+    await clearCookie();
+    // Optionally, clear other user data here
+  }
 }
 

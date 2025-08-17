@@ -45,56 +45,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => isLoading = true);
-    print('Google sign-in started');
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      print('Google user: ' + (googleUser?.email ?? 'null'));
-      if (googleUser == null) {
-        print('Google sign-in cancelled by user');
-        setState(() => isLoading = false);
-        return; // User cancelled
-      }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      print('Google auth: accessToken=' + (googleAuth.accessToken ?? 'null') + ', idToken=' + (googleAuth.idToken ?? 'null'));
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      print('Firebase userCredential: ' + (userCredential.user?.email ?? 'null'));
-      final token = await userCredential.user?.getIdToken(true);
-      print('Firebase token: ' + (token ?? 'null'));
-
-      if (token == null) {
-        print('Failed to get Google token');
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Failed to get Google token';
-        });
-        return;
-      }
-
-      print('Calling loginOAuth with token');
-      final result = await _loginBloc.loginOAuth(token);
-      print('loginOAuth result: $result');
-      if (!result['success']) {
-        print('Google sign-in failed: ' + (result['error'] ?? 'Unknown error'));
-        setState(() {
-          isLoading = false;
-          errorMessage = result['error'] ?? 'Google sign-in failed';
-        });
-        return;
-      }
-      setState(() => isLoading = false);
-      print('Navigating to home');
-      Navigator.of(context).pushReplacementNamed(RouteNames.home);
-    } catch (e) {
-      print('Google sign-in exception: $e');
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Google sign-in failed: $e';
-      });
+    final result = await _loginBloc.loginWithGoogle();
+    setState(() => isLoading = false);
+    if (!result['success']) {
+      setState(() => errorMessage = result['error']);
+      return;
     }
+    if (!context.mounted) return;
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    if (result['sessionValue'] != null) {
+      await authProvider.saveCookie(result['sessionValue']);
+    }
+    Navigator.of(context).pushReplacementNamed(RouteNames.main);
+  }
+
+  Future<void> _handleUsernamePasswordSignIn() async {
+    setState(() => isLoading = true);
+    final result = await _loginBloc.loginWithUsernamePassword(
+      usernameController.text,
+      passwordController.text,
+    );
+    setState(() => isLoading = false);
+    if (!result['success']) {
+      setState(() => errorMessage = result['error']);
+      return;
+    }
+    if (!context.mounted) return;
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    if (result['sessionValue'] != null) {
+      await authProvider.saveCookie(result['sessionValue']);
+    }
+    Navigator.of(context).pushNamedAndRemoveUntil(
+        RouteNames.main, (route) => false);
   }
 
   @override
@@ -250,34 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                     child: BuildButton(
                         buttonText: 'Log In',
-                        onPressed: () async {
-                          setState(() => isLoading = true);
-
-                          final result = await _loginBloc.login(
-                            usernameController.text,
-                            passwordController.text,
-                          );
-                          setState(() => isLoading = false);
-
-                          if (!result['success']) {
-                            setState(() => errorMessage = result['error']);
-                            return;
-                          }
-
-                          if (!mounted) return;
-
-                          final authProvider = Provider.of<AppAuthProvider>(
-                              context, listen: false);
-                          final cookieString = result['cookie'];
-                          final sessionValue = cookieString
-                              .split(';')
-                              .first
-                              .split('=')
-                              .last;
-                          await authProvider.saveCookie(sessionValue);
-                          Navigator.of(context).pushNamedAndRemoveUntil(
-                              RouteNames.home, (route) => false);
-                        },
+                        onPressed: _handleUsernamePasswordSignIn,
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
                         buttonHeight: 45,
