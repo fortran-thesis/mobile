@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/pages/support/contact_us.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
@@ -184,7 +185,11 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
-
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ContactUsScreen(),
+                    ),
+                  );
                 },
               ),
               Padding(

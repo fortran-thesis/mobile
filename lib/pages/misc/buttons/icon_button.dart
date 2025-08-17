@@ -26,7 +26,7 @@ class BuildIconButton extends StatelessWidget {
       width: 30,
       height: 30,
       decoration: BoxDecoration(
-          color: MoldifyColors.primaryColor,
+          color: MoldifyColors.backgroundColor,
           borderRadius: BorderRadius.circular(25),
           ),
       child: IconButton(
