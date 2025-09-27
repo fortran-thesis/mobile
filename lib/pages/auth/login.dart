@@ -268,9 +268,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
                                 fontSize: 14,
-                                color: MoldifyColors.accentColor,
+                                color: MoldifyColors.primaryColor,
                                 decoration: TextDecoration.underline,
-                                decorationColor: MoldifyColors.accentColor,
+                                decorationColor: MoldifyColors.primaryColor,
                                 decorationThickness: 2,
                               ),
                             ),
@@ -360,10 +360,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: 'Terms of Agreement',
                               style: const TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
-                                color: MoldifyColors.accentColor,
+                                color: MoldifyColors.primaryColor,
                                 decoration: TextDecoration.underline,
                                 decorationThickness: 2,
-                                decorationColor: MoldifyColors.accentColor,
+                                decorationColor: MoldifyColors.primaryColor,
                               ),
                               recognizer: TapGestureRecognizer()..onTap = () {
                                 // Handle Terms of Agreement tap here
@@ -374,10 +374,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: 'Privacy Policy',
                               style: const TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
-                                color: MoldifyColors.accentColor,
+                                color: MoldifyColors.primaryColor,
                                 decoration: TextDecoration.underline,
                                 decorationThickness: 2,
-                                decorationColor: MoldifyColors.accentColor,
+                                decorationColor: MoldifyColors.primaryColor,
                               ),
                               recognizer: TapGestureRecognizer()..onTap = () {
                                 // Handle Privacy Policy tap here
