@@ -21,7 +21,7 @@ class AppRoutes {
             if (isAuthenticated) {
               return MainPage();
             }
-            return LoginScreen();
+            return MainPage();
           case RouteNames.signup:
             return SignUpScreen();
           case RouteNames.emailRecoverAccount:
@@ -37,7 +37,7 @@ class AppRoutes {
             if (isAuthenticated) {
               return MainPage();
             }
-            return IntroScreen();
+            return MainPage();
           case RouteNames.main:
             return MainPage();
           case RouteNames.setNewPassword:

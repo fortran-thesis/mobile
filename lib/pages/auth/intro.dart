@@ -12,7 +12,7 @@ class IntroScreen extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pushReplacementNamed(RouteNames.login);
           },
-          child: const Text('Go to Login'),
+          child: const Text('Go to Login1234'),
         ),
       ),
     );

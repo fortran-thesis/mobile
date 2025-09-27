@@ -31,6 +31,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final fnameController = TextEditingController();
+  final lnameController = TextEditingController();
+  final phoneNumController = TextEditingController();
+  final addressController = TextEditingController();
   bool _agreedToTerms = false;
   bool isLoading = false;
   String? errorMessage;
@@ -42,6 +46,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    fnameController.dispose();
+    lnameController.dispose();
+    phoneNumController.dispose();
+    addressController.dispose();
     super.dispose();
   }
 
@@ -66,7 +74,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if( usernameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
+        confirmPasswordController.text.isEmpty ||
+        fnameController.text.isEmpty ||
+        lnameController.text.isEmpty ||
+        phoneNumController.text.isEmpty ||
+        addressController.text.isEmpty) {
       setState(() {
         errorMessage = 'All fields are required.';
         isLoading = false;
@@ -177,6 +189,52 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
 
+                  /// FirstName Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: const Text(
+                      'First Name',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  /// FirstName TextBox
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: BuildTextBox(
+                      hintText: 'Enter first name',
+                      controller: fnameController,
+                      showPassword: false,
+                    ),
+                  ),
+
+                  /// LastName Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: const Text(
+                      'Last Name',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  /// LastName TextBox
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: BuildTextBox(
+                      hintText: 'Enter last name',
+                      controller: lnameController,
+                      showPassword: false,
+                    ),
+                  ),
+
                   /// Email Label
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0),
@@ -196,6 +254,52 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: BuildTextBox(
                       hintText: 'Enter Email',
                       controller: emailController,
+                      showPassword: false,
+                    ),
+                  ),
+
+                  /// Phone Number Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: const Text(
+                      'Phone Number',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  /// FirstName TextBox
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: BuildTextBox(
+                      hintText: 'Enter phone number',
+                      controller: phoneNumController,
+                      showPassword: false,
+                    ),
+                  ),
+
+                  /// Address Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: const Text(
+                      'Address',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+
+                  /// FirstName TextBox
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: BuildTextBox(
+                      hintText: 'Enter address',
+                      controller: addressController,
                       showPassword: false,
                     ),
                   ),
@@ -295,9 +399,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Bold',
                                 fontSize: 14,
-                                color: MoldifyColors.accentColor,
+                                color: MoldifyColors.primaryColor,
                                 decoration: TextDecoration.underline,
-                                decorationColor: MoldifyColors.accentColor,
+                                decorationColor: MoldifyColors.primaryColor,
                                 decorationThickness: 2,
                               ),
                             ),
@@ -401,10 +505,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   text: 'Terms of Agreement',
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
-                                    color: MoldifyColors.accentColor,
+                                    color: MoldifyColors.primaryColor,
                                     decoration: TextDecoration.underline,
                                     decorationThickness: 2,
-                                    decorationColor: MoldifyColors.accentColor,
+                                    decorationColor: MoldifyColors.primaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()..onTap = () {
                                     // Handle Terms of Agreement tap here
@@ -415,10 +519,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   text: 'Privacy Policy',
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
-                                    color: MoldifyColors.accentColor,
+                                    color: MoldifyColors.primaryColor,
                                     decoration: TextDecoration.underline,
                                     decorationThickness: 2,
-                                    decorationColor: MoldifyColors.accentColor,
+                                    decorationColor: MoldifyColors.primaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()..onTap = () {
                                     // Handle Privacy Policy tap here

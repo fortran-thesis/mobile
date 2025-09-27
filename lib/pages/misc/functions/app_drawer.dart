@@ -45,7 +45,7 @@ class AppDrawer extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage: AssetImage('assets/images/profile.png'),
+                        backgroundImage: AssetImage('assets/images/moldify-logo.png'),
                         backgroundColor: MoldifyColors.accentColor,
                       ),
                       SizedBox(width: 20),
