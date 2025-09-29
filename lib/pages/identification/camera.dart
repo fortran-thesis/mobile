@@ -70,7 +70,6 @@ class _CameraScreenState extends State<CameraScreen> {
         print('Picture saved to: ${imageFile.path}');
 
         // The next step would be to navigate to a new screen to show the preview.
-        // For example:
         // Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewScreen(imagePath: imageFile.path)));
       }
     } on CameraException catch (e) {

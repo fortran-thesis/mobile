@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 
 import '../misc/colors.dart';
@@ -12,6 +13,23 @@ class MainCameraScreen extends StatefulWidget {
 }
 
 class _MainCameraScreenState extends State<MainCameraScreen> {
+  // This is used to open gallery and pick an image
+  Future<void> _pickImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    // Open the gallery and wait for the user to pick an image.
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      // If an image is selected, print its path to the console.
+      print('Image selected from gallery: ${image.path}');
+      // The next step would be to navigate to a new screen to show the preview.
+      // For example:
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewScreen(imagePath: imageFile.path)));
+    } else {
+      // If no image is selected (user backed out), print a message.
+      print('No image selected.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,9 +152,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                           padding: const EdgeInsets.only(top: 10.0, bottom: 60.0),
                           child: BuildButton(
                               buttonText: 'Upload Image',
-                              onPressed: () {
-                                // Navigate to the next screen
-                              },
+                              onPressed: _pickImageFromGallery,
                               backgroundColor: MoldifyColors.accentColor,
                               textColor: MoldifyColors.MoldifyBlack,
                               buttonHeight: 45.0,
