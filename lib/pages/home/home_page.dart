@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
           child: Column(
             children: [
+              /// Header with Menu and Notification Icons
               Row(
                 children: [
                   Builder(
@@ -81,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              /// End Of Header with Menu and Notification Icons
               const Row(
                 children: [
 

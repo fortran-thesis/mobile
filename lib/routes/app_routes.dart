@@ -3,6 +3,7 @@ import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/code_recover_account.dart';
 import 'package:moldify/pages/auth/intro.dart';
+import 'package:moldify/pages/identification/camera.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -44,6 +45,8 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final token = args != null && args['token'] != null ? args['token'] as String : '';
             return SetNewPasswordScreen(token: token);
+          case RouteNames.camera:
+            return CameraScreen();
           // Add more cases for other routes using RouteNames
           default:
             return Scaffold(

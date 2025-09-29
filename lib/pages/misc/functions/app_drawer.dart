@@ -43,10 +43,10 @@ class AppDrawer extends StatelessWidget {
                   child: Row (
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage: AssetImage('assets/images/moldify-logo.png'),
-                        backgroundColor: MoldifyColors.accentColor,
+                      Image.asset(
+                        'assets/images/moldify-logo.png',
+                        height: 70,
+                        width: 70,
                       ),
                       SizedBox(width: 20),
                       Text.rich(

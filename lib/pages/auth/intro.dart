@@ -10,9 +10,9 @@ class IntroScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed(RouteNames.login);
+            Navigator.of(context).pushReplacementNamed(RouteNames.main);
           },
-          child: const Text('Go to Login1234'),
+          child: const Text('Go to Main Page'),
         ),
       ),
     );

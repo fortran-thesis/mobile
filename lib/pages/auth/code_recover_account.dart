@@ -281,7 +281,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                                 style: TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-ExtraBold',
                                   fontSize: 14,
-                                  color: MoldifyColors.accentColor,
+                                  color: MoldifyColors.primaryColor,
                                 ),
                               ),
                             ),
