@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-
 import '../misc/colors.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -12,38 +12,39 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? cameraController;
-  Object? _error; // To hold any initialization error.
+  Object? _error;
 
   // This is used to track the flash state.
   bool _isFlashOn = false;
+  // This is used to prevent multiple captures at once and show loading indicator
+  bool _isTakingPicture = false;
 
+  /// Initialize the camera when the widget is first created.
   @override
   void initState() {
     super.initState();
     _setUpCameraController();
   }
 
+  /// Dispose the camera controller when the widget is disposed.
   @override
   void dispose() {
-    cameraController?.dispose();
+    if (cameraController != null && cameraController!.value.isInitialized) {
+      cameraController!.setFlashMode(FlashMode.off);
+      cameraController!.dispose();
+    } else {
+      cameraController?.dispose();
+    }
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return buildBody();
-  }
-
-  // --- This is used to toggle the flash ---
+  /// This is used to toggle the flash
   void _toggleFlash() async {
-    if (cameraController == null) return;
+    if (cameraController == null || !cameraController!.value.isInitialized) return;
 
-    // Determine the new mode and update the camera.
-    // FlashMode.torch keeps the light on.
     final newMode = _isFlashOn ? FlashMode.off : FlashMode.torch;
     try {
       await cameraController!.setFlashMode(newMode);
-      // Update the state to change the icon.
       if (mounted) {
         setState(() {
           _isFlashOn = !_isFlashOn;
@@ -54,29 +55,95 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  //This is used to handle taking picture
+  /// This is used to handle capture button
   void _onCaptureButtonPressed() async {
     if (cameraController == null || !cameraController!.value.isInitialized) {
       print('Error: Camera controller is not initialized.');
       return;
     }
+    // Prevent multiple captures if one is already in progress
+    if (_isTakingPicture) {
+      return;
+    }
 
     try {
-      // The takePicture() method returns an XFile object with the path.
+      if (mounted) {
+        setState(() {
+          _isTakingPicture = true; // Show loading indicator
+        });
+      }
+
       final XFile imageFile = await cameraController!.takePicture();
 
       if (mounted) {
-        // For now, we just print the path to the console.
         print('Picture saved to: ${imageFile.path}');
 
-        // The next step would be to navigate to a new screen to show the preview.
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewScreen(imagePath: imageFile.path)));
+        // Turn off flash if on before navigating
+        if (_isFlashOn || cameraController!.value.flashMode == FlashMode.torch) {
+          await cameraController!.setFlashMode(FlashMode.off);
+          print('Flash explicitly turned off before navigating.');
+          if (mounted) { // Re-check mounted after async gap
+            setState(() {
+              _isFlashOn = false;
+            });
+          }
+        }
+
+        // Navigate after picture is taken.
+        await Navigator.pushNamed
+          (context, '/image_preview',
+            arguments: {'imagePath': imageFile.path}
+        );
       }
     } on CameraException catch (e) {
       print('Error taking picture: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTakingPicture = false;
+        });
+      }
     }
   }
 
+  /// This is used to set up the camera controller
+  /// and handle errors during initialization.
+  /// It also sets the initial flash mode to off.
+  /// If no cameras are found, it sets an appropriate error message.
+  /// This method is called in initState.
+  Future<void> _setUpCameraController() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        throw CameraException('NoCamerasFound', 'No cameras were found on this device.');
+      }
+
+      final controller = CameraController(cameras.first, ResolutionPreset.high, enableAudio: false);
+      await controller.initialize();
+
+      await controller.setFlashMode(FlashMode.off);
+
+      if (!mounted) return;
+      setState(() {
+        cameraController = controller;
+        _isFlashOn = false;
+        _error = null;
+      });
+
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e;
+      });
+      print('Camera Error: $e');
+    }
+  }
+
+  /// Build the widget tree.
+  @override
+  Widget build(BuildContext context) {
+    return buildBody();
+  }
 
   Widget buildBody() {
     // First, check if an error occurred.
@@ -94,7 +161,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
     // If no error, check if the controller is ready.
     if (cameraController == null || !cameraController!.value.isInitialized) {
-      // If not ready, show a loading indicator.
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -102,10 +168,11 @@ class _CameraScreenState extends State<CameraScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        /// Layer 1: The Camera Preview as the background
+
+        /// Layer 1: Camera Preview
         CameraPreview(cameraController!),
 
-        /// Layer 2: Your FAB, positioned  at the bottom center
+        /// Layer 2: Overlay UI
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
@@ -115,9 +182,9 @@ class _CameraScreenState extends State<CameraScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
 
-                /// 1. This is the cancel button
+                /// 1. Cancel Button
                 TextButton (
-                  onPressed: () {
+                  onPressed: _isTakingPicture ? null : () { // Disable cancel when taking picture
                     Navigator.of(context).pop();
                   },
                   child: const Text(
@@ -126,11 +193,12 @@ class _CameraScreenState extends State<CameraScreen> {
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       fontSize: 18,
                       color: MoldifyColors.backgroundColor,
-                      decoration: TextDecoration.none, // Explicitly remove decoration
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
-                /// 2. This is the capture button
+
+                /// 2. Capture Button
                 Container(
                   padding: const EdgeInsets.all(5.0),
                   decoration: BoxDecoration(
@@ -143,20 +211,22 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                   child: FloatingActionButton(
                     heroTag: 'capture_button',
-                    onPressed: _onCaptureButtonPressed,
-                    backgroundColor: MoldifyColors.primaryColor,
+                    // Disable button if a picture is being taken
+                    onPressed: _isTakingPicture ? null : _onCaptureButtonPressed,
+                    backgroundColor: _isTakingPicture ? MoldifyColors.primaryColor.withValues(alpha: 0.5) : MoldifyColors.primaryColor,
                     shape: CircleBorder(
                       side: BorderSide(
                         color: MoldifyColors.backgroundColor,
                         width: 5.0,
                       ),
                     ),
+
                   ),
                 ),
 
-                /// 3. This is the flash button
+                /// 3. Flash Button
                 IconButton(
-                  onPressed: _toggleFlash,
+                  onPressed: _isTakingPicture ? null : _toggleFlash,
                   icon: Icon(
                     _isFlashOn ? Icons.flash_on : Icons.flash_off,
                     color: MoldifyColors.backgroundColor,
@@ -167,9 +237,8 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
         ),
-        /// End Of Layer 2
 
-        /// Layer 3: Instructions banner at the top
+        /// Layer 3: Instructional Banner Text
         Align(
           alignment: Alignment.topCenter,
           child: Padding(
@@ -186,7 +255,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     fontFamily: 'Bricolage-Grotesque-Regular',
                     fontSize: 12,
                     color: MoldifyColors.backgroundColor,
-                    decoration: TextDecoration.none, // Explicitly remove decoration
+                    decoration: TextDecoration.none, 
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -194,38 +263,39 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
         ),
+
+        /// Layer 4: Dotted Border Overlay To Guide User
+        Align(
+          alignment: Alignment.center,
+          child: DottedBorder(
+            options: RoundedRectDottedBorderOptions(
+              dashPattern: [10, 6],
+              radius: Radius.circular(12),
+              strokeWidth: 3,
+              padding: EdgeInsets.all(16),
+              color: MoldifyColors.backgroundColor,
+            ),
+            child: Container(
+              width: 200,
+              height: 200,
+              color: Colors.transparent,
+            ),
+          )
+        ),
+
+        /// Loading Indicator Overlay
+        Visibility(
+          visible: _isTakingPicture,
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.5),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
       ],
     );
-  }
-
-  Future<void> _setUpCameraController() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        throw CameraException('NoCamerasFound', 'No cameras were found on this device.');
-      }
-
-      final controller = CameraController(cameras.first, ResolutionPreset.high, enableAudio: false);
-      await controller.initialize();
-      
-      // Make sure flash is off when camera starts.
-      await controller.setFlashMode(FlashMode.off);
-
-      // If initialization is successful, update the state.
-      if (!mounted) return;
-      setState(() {
-        cameraController = controller;
-        _isFlashOn = false; // Sync the state
-        _error = null; // Clear any previous error.
-      });
-
-    } catch (e) {
-      // If an error occurs, update the state to show the error.
-      if (!mounted) return;
-      setState(() {
-        _error = e;
-      });
-      print('Camera Error: $e'); // Log the error for debugging.
-    }
   }
 }

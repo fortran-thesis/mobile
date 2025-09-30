@@ -9,5 +9,7 @@ class RouteNames {
   static const String main = '/main';
   static const String setNewPassword = '/set-new-password';
   static const String camera = '/camera';
+  static const String imagePreview = '/image_preview';
+  static const String moldResult = '/mold_result';
   // Add more route names as needed
 }
