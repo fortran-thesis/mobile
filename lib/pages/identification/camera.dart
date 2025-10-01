@@ -264,7 +264,7 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ),
 
-        /// Layer 4: Dotted Border Overlay To Guide User
+        /// Layer 4: Dotted Border Box Overlay To Guide User
         Align(
           alignment: Alignment.center,
           child: DottedBorder(

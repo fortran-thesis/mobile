@@ -20,7 +20,18 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   String moldGenus = 'Aspergillus';
 
   final String fullDescription =
-      "Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions. These issues can range from allergic reactions and respiratory infections to more severe, systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, appearance and can vary in color, including green, yellow, black, or brown. They reproduce through airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a variety of materials, including walls, insulation, and stored food items. Proper ventilation and moisture control are key to preventing its growth. Some species, like Aspergillus niger, are also used commercially for the production of citric acid and other enzymes, highlighting the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
+      "Aspergillus is a genus of common molds that can be found in various environments, "
+      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
+      "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
+      "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
+      "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
+      "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
+      "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
+      "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
+      "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
+      "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
+      "are also used commercially for the production of citric acid and other enzymes, highlighting "
+      "the genus's dual role as both a potential pathogen and a useful industrial microorganism." ?? 'No description available.';
 
   bool _showFullText = false;
   late TapGestureRecognizer _tapRecognizer;
@@ -64,29 +75,22 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       appBar: PrimaryAppBar(
         title: 'Mold Result',
       ),
-      body: Stack(
-        fit: StackFit.expand,
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          // Image uploaded by user
-            child: Image.file(
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            /// 1. The image uploaded bu the user
+            Image.file(
               File(widget.croppedImagePath),
-              fit: BoxFit.contain,
+              height: MediaQuery.of(context).size.height * 0.4,
+              width: double.infinity,
+              fit: BoxFit.cover,
             ),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: SingleChildScrollView(
+      
+            /// 2. The content container, padded from the top to create the overlap.
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
               child: Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: MoldifyColors.backgroundColor,
                   borderRadius: BorderRadius.only(
@@ -114,7 +118,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                 ),
                               ),
                               TextSpan(
-                                text: "\t\t\tThis information is verified by experts.",
+                                text: "			This information is verified by experts.",
                                 style: TextStyle(
                                   color: MoldifyColors.MoldifyGrey,
                                   fontSize: 10,
@@ -126,7 +130,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         ),
                       ),
               
-                      // Mold Genus
+                      /// This is the Mold Genus Name
                       Padding(
                         padding: const EdgeInsets.only(
                             top: 5.0, left: 15, right: 15),
@@ -140,14 +144,14 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         ),
                       ),
               
-                      // Date and Confidence Level
+                      /// Date and Confidence Level
                       Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 15.0, horizontal: 15.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Date
+                            /// Date
                             RichText(
                               text: TextSpan(
                                 children: [
@@ -160,7 +164,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     ),
                                   ),
                                   TextSpan(
-                                    text: "\t\t\t$today",
+                                    text: "			$today",
                                     style: TextStyle(
                                       color: MoldifyColors.primaryColor,
                                       fontSize: 12,
@@ -172,7 +176,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               ),
                             ),
               
-                            // Confidence Level
+                            /// Confidence Level
                             RichText(
                               text: TextSpan(
                                 children: [
@@ -186,7 +190,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                   ),
                                   TextSpan(
                                     text:
-                                    "\t\t\tConfidence level: $confidenceLevel%",
+                                    "			Confidence level: $confidenceLevel%",
                                     style: TextStyle(
                                       color: MoldifyColors.primaryColor,
                                       fontSize: 12,
@@ -203,12 +207,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
               
                       Divider(color: MoldifyColors.MoldifySoftGrey),
               
-                      // Mold Description with Learn More
+                      /// Mold Description
                       Padding(
                         padding: const EdgeInsets.all(15.0),
                         child: Text.rich(
 
-                          // This is the description of the mold genus
+                          /// This is the description of the mold genus
                           TextSpan(
                             style: TextStyle(
                               fontSize: 16,
@@ -223,12 +227,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     : fullDescription,
                               ),
 
-                              // Tappable "Learn More" or "Show Less"
+                              /// Tappable "Learn More" or "Show Less"
                               if (isLongText)
                                 TextSpan(
                                   text: _showFullText
                                       ? ' Show Less'
-                                      : '... Learn More',
+                                      : '... Show More',
                                   style: TextStyle(
                                     color: MoldifyColors.MoldifyBlue,
                                     fontWeight: FontWeight.bold,
@@ -277,7 +281,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                         ),
                                       ),
                                       TextSpan(
-                                        text: "\t\t\tTaxonomy",
+                                        text: "			Taxonomy",
                                         style: TextStyle(
                                           color: MoldifyColors.primaryColor,
                                           fontSize: 16,
@@ -311,12 +315,11 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
 
   /// A helper method to build a row for taxonomy information.
   /// Parameters:
@@ -325,16 +328,16 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   /// - [withPadding]: A boolean indicating whether to add top padding to the row.
   Widget buildTaxonomyRow(String label, String value, {bool withPadding = false}) {
     return Padding(
-      padding: EdgeInsets.only(top: withPadding ? 12.0 : 0),
+      padding: EdgeInsets.only(top: withPadding ? 8.0 : 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              color: MoldifyColors.MoldifyBlack,
+              color: MoldifyColors.primaryColor,
               fontSize: 16,
-              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontFamily: 'Bricolage-Grotesque-Bold',
             ),
           ),
           Text(
@@ -349,6 +352,4 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       ),
     );
   }
-
-
 }

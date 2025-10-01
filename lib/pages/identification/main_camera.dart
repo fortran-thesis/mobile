@@ -182,7 +182,6 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                   top: 10.0, bottom: 60.0),
                               child: BuildButton(
                                   buttonText: 'Upload Image',
-                                  // Pass empty function when loading to "disable"
                                   onPressed: _isProcessingImage ? () {} : _pickImageFromGallery,
                                   backgroundColor: MoldifyColors.accentColor,
                                   textColor: MoldifyColors.MoldifyBlack,
@@ -202,7 +201,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
         if (_isProcessingImage)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),
