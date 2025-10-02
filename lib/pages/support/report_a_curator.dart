@@ -231,7 +231,42 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                   padding: const EdgeInsets.only(top: 50.0),
                   child: BuildButton(
                     onPressed: () {
-
+                      if (selectedRadio == -1 ) {
+                        // Show a snackbar if no option is selected
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Please select a reason for reporting.'),
+                            backgroundColor: MoldifyColors.primaryColor,
+                            duration: const Duration(seconds: 3),
+                            action: SnackBarAction(
+                              label: 'OK',
+                              textColor: MoldifyColors.backgroundColor,
+                              onPressed: () {
+                                // Dismiss the snackbar when "OK" is pressed
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              },
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return BuildConfirmationDialog(
+                            title: 'Are you sure you want to submit this report?',
+                            subtitle: 'This will alert our team to review the curator\'s content.',
+                            onConfirm: () {
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pop();
+                            },
+                            onCancel: (){
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      );
                     },
                     buttonText: 'Submit Report',
                     backgroundColor: MoldifyColors.primaryColor,

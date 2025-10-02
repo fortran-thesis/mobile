@@ -250,6 +250,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () async {
+
                     final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                     await authProvider.logout();
                     if (context.mounted) {
