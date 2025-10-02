@@ -72,7 +72,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
             color: MoldifyColors.backgroundColor,
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30.0),
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -178,7 +178,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                             ),
                             Padding(
                               padding: const EdgeInsets.only(
-                                  top: 10.0, bottom: 60.0),
+                                  top: 10.0, bottom: 70.0),
                               child: BuildButton(
                                   buttonText: 'Upload Image',
                                   onPressed: _isProcessingImage ? () {} : _pickImageFromGallery,

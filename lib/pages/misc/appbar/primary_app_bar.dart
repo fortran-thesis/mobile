@@ -7,17 +7,20 @@ import 'package:moldify/pages/misc/colors.dart';
 /// - [title]: The title of the AppBar.
 /// - [rightIcon]: An optional icon displayed on the right side of the AppBar.
 /// - [onRightIconPressed]: A callback function that is called when the right icon is pressed.
+/// - [rightIconColor]: An optional color for the right icon.
 
 class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Icon? rightIcon;
   final VoidCallback? onRightIconPressed;
+  final Color? rightIconColor;
 
   const PrimaryAppBar({
     super.key,
     required this.title,
     this.rightIcon,
     this.onRightIconPressed,
+    this.rightIconColor,
   });
 
   @override
@@ -43,7 +46,7 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
             icon: rightIcon!,
             onPressed: onRightIconPressed,
-            color: MoldifyColors.primaryColor,
+            color: rightIconColor ?? MoldifyColors.primaryColor,
           ),
       ],
     );

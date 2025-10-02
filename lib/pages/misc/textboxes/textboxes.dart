@@ -112,7 +112,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
             ? Icon(
             widget.rightIcon,
             color: MoldifyColors.primaryColor,
-            size: 8.0,
+            size: 16.0,
         )
             : null,
       ),
