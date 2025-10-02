@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 
