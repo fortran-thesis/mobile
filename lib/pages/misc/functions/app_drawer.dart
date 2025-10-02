@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:moldify/core/constants/route_names.dart';
-import 'package:moldify/pages/support/contact_us.dart';
+import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/wikimold/main_wikimold.dart';
+import '../../../core/constants/route_names.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -28,7 +29,7 @@ class AppDrawer extends StatelessWidget {
             borderRadius: BorderRadius.zero,
           ),
           backgroundColor: MoldifyColors.backgroundColor,
-      
+
           child: SafeArea(
             bottom: true,
             top: false,
@@ -77,7 +78,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                 ),
-      
+
                 /// Terms of Use
                 ListTile(
                   leading: Icon(
@@ -97,7 +98,7 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pop(context);
                   },
                 ),
-      
+
                 /// Privacy Policy
                 ListTile(
                   leading: const Icon(
@@ -117,7 +118,7 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pop(context);
                   },
                 ),
-      
+
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
                   child: Container(
@@ -125,7 +126,7 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.MoldifySoftGrey,
                   ),
                 ),
-      
+
                 /// Send Feedback
                 ListTile(
                   leading: const Icon(
@@ -149,7 +150,7 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-      
+
                 /// Report A Bug
                 ListTile(
                   leading: const Icon(
@@ -172,7 +173,7 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-      
+
                 /// Contact Us
                 ListTile(
                   leading: Icon(
@@ -202,7 +203,7 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.MoldifySoftGrey,
                   ),
                 ),
-      
+
                 /// Account Settings
                 ListTile(
                   leading: Icon(
@@ -233,7 +234,7 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.MoldifySoftGrey,
                   ),
                 ),
-      
+
                 /// Log Out
                 ListTile(
                   leading: Icon(
