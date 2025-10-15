@@ -100,6 +100,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                         ),
                       ),
                     ),
+
                     /// Search Box
                     BuildTextBox(
                       hintText: 'Search Cases',
@@ -131,21 +132,32 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               },
                               /// This is the pop menu button
                               showPopupMenu: true,
-                              popupMenuItems: ['Edit Monitoring Details', 'Identification History', 'Treatment History'],
-                              popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+                              popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History'],
+                              popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
                               onPopupMenuItemSelected: (index) {
                                 // Handle the selection based on the index
+
+                                /// Edit Monitoring Details
                                 if (index == 0) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => EditMonitoringDetailsScreen(),
+                                      builder: (context) => SetMonitoringDetailsScreen(),
                                     ),
                                   );
-                                } else if (index == 1) {
+                                }
+                                /// End of Monitoring Details
+
+                                /// Identification History
+                                else if (index == 1) {
                                   // Identification History was tapped
-                                } else if (index == 2) {
+                                }
+                                /// End of Identification History
+
+                                /// Treatment History
+                                else if (index == 2) {
                                   // Treatment History was tapped
                                 }
+                                /// End of Treatment History
                               }
                           ),
                         );

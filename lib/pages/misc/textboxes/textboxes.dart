@@ -15,6 +15,8 @@ import 'package:moldify/pages/misc/colors.dart';
 /// - [autoFocus]: If true, the text field will automatically gain focus when the widget is built.
 /// - [focusNode]: An optional focus node to manage focus state.
 /// - [onChanged]: A callback function that is called when the text in the text box changes.
+/// - [onTap]: A callback function that is called when the text box is tapped.
+/// - [readOnly]: If true, the text field is not editable via the keyboard.
 
 
 class BuildTextBox extends StatefulWidget {
@@ -29,7 +31,10 @@ class BuildTextBox extends StatefulWidget {
   final double? textboxHeight, fontSize ;
   final bool? autoFocus;
   final FocusNode? focusNode;
+  final Color? rightIconColor;
   final Function(String)? onChanged;
+  final VoidCallback? onTap;
+  final bool readOnly;
 
   const BuildTextBox({
     super.key,
@@ -46,6 +51,9 @@ class BuildTextBox extends StatefulWidget {
     this.focusNode,
     this.textboxHeight,
     this.fontSize,
+    this.rightIconColor,
+    this.onTap,
+    this.readOnly = false,
   });
 
   @override
@@ -67,6 +75,8 @@ class _BuildTextBoxState extends State<BuildTextBox> {
       onChanged: widget.onChanged,
       focusNode: widget.focusNode,
       autofocus: widget.autoFocus ?? false,
+      readOnly: widget.readOnly,
+      onTap: widget.onTap,
       style: TextStyle(
         fontSize: widget.fontSize ?? 14,
         color: MoldifyColors.MoldifyBlack,
@@ -111,7 +121,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
             : widget.rightIcon != null
             ? Icon(
             widget.rightIcon,
-            color: MoldifyColors.primaryColor,
+            color: widget.rightIconColor ?? MoldifyColors.primaryColor,
             size: 16.0,
         )
             : null,
