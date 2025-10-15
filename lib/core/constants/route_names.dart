@@ -11,5 +11,6 @@ class RouteNames {
   static const String camera = '/camera';
   static const String imagePreview = '/image_preview';
   static const String moldResult = '/mold_result';
+  static const String editMonitoringDetails = '/edit-monitoring-details';
   // Add more route names as needed
 }

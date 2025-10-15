@@ -4,6 +4,7 @@ import 'package:moldify/pages/home/notification_page.dart';
 import 'package:moldify/pages/misc/chart/status_donut_chart.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
+import 'package:moldify/pages/misc/functions/empty_state.dart';
 import 'package:moldify/pages/misc/tiles/home_banner.dart';
 import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
 import '../misc/images/circle_avatar.dart';
@@ -32,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'status': 'Pending',
       },
       {
-        'caseName': 'Case Two',
+        'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
         'status': 'Pending',
       },
@@ -57,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -205,6 +206,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
+              pendingCases.isEmpty
+                  ? EmptyState(
+                  message: 'No Recently Assigned Cases',
+                  height: MediaQuery.of(context).size.height - 500,
+              )
+                  : const SizedBox.shrink(),
               /// This displays only pending cases
               ...pendingCases.take(3).map((c) => Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -212,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   caseName: c['caseName'] ?? 'Unknown',
                   dateSubmitted: c['dateSubmitted'] ?? '',
                   status: c['status'] ?? '',
+                  imageHeight: 70.0,
+                  imageWidth: 70.0,
                   onTap: () {
                     // TODO: Navigate to different screen
                   },

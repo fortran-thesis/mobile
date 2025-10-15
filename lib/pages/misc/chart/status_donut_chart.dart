@@ -23,9 +23,18 @@ class StatusDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalCases = statusData.values.reduce((a, b) => a + b);
+    final totalCases = statusData.values.fold(0.0, (a, b) => a + b);
 
-    final List<PieChartSectionData> sections = statusData.entries.map((entry) {
+    final List<PieChartSectionData> sections = totalCases == 0
+        ? [
+      PieChartSectionData(
+        color: MoldifyColors.MoldifyGrey,
+        value: 1,
+        radius: 38,
+        showTitle: false,
+      ),
+    ]
+        : statusData.entries.map((entry) {
       final color = _getColorForStatus(entry.key);
       return PieChartSectionData(
         color: color,

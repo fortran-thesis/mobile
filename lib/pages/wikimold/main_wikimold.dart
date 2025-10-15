@@ -6,6 +6,7 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/wikimold/view_wikimold.dart';
 
+import '../misc/functions/empty_state.dart';
 import '../misc/tiles/wikimold_tiles.dart';
 
 class MainWikiMoldScreen extends StatefulWidget {
@@ -60,7 +61,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// ----------- Edit Profile Header -----------
+              /// ----------- WikiMold Header -----------
               Text(
                   'WikiMold',
                   style: TextStyle(
@@ -77,8 +78,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                     color: MoldifyColors.MoldifyBlack,
                   )
               ),
-              /// ----------- End of Edit Profile Header -----------
-
+              /// ----------- End of WikiMold Header -----------
               /// Search Box
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -91,6 +91,12 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
               ),
 
               /// List of WikiMold Articles
+              wikiArticles.isEmpty
+                  ? EmptyState(
+                message: 'No WikiMold is published yet.',
+                height: MediaQuery.of(context).size.height - 300,
+                icon: FontAwesomeIcons.bookOpen,
+              ):
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
