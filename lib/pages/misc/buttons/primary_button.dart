@@ -68,7 +68,8 @@ class BuildButton extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (leftIcon != null)
               Padding(
@@ -79,6 +80,7 @@ class BuildButton extends StatelessWidget {
                   size: iconSize,
                 ),
               ),
+
             if (svg != null)
               Padding(
                 padding: EdgeInsets.only(right: paddingIconText ?? 24.0),

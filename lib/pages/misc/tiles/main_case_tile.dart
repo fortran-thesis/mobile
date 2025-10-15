@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
 
-class MainCaseTile extends StatelessWidget {
+class MainCaseTile extends StatefulWidget {
   final String caseName;
   final String dateSubmitted;
   final String status;
@@ -34,6 +34,19 @@ class MainCaseTile extends StatelessWidget {
     this.imageHeight,
   });
 
+  @override
+  _MainCaseTileState createState() => _MainCaseTileState();
+}
+
+class _MainCaseTileState extends State<MainCaseTile> {
+  late Color _containerColor;
+
+  @override
+  void initState() {
+    super.initState();
+    _containerColor = MoldifyColors.taupe;
+  }
+
   // Helper method to get color based on status
   Color _getColorForStatus(String status) {
     switch (status) {
@@ -57,12 +70,29 @@ class MainCaseTile extends StatelessWidget {
     final String defaultImageUrl = 'assets/images/Branding2.png';
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTapDown: (_) {
+        setState(() {
+          // Make the tile slightly darker on tap.
+          _containerColor = MoldifyColors.taupe.withValues(alpha: 0.7);
+        });
+      },
+      onTapUp: (_) {
+        setState(() {
+          _containerColor = MoldifyColors.taupe;
+        });
+        widget.onTap();
+      },
+      onTapCancel: () {
+        setState(() {
+          _containerColor = MoldifyColors.taupe;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
         width: MediaQuery.of(context).size.width,
         padding: const EdgeInsets.all(7.0),
         decoration: BoxDecoration(
-          color: MoldifyColors.taupe,
+          color: _containerColor,
           borderRadius: BorderRadius.circular(15.0),
         ),
         child: Column(
@@ -72,13 +102,13 @@ class MainCaseTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SizedBox(
-                  width: imageWidth ?? 90,
-                  height: imageHeight ?? 90,
+                  width: widget.imageWidth ?? 90,
+                  height: widget.imageHeight ?? 90,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10.0),
                     child: Image.asset(
-                      (imageUrl != null && imageUrl != "no_image")
-                          ? imageUrl!
+                      (widget.imageUrl != null && widget.imageUrl != "no_image")
+                          ? widget.imageUrl!
                           : defaultImageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
@@ -108,7 +138,7 @@ class MainCaseTile extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              caseName,
+                              widget.caseName,
                               style: const TextStyle(
                                   fontSize: 16.0,
                                   fontFamily: 'Montserrat-Black',
@@ -128,7 +158,7 @@ class MainCaseTile extends StatelessWidget {
                                     ),
                                   ),
                                   TextSpan(
-                                    text: dateSubmitted,
+                                    text: widget.dateSubmitted,
                                     style: const TextStyle(
                                       fontSize: 10.0,
                                       color: MoldifyColors.MoldifyBlack,
@@ -147,21 +177,22 @@ class MainCaseTile extends StatelessWidget {
                         child: Container(
                           width: 75,
                           // 2. Styled the container
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 4.0),
                           decoration: BoxDecoration(
-                            color: _getColorForStatus(status),
+                            color: _getColorForStatus(widget.status),
                             borderRadius: BorderRadius.circular(12.0),
                           ),
                           child: Center(
                             child: Text(
-                              status,
+                              widget.status,
                               style: TextStyle(
                                   fontSize: 10.0,
                                   fontFamily: 'Bricolage-Grotesque-Bold',
-                                  color: status == 'Pending'
+                                  color: widget.status == 'Pending'
                                       ? MoldifyColors.MoldifyBlack
-                                      : MoldifyColors.backgroundColor),
+                                      : MoldifyColors.backgroundColor
+                              ),
                             ),
                           ),
                         ),
@@ -169,14 +200,13 @@ class MainCaseTile extends StatelessWidget {
                     ],
                   ),
                 ),
-
               ],
             ),
             // Optional PopupMenu positioned at the bottom right
-            if (showPopupMenu == true &&
-                popupMenuItems != null &&
-                popupMenuItems!.isNotEmpty &&
-                onPopupMenuItemSelected != null)
+            if (widget.showPopupMenu == true &&
+                widget.popupMenuItems != null &&
+                widget.popupMenuItems!.isNotEmpty &&
+                widget.onPopupMenuItemSelected != null)
               Padding(
                 padding: const EdgeInsets.only(top: 2.0),
                 child: Column(
@@ -188,10 +218,10 @@ class MainCaseTile extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: PopupMenu(
-                        popMenuIcon: popupMenuIcon,
-                        items: popupMenuItems!,
-                        icons: popupMenuIcons,
-                        onItemSelected: onPopupMenuItemSelected!,
+                        popMenuIcon: widget.popupMenuIcon,
+                        items: widget.popupMenuItems!,
+                        icons: widget.popupMenuIcons,
+                        onItemSelected: widget.onPopupMenuItemSelected!,
                       ),
                     ),
                   ],

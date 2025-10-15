@@ -5,6 +5,7 @@ import 'package:moldify/pages/misc/images/circle_avatar.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 
 import '../misc/colors.dart';
+import '../misc/images/cover_image.dart';
 
 class ViewWikiMoldScreen extends StatefulWidget {
   final String articleTitle;
@@ -65,25 +66,16 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
           child: Stack(
             children: [
               /// 1. Article Image
-              Image.asset(
-                widget.articleImageUrl,
-                height: MediaQuery.of(context).size.height * 0.3,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: MediaQuery.of(context).size.height * 0.3,
-                    color: MoldifyColors.MoldifySoftGrey,
-                    child: const Center(
-                        child: Icon(Icons.broken_image,
-                            color: MoldifyColors.primaryColor)),
-                  );
-                },
+              BuildCoverImage(
+                imageUrl: widget.articleImageUrl,
+                borderRadiusContainer: 8,
+                borderRadiusImage: 8,
+                isHeader: true,
               ),
 
               /// 2. Article Information and Content
               Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.25),
+                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -94,7 +86,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

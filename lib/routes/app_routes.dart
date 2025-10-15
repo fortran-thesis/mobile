@@ -13,6 +13,8 @@ import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
 import '../pages/identification/mold_result.dart';
+import '../pages/monitor/set_monitoring_details.dart';
+import '../pages/monitor/view_case.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -98,6 +100,10 @@ class AppRoutes {
                 ),
               );
             }
+            case RouteNames.setMonitoringDetails:
+              return SetMonitoringDetailsScreen();
+          case RouteNames.viewCase:
+              return ViewCaseScreen();
           // Add more cases for other routes using RouteNames
           default:
             return Scaffold(

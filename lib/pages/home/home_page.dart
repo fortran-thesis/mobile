@@ -222,7 +222,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   imageHeight: 70.0,
                   imageWidth: 70.0,
                   onTap: () {
-                    // TODO: Navigate to different screen
+                    Navigator.pushNamed(
+                      context,
+                      '/view-case',
+                    );
                   },
                 ),
               )).toList(),

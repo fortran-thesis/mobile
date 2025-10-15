@@ -7,7 +7,8 @@ class PopupMenu extends StatelessWidget {
   final List<String> items;
   final List<IconData>? icons;
   final ValueChanged<int>? onItemSelected;
-  final Widget? popMenuIcon; // Simplified to a single 'icon' property of type Widget
+  final Widget? popMenuIcon;
+  final Color? popMenuColor;
   final double offset;
 
   const PopupMenu({
@@ -17,6 +18,7 @@ class PopupMenu extends StatelessWidget {
     this.onItemSelected,
     this.offset = 40.0,
     this.popMenuIcon,
+    this.popMenuColor,
   })  : assert(icons == null || icons.length == items.length,
   'Each item must have a corresponding icon if icons are provided');
 
@@ -37,9 +39,9 @@ class PopupMenu extends StatelessWidget {
         ),
         // Use the provided icon or a default one. The size is set on the icon itself.
         child: popMenuIcon ??
-            const Icon(
+            Icon(
               FontAwesomeIcons.ellipsis,
-              color: MoldifyColors.primaryColor,
+              color: popMenuColor ?? MoldifyColors.primaryColor,
             ),
       ),
       itemBuilder: (BuildContext context) {

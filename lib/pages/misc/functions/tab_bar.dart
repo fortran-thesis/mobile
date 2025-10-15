@@ -62,7 +62,7 @@ class _BuildTabBarState extends State<BuildTabBar>
               color: MoldifyColors.accentColor,
               width: 4,
             ),
-            insets: const EdgeInsets.symmetric(horizontal: 70),
+            insets: const EdgeInsets.symmetric(horizontal: 80),
 
           ),
           tabs: widget.tabs.map((t) => Tab(text: t)).toList(),

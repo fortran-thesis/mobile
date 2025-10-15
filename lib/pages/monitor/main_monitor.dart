@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
 import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
-import 'package:moldify/pages/monitor/edit_monitoring_details.dart';
-
 import '../misc/buttons/popmenu_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -129,6 +127,10 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               dateSubmitted: article['dateSubmitted']!,
                               status: article['status']!,
                               onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/view-case',
+                                );
                               },
                               /// This is the pop menu button
                               showPopupMenu: true,
@@ -139,10 +141,9 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
 
                                 /// Edit Monitoring Details
                                 if (index == 0) {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => SetMonitoringDetailsScreen(),
-                                    ),
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/set-monitoring-details',
                                   );
                                 }
                                 /// End of Monitoring Details
