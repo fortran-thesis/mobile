@@ -7,21 +7,34 @@ import '../colors.dart';
 class ExperimentTimelineTile extends StatelessWidget {
   final String dateTime;
   final String imagePath;
-  final String colonyDiameter;
-  final String colonyColor;
+  final String sizeValue;
+  final String colorValue;
   final String notes;
   final bool isFirst;
   final bool isLast;
+  final String sizeLabel;
+  final String colorLabel;
+
+  final List<String>? popupMenuItems;
+  final List<IconData>? popupMenuIcons;
+  final ValueChanged<int>? onPopupMenuItemSelected;
+  final Widget? popupMenuIcon;
 
   const ExperimentTimelineTile({
     super.key,
     required this.dateTime,
     required this.imagePath,
-    required this.colonyDiameter,
-    required this.colonyColor,
+    required this.sizeValue,
+    required this.colorValue,
     required this.notes,
     this.isFirst = false,
     this.isLast = false,
+    this.popupMenuItems,
+    this.popupMenuIcons,
+    this.onPopupMenuItemSelected,
+    this.popupMenuIcon,
+    required this.sizeLabel,
+    required this.colorLabel,
   });
 
   @override
@@ -60,17 +73,11 @@ class ExperimentTimelineTile extends StatelessWidget {
                   ),
                 ),
                 PopupMenu(
-                  items: ['Edit Log', 'Delete Log'],
-                  icons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash],
                   popMenuColor: MoldifyColors.MoldifyGrey,
-                  onItemSelected: (int index) {
-                    // Handle menu item selection
-                    if (index == 0) {
-                      // Edit log action
-                    } else if (index == 1) {
-                      // Delete log action
-                    }
-                  },
+                  popMenuIcon: popupMenuIcon,
+                  items: popupMenuItems!,
+                  icons: popupMenuIcons,
+                  onItemSelected: onPopupMenuItemSelected!,
                 ),
               ],
             ),
@@ -119,8 +126,8 @@ class ExperimentTimelineTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
                       imagePath,
-                      width: 100,
-                      height: 100,
+                      width: 120,
+                      height: 120,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -148,20 +155,20 @@ class ExperimentTimelineTile extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Colony Diameter:",
+                               Text(
+                                sizeLabel,
                                 style: TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-Bold',
-                                  fontSize: 10,
+                                  fontSize: 14,
                                   color: MoldifyColors.primaryColor,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                colonyDiameter,
+                                sizeValue,
                                 style: const TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-Regular',
-                                  fontSize: 12,
+                                  fontSize: 16,
                                   color: Colors.black87,
                                   height: 1.4,
                                 ),
@@ -169,28 +176,29 @@ class ExperimentTimelineTile extends StatelessWidget {
                             ],
                           ),
 
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Colony Color:",
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                  fontSize: 10,
-                                  color: MoldifyColors.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                colonyColor,
-                                style: const TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           Text(
+                            colorLabel,
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 14,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            colorValue,
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 16,
+                              color: Colors.black87,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),

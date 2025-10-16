@@ -5,6 +5,7 @@ import 'package:moldify/pages/auth/code_recover_account.dart';
 import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
+import 'package:moldify/pages/monitor/add_treatment.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
 import '../pages/identification/mold_result.dart';
+import '../pages/monitor/edit_log.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/view_case.dart';
 
@@ -104,6 +106,32 @@ class AppRoutes {
               return SetMonitoringDetailsScreen();
           case RouteNames.viewCase:
               return ViewCaseScreen();
+              case RouteNames.editLog:
+              if (settings.arguments is Map<String, dynamic>) {
+                final args = settings.arguments as Map<String, dynamic>; // Safe cast
+                if (args.containsKey('tabName') && args['tabName'] is String) {
+                  final String tabName = args['tabName'] as String;
+                  // Ensure EditLogScreen is imported
+                  return EditLogScreen(tabName: tabName);
+                } else {
+                  print('ERROR (EditLog): Arguments are Map, but \'tabName\' key is missing or not a String. Args: $args');
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('Argument Error')),
+                    body: const Center(child: Text('EditLog: tabName missing or invalid in arguments.')),
+                  );
+                }
+              } else {
+                // This handles the case where arguments are not a Map (e.g., String, null), preventing the crash.
+                print('ERROR (EditLog): Expected Map arguments, but got ${settings.arguments.runtimeType}. Args: ${settings.arguments}');
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Navigation Error')),
+                  body: Center(
+                      child: Text('EditLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.\nCheck console for details. Args: ${settings.arguments}')
+                  ),
+                );
+              }
+              case RouteNames.addTreatment:
+                return AddTreatmentScreen();
           // Add more cases for other routes using RouteNames
           default:
             return Scaffold(

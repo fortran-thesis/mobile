@@ -8,6 +8,7 @@ import 'package:moldify/pages/misc/colors.dart';
 /// - [controller]: Controls the text being edited. Required for managing the input.
 /// - [showPassword]: If true, displays an eye icon to toggle password visibility.
 /// - [rightIcon]: An optional icon displayed on the right side of the text box (if not using password toggle).
+/// - [suffixIcon]: An optional widget to be displayed at the end of the text field. Overrides [rightIcon].
 /// - [isMultiline]: If true, the text field allows multiple lines of input; otherwise, it's single-line.
 /// - [textAlign]: The alignment of the text within the text box.
 /// - [keyboardType]: The type of keyboard to display (e.g., text, number).
@@ -24,6 +25,7 @@ class BuildTextBox extends StatefulWidget {
   final bool showPassword;
   final TextEditingController controller;
   final IconData? rightIcon;
+  final Widget? suffixIcon; // New property for a custom widget
   final bool? isMultiline;
   final TextAlign? textAlign;
   final TextInputType? keyboardType;
@@ -42,6 +44,7 @@ class BuildTextBox extends StatefulWidget {
     required this.controller,
     required this.showPassword,
     this.rightIcon,
+    this.suffixIcon,
     this.isMultiline,
     this.textAlign,
     this.keyboardType,
@@ -87,12 +90,12 @@ class _BuildTextBoxState extends State<BuildTextBox> {
       decoration: InputDecoration(
         counterText: '',
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide.none
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide.none
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide.none
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: BorderSide.none
         ),
         hintText: widget.hintText,
         hintStyle: const TextStyle(
@@ -106,6 +109,7 @@ class _BuildTextBoxState extends State<BuildTextBox> {
           horizontal: 10.0,
           vertical: 10.0,
         ),
+        // Updated logic to prioritize suffixIcon
         suffixIcon: widget.showPassword
             ? IconButton(
           icon: Icon(
@@ -118,13 +122,14 @@ class _BuildTextBoxState extends State<BuildTextBox> {
             });
           },
         )
-            : widget.rightIcon != null
+            : widget.suffixIcon ?? // Use the custom widget if provided
+        (widget.rightIcon != null
             ? Icon(
-            widget.rightIcon,
-            color: widget.rightIconColor ?? MoldifyColors.primaryColor,
-            size: 16.0,
+          widget.rightIcon,
+          color: widget.rightIconColor ?? MoldifyColors.primaryColor,
+          size: 16.0,
         )
-            : null,
+            : null),
       ),
     );
 

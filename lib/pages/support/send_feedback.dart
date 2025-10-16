@@ -72,7 +72,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
                     child: const Text(
                       'How can we make our app better?',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
                       ),

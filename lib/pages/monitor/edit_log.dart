@@ -10,27 +10,50 @@ import '../misc/textboxes/dropdwon.dart';
 import '../misc/textboxes/textboxes.dart';
 
 class EditLogScreen extends StatefulWidget {
-
-  EditLogScreen({super.key});
+  final String tabName;
+  EditLogScreen({super.key, required this.tabName});
 
   @override
   _EditLogScreenState createState() =>
       _EditLogScreenState();
 }
 
-class _EditLogScreenState
-    extends State<EditLogScreen> {
-  final TextEditingController _lesionSizeController = TextEditingController();
-  final TextEditingController _endDateController = TextEditingController();
-  final TextEditingController _incubationTempController = TextEditingController();
-  final TextEditingController _environmentalTempController = TextEditingController();
+class _EditLogScreenState extends State<EditLogScreen> {
+  final TextEditingController _diameterController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+
+  late final String diameterLabel;
+  late final String diameterHintText;
+  late final String colorLabel;
+  late final String colorHintText;
+
+  @override
+  void initState() {
+    super.initState();
+    if(widget.tabName == 'In Vivo'){
+      diameterLabel = 'Lesion Size (mm)';
+      diameterHintText = 'Enter lesion size in mm';
+      colorLabel = 'Lesion Color';
+      colorHintText = 'Enter lesion color';
+    } else if(widget.tabName == 'In Vitro'){
+      diameterLabel = 'Colony Diameter (mm)';
+      diameterHintText = 'Enter colony diameter in mm';
+      colorLabel = 'Colony Color';
+      colorHintText = 'Enter colony color';
+    } else {
+      diameterLabel = widget.tabName;
+      diameterHintText = 'Enter $diameterLabel';
+      colorLabel = 'Color';
+      colorHintText = 'Enter $colorLabel';
+    }
+  }
 
   @override
   void dispose() {
-    _startDateController.dispose();
-    _endDateController.dispose();
-    _incubationTempController.dispose();
-    _environmentalTempController.dispose();
+    _diameterController.dispose();
+    _colorController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -49,7 +72,7 @@ class _EditLogScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// ----------- Edit Monitoring Details Header -----------
+                  /// ----------- Edit Log Header -----------
                   Text(
                       'Edit Log',
                       style: TextStyle(
@@ -58,20 +81,20 @@ class _EditLogScreenState
                         color: MoldifyColors.primaryColor,
                       )),
                   Text(
-                      'skejihsdsduhsduhudshsdhu',
+                      'Edit the fields below to update the monitoring log.',
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
                       )),
 
-                  /// ----------- End of Monitoring Details Header -----------
+                  /// ----------- End of Edit Log Header -----------
 
-                  /// Start Date Label
+                  /// Diameter Label
                   Padding(
                     padding: const EdgeInsets.only(top: 30.0, bottom: 8.0),
-                    child: const Text(
-                      'Start Date',
+                    child:  Text(
+                      diameterLabel,
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -79,118 +102,18 @@ class _EditLogScreenState
                       ),
                     ),
                   ),
-                  /// Start Date Textbox
+                  /// Diameter Textbox
                   BuildTextBox(
-                    hintText: 'Enter start date',
-                    controller: _startDateController,
-                    showPassword: false,
-                    rightIcon: FontAwesomeIcons.solidCalendar,
-                    rightIconColor: MoldifyColors.accentColor,
-                    // 2. Make the text box read-only and trigger the date picker on tap
-                    readOnly: true,
-                    onTap: () {
-                      _selectDate(context);
-                    },
-                  ),
-
-                  /// End Date Label
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'End Date',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                        color: MoldifyColors.primaryColor,
-                      ),
-                    ),
-                  ),
-                  /// End Date Textbox.
-                  /// This will be uneditable as this has been set by the administrator.
-                  /// It is only here for mycologist's reference when setting the start date.
-                  BuildTextBox(
-                    hintText: 'Enter end date',
-                    controller: _endDateController,
-                    showPassword: false,
-                    rightIcon: FontAwesomeIcons.solidCalendar,
-                    rightIconColor: MoldifyColors.accentColor,
-                    readOnly: true,
-                  ),
-
-                  /// Reminder Interval Label
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'Reminder Interval',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                        color: MoldifyColors.primaryColor,
-                      ),
-                    ),
-                  ),
-                  /// Reminder Interval Picker
-                  ReminderIntervalPicker(
-                    initialNumber: 4,
-                    initialUnit: 'days',
-                    maxNumber: 60,
-                    onChanged: (value) {
-                      final (num, unit) = value;
-                      print('Selected: Every $num $unit');
-                    },
-                  ),
-
-                  /// Growth Medium Label
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'Growth Medium',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                        color: MoldifyColors.primaryColor,
-                      ),
-                    ),
-                  ),
-                  /// Growth Medium Dropdown
-                  BuildDropdown(
-                    hintText: 'Select growth medium',
-                    items: [
-                      'PDA (Potato Dextrose Agar)',
-                      'MEA (Malt Extract Agar)',
-                      'CYA (Czapek Yeast Extract Agar)',
-                      'SDA (Sabouraud Dextrose Agar)',
-                      'Other',
-                    ],
-                    onChanged: (value) {
-                      print('Selected growth medium: $value');
-                    },
-                  ),
-
-                  /// Incubation Temperature Label
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'Incubation Temperature (°C)',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                        color: MoldifyColors.primaryColor,
-                      ),
-                    ),
-                  ),
-                  /// Incubation Temperature TextBox.
-                  BuildTextBox(
-                    hintText: 'Enter incubation temperature',
-                    controller: _incubationTempController,
+                    hintText: diameterHintText,
+                    controller: _diameterController,
                     showPassword: false,
                   ),
 
-                  /// Environmental Temperature Label
+                  /// Color Label
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'Environmental Temperature (°C)',
+                    child: Text(
+                      colorLabel,
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -198,11 +121,32 @@ class _EditLogScreenState
                       ),
                     ),
                   ),
-                  /// Incubation Temperature TextBox.
+
+                  /// Color Textbox.
                   BuildTextBox(
-                    hintText: 'Enter environmental temperature',
-                    controller: _environmentalTempController,
+                    hintText: colorHintText,
+                    controller: _colorController,
                     showPassword: false,
+                  ),
+
+                  /// Additional Notes Label
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                    child: const Text(
+                      'Additional Notes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ),
+                  /// Additional Notes Textbox.
+                  BuildTextBox(
+                    hintText: 'Enter additional notes here',
+                    controller: _notesController,
+                    showPassword: false,
+                    isMultiline: true,
                   ),
 
                   /// Save Button
@@ -215,8 +159,8 @@ class _EditLogScreenState
                             barrierDismissible: false,
                             builder: (BuildContext context) {
                               return BuildConfirmationDialog(
-                                title: 'Apply Monitoring Setup?',
-                                subtitle: 'Make sure everything looks right before moving on.',
+                                title: 'Apply Changes?',
+                                subtitle: 'Are you sure you want to save these changes?',
                                 onConfirm: () {
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();

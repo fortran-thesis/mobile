@@ -14,29 +14,29 @@ class InVitroTab extends StatelessWidget {
       {
         'date': 'October 2, 2025 • 09:14 PM',
         'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '20 mm',
-        'colonyColor': 'White',
+        'sizeValue': '20 mm',
+        'colorValue': 'White',
         'notes': 'Growth appears normal.',
       },
       {
         'date': 'October 5, 2025 • 10:30 AM',
         'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '35 mm',
-        'colonyColor': 'Greenish center',
+        'sizeValue': '35 mm',
+        'colorValue': 'Greenish center',
         'notes': 'Colonies expanding rapidly.',
       },
       {
         'date': 'October 2, 2025 • 09:14 PM',
         'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '20 mm',
-        'colonyColor': 'White',
+        'sizeValue': '20 mm',
+        'colorValue': 'White',
         'notes': 'Growth appears normal.',
       },
       {
         'date': 'October 5, 2025 • 10:30 AM',
         'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '35 mm',
-        'colonyColor': 'Greenish center',
+        'sizeValue': '35 mm',
+        'colorValue': 'Greenish center',
         'notes': 'Colonies expanding rapidly.',
       },
     ];
@@ -146,11 +146,34 @@ class InVitroTab extends StatelessWidget {
             return ExperimentTimelineTile(
               dateTime: entry['date'] ?? '',
               imagePath: entry['imagePath'] ?? '',
-              colonyDiameter: entry['colonyDiameter'] ?? '',
-              colonyColor: entry['colonyColor'] ?? '',
+              sizeValue: entry['sizeValue'] ?? '',
+              colorValue: entry['colorValue'] ?? '',
               notes: entry['notes'] ?? '',
               isFirst: index == 0,
               isLast: index == inVitroEntries.length - 1,
+                popupMenuItems: ['Edit Log', 'Delete Log'],
+                popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                onPopupMenuItemSelected: (index) {
+                  // Handle the selection based on the index
+
+                  /// Edit Log
+                  if (index == 0) {
+                    Navigator.pushNamed(
+                        context,
+                        '/edit-log', arguments: {'tabName': 'In Vitro'}
+                    );
+                  }
+                  /// End of Edit Log
+
+                  /// Delete Log
+                  else if (index == 1) {
+                    // Identification History was tapped
+                  }
+                  /// End of Delete Log
+
+                },
+              sizeLabel: 'Colony Diameter',
+              colorLabel: 'Colony Color',
             );
           }),
         ],

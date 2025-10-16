@@ -194,10 +194,10 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                             SizedBox(width: 5),
                             BuildButton(
                               onPressed: () {
-                                // Navigator.pushNamed(
-                                //   context,
-                                //   '/set-monitoring-details',
-                                // );
+                                Navigator.pushNamed(
+                                  context,
+                                  '/add-treatment',
+                                );
                               },
                               buttonText: 'Add Treatment',
                               fontSize: 12,
@@ -217,13 +217,22 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 10.0),
                         child: SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.7, // ✅ bounded height
+                          height: MediaQuery.of(context).size.height * 0.7,
                           child: BuildTabBar(
                             tabs: ['Case Details', 'In Vitro', 'In Vivo'],
                             tabContents: [
-                              CaseDetailsTab(),
-                              InVitroTab(),
-                              InVivoTab(),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: CaseDetailsTab(),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: InVitroTab(),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: InVivoTab(),
+                              ),
                             ],
                           ),
                         ),

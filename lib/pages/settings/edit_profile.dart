@@ -120,7 +120,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const Text(
                 'Username',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontFamily: 'Bricolage-Grotesque-SemiBold',
                   color: MoldifyColors.primaryColor,
                 ),
@@ -142,7 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: const Text(
                   'Email',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),

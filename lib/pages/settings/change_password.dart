@@ -54,7 +54,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'Old Password',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),
@@ -106,7 +106,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'New Password',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),
@@ -129,7 +129,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: const Text(
                   'Confirm New Password',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-SemiBold',
                     color: MoldifyColors.primaryColor,
                   ),

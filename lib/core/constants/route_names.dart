@@ -13,5 +13,7 @@ class RouteNames {
   static const String moldResult = '/mold_result';
   static const String setMonitoringDetails = '/set-monitoring-details';
   static const String viewCase = '/view-case';
+  static const String editLog = '/edit-log';
+  static const String addTreatment = '/add-treatment';
   // Add more route names as needed
 }

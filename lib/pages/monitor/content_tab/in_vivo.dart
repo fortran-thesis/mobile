@@ -13,30 +13,30 @@ class InVivoTab extends StatelessWidget {
     final List<Map<String, String>> inVitroEntries = [
       {
         'date': 'October 2, 2025 • 09:14 PM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '20 mm',
-        'colonyColor': 'White',
+        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
+        'sizeValue': '20 mm',
+        'colorValue': 'White',
         'notes': 'Growth appears normal.',
       },
       {
         'date': 'October 5, 2025 • 10:30 AM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '35 mm',
-        'colonyColor': 'Greenish center',
+        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
+        'sizeValue': '35 mm',
+        'colorValue': 'Greenish center',
         'notes': 'Colonies expanding rapidly.',
       },
       {
         'date': 'October 2, 2025 • 09:14 PM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '20 mm',
-        'colonyColor': 'White',
+        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
+        'sizeValue': '20 mm',
+        'colorValue': 'White',
         'notes': 'Growth appears normal.',
       },
       {
         'date': 'October 5, 2025 • 10:30 AM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'colonyDiameter': '35 mm',
-        'colonyColor': 'Greenish center',
+        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
+        'sizeValue': '35 mm',
+        'colorValue': 'Greenish center',
         'notes': 'Colonies expanding rapidly.',
       },
     ];
@@ -115,11 +115,34 @@ class InVivoTab extends StatelessWidget {
               return ExperimentTimelineTile(
                 dateTime: entry['date'] ?? '',
                 imagePath: entry['imagePath'] ?? '',
-                colonyDiameter: entry['colonyDiameter'] ?? '',
-                colonyColor: entry['colonyColor'] ?? '',
+                sizeValue: entry['sizeValue'] ?? '',
+                colorValue: entry['colorValue'] ?? '',
                 notes: entry['notes'] ?? '',
                 isFirst: index == 0,
                 isLast: index == inVitroEntries.length - 1,
+                  popupMenuItems: ['Edit Log', 'Delete Log'],
+                  popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                  onPopupMenuItemSelected: (index) {
+                    // Handle the selection based on the index
+
+                    /// Edit Log
+                    if (index == 0) {
+                      Navigator.pushNamed(
+                        context,
+                        '/edit-log', arguments: {'tabName': 'In Vivo'}
+                      );
+                    }
+                    /// End of Edit Log
+
+                    /// Delete Log
+                    else if (index == 1) {
+                      // Identification History was tapped
+                    }
+                    /// End of Delete Log
+
+                  },
+                sizeLabel: 'Lesion Size',
+                colorLabel: 'Lesion Color',
               );
             }),
           ],
