@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 
 import '../../misc/colors.dart';
+import '../../misc/functions/empty_state.dart';
 import '../../misc/tiles/experiment_timeline_tile.dart';
 
 class InVivoTab extends StatelessWidget {
@@ -10,7 +11,7 @@ class InVivoTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> inVitroEntries = [
+    final List<Map<String, String>> inVivoEntries = [
       {
         'date': 'October 2, 2025 • 09:14 PM',
         'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
@@ -75,7 +76,10 @@ class InVivoTab extends StatelessWidget {
                     backgroundColor: MoldifyColors.MoldifySoftGrey,
                     color: MoldifyColors.MoldifyGrey,
                     onPressed: () {
-
+                      Navigator.pushNamed(
+                        context,
+                        '/add-log-instructions',
+                      );
                     }
                 )
               ],
@@ -109,9 +113,15 @@ class InVivoTab extends StatelessWidget {
 
             SizedBox(height: 12),
 
+            inVivoEntries.isEmpty
+                ? EmptyState(
+              message: 'No entries made yet.',
+              icon: FontAwesomeIcons.flaskVial,
+              height: MediaQuery.of(context).size.height - 400,
+            ): const SizedBox.shrink(),
             /// Timeline Entries
-            ...List.generate(inVitroEntries.length, (index) {
-              final entry = inVitroEntries[index];
+            ...List.generate(inVivoEntries.length, (index) {
+              final entry = inVivoEntries[index];
               return ExperimentTimelineTile(
                 dateTime: entry['date'] ?? '',
                 imagePath: entry['imagePath'] ?? '',
@@ -119,7 +129,7 @@ class InVivoTab extends StatelessWidget {
                 colorValue: entry['colorValue'] ?? '',
                 notes: entry['notes'] ?? '',
                 isFirst: index == 0,
-                isLast: index == inVitroEntries.length - 1,
+                isLast: index == inVivoEntries.length - 1,
                   popupMenuItems: ['Edit Log', 'Delete Log'],
                   popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
                   onPopupMenuItemSelected: (index) {

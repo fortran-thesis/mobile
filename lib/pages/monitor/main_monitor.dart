@@ -75,7 +75,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
 
                     /// This is the filter button
                     Padding(
-                      padding: const EdgeInsets.only(top: 15.0),
+                      padding: const EdgeInsets.only(top: 20.0),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: PopupMenu(
@@ -100,11 +100,14 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                     ),
 
                     /// Search Box
-                    BuildTextBox(
-                      hintText: 'Search Cases',
-                      controller: searchController,
-                      showPassword: false,
-                      rightIcon: FontAwesomeIcons.magnifyingGlass,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      child: BuildTextBox(
+                        hintText: 'Search Cases',
+                        controller: searchController,
+                        showPassword: false,
+                        rightIcon: FontAwesomeIcons.magnifyingGlass,
+                      ),
                     ),
 
                     /// This the empty state if there are no cases
@@ -150,13 +153,19 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
 
                                 /// Identification History
                                 else if (index == 1) {
-                                  // Identification History was tapped
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/identification-history',
+                                  );
                                 }
                                 /// End of Identification History
 
                                 /// Treatment History
                                 else if (index == 2) {
-                                  // Treatment History was tapped
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/treatment-history',
+                                  );
                                 }
                                 /// End of Treatment History
                               }

@@ -172,7 +172,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
                         ),
                       ),
                       Positioned(
-                        top: -16,
+                        top: -14,
                         right: 5,
                         child: Container(
                           width: 75,

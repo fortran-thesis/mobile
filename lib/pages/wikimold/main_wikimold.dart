@@ -81,7 +81,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
               /// ----------- End of WikiMold Header -----------
               /// Search Box
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
                 child: BuildTextBox(
                     hintText: 'Search WikiMold',
                     controller: searchController,

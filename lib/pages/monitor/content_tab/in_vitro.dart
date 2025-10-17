@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 
 import '../../misc/colors.dart';
+import '../../misc/functions/empty_state.dart';
 import '../../misc/tiles/experiment_timeline_tile.dart';
 
 class InVitroTab extends StatelessWidget {
@@ -75,7 +76,10 @@ class InVitroTab extends StatelessWidget {
                   backgroundColor: MoldifyColors.MoldifySoftGrey,
                   color: MoldifyColors.MoldifyGrey,
                   onPressed: () {
-
+                    Navigator.pushNamed(
+                        context,
+                        '/add-log-instructions',
+                    );
                   }
               )
             ],
@@ -140,6 +144,12 @@ class InVitroTab extends StatelessWidget {
           ),
           SizedBox(height: 12),
 
+          inVitroEntries.isEmpty
+              ? EmptyState(
+            message: 'No entries made yet.',
+            icon: FontAwesomeIcons.flaskVial,
+            height: MediaQuery.of(context).size.height - 400,
+          ): const SizedBox.shrink(),
           /// Timeline Entries
           ...List.generate(inVitroEntries.length, (index) {
             final entry = inVitroEntries[index];

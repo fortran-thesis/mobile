@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

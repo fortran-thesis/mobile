@@ -46,13 +46,19 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
             /// Identification History
             else if (index == 1) {
-              // Identification History was tapped
+              Navigator.pushNamed(
+                context,
+                '/identification-history',
+              );
             }
             /// End of Identification History
 
             /// Treatment History
             else if (index == 2) {
-              // Treatment History was tappeeed
+              Navigator.pushNamed(
+                context,
+                '/treatment-history',
+              );
             }
             /// End of Treatment History
           }

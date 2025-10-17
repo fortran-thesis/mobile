@@ -77,8 +77,7 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
         ),
         body: SingleChildScrollView(
           child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -197,7 +196,7 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
 
                   /// Save Button
                   Padding(
-                    padding: const EdgeInsets.only(top: 70.0),
+                    padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
                         onPressed: () {
                           showDialog(

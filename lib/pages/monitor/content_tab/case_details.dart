@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 import 'package:moldify/pages/misc/colors.dart';
+
+import '../../misc/functions/empty_state.dart';
 
 /// This is the "Case Details" tab content in the "Monitoring" page for mycologists
 /// It displays a timeline of case updates with dates, notes, and images.
@@ -182,6 +185,12 @@ class CaseDetailsTab extends StatelessWidget {
           ),
 
           /// This is the list of case timeline entries provided by the farmers
+          entries.isEmpty
+              ? EmptyState(
+            message: 'No information available.',
+            icon: FontAwesomeIcons.circleInfo,
+            height: MediaQuery.of(context).size.height - 500,
+          ): const SizedBox.shrink(),
           ...List.generate(
             entries.length,
                 (index) {
@@ -402,6 +411,14 @@ class _CaseTimelineTile extends StatelessWidget {
                           width: 90,
                           height: 90,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 100,
+                              height: 100,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.broken_image, color: Colors.grey),
+                            );
+                          },
                         ),
                       ),
                     );

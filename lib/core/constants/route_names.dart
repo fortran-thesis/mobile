@@ -15,5 +15,9 @@ class RouteNames {
   static const String viewCase = '/view-case';
   static const String editLog = '/edit-log';
   static const String addTreatment = '/add-treatment';
+  static const String identificationHistory = '/identification-history';
+  static const String treatmentHistory = '/treatment-history';
+  static const String addLogInstructions = '/add-log-instructions';
+  static const String addLog = '/add-log';
   // Add more route names as needed
 }

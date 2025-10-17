@@ -14,8 +14,12 @@ import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
 import '../pages/identification/mold_result.dart';
+import '../pages/monitor/add_log.dart';
+import '../pages/monitor/add_log_instructions.dart';
 import '../pages/monitor/edit_log.dart';
+import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
+import '../pages/monitor/treatment_history.dart';
 import '../pages/monitor/view_case.dart';
 
 class AppRoutes {
@@ -132,6 +136,14 @@ class AppRoutes {
               }
               case RouteNames.addTreatment:
                 return AddTreatmentScreen();
+          case RouteNames.identificationHistory:
+                return IdentificationHistoryScreen();
+          case RouteNames.treatmentHistory:
+                return TreatmentHistoryScreen();
+          case RouteNames.addLogInstructions:
+                return AddLogInstructionsScreen();
+          case RouteNames.addLog:
+                return AddLogScreen();
           // Add more cases for other routes using RouteNames
           default:
             return Scaffold(
