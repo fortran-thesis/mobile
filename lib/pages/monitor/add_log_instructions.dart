@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:moldify/core/constants/route_names.dart';
-import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import '../misc/appbar/primary_app_bar.dart';
 import '../misc/colors.dart';
 
-class MainCameraScreen extends StatefulWidget {
-  // 1. Add a boolean to control AppBar visibility, defaulting to false.
-  final bool showAppBar;
+class AddLogInstructionsScreen extends StatefulWidget {
+  // 1. Add sourceTab as a constructor argument
+  final String? sourceTab;
 
-  const MainCameraScreen({super.key, this.showAppBar = false});
+  const AddLogInstructionsScreen({super.key, this.sourceTab});
 
   @override
-  State<MainCameraScreen> createState() => _MainCameraScreenState();
+  State<AddLogInstructionsScreen> createState() => _AddLogInstructionsScreenState();
 }
 
-class _MainCameraScreenState extends State<MainCameraScreen> {
+class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
   bool _isProcessingImage = false; // State variable for loading
 
   /// This is used to open gallery and pick an image
@@ -38,9 +38,16 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
 
       if (imageFile != null) {
         print('Image selected from gallery: ${imageFile.path}');
-        // Use named route for navigation
-        await Navigator.pushNamed(context, RouteNames.imagePreview,
-            arguments: {'imagePath': imageFile.path, 'source': 'main_camera'});
+        // 2. Pass both 'source' and the new 'sourceTab' argument
+        await Navigator.pushNamed(
+          context,
+          RouteNames.imagePreview,
+          arguments: {
+            'imagePath': imageFile.path,
+            'source': 'add_log',
+            'sourceTab': widget.sourceTab
+          },
+        );
       } else {
         print('No image selected.');
       }
@@ -58,58 +65,69 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
   /// This is used to navigate to the camera screen
   void _navigateToCamera() {
     if (_isProcessingImage) return;
-    // Use named route for navigation
-    Navigator.pushNamed(context, RouteNames.camera,
-        arguments: {'source': 'main_camera'});
+    // 3. Pass both 'source' and the new 'sourceTab' argument
+    Navigator.pushNamed(
+      context,
+      RouteNames.camera,
+      arguments: {
+        'source': 'add_log',
+        'sourceTab': widget.sourceTab
+      },
+    );
   }
 
-  // 2. The page's UI content is extracted into a helper method to avoid duplication.
-  Widget _buildContent(BuildContext context) {
-    return Stack(
-      children: [
-        SafeArea(
-          bottom: false,
-          child: Container(
-            color: MoldifyColors.backgroundColor,
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// ----------- Mold Scanner Header -----------
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Text('Mold Scanner',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontFamily: 'Montserrat-Black',
-                            color: MoldifyColors.primaryColor,
-                          )),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Text('Please capture or upload mold sample.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            color: MoldifyColors.MoldifyBlack,
-                          )),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                      child: SvgPicture.asset(
-                        'assets/images/mold_scanner_curve.svg',
-                        width: MediaQuery.of(context).size.width,
-                        fit: BoxFit.cover,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MoldifyColors.backgroundColor,
+      appBar: PrimaryAppBar(
+        title: 'Add New Log',
+      ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// ----------- Mold Scanner Header -----------
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Text('Add New Log',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontFamily: 'Montserrat-Black',
+                              color: MoldifyColors.primaryColor,
+                            )),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Text(
+                            'Please submit an image of the mold sample you want to log.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              color: MoldifyColors.MoldifyBlack,
+                            )),
+                      ),
 
-                    /// ----------- End of Mold Scanner Header -----------
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Column(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
+                        child: SvgPicture.asset(
+                          'assets/images/add_log_curve.svg',
+                          width: MediaQuery.of(context).size.width,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      /// ----------- End of Mold Scanner Header -----------
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
@@ -125,9 +143,9 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                             /// Start of Instructions Before Using
                             Column(
                               children: [
-                                'Make sure the mold sample is centered in the frame.',
-                                'Ensure good lighting conditions for better accuracy.',
-                                'Only photograph one mold species per image; avoid mixing species.',
+                                'Stand about half a meter from the mold to accurately measure its diameter.',
+                                'Make sure the mold is centered in the frame.',
+                                'Ensure that the mold is in clear lighting',
                               ].asMap().entries.map((entry) {
                                 int idx = entry.key;
                                 String text = entry.value;
@@ -162,14 +180,13 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                 );
                               }).toList(),
                             ),
-
                             /// End of Instructions Before Using
+
                             Padding(
                               padding: const EdgeInsets.only(top: 30.0),
                               child: BuildButton(
                                   buttonText: 'Use Camera',
-                                  onPressed:
-                                  _isProcessingImage ? () {} : _navigateToCamera,
+                                  onPressed: _isProcessingImage ? () {} : _navigateToCamera,
                                   backgroundColor: MoldifyColors.primaryColor,
                                   textColor: MoldifyColors.backgroundColor,
                                   buttonHeight: 40.0,
@@ -177,56 +194,37 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                   buttonRadius: 10.0),
                             ),
                             Padding(
-                              padding:
-                              EdgeInsets.only(top: 10.0, bottom: widget.showAppBar ? 10.0 : 70.0),
+                              padding: const EdgeInsets.only(top: 10.0),
                               child: BuildButton(
                                   buttonText: 'Upload Image',
-                                  onPressed: _isProcessingImage
-                                      ? () {}
-                                      : _pickImageFromGallery,
+                                  onPressed: _isProcessingImage ? () {} : _pickImageFromGallery,
                                   backgroundColor: MoldifyColors.accentColor,
                                   textColor: MoldifyColors.MoldifyBlack,
                                   buttonHeight: 45.0,
                                   buttonWidth: MediaQuery.of(context).size.width,
-                                  buttonRadius: 10.0),
+                                  buttonRadius: 10.0
+                              ),
                             ),
-                          ]),
-                    )
-                  ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isProcessingImage)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(),
                 ),
               ),
             ),
-          ),
-        ),
-        // Loading Overlay
-        if (_isProcessingImage)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    // 3. Check the `showAppBar` flag to decide what to build.
-    if (widget.showAppBar) {
-      // If true, build the UI inside a Scaffold with an AppBar.
-      // This provides the correct layout and a back button.
-      return Scaffold(
-        backgroundColor: MoldifyColors.backgroundColor,
-        appBar: PrimaryAppBar(title: 'Mold Scanner'),
-        body: _buildContent(context),
-      );
-    } else {
-      // If false, build just the content. This is for the bottom navigation bar.
-      return _buildContent(context);
-    }
   }
 }

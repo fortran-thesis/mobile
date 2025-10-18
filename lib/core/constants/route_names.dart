@@ -11,5 +11,14 @@ class RouteNames {
   static const String camera = '/camera';
   static const String imagePreview = '/image_preview';
   static const String moldResult = '/mold_result';
+  static const String setMonitoringDetails = '/set-monitoring-details';
+  static const String viewCase = '/view-case';
+  static const String editLog = '/edit-log';
+  static const String addTreatment = '/add-treatment';
+  static const String identificationHistory = '/identification-history';
+  static const String treatmentHistory = '/treatment-history';
+  static const String addLogInstructions = '/add-log-instructions';
+  static const String addLog = '/add-log';
+  static const String mainCamera = '/main-camera'; // Added this line
   // Add more route names as needed
 }

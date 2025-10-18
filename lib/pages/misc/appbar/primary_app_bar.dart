@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
+import '../buttons/popmenu_button.dart';
+
 /// PrimaryAppBar is a custom AppBar widget used throughout the Moldify application.
 /// It features a title, an optional right icon, and a callback for when the icon is pressed.
 /// Parameters:
@@ -8,6 +10,11 @@ import 'package:moldify/pages/misc/colors.dart';
 /// - [rightIcon]: An optional icon displayed on the right side of the AppBar.
 /// - [onRightIconPressed]: A callback function that is called when the right icon is pressed.
 /// - [rightIconColor]: An optional color for the right icon.
+/// - [showPopupMenu]: A boolean to determine if the popup menu should be shown.
+/// - [popupMenuItems]: A list of strings representing the items in the popup menu.
+/// - [popupMenuIcons]: A list of icons corresponding to each popup menu item.
+/// - [onPopupMenuItemSelected]: A callback function that is called when a popup menu item is selected.
+/// - [popupMenuIcon]: An optional custom icon for the popup menu button.
 
 class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -15,12 +22,24 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onRightIconPressed;
   final Color? rightIconColor;
 
+  // Properties for the optional PopupMenu
+  final bool? showPopupMenu;
+  final List<String>? popupMenuItems;
+  final List<IconData>? popupMenuIcons;
+  final ValueChanged<int>? onPopupMenuItemSelected;
+  final Widget? popupMenuIcon;
+
   const PrimaryAppBar({
     super.key,
     required this.title,
     this.rightIcon,
     this.onRightIconPressed,
     this.rightIconColor,
+    this.showPopupMenu,
+    this.popupMenuItems,
+    this.popupMenuIcons,
+    this.onPopupMenuItemSelected,
+    this.popupMenuIcon,
   });
 
   @override
@@ -47,6 +66,16 @@ class PrimaryAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: rightIcon!,
             onPressed: onRightIconPressed,
             color: rightIconColor ?? MoldifyColors.primaryColor,
+          ),
+        if (showPopupMenu == true &&
+            popupMenuItems != null &&
+            popupMenuItems!.isNotEmpty &&
+            onPopupMenuItemSelected != null)
+          PopupMenu(
+            popMenuIcon: popupMenuIcon,
+            items: popupMenuItems!,
+            icons: popupMenuIcons,
+            onItemSelected: onPopupMenuItemSelected!,
           ),
       ],
     );

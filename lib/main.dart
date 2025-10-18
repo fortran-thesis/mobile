@@ -67,6 +67,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       body: _pages[selectedPosition],
       floatingActionButton: FloatingActionButton(
@@ -110,7 +111,7 @@ class _MainPageState extends State<MainPage> {
               onTap: () => setState(() => selectedPosition = 0),
             ),
             _tabItem(
-              icon: FontAwesomeIcons.chartSimple,
+              icon: FontAwesomeIcons.solidClipboard,
               isSelected: selectedPosition == 2,
               onTap: () => setState(() => selectedPosition = 2),
             ),

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// for consistency in UI design.
 
 class MoldifyColors{
-    static const Color primaryColor = Color(0xFF3A5015);
+    static const Color primaryColor = Color(0xFF355300);
     static const Color accentColor = Color(0xFFE7B343);
     static const Color taupe = Color(0xFFF4EEDE);
 

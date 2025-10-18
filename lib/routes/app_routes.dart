@@ -6,6 +6,15 @@ import 'package:moldify/pages/auth/code_recover_account.dart';
 import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
+import 'package:moldify/pages/identification/main_camera.dart';
+import 'package:moldify/pages/monitor/add_log.dart';
+import 'package:moldify/pages/monitor/add_log_instructions.dart';
+import 'package:moldify/pages/monitor/add_treatment.dart';
+import 'package:moldify/pages/monitor/edit_log.dart';
+import 'package:moldify/pages/monitor/identification_history.dart';
+import 'package:moldify/pages/monitor/set_monitoring_details.dart';
+import 'package:moldify/pages/monitor/treatment_history.dart';
+import 'package:moldify/pages/monitor/view_case.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -39,11 +48,6 @@ class AppRoutes {
         if (!loggedIn && !isAuthRoute) {
           return RouteNames.login;
         }
-
-        if (loggedIn && (goingTo == RouteNames.login || goingTo == RouteNames.intro)) {
-          return RouteNames.main;
-        }
-
         return null;
       },
       routes: <GoRoute>[
@@ -99,6 +103,64 @@ class AppRoutes {
               );
             }
             return MoldResultScreen(croppedImagePath: croppedImagePath);
+          },
+        ),
+        GoRoute(
+          path: RouteNames.setMonitoringDetails,
+          builder: (context, state) => SetMonitoringDetailsScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.viewCase,
+          builder: (context, state) => ViewCaseScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.editLog,
+          builder: (context, state) {
+            final tabName = state.uri.queryParameters['tabName'];
+            if (tabName == null || tabName.isEmpty) {
+              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('tabName missing')));
+            }
+            return EditLogScreen(tabName: tabName);
+          },
+        ),
+        GoRoute(
+          path: RouteNames.addTreatment,
+          builder: (context, state) => AddTreatmentScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.identificationHistory,
+          builder: (context, state) => IdentificationHistoryScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.treatmentHistory,
+          builder: (context, state) => TreatmentHistoryScreen(),
+        ),
+        GoRoute(
+          path: RouteNames.addLogInstructions,
+          builder: (context, state) {
+            final sourceTab = state.uri.queryParameters['sourceTab'];
+            return AddLogInstructionsScreen(sourceTab: sourceTab);
+          },
+        ),
+        GoRoute(
+          path: RouteNames.addLog,
+          builder: (context, state) {
+            final imagePath = state.uri.queryParameters['imagePath'];
+            final sourceTab = state.uri.queryParameters['sourceTab'];
+            if (imagePath == null || sourceTab == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Argument Error')),
+                body: const Center(child: Text('AddLog: imagePath or sourceTab missing or invalid.')),
+              );
+            }
+            return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab);
+          },
+        ),
+        GoRoute(
+          path: RouteNames.mainCamera,
+          builder: (context, state) {
+            final showAppBar = state.uri.queryParameters['showAppBar'] == 'true';
+            return MainCameraScreen(showAppBar: showAppBar);
           },
         ),
       ],

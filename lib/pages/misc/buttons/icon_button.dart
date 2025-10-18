@@ -12,22 +12,24 @@ class BuildIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
   final Color? color;
+  final Color? backgroundColor;
 
   const BuildIconButton({
     required this.icon,
     required this.onPressed,
     this.color,
+    this.backgroundColor,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 30,
+      width: 27,
+      height: 27,
       decoration: BoxDecoration(
-          color: MoldifyColors.backgroundColor,
-          borderRadius: BorderRadius.circular(25),
+          color: backgroundColor ?? MoldifyColors.backgroundColor,
+          borderRadius: BorderRadius.circular(7),
           ),
       child: IconButton(
         icon: Icon(

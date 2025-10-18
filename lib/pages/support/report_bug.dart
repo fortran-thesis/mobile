@@ -74,7 +74,7 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                       child: const Text(
                         'Describe what happened, and what you expected instead.',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontFamily: 'Bricolage-Grotesque-SemiBold',
                           color: MoldifyColors.primaryColor,
                         ),
