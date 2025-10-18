@@ -72,13 +72,15 @@ class ExperimentTimelineTile extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
-                PopupMenu(
-                  popMenuColor: MoldifyColors.MoldifyGrey,
-                  popMenuIcon: popupMenuIcon,
-                  items: popupMenuItems!,
-                  icons: popupMenuIcons,
-                  onItemSelected: onPopupMenuItemSelected!,
-                ),
+                // 1. Conditionally build the PopupMenu only if items and a selection handler are provided.
+                if (popupMenuItems != null && popupMenuItems!.isNotEmpty && onPopupMenuItemSelected != null)
+                  PopupMenu(
+                    popMenuColor: MoldifyColors.MoldifyGrey,
+                    popMenuIcon: popupMenuIcon,
+                    items: popupMenuItems!,
+                    icons: popupMenuIcons,
+                    onItemSelected: onPopupMenuItemSelected!,
+                  ),
               ],
             ),
 
@@ -95,7 +97,8 @@ class ExperimentTimelineTile extends StatelessWidget {
                       builder: (_) {
                         return Dialog(
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          backgroundColor: Colors.black.withValues(alpha: 0.9),
+                          // 2. Corrected `withValues` to `withOpacity`
+                          backgroundColor: Colors.black.withOpacity(0.9),
                           insetPadding: EdgeInsets.zero,
                           child: Stack(
                             children: [

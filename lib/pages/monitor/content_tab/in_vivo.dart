@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
@@ -8,25 +9,13 @@ import '../../misc/functions/empty_state.dart';
 import '../../misc/tiles/experiment_timeline_tile.dart';
 
 class InVivoTab extends StatelessWidget {
-  const InVivoTab({super.key});
+  // 1. Add isCaseClosed to the constructor
+  final bool isCaseClosed;
+  const InVivoTab({super.key, required this.isCaseClosed});
 
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> inVivoEntries = [
-      {
-        'date': 'October 2, 2025 • 09:14 PM',
-        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
-        'sizeValue': '20 mm',
-        'colorValue': 'White',
-        'notes': 'Growth appears normal.',
-      },
-      {
-        'date': 'October 5, 2025 • 10:30 AM',
-        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
-        'sizeValue': '35 mm',
-        'colorValue': 'Greenish center',
-        'notes': 'Colonies expanding rapidly.',
-      },
       {
         'date': 'October 2, 2025 • 09:14 PM',
         'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
@@ -76,13 +65,13 @@ class InVivoTab extends StatelessWidget {
                     ),
                   ],
                 ),
+                // 2. Conditionally show the 'Add' button if the case is not closed
+                if (!isCaseClosed)
                 BuildIconButton(
                     icon: FontAwesomeIcons.plus,
                     backgroundColor: MoldifyColors.MoldifySoftGrey,
                     color: MoldifyColors.MoldifyGrey,
                     onPressed: () {
-                      // 1. Navigate using the RouteNames constant
-                      // 2. Pass 'in-vivo' as the sourceTab argument
                       Navigator.pushNamed(
                           context,
                           RouteNames.addLogInstructions,
@@ -96,8 +85,6 @@ class InVivoTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 12),
-
-                /// Submitted By Label
                 const Text(
                   "Environmental Temperature",
                   style: TextStyle(
@@ -107,7 +94,6 @@ class InVivoTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                /// Farmer Name
                 Text(
                   environmentalTemperature,
                   style: const TextStyle(
@@ -124,7 +110,7 @@ class InVivoTab extends StatelessWidget {
             inVivoEntries.isEmpty
                 ? EmptyState(
               message: 'No entries made yet.',
-              icon: FontAwesomeIcons.flaskVial,
+              icon: FontAwesomeIcons.leaf,
               height: MediaQuery.of(context).size.height - 400,
             ): const SizedBox.shrink(),
             /// Timeline Entries
@@ -138,26 +124,19 @@ class InVivoTab extends StatelessWidget {
                 notes: entry['notes'] ?? '',
                 isFirst: index == 0,
                 isLast: index == inVivoEntries.length - 1,
-                  popupMenuItems: ['Edit Log', 'Delete Log'],
-                  popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
-                  onPopupMenuItemSelected: (index) {
-                    // Handle the selection based on the index
-
-                    /// Edit Log
-                    if (index == 0) {
+                  // 3. Conditionally provide empty lists to hide the popup menu if the case is closed
+                  popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                  popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                  onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
+                    if (selectedIndex == 0) {
                       Navigator.pushNamed(
                         context,
                         '/edit-log', arguments: {'tabName': 'In Vivo'}
                       );
                     }
-                    /// End of Edit Log
-
-                    /// Delete Log
-                    else if (index == 1) {
-                      // Identification History was tapped
+                    else if (selectedIndex == 1) {
+                      // Handle delete
                     }
-                    /// End of Delete Log
-
                   },
                 sizeLabel: 'Lesion Size',
                 colorLabel: 'Lesion Color',

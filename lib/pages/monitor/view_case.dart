@@ -23,46 +23,47 @@ class ViewCaseScreen extends StatefulWidget {
 }
 class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
-  String caseStatus = 'In Progress';
+  String caseStatus = 'Pending';
 
   @override
   Widget build(BuildContext context) {
+    //Determine if the case is closed. This boolean will control the UI.
+    final bool isCaseClosed = caseStatus == 'Closed';
+
+    //Dynamically build the list of menu items based on the case status.
+    final List<String> popupMenuItems = [
+      if (!isCaseClosed) 'Set Monitoring Details',
+      'Identification History',
+      'Treatment History',
+    ];
+
+    final List<IconData> popupMenuIcons = [
+      if (!isCaseClosed) FontAwesomeIcons.circleInfo,
+      FontAwesomeIcons.clockRotateLeft,
+      FontAwesomeIcons.sprayCan,
+    ];
+
+
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
-        title: 'Set Monitoring Details',
+        title: 'View Case',
           showPopupMenu: true,
-          popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History'],
-          popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+          popupMenuItems: popupMenuItems,
+          popupMenuIcons: popupMenuIcons,
           onPopupMenuItemSelected: (index) {
-            // Handle the selection based on the index
+            // The selected item is now correctly determined from the same list used by the menu.
+            final selectedItem = popupMenuItems[index];
 
-            /// Edit Monitoring Details
-            if (index == 0) {
-              Navigator.pushNamed(
-                context,
-                '/set-monitoring-details',
-              );
+            if (selectedItem == 'Set Monitoring Details') {
+              Navigator.pushNamed(context, '/set-monitoring-details');
             }
-            /// End of Monitoring Details
-
-            /// Identification History
-            else if (index == 1) {
-              Navigator.pushNamed(
-                context,
-                '/identification-history',
-              );
+            else if (selectedItem == 'Identification History') {
+              Navigator.pushNamed(context, '/identification-history');
             }
-            /// End of Identification History
-
-            /// Treatment History
-            else if (index == 2) {
-              Navigator.pushNamed(
-                context,
-                '/treatment-history',
-              );
+            else if (selectedItem == 'Treatment History') {
+              Navigator.pushNamed(context, '/treatment-history');
             }
-            /// End of Treatment History
           }
       ),
       body: SingleChildScrollView(
@@ -176,6 +177,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                         ],
                       ),
 
+                      if(!isCaseClosed)
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
                         child: Row (
@@ -236,12 +238,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: InVitroTab(),
+                                child: InVitroTab(isCaseClosed: isCaseClosed),
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: InVivoTab(),
-                              ),
+                                child: InVivoTab(isCaseClosed: isCaseClosed),                              ),
                             ],
                           ),
                         ),

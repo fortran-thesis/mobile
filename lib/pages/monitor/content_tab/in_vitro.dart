@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
@@ -8,25 +9,13 @@ import '../../misc/functions/empty_state.dart';
 import '../../misc/tiles/experiment_timeline_tile.dart';
 
 class InVitroTab extends StatelessWidget {
-  const InVitroTab({super.key});
+  // This is used to determine if the case is closed
+  final bool isCaseClosed;
+  const InVitroTab({super.key, required this.isCaseClosed});
 
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> inVitroEntries = [
-      {
-        'date': 'October 2, 2025 • 09:14 PM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'sizeValue': '20 mm',
-        'colorValue': 'White',
-        'notes': 'Growth appears normal.',
-      },
-      {
-        'date': 'October 5, 2025 • 10:30 AM',
-        'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
-        'sizeValue': '35 mm',
-        'colorValue': 'Greenish center',
-        'notes': 'Colonies expanding rapidly.',
-      },
       {
         'date': 'October 2, 2025 • 09:14 PM',
         'imagePath': 'https://www.shutterstock.com/image-photo/colletotrichum-gloeosporioides-colony-culture-on-600nw-1248498718.jpg',
@@ -76,13 +65,13 @@ class InVitroTab extends StatelessWidget {
                   ),
                 ],
               ),
+              //Conditionally show the 'Add' button if the case is not closed
+              if (!isCaseClosed)
               BuildIconButton(
                   icon: FontAwesomeIcons.plus,
                   backgroundColor: MoldifyColors.MoldifySoftGrey,
                   color: MoldifyColors.MoldifyGrey,
                   onPressed: () {
-                    // 1. Navigate using the RouteNames constant
-                    // 2. Pass 'in-vitro' as the sourceTab argument
                     Navigator.pushNamed(
                       context,
                       RouteNames.addLogInstructions,
@@ -99,8 +88,6 @@ class InVitroTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12),
-
-                  /// Submitted By Label
                   const Text(
                     "Growth Medium",
                     style: TextStyle(
@@ -110,7 +97,6 @@ class InVitroTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  /// Farmer Name
                   Text(
                     growthMedium,
                     style: const TextStyle(
@@ -125,8 +111,6 @@ class InVitroTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 12),
-
-                  /// Date First Observed Label
                   const Text(
                     "Incubation Temperature",
                     style: TextStyle(
@@ -136,8 +120,6 @@ class InVitroTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-
-                  /// Date First Observed Value
                   Text(
                     incubationTemperature,
                     style: const TextStyle(
@@ -169,26 +151,19 @@ class InVitroTab extends StatelessWidget {
               notes: entry['notes'] ?? '',
               isFirst: index == 0,
               isLast: index == inVitroEntries.length - 1,
-                popupMenuItems: ['Edit Log', 'Delete Log'],
-                popupMenuIcons: [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
-                onPopupMenuItemSelected: (index) {
-                  // Handle the selection based on the index
-
-                  /// Edit Log
-                  if (index == 0) {
+                //Conditionally provide empty lists to hide the popup menu if the case is closed
+                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
+                  if (selectedIndex == 0) {
                     Navigator.pushNamed(
                         context,
                         '/edit-log', arguments: {'tabName': 'In Vitro'}
                     );
                   }
-                  /// End of Edit Log
-
-                  /// Delete Log
-                  else if (index == 1) {
-                    // Identification History was tapped
+                  else if (selectedIndex == 1) {
+                    // Handle delete
                   }
-                  /// End of Delete Log
-
                 },
               sizeLabel: 'Colony Diameter',
               colorLabel: 'Colony Color',
