@@ -16,6 +16,8 @@ import '../misc/colors.dart';
 import '../misc/tiles/account_settings_tiles.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
+import 'flag_history.dart';
+
 /// MainAccountSettingsScreen is the main screen for account settings.
 /// It displays the user's profile image, username, email, and various account settings options.
 
@@ -227,11 +229,15 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
                           child: BuildAccountSettingsTiles(
-                            leftIcon: FontAwesomeIcons.clockRotateLeft,
+                            leftIcon: FontAwesomeIcons.solidFlag,
                             rightIcon: FontAwesomeIcons.angleRight,
-                            title: 'Flagged Mold History',
+                            title: 'Flagged History',
                             onTap: () {
-
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const FlagHistoryScreen(),
+                                ),
+                              );
                             },
                           ),
                         ),
