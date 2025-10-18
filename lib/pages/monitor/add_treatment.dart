@@ -224,7 +224,7 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
                         buttonWidth: MediaQuery.of(context).size.width,
                         buttonRadius: 10
                     ),
-                  )
+                  ),
                 ],
               )
           ),

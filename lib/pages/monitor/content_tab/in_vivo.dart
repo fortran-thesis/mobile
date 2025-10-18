@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 
 import '../../misc/colors.dart';
@@ -41,6 +42,10 @@ class InVivoTab extends StatelessWidget {
         'notes': 'Colonies expanding rapidly.',
       },
     ];
+
+    String dateTime = 'October 2, 2025 • 09:14 PM';
+    String environmentalTemperature = '36°C';
+
     return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
@@ -62,7 +67,7 @@ class InVivoTab extends StatelessWidget {
                       ),
                     ),
                     Text (
-                      'October 2, 2025 • 09:14 PM',
+                      dateTime,
                       style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         fontSize: 12,
@@ -76,9 +81,12 @@ class InVivoTab extends StatelessWidget {
                     backgroundColor: MoldifyColors.MoldifySoftGrey,
                     color: MoldifyColors.MoldifyGrey,
                     onPressed: () {
+                      // 1. Navigate using the RouteNames constant
+                      // 2. Pass 'in-vivo' as the sourceTab argument
                       Navigator.pushNamed(
-                        context,
-                        '/add-log-instructions',
+                          context,
+                          RouteNames.addLogInstructions,
+                          arguments: {'sourceTab': 'in-vivo'},
                       );
                     }
                 )
@@ -101,7 +109,7 @@ class InVivoTab extends StatelessWidget {
                 const SizedBox(height: 4),
                 /// Farmer Name
                 Text(
-                  '36°C',
+                  environmentalTemperature,
                   style: const TextStyle(
                     fontFamily: 'Montserrat-Black',
                     fontSize: 16,

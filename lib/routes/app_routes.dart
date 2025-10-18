@@ -13,6 +13,7 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
+import '../pages/identification/main_camera.dart';
 import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
 import '../pages/monitor/add_log_instructions.dart';
@@ -56,95 +57,100 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final token = args != null && args['token'] != null ? args['token'] as String : '';
             return SetNewPasswordScreen(token: token);
+
           case RouteNames.camera:
-            return CameraScreen();
+            final args = settings.arguments as Map<String, dynamic>?;
+            final source = args?['source'] as String?;
+            final sourceTab = args?['sourceTab'] as String?;
+            return CameraScreen(source: source, sourceTab: sourceTab);
+
           case RouteNames.imagePreview:
             if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>; // Safe cast
+              final args = settings.arguments as Map<String, dynamic>;
               if (args.containsKey('imagePath') && args['imagePath'] is String) {
                 final String imagePath = args['imagePath'] as String;
-                // Ensure ImagePreviewScreen is imported
-                return ImagePreviewScreen(imagePath: imagePath);
+                final String? source = args['source'] as String?;
+                final String? sourceTab = args['sourceTab'] as String?;
+                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab);
               } else {
-                print('ERROR (ImagePreview): Arguments are Map, but \'imagePath\' key is missing or not a String. Args: $args');
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Argument Error')),
-                  body: const Center(child: Text('ImagePreview: imagePath missing or invalid in arguments.')),
-                );
+                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('imagePath missing')));
               }
             } else {
-              // This handles the case where arguments are not a Map (e.g., String, null), preventing the crash.
-              print('ERROR (ImagePreview): Expected Map arguments, but got ${settings.arguments.runtimeType}. Args: ${settings.arguments}');
-              return Scaffold(
-                appBar: AppBar(title: const Text('Navigation Error')),
-                body: Center(
-                    child: Text('ImagePreview: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.\nCheck console for details. Args: ${settings.arguments}')
-                ),
-              );
+              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for imagePreview')));
             }
+
           case RouteNames.moldResult:
             if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>; // Safe cast
+              final args = settings.arguments as Map<String, dynamic>;
               if (args.containsKey('croppedImagePath') && args['croppedImagePath'] is String) {
                 final String croppedImagePath = args['croppedImagePath'] as String;
-                // Ensure MoldResultScreen is imported
                 return MoldResultScreen(croppedImagePath: croppedImagePath);
               } else {
-                print('ERROR (MoldResult): Arguments are Map, but \'croppedImagePath\' key is missing or not a String. Args: $args');
+                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('croppedImagePath missing')));
+              }
+            } else {
+              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for moldResult')));
+            }
+
+          case RouteNames.setMonitoringDetails:
+            return SetMonitoringDetailsScreen();
+
+          case RouteNames.viewCase:
+            return ViewCaseScreen();
+
+          case RouteNames.editLog:
+            if (settings.arguments is Map<String, dynamic>) {
+              final args = settings.arguments as Map<String, dynamic>;
+              if (args.containsKey('tabName') && args['tabName'] is String) {
+                final String tabName = args['tabName'] as String;
+                return EditLogScreen(tabName: tabName);
+              } else {
+                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('tabName missing')));
+              }
+            } else {
+              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for editLog')));
+            }
+
+          case RouteNames.addTreatment:
+            return AddTreatmentScreen();
+
+          case RouteNames.identificationHistory:
+            return IdentificationHistoryScreen();
+
+          case RouteNames.treatmentHistory:
+            return TreatmentHistoryScreen();
+
+          case RouteNames.addLogInstructions:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final sourceTab = args?['sourceTab'] as String?;
+            return AddLogInstructionsScreen(sourceTab: sourceTab);
+
+          case RouteNames.addLog:
+            if (settings.arguments is Map<String, dynamic>) {
+              final args = settings.arguments as Map<String, dynamic>;
+              if (args.containsKey('imagePath') && args['imagePath'] is String &&
+                  args.containsKey('sourceTab') && args['sourceTab'] is String) {
+                final imagePath = args['imagePath'] as String;
+                final sourceTab = args['sourceTab'] as String;
+                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab);
+              } else {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Argument Error')),
-                  body: const Center(child: Text('MoldResult: croppedImagePath missing or invalid in arguments.')),
+                  body: const Center(child: Text('AddLog: imagePath or sourceTab missing or invalid.')),
                 );
               }
             } else {
-              // This handles the case where arguments are not a Map (e.g., String, null), preventing the crash.
-              print('ERROR (MoldResult): Expected Map arguments, but got ${settings.arguments.runtimeType}. Args: ${settings.arguments}');
               return Scaffold(
                 appBar: AppBar(title: const Text('Navigation Error')),
-                body: Center(
-                    child: Text('MoldResult: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.\nCheck console for details. Args: ${settings.arguments}')
-                ),
+                body: Center(child: Text('AddLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.')),
               );
             }
-            case RouteNames.setMonitoringDetails:
-              return SetMonitoringDetailsScreen();
-          case RouteNames.viewCase:
-              return ViewCaseScreen();
-              case RouteNames.editLog:
-              if (settings.arguments is Map<String, dynamic>) {
-                final args = settings.arguments as Map<String, dynamic>; // Safe cast
-                if (args.containsKey('tabName') && args['tabName'] is String) {
-                  final String tabName = args['tabName'] as String;
-                  // Ensure EditLogScreen is imported
-                  return EditLogScreen(tabName: tabName);
-                } else {
-                  print('ERROR (EditLog): Arguments are Map, but \'tabName\' key is missing or not a String. Args: $args');
-                  return Scaffold(
-                    appBar: AppBar(title: const Text('Argument Error')),
-                    body: const Center(child: Text('EditLog: tabName missing or invalid in arguments.')),
-                  );
-                }
-              } else {
-                // This handles the case where arguments are not a Map (e.g., String, null), preventing the crash.
-                print('ERROR (EditLog): Expected Map arguments, but got ${settings.arguments.runtimeType}. Args: ${settings.arguments}');
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Navigation Error')),
-                  body: Center(
-                      child: Text('EditLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.\nCheck console for details. Args: ${settings.arguments}')
-                  ),
-                );
-              }
-              case RouteNames.addTreatment:
-                return AddTreatmentScreen();
-          case RouteNames.identificationHistory:
-                return IdentificationHistoryScreen();
-          case RouteNames.treatmentHistory:
-                return TreatmentHistoryScreen();
-          case RouteNames.addLogInstructions:
-                return AddLogInstructionsScreen();
-          case RouteNames.addLog:
-                return AddLogScreen();
-          // Add more cases for other routes using RouteNames
+            
+          case RouteNames.mainCamera:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final bool showAppBar = args?['showAppBar'] as bool? ?? false;
+            return MainCameraScreen(showAppBar: showAppBar);
+
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

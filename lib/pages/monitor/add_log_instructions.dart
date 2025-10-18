@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/colors.dart';
 
 class AddLogInstructionsScreen extends StatefulWidget {
-  const AddLogInstructionsScreen({super.key});
+  // 1. Add sourceTab as a constructor argument
+  final String? sourceTab;
+
+  const AddLogInstructionsScreen({super.key, this.sourceTab});
 
   @override
   State<AddLogInstructionsScreen> createState() => _AddLogInstructionsScreenState();
@@ -17,7 +21,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
 
   /// This is used to open gallery and pick an image
   Future<void> _pickImageFromGallery() async {
-    if (_isProcessingImage) return; // Don't do anything if already processing
+    if (_isProcessingImage) return;
 
     if (!mounted) return;
     setState(() {
@@ -28,25 +32,27 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
     XFile? imageFile;
 
     try {
-      // This opens the gallery and wait for the user to pick an image.
       imageFile = await picker.pickImage(source: ImageSource.gallery);
 
       if (!mounted) return;
 
-      // If an image is picked, navigate to the ImagePreviewScreen with the image path.
       if (imageFile != null) {
         print('Image selected from gallery: ${imageFile.path}');
-        await Navigator.pushNamed
-          (context, '/image_preview',
-            arguments: {'imagePath': imageFile.path}
+        // 2. Pass both 'source' and the new 'sourceTab' argument
+        await Navigator.pushNamed(
+          context,
+          RouteNames.imagePreview,
+          arguments: {
+            'imagePath': imageFile.path,
+            'source': 'add_log',
+            'sourceTab': widget.sourceTab
+          },
         );
       } else {
-        // If no image is selected, print this message.
         print('No image selected.');
       }
     } catch (e) {
       print('Error picking image or navigating: $e');
-      // Optionally show an error message to the user
     } finally {
       if (mounted) {
         setState(() {
@@ -57,10 +63,17 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
   }
 
   /// This is used to navigate to the camera screen
-  /// if not already processing an image.
   void _navigateToCamera() {
     if (_isProcessingImage) return;
-    Navigator.pushNamed(context, '/camera');
+    // 3. Pass both 'source' and the new 'sourceTab' argument
+    Navigator.pushNamed(
+      context,
+      RouteNames.camera,
+      arguments: {
+        'source': 'add_log',
+        'sourceTab': widget.sourceTab
+      },
+    );
   }
 
   @override
@@ -70,10 +83,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
       appBar: PrimaryAppBar(
         title: 'Add New Log',
       ),
-      // 1. Use a Stack to allow layering widgets
       body: Stack(
         children: [
-          // 2. Make the primary content scrollable
           SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,8 +97,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
                       /// ----------- Mold Scanner Header -----------
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Text(
-                            'Add New Log',
+                        child: Text('Add New Log',
                             style: TextStyle(
                               fontSize: 36,
                               fontFamily: 'Montserrat-Black',
@@ -176,7 +186,6 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
                               padding: const EdgeInsets.only(top: 30.0),
                               child: BuildButton(
                                   buttonText: 'Use Camera',
-                                  // Pass empty function when loading to "disable"
                                   onPressed: _isProcessingImage ? () {} : _navigateToCamera,
                                   backgroundColor: MoldifyColors.primaryColor,
                                   textColor: MoldifyColors.backgroundColor,
@@ -205,12 +214,10 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
               ],
             ),
           ),
-          // 3. Loading Overlay is now correctly placed within the Stack
           if (_isProcessingImage)
             Positioned.fill(
               child: Container(
-                // 4. Corrected the color property
-                color: Colors.black.withValues(alpha: 0.5),
+                color: Colors.black.withOpacity(0.5),
                 child: const Center(
                   child: CircularProgressIndicator(),
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/pages/identification/main_camera.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/tab_bar.dart';
@@ -180,10 +182,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                           children: [
                             BuildButton(
                                 onPressed: () {
-                                  // Navigator.pushNamed(
-                                  //   context,
-                                  //   '/set-monitoring-details',
-                                  // );
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.mainCamera,
+                                    arguments: {'showAppBar': true},
+                                  );
                                 },
                                 buttonText: 'Identify Mold',
                                 fontSize: 12,

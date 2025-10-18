@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 
 class MainCameraScreen extends StatefulWidget {
-  const MainCameraScreen({super.key});
+  // 1. Add a boolean to control AppBar visibility, defaulting to false.
+  final bool showAppBar;
+
+  const MainCameraScreen({super.key, this.showAppBar = false});
 
   @override
   State<MainCameraScreen> createState() => _MainCameraScreenState();
@@ -16,7 +21,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
 
   /// This is used to open gallery and pick an image
   Future<void> _pickImageFromGallery() async {
-    if (_isProcessingImage) return; // Don't do anything if already processing
+    if (_isProcessingImage) return;
 
     if (!mounted) return;
     setState(() {
@@ -27,25 +32,20 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
     XFile? imageFile;
 
     try {
-      // This opens the gallery and wait for the user to pick an image.
       imageFile = await picker.pickImage(source: ImageSource.gallery);
 
       if (!mounted) return;
 
-      // If an image is picked, navigate to the ImagePreviewScreen with the image path.
       if (imageFile != null) {
         print('Image selected from gallery: ${imageFile.path}');
-        await Navigator.pushNamed
-          (context, '/image_preview',
-            arguments: {'imagePath': imageFile.path}
-          );
+        // Use named route for navigation
+        await Navigator.pushNamed(context, RouteNames.imagePreview,
+            arguments: {'imagePath': imageFile.path, 'source': 'main_camera'});
       } else {
-        // If no image is selected, print this message.
         print('No image selected.');
       }
     } catch (e) {
       print('Error picking image or navigating: $e');
-      // Optionally show an error message to the user
     } finally {
       if (mounted) {
         setState(() {
@@ -56,14 +56,15 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
   }
 
   /// This is used to navigate to the camera screen
-  /// if not already processing an image.
   void _navigateToCamera() {
     if (_isProcessingImage) return;
-    Navigator.pushNamed(context, '/camera');
+    // Use named route for navigation
+    Navigator.pushNamed(context, RouteNames.camera,
+        arguments: {'source': 'main_camera'});
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // 2. The page's UI content is extracted into a helper method to avoid duplication.
+  Widget _buildContent(BuildContext context) {
     return Stack(
       children: [
         SafeArea(
@@ -88,8 +89,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: Text(
-                          'Please capture or upload mold sample.',
+                      child: Text('Please capture or upload mold sample.',
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-Regular',
@@ -105,8 +105,8 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    /// ----------- End of Mold Scanner Header -----------
 
+                    /// ----------- End of Mold Scanner Header -----------
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
                       child: Column(
@@ -138,7 +138,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                       '${idx + 1}. ',
                                       style: const TextStyle(
                                         fontFamily:
-                                            'Bricolage-Grotesque-Regular',
+                                        'Bricolage-Grotesque-Regular',
                                         fontSize: 16,
                                         color: MoldifyColors.MoldifyBlack,
                                         letterSpacing: 0.5,
@@ -150,7 +150,7 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                         text,
                                         style: const TextStyle(
                                           fontFamily:
-                                              'Bricolage-Grotesque-Regular',
+                                          'Bricolage-Grotesque-Regular',
                                           fontSize: 16,
                                           color: MoldifyColors.MoldifyBlack,
                                           letterSpacing: 0.5,
@@ -162,14 +162,14 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                 );
                               }).toList(),
                             ),
-                            /// End of Instructions Before Using
 
+                            /// End of Instructions Before Using
                             Padding(
                               padding: const EdgeInsets.only(top: 30.0),
                               child: BuildButton(
                                   buttonText: 'Use Camera',
-                                  // Pass empty function when loading to "disable"
-                                  onPressed: _isProcessingImage ? () {} : _navigateToCamera,
+                                  onPressed:
+                                  _isProcessingImage ? () {} : _navigateToCamera,
                                   backgroundColor: MoldifyColors.primaryColor,
                                   textColor: MoldifyColors.backgroundColor,
                                   buttonHeight: 40.0,
@@ -177,11 +177,13 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
                                   buttonRadius: 10.0),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 10.0, bottom: 70.0),
+                              padding:
+                              EdgeInsets.only(top: 10.0, bottom: widget.showAppBar ? 10.0 : 70.0),
                               child: BuildButton(
                                   buttonText: 'Upload Image',
-                                  onPressed: _isProcessingImage ? () {} : _pickImageFromGallery,
+                                  onPressed: _isProcessingImage
+                                      ? () {}
+                                      : _pickImageFromGallery,
                                   backgroundColor: MoldifyColors.accentColor,
                                   textColor: MoldifyColors.MoldifyBlack,
                                   buttonHeight: 45.0,
@@ -208,5 +210,23 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
           ),
       ],
     );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    // 3. Check the `showAppBar` flag to decide what to build.
+    if (widget.showAppBar) {
+      // If true, build the UI inside a Scaffold with an AppBar.
+      // This provides the correct layout and a back button.
+      return Scaffold(
+        backgroundColor: MoldifyColors.backgroundColor,
+        appBar: PrimaryAppBar(title: 'Mold Scanner'),
+        body: _buildContent(context),
+      );
+    } else {
+      // If false, build just the content. This is for the bottom navigation bar.
+      return _buildContent(context);
+    }
   }
 }

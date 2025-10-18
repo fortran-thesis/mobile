@@ -9,8 +9,15 @@ import 'package:path_provider/path_provider.dart';
 
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
+  final String? source;
+  final String? sourceTab;
 
-  const ImagePreviewScreen({super.key, required this.imagePath});
+  const ImagePreviewScreen({
+    super.key,
+    required this.imagePath,
+    this.source,
+    this.sourceTab,
+  });
 
   @override
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
@@ -22,16 +29,20 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   final GlobalKey _dottedBoxKey = GlobalKey();
   final TransformationController _transformationController = TransformationController();
 
+  /// Captures the current UI preview, crops it based on a defined box, and navigates to the appropriate screen.
   Future<void> _captureAndCropImage() async {
-    if (_isProcessing) return; // Prevent multiple taps
+    if (_isProcessing) return;
+
+    // Set the processing flag to true to indicate a task is in progress
     setState(() {
       _isProcessing = true;
     });
 
-    /// 1. Get Render Objects
+    // Get the RenderObject for the full preview container and the dotted box
     final RenderRepaintBoundary? boundary = _previewContainerKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     final RenderBox? dottedBoxRenderBox = _dottedBoxKey.currentContext?.findRenderObject() as RenderBox?;
 
+    // If either render object is null, show error and exit
     if (boundary == null || dottedBoxRenderBox == null) {
       print("Error: Could not get render objects for cropping.");
       if (mounted) {
@@ -46,13 +57,16 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     }
 
     try {
+      // Get the device's pixel ratio (for accurate cropping on high DPI screens)
       final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-      /// 2. Capture Image
+
+      // Capture the full preview as an image
       final ui.Image capturedImage = await boundary.toImage(pixelRatio: pixelRatio);
 
-      /// 3. Calculate Crop Rectangle (coordinates relative to the captured image)
+      // Get the global position of the dotted crop box and the preview container
       final Offset dottedBoxGlobalOffset = dottedBoxRenderBox.localToGlobal(Offset.zero);
       final Offset previewContainerGlobalOffset = (boundary as RenderBox).localToGlobal(Offset.zero);
+      // Calculate the crop rectangle (logical coordinates)
       final Offset relativeOffset = dottedBoxGlobalOffset - previewContainerGlobalOffset;
 
       final Rect cropRectLogical = Rect.fromLTWH(
@@ -62,6 +76,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         dottedBoxRenderBox.size.height,
       );
 
+      // Convert logical crop rect to physical (pixel-based) coordinates
       final Rect cropRectPhysical = Rect.fromLTWH(
         cropRectLogical.left * pixelRatio,
         cropRectLogical.top * pixelRatio,
@@ -69,7 +84,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         cropRectLogical.height * pixelRatio,
       );
 
-      // Basic bounds check for the crop rectangle
+      // Check if the crop area is within the captured image bounds
       if (cropRectPhysical.left < 0 || cropRectPhysical.top < 0 ||
           cropRectPhysical.right > capturedImage.width || cropRectPhysical.bottom > capturedImage.height) {
         print("Error: Crop area is outside the captured image bounds.");
@@ -84,22 +99,27 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         return;
       }
 
-      /// 4. Perform the Crop
+      // Begin a new canvas to draw the cropped portion
       final ui.PictureRecorder recorder = ui.PictureRecorder();
       final Canvas canvas = Canvas(recorder);
       final Paint paint = Paint();
+
+      // Draw the cropped area from the captured image onto the new canvas
       canvas.drawImageRect(
           capturedImage,
           cropRectPhysical,
           Rect.fromLTWH(0, 0, cropRectPhysical.width, cropRectPhysical.height),
           paint);
+
+      // Convert the canvas drawing into a ui.Image (cropped image)
       final ui.Image croppedUiImage = await recorder.endRecording().toImage(
         cropRectPhysical.width.round(),
         cropRectPhysical.height.round(),
       );
 
-      /// 5. Convert to File
+      // Convert the cropped image to PNG byte data
       final ByteData? byteData = await croppedUiImage.toByteData(format: ui.ImageByteFormat.png);
+      // Check if byte data was successfully obtained
       if (byteData == null) {
         print("Error: Could not get byte data from cropped image.");
         if (mounted) {
@@ -112,6 +132,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         }
         return;
       }
+
+      // Save the PNG byte data to a temporary file
       final Uint8List pngBytes = byteData.buffer.asUint8List();
       final Directory tempDir = await getTemporaryDirectory();
       final String fileName = 'cropped_preview_${DateTime.now().millisecondsSinceEpoch}.png';
@@ -119,13 +141,24 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       await file.writeAsBytes(pngBytes);
       print('Cropped image saved to: ${file.path}');
 
-      /// 6. Navigate
       if (!mounted) return;
-      Navigator.pushNamed(
-        context,
-        '/mold_result',
-        arguments: {'croppedImagePath': file.path},
-      );
+      if (widget.source == 'add_log') {
+        // 3. Update navigation arguments to include sourceTab
+        Navigator.pushNamed(
+          context,
+          '/add-log',
+          arguments: {
+            'imagePath': file.path,
+            'sourceTab': widget.sourceTab
+          },
+        );
+      } else {
+        Navigator.pushNamed(
+          context,
+          '/mold_result',
+          arguments: {'croppedImagePath': file.path},
+        );
+      }
 
     } catch (e, s) {
       print('Error during cropping or navigation: $e\n$s');
@@ -144,7 +177,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        /// Layer 1: Image Preview Background
+        /// 1. Interactive Image Preview
+        /// This allows the user to pan and zoom the captured image. It is wrapped
+        /// in a RepaintBoundary to allow us to capture it as an image.
         RepaintBoundary(
           key: _previewContainerKey,
           child: InteractiveViewer(
@@ -154,15 +189,16 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             minScale: 0.5,
             maxScale: 4.0,
             child: Center(
-                child: Image.file(
-                  File(widget.imagePath),
-                  fit: BoxFit.contain,
-                ),
+              child: Image.file(
+                File(widget.imagePath),
+                fit: BoxFit.contain,
               ),
+            ),
           ),
         ),
 
-        /// Layer 2: Overlay UI
+        /// 2. Bottom Control Bar
+        /// This bar contains the 'Close' (cancel) and 'Check' (confirm) buttons.
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
@@ -172,7 +208,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
 
-                /// 1. Go Back Button
+                /// Close Button
                 IconButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -184,7 +220,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                   ),
                 ),
 
-                /// 2. Proceed Button
+                /// Check Button
                 IconButton(
                   onPressed: _captureAndCropImage,
                   icon: Icon(
@@ -198,7 +234,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ),
 
-        /// Layer 3: Instructional Banner Text
+
+        /// 3. Instructional Banner
+        /// This banner at the top provides guidance to the user.
         Align(
           alignment: Alignment.topCenter,
           child: Padding(
@@ -224,7 +262,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ),
 
-        /// Layer 4: Dotted Border Overlay To Guide User
+        /// 4. Dotted Border Overlay
+        /// This provides a non-interactive visual guide for cropping.
         IgnorePointer(
           ignoring: true,
           child: Align(
@@ -247,10 +286,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ),
 
-        /// Layer 5: Loading Overlay
+        /// 5. Loading Indicator Overlay
+        /// This appears on top of the screen while the image is being processed.
         if (_isProcessing)
           Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -259,6 +299,5 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
       ],
     );
-
   }
 }

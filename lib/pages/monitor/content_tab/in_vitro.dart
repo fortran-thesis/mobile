@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 
 import '../../misc/colors.dart';
@@ -41,6 +42,10 @@ class InVitroTab extends StatelessWidget {
         'notes': 'Colonies expanding rapidly.',
       },
     ];
+    String dateTime = 'October 2, 2025 • 09:14 PM';
+    String growthMedium = 'PDA';
+    String incubationTemperature = '36°C';
+
     return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -62,7 +67,7 @@ class InVitroTab extends StatelessWidget {
                     ),
                   ),
                   Text (
-                    'October 2, 2025 • 09:14 PM',
+                    dateTime,
                     style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Regular',
                       fontSize: 12,
@@ -76,9 +81,12 @@ class InVitroTab extends StatelessWidget {
                   backgroundColor: MoldifyColors.MoldifySoftGrey,
                   color: MoldifyColors.MoldifyGrey,
                   onPressed: () {
+                    // 1. Navigate using the RouteNames constant
+                    // 2. Pass 'in-vitro' as the sourceTab argument
                     Navigator.pushNamed(
-                        context,
-                        '/add-log-instructions',
+                      context,
+                      RouteNames.addLogInstructions,
+                      arguments: {'sourceTab': 'in-vitro'},
                     );
                   }
               )
@@ -104,7 +112,7 @@ class InVitroTab extends StatelessWidget {
                   const SizedBox(height: 4),
                   /// Farmer Name
                   Text(
-                    'PDA',
+                    growthMedium,
                     style: const TextStyle(
                       fontFamily: 'Montserrat-Black',
                       fontSize: 16,
@@ -131,7 +139,7 @@ class InVitroTab extends StatelessWidget {
 
                   /// Date First Observed Value
                   Text(
-                    '36°C',
+                    incubationTemperature,
                     style: const TextStyle(
                       fontFamily: 'Montserrat-Black',
                       fontSize: 16,
