@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/misc/colors.dart';
+
+/// Content widget specifically for photo options.
+/// To be used as a child of [BuildBottomSheet] or directly in [showModalBottomSheet].
+/// It provides options to upload or remove a photo with appropriate icons and styles.
+/// Parameters:
+/// - [onUploadPhoto]: Callback for upload photo action.
+/// - [onRemovePhoto]: Callback for remove photo action.
+
+class PhotoOptionsBottomSheetContent extends StatelessWidget {
+  final VoidCallback? onUploadPhoto;
+  final VoidCallback? onRemovePhoto;
+
+  const PhotoOptionsBottomSheetContent({
+    super.key,
+    this.onUploadPhoto,
+    this.onRemovePhoto,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: Icon(
+            FontAwesomeIcons.arrowUpFromBracket,
+            color: MoldifyColors.accentColor,
+            size: 20.0
+          ),
+          title: Text(
+            'Upload Photo',
+            style: TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Bold',
+                color: MoldifyColors.primaryColor,
+                fontSize: 16
+            )
+          ),
+          onTap: onUploadPhoto
+        ),
+        ListTile(
+          leading: Icon(
+            FontAwesomeIcons.solidTrashCan,
+            color: MoldifyColors.accentColor,
+            size: 20.0
+          ),
+          title: Text(
+            'Remove Photo',
+            style: TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Bold',
+              color: MoldifyColors.primaryColor,
+              fontSize: 16
+            )
+          ),
+          onTap: onRemovePhoto
+        ),
+      ],
+    );
+  }
+}

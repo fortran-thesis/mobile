@@ -6,6 +6,11 @@ import 'package:moldify/pages/misc/colors.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 
+import '../misc/buttons/primary_button.dart';
+import '../misc/overlays/modals/confirmation_dialog.dart';
+import '../misc/tiles/bottom_sheet.dart';
+import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
+
 class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
 
@@ -69,11 +74,45 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     final List<String> words = fullDescription.split(' ');
     final bool isLongText = words.length > 40;
 
+    final TextEditingController correctedGenusController = TextEditingController();
+
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
         title: 'Mold Result',
+        rightIcon: Icon(
+          Icons.flag,
+        ),
+        rightIconColor: MoldifyColors.MoldifyRed,
+        onRightIconPressed: () {
+          showModalBottomSheet(
+            context: context,
+            // Make it non-dismissible
+            isDismissible: false,
+            // Use true to prevent the keyboard from covering the text field
+            isScrollControlled: true,
+            builder: (context) {
+              return Padding(
+                // Add padding to account for the keyboard
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: BuildBottomSheet(
+                  child: CorrectionBottomSheetContent(
+                    correctedGenusController: correctedGenusController,
+                    onClose: () {
+                      Navigator.of(context).pop();
+                    },
+                    onSave: (correctedText) {
+                      // Add your save logic here
+                      print('Corrected Text: $correctedText');
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
       body: SingleChildScrollView(
         child: Stack(
@@ -106,34 +145,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                       // Verified Information Banner
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Icon(
-                                  Icons.verified,
-                                  size: 14,
-                                  color: MoldifyColors.accentColor,
-                                ),
-                              ),
-                              TextSpan(
-                                text: "			This information is verified by experts.",
-                                style: TextStyle(
-                                  color: MoldifyColors.MoldifyGrey,
-                                  fontSize: 10,
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                ),
-                              ),
-                            ],
+                        child: Text(
+                          'Most probably identified mold genus:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Bricolage-Grotesque-Regular',
+                            color: MoldifyColors.MoldifyGrey,
                           ),
-                        ),
+                        )
                       ),
               
                       /// This is the Mold Genus Name
                       Padding(
-                        padding: const EdgeInsets.only(
-                            top: 5.0, left: 15, right: 15),
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Text(
                           moldGenus,
                           style: TextStyle(
@@ -304,12 +328,56 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                       return buildTaxonomyRow(entry.key, entry.value, withPadding: !isFirst);
                                     }).toList(),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           )
                         ),
-                      )
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 40.0, left: 15.0, right: 15.0),
+                        child: Text(
+                          "Disclaimer: This app only suggests possible mold genus based on image analysis. This should not replace expert advice or laboratory confirmation.",
+                          style: TextStyle(
+                              fontFamily: "Bricolage-Grotesque-Regular",
+                              fontSize: 12,
+                              color: MoldifyColors.MoldifyGrey,
+                          ),
+                        ),
+                      ),
+
+                      /// Save Log Button
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, left: 15.0, right: 15.0),
+                        child: BuildButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return BuildConfirmationDialog(
+                                    title: 'Save Result?',
+                                    subtitle: 'Are you sure you want to save result?',
+                                    onConfirm: () {
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pop();
+                                    },
+                                    onCancel: (){
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            buttonText: 'Save Result',
+                            backgroundColor: MoldifyColors.primaryColor,
+                            textColor: MoldifyColors.backgroundColor,
+                            buttonHeight: 45,
+                            buttonWidth: MediaQuery.of(context).size.width,
+                            buttonRadius: 10
+                        ),
+                      ),
+
                     ],
                   ),
                 ),

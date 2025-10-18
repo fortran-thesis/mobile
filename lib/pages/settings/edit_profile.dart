@@ -7,6 +7,7 @@ import 'package:moldify/pages/misc/images/profile_image.dart';
 import 'package:moldify/pages/misc/tiles/bottom_sheet.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/textboxes/textboxes.dart';
+import '../misc/tiles/bottom_sheet_contents/photo_options_content.dart';
 
 /// This screen allows users to edit their profile information such as username and email.
 /// It includes a profile image section where users can upload or remove their profile photo.
