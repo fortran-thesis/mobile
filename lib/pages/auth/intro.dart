@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/core/utils/route_utils.dart';
 import '../../core/constants/route_names.dart';
 
 class IntroScreen extends StatelessWidget {
@@ -10,7 +11,7 @@ class IntroScreen extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed(RouteNames.main);
+            navigateTo(context, RouteNames.main);
           },
           child: const Text('Go to Main Page'),
         ),

@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:moldify/core/constants/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'routes/app_routes.dart';
@@ -30,13 +29,15 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Build the router using the current AppAuthProvider from context.
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: true);
+    final router = AppRoutes.createRouter(authProvider);
+
+    return MaterialApp.router(
       title: 'Moldify',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-      ),
-      initialRoute: RouteNames.intro,
-      onGenerateRoute: AppRoutes.generateRoute,
+      theme: ThemeData(),
+      routerConfig: router,
     );
   }
 }

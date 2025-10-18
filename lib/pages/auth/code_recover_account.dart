@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/utils/route_utils.dart';
-import 'package:moldify/pages/auth/set_new_password.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../misc/appbar/secondary_appbar.dart';

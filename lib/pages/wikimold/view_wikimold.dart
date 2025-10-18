@@ -145,7 +145,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    datePublished ?? 'Unknown Date',
+                                    datePublished,
                                     style: TextStyle(
                                       fontFamily: 'Bricolage-Grotesque-Regular',
                                       fontSize: 14,

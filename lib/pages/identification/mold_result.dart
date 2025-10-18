@@ -31,7 +31,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
       "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
       "are also used commercially for the production of citric acid and other enzymes, highlighting "
-      "the genus's dual role as both a potential pathogen and a useful industrial microorganism." ?? 'No description available.';
+      "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
   bool _showFullText = false;
   late TapGestureRecognizer _tapRecognizer;

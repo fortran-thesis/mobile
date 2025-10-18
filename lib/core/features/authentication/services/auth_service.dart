@@ -1,8 +1,6 @@
-import 'dart:convert';
-
+import 'package:moldify/core/utils/dio_utils.dart';
 import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
-
 
 class AuthService {
   final ApiService _apiService = ApiService(baseUrl: ApiUrl.auth);
@@ -11,17 +9,17 @@ class AuthService {
     final response = await _apiService.post(
       '/login',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'username': username,
         'password': password,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
-    final String? cookie = response.headers['set-cookie'];
+    final String? cookie = response.headers.value('set-cookie');
 
     return {
       'success': success,
@@ -35,16 +33,16 @@ class AuthService {
     final response = await _apiService.post(
       '/login/oauth',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'token': token,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
-    final String? cookie = response.headers['set-cookie'];
+    final String? cookie = response.headers.value('set-cookie');
 
     return {
       'success': success,
@@ -58,14 +56,14 @@ class AuthService {
     final response = await _apiService.post(
       '/register',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'username': username,
         'email': email,
         'password': password,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -81,13 +79,13 @@ class AuthService {
     final response = await _apiService.post(
       '/verify-code',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'email': email,
         'code': code,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -103,12 +101,12 @@ class AuthService {
     final response = await _apiService.post(
       '/forgot-username',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'email': email,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -124,12 +122,12 @@ class AuthService {
     final response = await _apiService.post(
       '/forgot-password',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'email': email,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -145,12 +143,12 @@ class AuthService {
     final response = await _apiService.post(
       '/forgot-username/verify',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'token': token,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -166,13 +164,13 @@ class AuthService {
     final response = await _apiService.post(
       '/forgot-password/verify',
       headers: {'Content-Type': 'application/json'},
-      body: {
+      data: {
         'token': token,
         'newPassword': newPass,
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = DioUtils.normalizeResponseData(response);
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];

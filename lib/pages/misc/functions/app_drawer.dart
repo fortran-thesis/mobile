@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:moldify/pages/auth/login.dart';
-import 'package:moldify/pages/support/report_a_curator.dart';
-import 'package:moldify/pages/support/report_bug.dart';
-import 'package:moldify/pages/support/send_feedback.dart';
+import 'package:moldify/core/utils/route_utils.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/wikimold/main_wikimold.dart';
 import '../../../core/constants/route_names.dart';
-import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
@@ -143,11 +138,8 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const SendFeedbackScreen(),
-                      ),
-                    );
+                    // Use GoRouter if available, else fall back to pushing a MaterialPageRoute
+                    navigateTo(context, '/support/send-feedback');
                   },
                 ),
 
@@ -166,11 +158,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const ReportBugScreen(),
-                      ),
-                    );
+                    navigateTo(context, '/support/report-bug');
                   },
                 ),
 
@@ -189,11 +177,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const MainWikiMoldScreen(),
-                      ),
-                    );
+                    navigateTo(context, '/support/contact-us');
                   },
                 ),
                 Padding(
@@ -220,11 +204,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const MainAccountSettingsScreen(),
-                      ),
-                    );
+                    navigateTo(context, '/settings/account');
                   },
                 ),
                 Padding(
@@ -255,7 +235,7 @@ class AppDrawer extends StatelessWidget {
                     final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                     await authProvider.logout();
                     if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+                      navigateTo(context, RouteNames.login);
                     }
                   },
                 ),

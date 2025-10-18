@@ -1,62 +1,75 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class ApiService {
   final String baseUrl;
+  final Dio _dio;
 
-  ApiService({required this.baseUrl});
+  ApiService({
+    required this.baseUrl,
+    String? sessionCookie,
+    BaseOptions? options,
+  }) : _dio = Dio(options ?? BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(milliseconds: 5000), receiveTimeout: const Duration(milliseconds: 10000))) {
+    if (sessionCookie != null) {
+      _dio.options.headers['Cookie'] = 'session=$sessionCookie';
+    }
 
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+    // simple logger (optional)
+    _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+
+    // Example auth cookie interceptor (keeps header updated)
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      // if you maintain cookie elsewhere, set here:
+      // options.headers['Cookie'] = 'session=$currentCookie';
+      handler.next(options);
+    }, onError: (e, handler) {
+      handler.next(e);
+    }, onResponse: (r, handler) {
+      handler.next(r);
+    }));
+  }
+
+  Future<Response> get(String endpoint, {Map<String, dynamic>? queryParameters, Map<String, String>? headers}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      return await http.get(url, headers: allHeaders);
+      return await _dio.get(endpoint, queryParameters: queryParameters, options: Options(headers: headers));
     } catch (e) {
-      throw Exception('GET request failed: $e');
+      rethrow;
     }
   }
 
-  Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> post(String endpoint, {Object? data, Map<String, dynamic>? queryParameters, Map<String, String>? headers}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      return await http.post(url, headers: allHeaders, body: json.encode(body));
+      return await _dio.post(endpoint, data: data, queryParameters: queryParameters, options: Options(headers: headers));
     } catch (e) {
-      throw Exception('POST request failed: $e');
+      rethrow;
     }
   }
 
-  Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> patch(String endpoint, {Object? data, Map<String, dynamic>? queryParameters, Map<String, String>? headers}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      return await http.patch(url, headers: allHeaders, body: json.encode(body));
+      return await _dio.patch(endpoint, data: data, queryParameters: queryParameters, options: Options(headers: headers));
     } catch (e) {
-      throw Exception('PATCH request failed: $e');
+      rethrow;
     }
   }
 
-  Future<http.Response> delete(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> delete(String endpoint, {Map<String, dynamic>? queryParameters, Map<String, String>? headers}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      return await http.delete(url, headers: allHeaders);
+      return await _dio.delete(endpoint, queryParameters: queryParameters, options: Options(headers: headers));
     } catch (e) {
-      throw Exception('DELETE request failed: $e');
+      rethrow;
     }
   }
 
-
+  // helper for multipart file upload (useful for images)
+  Future<Response> uploadFile(String endpoint, {required String fieldName, required List<int> fileBytes, required String filename, Map<String, dynamic>? data, Map<String, String>? headers, ProgressCallback? onSendProgress}) async {
+    try {
+      final form = FormData.fromMap({
+        ...?data,
+        fieldName: MultipartFile.fromBytes(fileBytes, filename: filename),
+      });
+      return await _dio.post(endpoint, data: form, options: Options(headers: headers), onSendProgress: onSendProgress);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

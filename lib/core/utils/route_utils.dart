@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-void navigateTo(BuildContext context, String routeName, {Object? arguments}) {
-  Navigator.of(context).pushNamed(routeName, arguments: arguments);
+/// Helper that prefers GoRouter navigation if available.
+void navigateTo(BuildContext context, String path, {bool replace = false, Object? arguments}) {
+  if (replace) {
+    // replace the stack (use for logout/login flows)
+    context.go(path, extra: arguments);
+  } else {
+    // push to preserve back stack
+    context.push(path, extra: arguments);
+  }
 }
