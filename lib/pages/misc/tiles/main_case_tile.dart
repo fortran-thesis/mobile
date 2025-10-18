@@ -10,6 +10,7 @@ class MainCaseTile extends StatefulWidget {
   final String? imageUrl;
   final VoidCallback onTap;
   final double? imageWidth, imageHeight;
+  final String? dateLabel;
 
   // Properties for the optional PopupMenu
   final bool showPopupMenu;
@@ -32,6 +33,7 @@ class MainCaseTile extends StatefulWidget {
     this.popupMenuIcon,
     this.imageWidth,
     this.imageHeight,
+    this.dateLabel,
   });
 
   @override
@@ -150,7 +152,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
                               text: TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: 'Date Submitted: ',
+                                    text: widget.dateLabel ?? 'Date Submitted: ',
                                     style: const TextStyle(
                                       fontSize: 10.0,
                                       color: MoldifyColors.primaryColor,

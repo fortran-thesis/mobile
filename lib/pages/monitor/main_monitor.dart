@@ -18,7 +18,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
   @override
   Widget build(BuildContext context) {
 
-    /// Sample data for WikiMold articles
+    /// Sample data for Cases Assigned
     final List<Map<String, String?>> casesAssigned = [
       {
         'caseName': 'Wowerz',

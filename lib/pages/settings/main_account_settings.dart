@@ -7,6 +7,7 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/core/utils/image_utils.dart';
 import 'package:moldify/pages/misc/appbar/secondary_appbar.dart';
 import 'package:moldify/pages/misc/images/profile_image.dart';
+import 'package:moldify/pages/settings/case_history.dart';
 import 'package:moldify/pages/settings/change_password.dart';
 import 'package:moldify/pages/settings/edit_profile.dart';
 import 'package:provider/provider.dart';
@@ -208,23 +209,27 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           ),
                         ),
 
-                        /// My Archive Tile
+                        /// Case History Tile
                         BuildAccountSettingsTiles(
-                          leftIcon: FontAwesomeIcons.boxArchive,
+                          leftIcon: FontAwesomeIcons.clipboardCheck,
                           rightIcon: FontAwesomeIcons.angleRight,
-                          title: 'My Archive',
+                          title: 'Case History',
                           onTap: () {
-
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const CaseHistoryScreen(),
+                              ),
+                            );
                           },
                         ),
 
-                        /// My History Tile
+                        /// Flagged Tile
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
                           child: BuildAccountSettingsTiles(
                             leftIcon: FontAwesomeIcons.clockRotateLeft,
                             rightIcon: FontAwesomeIcons.angleRight,
-                            title: 'My History',
+                            title: 'Flagged Mold History',
                             onTap: () {
 
                             },
