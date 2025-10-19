@@ -1,3 +1,4 @@
+import 'package:moldify/core/features/camera/models/camera_model_result.dart';
 import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,32 +12,34 @@ import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
 
+
 class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
+  final Map<String, dynamic>? modelResult;
 
-  const MoldResultScreen({super.key, required this.croppedImagePath});
+  const MoldResultScreen({super.key, required this.croppedImagePath, this.modelResult});
 
   @override
   State<MoldResultScreen> createState() => _MoldResultScreenState();
 }
 
 class _MoldResultScreenState extends State<MoldResultScreen> {
-  String confidenceLevel = 90.toString();
-  String moldGenus = 'Aspergillus';
+  late String confidenceLevel;
+  late String moldGenus;
 
   final String fullDescription =
-      "Aspergillus is a genus of common molds that can be found in various environments, "
-      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
-      "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
-      "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
-      "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
-      "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
-      "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
-      "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
-      "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
-      "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
-      "are also used commercially for the production of citric acid and other enzymes, highlighting "
-      "the genus's dual role as both a potential pathogen and a useful industrial microorganism." ?? 'No description available.';
+    "Aspergillus is a genus of common molds that can be found in various environments, "
+    "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
+    "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
+    "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
+    "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
+    "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
+    "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
+    "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
+    "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
+    "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
+    "are also used commercially for the production of citric acid and other enzymes, highlighting "
+    "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
   bool _showFullText = false;
   late TapGestureRecognizer _tapRecognizer;
@@ -59,6 +62,23 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
           _showFullText = !_showFullText;
         });
       };
+    // Initialize from modelResult argument
+  // Convert probability from decimal to percentage string
+  final prob = widget.modelResult?['probability'];
+  if (prob != null) {
+    double percent = 0.0;
+    if (prob is String) {
+      percent = double.tryParse(prob) ?? 0.0;
+    } else if (prob is num) {
+      percent = prob.toDouble();
+    }
+    confidenceLevel = (percent * 100).toStringAsFixed(2);
+  } else {
+    confidenceLevel = '';
+  }
+  // Extract only the genus from 'genus_spp' format
+  final predictedClass = widget.modelResult?['predicted_class']?.toString() ?? '';
+  moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
   }
 
   @override

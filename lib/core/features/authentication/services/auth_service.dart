@@ -21,13 +21,25 @@ class AuthService {
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
-    final String? cookie = response.headers['set-cookie'];
+    final String? setCookie = response.headers['set-cookie'];
+
+    String? sessionCookie;
+    if (setCookie != null) {
+      final cookies = setCookie.split(',');
+      for (final cookie in cookies) {
+        if (cookie.trim().startsWith('session=')) {
+          // Only take the cookie value up to the first semicolon
+          sessionCookie = cookie.trim().split(';').first;
+          break;
+        }
+      }
+    }
 
     return {
       'success': success,
       'data': data,
       'error': error,
-      'cookie': cookie,
+      'cookie': sessionCookie,
     };
   }
 
@@ -54,7 +66,7 @@ class AuthService {
     };
   }
 
-  Future<Map<String, dynamic>> registerUser(String username, String email, String password) async {
+  Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber) async {
     final response = await _apiService.post(
       '/register',
       headers: {'Content-Type': 'application/json'},
@@ -62,6 +74,10 @@ class AuthService {
         'username': username,
         'email': email,
         'password': password,
+        'firstName': firstName,
+        'lastName': lastName,
+        'address': address,
+        'phoneNumber': phoneNumber
       },
     );
 

@@ -96,6 +96,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       usernameController.text,
       emailController.text,
       passwordController.text,
+      fnameController.text,
+      lnameController.text,
+      addressController.text,
+      phoneNumController.text,
     );
     setState(() => isLoading = false);
     if (!result['success']) {

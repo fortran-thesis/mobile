@@ -34,7 +34,7 @@ class AppRoutes {
             if (isAuthenticated) {
               return MainPage();
             }
-            return MainPage();
+            return LoginScreen();
           case RouteNames.signup:
             return SignUpScreen();
           case RouteNames.emailRecoverAccount:
@@ -50,7 +50,7 @@ class AppRoutes {
             if (isAuthenticated) {
               return MainPage();
             }
-            return MainPage();
+            return IntroScreen();
           case RouteNames.main:
             return MainPage();
           case RouteNames.setNewPassword:
@@ -84,7 +84,8 @@ class AppRoutes {
               final args = settings.arguments as Map<String, dynamic>;
               if (args.containsKey('croppedImagePath') && args['croppedImagePath'] is String) {
                 final String croppedImagePath = args['croppedImagePath'] as String;
-                return MoldResultScreen(croppedImagePath: croppedImagePath);
+                final Map<String, dynamic>? modelResult = args['modelResult'] as Map<String, dynamic>?;
+                return MoldResultScreen(croppedImagePath: croppedImagePath, modelResult: modelResult);
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('croppedImagePath missing')));
               }

@@ -1,3 +1,4 @@
+import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
@@ -141,23 +142,44 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       await file.writeAsBytes(pngBytes);
       print('Cropped image saved to: ${file.path}');
 
-      if (!mounted) return;
-      if (widget.source == 'add_log') {
-        // 3. Update navigation arguments to include sourceTab
-        Navigator.pushNamed(
-          context,
-          '/add-log',
-          arguments: {
-            'imagePath': file.path,
-            'sourceTab': widget.sourceTab
-          },
+      // Send image to model API
+      try {
+        // Import CameraService at the top of the file:
+        // import 'package:moldify/core/features/camera/services/camera_service.dart';
+        final cameraService = CameraService();
+        final result = await cameraService.identifyImage(
+          imageBytes: pngBytes,
+          filename: fileName,
         );
-      } else {
-        Navigator.pushNamed(
-          context,
-          '/mold_result',
-          arguments: {'croppedImagePath': file.path},
-        );
+        print('Model API result: $result');
+
+        if (!mounted) return;
+        if (widget.source == 'add_log') {
+          Navigator.pushNamed(
+            context,
+            '/add-log',
+            arguments: {
+              'imagePath': file.path,
+              'sourceTab': widget.sourceTab,
+            },
+          );
+        } else {
+          Navigator.pushNamed(
+            context,
+            '/mold_result',
+            arguments: {
+              'croppedImagePath': file.path,
+              'modelResult': result,
+            },
+          );
+        }
+      } catch (e) {
+        print('Error sending image to model API: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send image for identification.')),
+          );
+        }
       }
 
     } catch (e, s) {
