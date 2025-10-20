@@ -6,7 +6,6 @@ import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/wikimold/main_wikimold.dart';
 import '../../../core/constants/route_names.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';

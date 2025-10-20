@@ -8,16 +8,23 @@ class StatusBox extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
-        return MoldifyColors.accentColor;
-      case 'in progress':
-        return MoldifyColors.MoldifyBlue;
-      case 'resolved':
-        return MoldifyColors.primaryColor;
-      case 'closed':
-        return MoldifyColors.MoldifyGrey;
-      case 'rejected':
-        return MoldifyColors.MoldifyRed;
+        case 'pending':
+          return MoldifyColors.accentColor;
+        case 'in progress':
+          return MoldifyColors.MoldifyBlue;
+        case 'resolved':
+          return MoldifyColors.primaryColor;
+        case 'closed':
+          return MoldifyColors.MoldifyGrey;
+        case 'rejected':
+          return MoldifyColors.MoldifyRed;
+        case 'low priority':
+          return MoldifyColors.MoldifyLightGreen;
+        case 'medium priority':
+          return MoldifyColors.MoldifyLightYellow;
+        case 'high priority':
+          return MoldifyColors.MoldifyLightRed;
+
       default:
         return Colors.black26;
     }
@@ -38,7 +45,10 @@ class StatusBox extends StatelessWidget {
         style: TextStyle(
           fontFamily: 'Bricolage-Grotesque-Bold',
           fontSize: 12,
-          color: status.toLowerCase() == 'pending'
+          color: status.toLowerCase() == 'pending' ||
+              status.toLowerCase() == 'low priority' ||
+              status.toLowerCase() == 'medium priority' ||
+              status.toLowerCase() == 'high priority'
               ? MoldifyColors.MoldifyBlack
               : MoldifyColors.backgroundColor
         ),

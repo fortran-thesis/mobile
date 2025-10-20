@@ -29,18 +29,22 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   Widget build(BuildContext context) {
     //Determine if the case is closed. This boolean will control the UI.
     final bool isCaseClosed = caseStatus == 'Closed';
+    String priorityLevel = 'Low Priority';
+
 
     //Dynamically build the list of menu items based on the case status.
     final List<String> popupMenuItems = [
       if (!isCaseClosed) 'Set Monitoring Details',
       'Identification History',
       'Treatment History',
+      'Export PDF'
     ];
 
     final List<IconData> popupMenuIcons = [
       if (!isCaseClosed) FontAwesomeIcons.circleInfo,
       FontAwesomeIcons.clockRotateLeft,
       FontAwesomeIcons.sprayCan,
+      FontAwesomeIcons.solidFilePdf,
     ];
 
 
@@ -63,6 +67,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             }
             else if (selectedItem == 'Treatment History') {
               Navigator.pushNamed(context, '/treatment-history');
+            }
+            else if (selectedItem == 'Export PDF') {
+              // Implement export PDF functionality here
             }
           }
       ),
@@ -95,14 +102,16 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: StatusBox(
-                            status: caseStatus
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          StatusBox(status: priorityLevel),
+                          SizedBox(width: 5),
+                          StatusBox(status: caseStatus),
+                        ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
+                        padding: const EdgeInsets.only(top: 15.0),
                         child: Text(
                           'Tomato Mold',
                           style: TextStyle(

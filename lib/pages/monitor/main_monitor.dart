@@ -88,11 +88,13 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                           onItemSelected: (index) {
                             // Handle the selection based on the index
                             if (index == 0) {
-                              // In Progress was tapped
+                              // All was tapped
                             } else if (index == 1) {
+                              // In Progress was tapped
+                            } else if (index == 2) {
                               // Pending was tapped
                             } else if (index == 2) {
-                              // Resolve was tapped
+                              // Resolved was tapped
                             }
                           },
                         ),
