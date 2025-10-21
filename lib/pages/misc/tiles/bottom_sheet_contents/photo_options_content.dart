@@ -12,11 +12,15 @@ import 'package:moldify/pages/misc/colors.dart';
 class PhotoOptionsBottomSheetContent extends StatelessWidget {
   final VoidCallback? onUploadPhoto;
   final VoidCallback? onRemovePhoto;
+  final String? label2;
+  final IconData? label2Icon;
 
   const PhotoOptionsBottomSheetContent({
     super.key,
     this.onUploadPhoto,
     this.onRemovePhoto,
+    this.label2,
+    this.label2Icon,
   });
 
   @override
@@ -43,12 +47,12 @@ class PhotoOptionsBottomSheetContent extends StatelessWidget {
         ),
         ListTile(
           leading: Icon(
-            FontAwesomeIcons.solidTrashCan,
+            label2Icon ?? FontAwesomeIcons.solidTrashCan,
             color: MoldifyColors.accentColor,
             size: 20.0
           ),
           title: Text(
-            'Remove Photo',
+            label2 ?? 'Remove Photo',
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-Bold',
               color: MoldifyColors.primaryColor,

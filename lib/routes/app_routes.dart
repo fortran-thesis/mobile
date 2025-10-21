@@ -14,6 +14,7 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
+import '../pages/farmer/report/submit_report.dart';
 import '../pages/identification/main_camera.dart';
 import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
@@ -152,7 +153,8 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final bool showAppBar = args?['showAppBar'] as bool? ?? false;
             return MainCameraScreen(showAppBar: showAppBar);
-
+            case RouteNames.submitReport:
+              return SubmitReportScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

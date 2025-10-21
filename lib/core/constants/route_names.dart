@@ -19,6 +19,9 @@ class RouteNames {
   static const String treatmentHistory = '/treatment-history';
   static const String addLogInstructions = '/add-log-instructions';
   static const String addLog = '/add-log';
-  static const String mainCamera = '/main-camera'; // Added this line
+  static const String mainCamera = '/main-camera';
+
+  /// for farmers
+  static const String submitReport = '/submit-report';
   // Add more route names as needed
 }

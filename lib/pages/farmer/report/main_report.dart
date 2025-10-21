@@ -81,7 +81,10 @@ class _MainReportScreenState extends State<MainReportScreen> {
                             /// Submit Mold Report Button
                             TextButton(
                               onPressed: () {
-                                // TODO: Navigate to full cases list
+                                Navigator.pushNamed(
+                                  context,
+                                  '/submit-report',
+                                );
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -162,7 +165,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 onTap: () {
                                   Navigator.pushNamed(
                                     context,
-                                    '/view-case',
+                                    '/submit-report',
                                   );
                                 },
                                 /// This is the pop menu button
