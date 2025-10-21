@@ -21,22 +21,26 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
     {
       'caseName': 'Wowerz',
       'dateSubmitted': 'October 25, 2025',
-      'status': 'Closed',
+      'priorityLevel': 'Medium Priority',
+      'caseStatus': 'Closed',
     },
     {
       'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
       'dateSubmitted': 'October 20, 2025',
-      'status': 'Closed',
+      'priorityLevel': 'Low Priority',
+      'caseStatus': 'Closed',
     },
     {
       'caseName': 'Wowersz',
       'dateSubmitted': 'October 25, 2025',
-      'status': 'Closed',
+      'priorityLevel': 'Low Priority',
+      'caseStatus': 'Closed',
     },
     {
       'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
       'dateSubmitted': 'October 20, 2025',
-      'status': 'Closed',
+      'priorityLevel': 'Low Priority',
+      'caseStatus': 'Closed',
     },
   ];
   @override
@@ -98,7 +102,8 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                     child: MainCaseTile(
                         caseName: closed['caseName']!,
                         dateSubmitted: closed['dateSubmitted']!,
-                        status: closed['status']!,
+                        priorityLevel: closed['priorityLevel']!,
+                        caseStatus: closed['caseStatus']!,
                         dateLabel: 'Date Closed: ',
                         onTap: () {
                           Navigator.pushNamed(

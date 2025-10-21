@@ -114,6 +114,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     //Determine if the case is closed. This boolean will control the UI.
     final bool isCaseClosed = caseStatus == 'Closed';
     String priorityLevel = 'Low Priority';
+    String endDate = 'December 15, 2025';
 
 
     //Dynamically build the list of menu items based on the case status.
@@ -189,13 +190,38 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            StatusBox(status: priorityLevel),
+                            StatusBox(status: priorityLevel, fontSize: 12,),
                             SizedBox(width: 5),
-                            StatusBox(status: caseStatus),
+                            StatusBox(status: caseStatus, fontSize: 12,),
                           ],
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 15.0),
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'End Date: ',
+                                  style: const TextStyle(
+                                    fontSize: 10.0,
+                                    color: MoldifyColors.primaryColor,
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: endDate,
+                                  style: const TextStyle(
+                                    fontSize: 10.0,
+                                    color: MoldifyColors.primaryColor,
+                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             'Tomato Mold',
                             style: TextStyle(

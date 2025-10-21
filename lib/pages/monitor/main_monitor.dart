@@ -23,22 +23,26 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
       {
         'caseName': 'Wowerz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'Pending',
+        'priorityLevel': 'Low Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'priorityLevel': 'Medium Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Wowersz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'In Progress',
+        'priorityLevel': 'High Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'priorityLevel': 'Low Priority',
+        'caseStatus': 'Resolved',
       },
     ];
     return Stack(
@@ -84,15 +88,13 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                             color: MoldifyColors.accentColor,
                             size: 20.0
                           ),
-                          items: ['All', 'In Progress', 'Pending', 'Resolved'],
+                          items: ['All', 'In Progress', 'Resolved'],
                           onItemSelected: (index) {
                             // Handle the selection based on the index
                             if (index == 0) {
                               // All was tapped
                             } else if (index == 1) {
                               // In Progress was tapped
-                            } else if (index == 2) {
-                              // Pending was tapped
                             } else if (index == 2) {
                               // Resolved was tapped
                             }
@@ -130,7 +132,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                           child: MainCaseTile(
                               caseName: article['caseName']!,
                               dateSubmitted: article['dateSubmitted']!,
-                              status: article['status']!,
+                              priorityLevel: article['priorityLevel']!,
+                              caseStatus: article['caseStatus']!,
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,

@@ -22,22 +22,22 @@ class _MainReportScreenState extends State<MainReportScreen> {
       {
         'caseName': 'Wowerz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'Pending',
+        'caseStatus': 'Pending',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'caseStatus': 'Resolved',
       },
       {
         'caseName': 'Wowersz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'In Progress',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'caseStatus': 'Resolved',
       },
     ];
 
@@ -161,7 +161,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                             child: MainCaseTile(
                                 caseName: report['caseName']!,
                                 dateSubmitted: report['dateSubmitted']!,
-                                status: report['status']!,
+                                caseStatus: report['caseStatus']!,
                                 onTap: () {
                                   Navigator.pushNamed(
                                     context,

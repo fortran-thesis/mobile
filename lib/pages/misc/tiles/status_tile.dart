@@ -3,8 +3,9 @@ import 'package:moldify/pages/misc/colors.dart';
 
 class StatusBox extends StatelessWidget {
   final String status;
+  final double? fontSize;
 
-  const StatusBox({super.key, required this.status});
+  const StatusBox({super.key, required this.status, this.fontSize});
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -44,7 +45,7 @@ class StatusBox extends StatelessWidget {
         status,
         style: TextStyle(
           fontFamily: 'Bricolage-Grotesque-Bold',
-          fontSize: 12,
+          fontSize: fontSize ?? 8,
           color: status.toLowerCase() == 'pending' ||
               status.toLowerCase() == 'low priority' ||
               status.toLowerCase() == 'medium priority' ||

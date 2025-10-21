@@ -2,11 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
+import 'status_tile.dart';
 
 class MainCaseTile extends StatefulWidget {
   final String caseName;
   final String dateSubmitted;
-  final String status;
+  final String? priorityLevel;
+  final String caseStatus;
   final String? imageUrl;
   final VoidCallback onTap;
   final double? imageWidth, imageHeight;
@@ -23,7 +25,8 @@ class MainCaseTile extends StatefulWidget {
     super.key,
     required this.caseName,
     required this.dateSubmitted,
-    required this.status,
+    this.priorityLevel,
+    required this.caseStatus,
     this.imageUrl,
     required this.onTap,
     this.showPopupMenu = false,
@@ -47,24 +50,6 @@ class _MainCaseTileState extends State<MainCaseTile> {
   void initState() {
     super.initState();
     _containerColor = MoldifyColors.taupe;
-  }
-
-  // Helper method to get color based on status
-  Color _getColorForStatus(String status) {
-    switch (status) {
-      case 'Resolved':
-        return MoldifyColors.primaryColor;
-      case 'Pending':
-        return MoldifyColors.accentColor;
-      case 'In Progress':
-        return MoldifyColors.MoldifyBlue;
-      case 'Rejected':
-        return MoldifyColors.MoldifyRed;
-      case 'Closed':
-        return MoldifyColors.MoldifyGrey;
-      default:
-        return Colors.grey;
-    }
   }
 
   @override
@@ -134,7 +119,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
                     children: [
                       // This Padding widget prevents the text from overlapping with the status label.
                       Padding(
-                        padding: const EdgeInsets.only(top: 10.0, right: 20.0),
+                        padding: const EdgeInsets.only(top: 15.0, right: 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -176,27 +161,16 @@ class _MainCaseTileState extends State<MainCaseTile> {
                       Positioned(
                         top: -14,
                         right: 5,
-                        child: Container(
-                          width: 75,
-                          // 2. Styled the container
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0, vertical: 4.0),
-                          decoration: BoxDecoration(
-                            color: _getColorForStatus(widget.status),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: Center(
-                            child: Text(
-                              widget.status,
-                              style: TextStyle(
-                                  fontSize: 10.0,
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                  color: widget.status == 'Pending'
-                                      ? MoldifyColors.MoldifyBlack
-                                      : MoldifyColors.backgroundColor
-                              ),
-                            ),
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.priorityLevel != null) ...[
+                              StatusBox(status: widget.priorityLevel!),
+                              const SizedBox(width: 5),
+                            ],
+                            const SizedBox(width: 5),
+                            StatusBox(status: widget.caseStatus),
+                          ],
                         ),
                       ),
                     ],

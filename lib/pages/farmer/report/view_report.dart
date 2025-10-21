@@ -159,7 +159,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                       children: [
                         Align(
                             alignment: Alignment.centerRight,
-                            child: StatusBox(status: caseStatus)
+                            child: StatusBox(status: caseStatus, fontSize: 12)
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 15.0),

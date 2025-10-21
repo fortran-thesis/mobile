@@ -30,28 +30,32 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'caseName': 'Wowerz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'Pending',
+        'caseStatus': 'Pending',
+        'priorityLevel': 'Low Priority',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Pending',
+        'caseStatus': 'Pending',
+        'priorityLevel': 'Medium Priority',
       },
       {
         'caseName': 'Case Three',
         'dateSubmitted': 'October 15, 2025',
-        'status': 'Pending',
+        'caseStatus': 'Pending',
+        'priorityLevel': 'High Priority',
       },
       {
         'caseName': 'Case Four',
         'dateSubmitted': 'October 10, 2025',
-        'status': 'Pending',
+        'caseStatus': 'Pending',
+        'priorityLevel': 'Low Priority',
       },
     ];
 
     /// Filter only pending cases
     final pendingCases = recentCases
-        .where((c) => (c['status'] ?? '').toLowerCase() == 'pending')
+        .where((c) => (c['caseStatus'] ?? '').toLowerCase() == 'pending')
         .toList();
 
     return Scaffold(
@@ -218,7 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: MainCaseTile(
                   caseName: c['caseName'] ?? 'Unknown',
                   dateSubmitted: c['dateSubmitted'] ?? '',
-                  status: c['status'] ?? '',
+                  priorityLevel: c['priorityLevel'] ?? '',
+                  caseStatus: c['caseStatus'] ?? '',
                   imageHeight: 70.0,
                   imageWidth: 70.0,
                   onTap: () {
