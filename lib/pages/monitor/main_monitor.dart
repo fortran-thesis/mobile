@@ -139,8 +139,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               },
                               /// This is the pop menu button
                               showPopupMenu: true,
-                              popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History'],
-                              popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+                              popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History', 'Export PDF'],
+                              popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
                               onPopupMenuItemSelected: (index) {
                                 // Handle the selection based on the index
 
@@ -170,6 +170,12 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                   );
                                 }
                                 /// End of Treatment History
+
+                                /// Export PDF
+                                else if (index == 3) {
+
+                                }
+                                /// End of Export PDF
                               }
                           ),
                         );

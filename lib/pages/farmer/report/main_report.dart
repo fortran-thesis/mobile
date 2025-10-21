@@ -171,7 +171,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 /// This is the pop menu button
                                 showPopupMenu: true,
                                 popupMenuItems: ['Treatment History', 'Export PDF'],
-                                popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+                                popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
                                 onPopupMenuItemSelected: (index) {
                                   // Handle the selection based on the index
 

@@ -106,6 +106,36 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                             '/view-case',
                           );
                         },
+                        showPopupMenu: true,
+                        popupMenuItems: ['Identification History', 'Treatment History', 'Export PDF'],
+                        popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
+                        onPopupMenuItemSelected: (index) {
+                          // Handle the selection based on the index
+
+                          /// Identification History
+                          if (index == 0) {
+                            Navigator.pushNamed(
+                              context,
+                              '/identification-history',
+                            );
+                          }
+                          /// End of Identification History
+
+                          /// Treatment History
+                          else if (index == 1) {
+                            Navigator.pushNamed(
+                              context,
+                              '/treatment-history',
+                            );
+                          }
+                          /// End of Treatment History
+
+                          /// Export PDF
+                          else if (index == 2) {
+
+                          }
+                          /// End of Export PDF
+                        }
                     ),
                   );
                 },

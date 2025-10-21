@@ -25,6 +25,90 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
   String caseStatus = 'Pending';
 
+  // Data for Case Details Tab
+  final String farmerName = 'Juan Dela Cruz';
+  final String dateFirstObserved = 'October 30, 2025';
+  final String emailAddress = 'juan.delacruz@example.com';
+  final String contactNumber = '+63 917 123 4567';
+  final List<Map<String, dynamic>> caseEntries = [
+    {
+      'date': 'October 30, 2025',
+      'notes': 'Initial report. Small, dark spots observed on the lower leaves of several tomato plants. The area is humid and has poor air circulation.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+    {
+      'date': 'November 2, 2025',
+      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+    {
+      'date': 'November 2, 2025',
+      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+  ];
+
+  // Data for In-Vitro Tab
+  final String inVitroDateTime = 'November 01, 2025 – 10:00 AM';
+  final String inVitroGrowthMedium = 'Potato Dextrose Agar';
+  final String inVitroIncubationTemperature = '25°C';
+  final List<Map<String, String>> inVitroEntries = [
+    {
+      'date': 'November 01, 2025 – 10:00 AM',
+      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
+      'sizeValue': '10 mm',
+      'colorValue': 'White',
+      'notes': 'Initial growth observed. Colony is circular and small.',
+    },
+    {
+      'date': 'November 03, 2025 – 10:00 AM',
+      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
+      'sizeValue': '25 mm',
+      'colorValue': 'Greenish-blue',
+      'notes': 'Color changing to a greenish-blue. Mycelium is spreading.',
+    },
+    {
+      'date': 'November 05, 2025 – 10:00 AM',
+      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
+      'sizeValue': '50 mm',
+      'colorValue': 'Dark Green',
+      'notes': 'Colony has almost covered the plate. Spores are visible.',
+    },
+  ];
+
+  // Data for In-Vivo Tab
+  final String inVivoDateTime = 'November 01, 2025 – 10:00 AM';
+  final String inVivoEnvironmentalTemperature = '28°C';
+  final List<Map<String, String>> inVivoEntries = [
+    {
+      'date': 'November 02, 2025 – 9:00 AM',
+      'imagePath': 'https://extension.usu.edu/vegetableguide/images/solanaceae-images/black-mold-tomato.jpg',
+      'sizeValue': '5 mm',
+      'colorValue': 'Yellowish',
+      'notes': 'Small lesions appeared on the leaves. No significant wilting.',
+    },
+    {
+      'date': 'November 04, 2025 – 9:00 AM',
+      'imagePath': 'https://extension.usu.edu/vegetableguide/images/solanaceae-images/black-mold-tomato.jpg',
+      'sizeValue': '15 mm',
+      'colorValue': 'Brown with yellow halo',
+      'notes': 'Lesions have enlarged and developed a distinct yellow halo. Some leaf curling observed.',
+    },
+  ];
+
+
   @override
   Widget build(BuildContext context) {
     //Determine if the case is closed. This boolean will control the UI.
@@ -49,222 +133,240 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
 
     return Scaffold(
-      backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(
-        title: 'View Case',
-          showPopupMenu: true,
-          popupMenuItems: popupMenuItems,
-          popupMenuIcons: popupMenuIcons,
-          onPopupMenuItemSelected: (index) {
-            // The selected item is now correctly determined from the same list used by the menu.
-            final selectedItem = popupMenuItems[index];
+        backgroundColor: MoldifyColors.backgroundColor,
+        appBar: PrimaryAppBar(
+            title: 'View Case',
+            showPopupMenu: true,
+            popupMenuItems: popupMenuItems,
+            popupMenuIcons: popupMenuIcons,
+            onPopupMenuItemSelected: (index) {
+              // The selected item is now correctly determined from the same list used by the menu.
+              final selectedItem = popupMenuItems[index];
 
-            if (selectedItem == 'Set Monitoring Details') {
-              Navigator.pushNamed(context, '/set-monitoring-details');
+              if (selectedItem == 'Set Monitoring Details') {
+                Navigator.pushNamed(context, '/set-monitoring-details');
+              }
+              else if (selectedItem == 'Identification History') {
+                Navigator.pushNamed(context, '/identification-history');
+              }
+              else if (selectedItem == 'Treatment History') {
+                Navigator.pushNamed(context, '/treatment-history');
+              }
+              else if (selectedItem == 'Export PDF') {
+                // Implement export PDF functionality here
+              }
             }
-            else if (selectedItem == 'Identification History') {
-              Navigator.pushNamed(context, '/identification-history');
-            }
-            else if (selectedItem == 'Treatment History') {
-              Navigator.pushNamed(context, '/treatment-history');
-            }
-            else if (selectedItem == 'Export PDF') {
-              // Implement export PDF functionality here
-            }
-          }
-      ),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
+        ),
+        body: SingleChildScrollView(
+          child: Stack(
+            children: [
 
-            ///1. Cover image for the case
-            BuildCoverImage(
-              imageUrl: caseImageUrl,
-              borderRadiusContainer: 8,
-              borderRadiusImage: 8,
-              isHeader: true,
-            ),
+              ///1. Cover image for the case
+              BuildCoverImage(
+                imageUrl: caseImageUrl,
+                borderRadiusContainer: 8,
+                borderRadiusImage: 8,
+                isHeader: true,
+              ),
 
-            ///2. Case details
-            Padding(
-              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: MoldifyColors.backgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.0),
-                    topRight: Radius.circular(20.0),
+              ///2. Case details
+              Padding(
+                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: MoldifyColors.backgroundColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20.0),
+                      topRight: Radius.circular(20.0),
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 15.0, bottom: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          StatusBox(status: priorityLevel),
-                          SizedBox(width: 5),
-                          StatusBox(status: caseStatus),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 15.0),
-                        child: Text(
-                          'Tomato Mold',
-                          style: TextStyle(
-                            fontFamily: 'Montserrat-Black',
-                            fontSize: 24,
-                            color: MoldifyColors.primaryColor,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                      /// Crop Name
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: RichText(
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Icon(
-                                      FontAwesomeIcons.seedling,
-                                      size: 16,
-                                      color: MoldifyColors.accentColor,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "			Kamatis Tagalog",
-                                    style: TextStyle(
-                                      color: MoldifyColors.primaryColor,
-                                      fontSize: 12,
-                                      fontFamily:
-                                      'Bricolage-Grotesque-Regular',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: RichText(
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Icon(
-                                      FontAwesomeIcons.locationDot,
-                                      size: 16,
-                                      color: MoldifyColors.accentColor,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "			Ilocos Region",
-                                    style: TextStyle(
-                                      color: MoldifyColors.primaryColor,
-                                      fontSize: 12,
-                                      fontFamily:
-                                      'Bricolage-Grotesque-Regular',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      if(!isCaseClosed)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Row (
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 15.0, bottom: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            BuildButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RouteNames.mainCamera,
-                                    arguments: {'showAppBar': true},
-                                  );
-                                },
-                                buttonText: 'Identify Mold',
-                                fontSize: 12,
-                                backgroundColor: MoldifyColors.primaryColor,
-                                textColor: MoldifyColors.backgroundColor,
-                                leftIcon: FontAwesomeIcons.camera,
-                                iconSize: 12,
-                                iconColor: MoldifyColors.backgroundColor,
-                                paddingIconText: 10,
-                                buttonHeight: 30,
-                                buttonWidth: 120,
-                                buttonRadius: 7,
-                            ),
+                            StatusBox(status: priorityLevel),
                             SizedBox(width: 5),
-                            BuildButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/add-treatment',
-                                );
-                              },
-                              buttonText: 'Add Treatment',
-                              fontSize: 12,
-                              backgroundColor: MoldifyColors.accentColor,
-                              textColor: MoldifyColors.MoldifyBlack,
-                              leftIcon: FontAwesomeIcons.plus,
-                              iconSize: 12,
-                              iconColor: MoldifyColors.MoldifyBlack,
-                              paddingIconText: 10,
-                              buttonHeight: 30,
-                              buttonWidth: 120,
-                              buttonRadius: 7,
-                            )
+                            StatusBox(status: caseStatus),
                           ],
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10.0),
-                        child: SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.7,
-                          child: BuildTabBar(
-                            tabs: ['Case Details', 'In Vitro', 'In Vivo'],
-                            tabContents: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: CaseDetailsTab(),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: InVitroTab(isCaseClosed: isCaseClosed),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: InVivoTab(isCaseClosed: isCaseClosed),                              ),
-                            ],
+                        Padding(
+                          padding: const EdgeInsets.only(top: 15.0),
+                          child: Text(
+                            'Tomato Mold',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat-Black',
+                              fontSize: 24,
+                              color: MoldifyColors.primaryColor,
+                              height: 1.2,
+                            ),
                           ),
                         ),
-                      )
-                    ],
+                        /// Crop Name
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: RichText(
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Icon(
+                                        FontAwesomeIcons.seedling,
+                                        size: 16,
+                                        color: MoldifyColors.accentColor,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "			Kamatis Tagalog",
+                                      style: TextStyle(
+                                        color: MoldifyColors.primaryColor,
+                                        fontSize: 12,
+                                        fontFamily:
+                                        'Bricolage-Grotesque-Regular',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: RichText(
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                text: TextSpan(
+                                  children: [
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Icon(
+                                        FontAwesomeIcons.locationDot,
+                                        size: 16,
+                                        color: MoldifyColors.accentColor,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "			Ilocos Region",
+                                      style: TextStyle(
+                                        color: MoldifyColors.primaryColor,
+                                        fontSize: 12,
+                                        fontFamily:
+                                        'Bricolage-Grotesque-Regular',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if(!isCaseClosed)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Row (
+                              children: [
+                                BuildButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      RouteNames.mainCamera,
+                                      arguments: {'showAppBar': true},
+                                    );
+                                  },
+                                  buttonText: 'Identify Mold',
+                                  fontSize: 12,
+                                  backgroundColor: MoldifyColors.primaryColor,
+                                  textColor: MoldifyColors.backgroundColor,
+                                  leftIcon: FontAwesomeIcons.camera,
+                                  iconSize: 12,
+                                  iconColor: MoldifyColors.backgroundColor,
+                                  paddingIconText: 10,
+                                  buttonHeight: 30,
+                                  buttonWidth: 120,
+                                  buttonRadius: 7,
+                                ),
+                                SizedBox(width: 5),
+                                BuildButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/add-treatment',
+                                    );
+                                  },
+                                  buttonText: 'Add Treatment',
+                                  fontSize: 12,
+                                  backgroundColor: MoldifyColors.accentColor,
+                                  textColor: MoldifyColors.MoldifyBlack,
+                                  leftIcon: FontAwesomeIcons.plus,
+                                  iconSize: 12,
+                                  iconColor: MoldifyColors.MoldifyBlack,
+                                  paddingIconText: 10,
+                                  buttonHeight: 30,
+                                  buttonWidth: 120,
+                                  buttonRadius: 7,
+                                )
+                              ],
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: BuildTabBar(
+                              tabs: ['Case Details', 'In Vitro', 'In Vivo'],
+                              tabContents: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                  child: CaseDetailsTab(
+                                    entries: caseEntries,
+                                    farmerName: farmerName,
+                                    dateFirstObserved: dateFirstObserved,
+                                    emailAddress: emailAddress,
+                                    contactNumber: contactNumber,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                  child: InVitroTab(
+                                    isCaseClosed: isCaseClosed,
+                                    dateTime: inVitroDateTime,
+                                    growthMedium: inVitroGrowthMedium,
+                                    incubationTemperature: inVitroIncubationTemperature,
+                                    inVitroEntries: inVitroEntries,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                  child: InVivoTab(
+                                    isCaseClosed: isCaseClosed,
+                                    dateTime: inVivoDateTime,
+                                    environmentalTemperature: inVivoEnvironmentalTemperature,
+                                    inVivoEntries: inVivoEntries,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-          ],
-        ),
-      )
+            ],
+          ),
+        )
     );
   }
 }

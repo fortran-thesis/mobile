@@ -9,32 +9,21 @@ import '../../misc/functions/empty_state.dart';
 import '../../misc/tiles/experiment_timeline_tile.dart';
 
 class InVivoTab extends StatelessWidget {
-  // 1. Add isCaseClosed to the constructor
   final bool isCaseClosed;
-  const InVivoTab({super.key, required this.isCaseClosed});
+  final String dateTime;
+  final String environmentalTemperature;
+  final List<Map<String, String>> inVivoEntries;
+
+  const InVivoTab({
+    super.key,
+    required this.isCaseClosed,
+    required this.dateTime,
+    required this.environmentalTemperature,
+    required this.inVivoEntries,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> inVivoEntries = [
-      {
-        'date': 'October 2, 2025 • 09:14 PM',
-        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
-        'sizeValue': '20 mm',
-        'colorValue': 'White',
-        'notes': 'Growth appears normal.',
-      },
-      {
-        'date': 'October 5, 2025 • 10:30 AM',
-        'imagePath': 'https://plantpath.ifas.ufl.edu/u-scout/tomato/images/black-mold/22161DD2C3964DF39A98F053EB87FBF3/5-4.png',
-        'sizeValue': '35 mm',
-        'colorValue': 'Greenish center',
-        'notes': 'Colonies expanding rapidly.',
-      },
-    ];
-
-    String dateTime = 'October 2, 2025 • 09:14 PM';
-    String environmentalTemperature = '36°C';
-
     return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
@@ -65,20 +54,20 @@ class InVivoTab extends StatelessWidget {
                     ),
                   ],
                 ),
-                // 2. Conditionally show the 'Add' button if the case is not closed
+                // Conditionally show the 'Add' button if the case is not closed
                 if (!isCaseClosed)
-                BuildIconButton(
-                    icon: FontAwesomeIcons.plus,
-                    backgroundColor: MoldifyColors.MoldifySoftGrey,
-                    color: MoldifyColors.MoldifyGrey,
-                    onPressed: () {
-                      Navigator.pushNamed(
+                  BuildIconButton(
+                      icon: FontAwesomeIcons.plus,
+                      backgroundColor: MoldifyColors.MoldifySoftGrey,
+                      color: MoldifyColors.MoldifyGrey,
+                      onPressed: () {
+                        Navigator.pushNamed(
                           context,
                           RouteNames.addLogInstructions,
                           arguments: {'sourceTab': 'in-vivo'},
-                      );
-                    }
-                )
+                        );
+                      }
+                  )
               ],
             ),
             Column(
@@ -124,20 +113,20 @@ class InVivoTab extends StatelessWidget {
                 notes: entry['notes'] ?? '',
                 isFirst: index == 0,
                 isLast: index == inVivoEntries.length - 1,
-                  // 3. Conditionally provide empty lists to hide the popup menu if the case is closed
-                  popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
-                  popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
-                  onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
-                    if (selectedIndex == 0) {
-                      Navigator.pushNamed(
+                // Conditionally provide empty lists to hide the popup menu if the case is closed
+                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
+                  if (selectedIndex == 0) {
+                    Navigator.pushNamed(
                         context,
                         '/edit-log', arguments: {'tabName': 'In Vivo'}
-                      );
-                    }
-                    else if (selectedIndex == 1) {
-                      // Handle delete
-                    }
-                  },
+                    );
+                  }
+                  else if (selectedIndex == 1) {
+                    // Handle delete
+                  }
+                },
                 sizeLabel: 'Lesion Size',
                 colorLabel: 'Lesion Color',
               );

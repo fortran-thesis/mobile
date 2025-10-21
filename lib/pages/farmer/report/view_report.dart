@@ -62,6 +62,40 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     );
   }
 
+  // Data for Case Details Tab
+  final String farmerName = 'Juan Dela Cruz';
+  final String dateFirstObserved = 'October 30, 2025';
+  final String emailAddress = 'juan.delacruz@example.com';
+  final String contactNumber = '+63 917 123 4567';
+  final List<Map<String, dynamic>> caseEntries = [
+    {
+      'date': 'October 30, 2025',
+      'notes': 'Initial report. Small, dark spots observed on the lower leaves of several tomato plants. The area is humid and has poor air circulation.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+    {
+      'date': 'November 2, 2025',
+      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+    {
+      'date': 'November 2, 2025',
+      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'images': [
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
+      ],
+    },
+  ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +105,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             title: 'View Case',
             showPopupMenu: true,
             popupMenuItems: ['Treatment History', 'Export PDF'],
-            popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+            popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
             onPopupMenuItemSelected: (index) {
               // Handle the selection based on the index
 
@@ -281,7 +315,13 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                     tabContents: [
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                        child: CaseDetailsTab(),
+                                        child: CaseDetailsTab(
+                                          entries: caseEntries,
+                                          farmerName: farmerName,
+                                          dateFirstObserved: dateFirstObserved,
+                                          emailAddress: emailAddress,
+                                          contactNumber: contactNumber,
+                                        ),
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
@@ -292,7 +332,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             'Copper-based fungicides',
                                             'Azoxystrobin'
                                           ],
-                                          additionalInformation: 'To prevent future outbreaks, ensure proper plant spacing for good air circulation, water at the base of plants to keep foliage dry, and promptly remove and destroy any infected plant debris. Rotate crops annually and consider using resistant varieties if available.',
+                                          additionalInformation: 'To prevent future outbreaks, ensure proper '
+                                              'plant spacing for good air circulation, water at the base of plants '
+                                              'to keep foliage dry, and promptly remove and destroy any infected plant'
+                                              ' debris. Rotate crops annually and consider using resistant varieties if available.'
+                                          ,
                                         ),
                                       ),
                                     ],
