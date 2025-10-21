@@ -14,7 +14,9 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
+import '../pages/farmer/report/add_follow_up.dart';
 import '../pages/farmer/report/submit_report.dart';
+import '../pages/farmer/report/view_report.dart';
 import '../pages/identification/main_camera.dart';
 import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
@@ -155,6 +157,10 @@ class AppRoutes {
             return MainCameraScreen(showAppBar: showAppBar);
             case RouteNames.submitReport:
               return SubmitReportScreen();
+          case RouteNames.viewReport:
+              return ViewReportScreen();
+          case RouteNames.addFollowUp:
+              return AddFollowUpScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

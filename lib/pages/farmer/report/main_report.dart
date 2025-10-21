@@ -165,31 +165,31 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 onTap: () {
                                   Navigator.pushNamed(
                                     context,
-                                    '/submit-report',
+                                    '/view-report',
                                   );
                                 },
                                 /// This is the pop menu button
                                 showPopupMenu: true,
-                                popupMenuItems: ['Identification History', 'Treatment History'],
+                                popupMenuItems: ['Treatment History', 'Export PDF'],
                                 popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
                                 onPopupMenuItemSelected: (index) {
                                   // Handle the selection based on the index
 
-                                  /// Identification History
-                                  if (index == 0) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/identification-history',
-                                    );
-                                  }
-                                  /// End of Identification History
-
                                   /// Treatment History
-                                  else if (index == 1) {
+                                  if (index == 0) {
                                     Navigator.pushNamed(
                                       context,
                                       '/treatment-history',
                                     );
+                                  }
+                                  /// End of Identification History
+
+                                  /// Export PDF
+                                  else if (index == 1) {
+                                    // Navigator.pushNamed(
+                                    //   context,
+                                    //   '/treatment-history',
+                                    // );
                                   }
                                   /// End of Treatment History
                                 }

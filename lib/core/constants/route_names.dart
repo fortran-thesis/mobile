@@ -23,5 +23,7 @@ class RouteNames {
 
   /// for farmers
   static const String submitReport = '/submit-report';
+  static const String viewReport = '/view-report';
+  static const String addFollowUp = '/add-follow-up';
   // Add more route names as needed
 }

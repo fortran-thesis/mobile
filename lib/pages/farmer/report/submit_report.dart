@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../misc/appbar/primary_app_bar.dart';
+import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/textboxes/textboxes.dart';
@@ -138,7 +139,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       child: Scaffold(
           backgroundColor: MoldifyColors.backgroundColor,
           appBar: PrimaryAppBar(
-            title: 'Set Monitoring Details',
+            title: 'Submit Report',
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -263,6 +264,38 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     showPassword: false,
                     isMultiline: true,
                   ),
+
+                  /// Submit Report Button
+                  Padding(
+                    padding: const EdgeInsets.only(top: 50.0),
+                    child: BuildButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return BuildConfirmationDialog(
+                                title: 'Are you sure you want to submit this report?',
+                                subtitle: 'Once submitted, you will not be able to edit the report details.',
+                                onConfirm: () {
+                                  Navigator.of(context).pop();
+                                  Navigator.of(context).pop();
+                                },
+                                onCancel: (){
+                                  Navigator.of(context).pop();
+                                },
+                              );
+                            },
+                          );
+                        },
+                        buttonText: 'Submit Report',
+                        backgroundColor: MoldifyColors.primaryColor,
+                        textColor: MoldifyColors.backgroundColor,
+                        buttonHeight: 45,
+                        buttonWidth: MediaQuery.of(context).size.width,
+                        buttonRadius: 10
+                    ),
+                  )
                 ],
               ),
             ),
