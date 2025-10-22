@@ -236,7 +236,6 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Please select a reason for reporting.'),
-                            backgroundColor: MoldifyColors.primaryColor,
                             duration: const Duration(seconds: 3),
                             action: SnackBarAction(
                               label: 'OK',

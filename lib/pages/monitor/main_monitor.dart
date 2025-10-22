@@ -23,22 +23,26 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
       {
         'caseName': 'Wowerz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'Pending',
+        'priorityLevel': 'Low Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'priorityLevel': 'Medium Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Wowersz',
         'dateSubmitted': 'October 25, 2025',
-        'status': 'In Progress',
+        'priorityLevel': 'High Priority',
+        'caseStatus': 'In Progress',
       },
       {
         'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
         'dateSubmitted': 'October 20, 2025',
-        'status': 'Resolved',
+        'priorityLevel': 'Low Priority',
+        'caseStatus': 'Resolved',
       },
     ];
     return Stack(
@@ -84,15 +88,15 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                             color: MoldifyColors.accentColor,
                             size: 20.0
                           ),
-                          items: ['All', 'In Progress', 'Pending', 'Resolved'],
+                          items: ['All', 'In Progress', 'Resolved'],
                           onItemSelected: (index) {
                             // Handle the selection based on the index
                             if (index == 0) {
-                              // In Progress was tapped
+                              // All was tapped
                             } else if (index == 1) {
-                              // Pending was tapped
+                              // In Progress was tapped
                             } else if (index == 2) {
-                              // Resolve was tapped
+                              // Resolved was tapped
                             }
                           },
                         ),
@@ -128,7 +132,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                           child: MainCaseTile(
                               caseName: article['caseName']!,
                               dateSubmitted: article['dateSubmitted']!,
-                              status: article['status']!,
+                              priorityLevel: article['priorityLevel']!,
+                              caseStatus: article['caseStatus']!,
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
@@ -137,8 +142,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               },
                               /// This is the pop menu button
                               showPopupMenu: true,
-                              popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History'],
-                              popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan],
+                              popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History', 'Export PDF'],
+                              popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
                               onPopupMenuItemSelected: (index) {
                                 // Handle the selection based on the index
 
@@ -168,6 +173,12 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                   );
                                 }
                                 /// End of Treatment History
+
+                                /// Export PDF
+                                else if (index == 3) {
+
+                                }
+                                /// End of Export PDF
                               }
                           ),
                         );

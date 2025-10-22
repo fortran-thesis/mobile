@@ -1,13 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/farmer/wikimold/view_wikimold.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
-import 'package:moldify/pages/wikimold/view_wikimold.dart';
+import '../../misc/functions/empty_state.dart';
+import '../../misc/tiles/wikimold_tiles.dart';
 
-import '../misc/functions/empty_state.dart';
-import '../misc/tiles/wikimold_tiles.dart';
 
 class MainWikiMoldScreen extends StatefulWidget {
   const MainWikiMoldScreen({super.key});

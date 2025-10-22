@@ -19,5 +19,9 @@ class MoldifyColors{
     static const Color MoldifyGrey = Color(0xFF7E8083);
     static const Color MoldifySoftGrey = Color(0xFFD9D9D9);
 
+    //this is used for status colors
+    static const Color MoldifyLightGreen = Color(0xFFB4D37F);
+    static const Color MoldifyLightRed = Color(0xFFFFA397);
+    static const Color MoldifyLightYellow = Color(0xFFF9CC69);
 
 }

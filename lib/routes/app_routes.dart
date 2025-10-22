@@ -3,6 +3,7 @@ import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/code_recover_account.dart';
 import 'package:moldify/pages/auth/intro.dart';
+import 'package:moldify/pages/farmer/report/main_report.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
@@ -13,6 +14,9 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
+import '../pages/farmer/report/add_follow_up.dart';
+import '../pages/farmer/report/submit_report.dart';
+import '../pages/farmer/report/view_report.dart';
 import '../pages/identification/main_camera.dart';
 import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
@@ -52,7 +56,7 @@ class AppRoutes {
             }
             return IntroScreen();
           case RouteNames.main:
-            return MainPage();
+            return MainReportScreen();
           case RouteNames.setNewPassword:
             final args = settings.arguments as Map<String, dynamic>?;
             final token = args != null && args['token'] != null ? args['token'] as String : '';
@@ -151,7 +155,12 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final bool showAppBar = args?['showAppBar'] as bool? ?? false;
             return MainCameraScreen(showAppBar: showAppBar);
-
+            case RouteNames.submitReport:
+              return SubmitReportScreen();
+          case RouteNames.viewReport:
+              return ViewReportScreen();
+          case RouteNames.addFollowUp:
+              return AddFollowUpScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

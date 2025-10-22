@@ -9,49 +9,23 @@ import '../../misc/functions/empty_state.dart';
 /// It displays a timeline of case updates with dates, notes, and images.
 /// This displays all the follow up entries of the farmer
 class CaseDetailsTab extends StatelessWidget {
-  const CaseDetailsTab({super.key});
+  final List<Map<String, dynamic>> entries;
+  final String farmerName;
+  final String dateFirstObserved;
+  final String emailAddress;
+  final String contactNumber;
+
+  const CaseDetailsTab({
+    super.key,
+    required this.entries,
+    required this.farmerName,
+    required this.dateFirstObserved,
+    required this.emailAddress,
+    required this.contactNumber,
+  });
 
   @override
   Widget build(BuildContext context) {
-
-    /// This is sample data. In a real app, this would come from a backend or database.
-    final List<Map<String, dynamic>> entries = [
-      {
-        "date": "September 30, 2025 • 10:31 PM",
-        "notes":
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et massa mi. Aliquam in hendrerit urna.",
-        "images": [
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-
-        ]
-      },
-      {
-        "date": "October 2, 2025 • 09:14 PM",
-        "notes":
-        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        "images": [
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-        ]
-      },
-      {
-        "date": "October 5, 2025 • 8:10 PM",
-        "notes": "Final update before closing the monitoring case.",
-        "images": [
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-          "https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg",
-        ],
-      },
-    ];
-
-    String farmerName = "Lauren Bishmilla";
-    String dateFirstObserved = "10-20-25";
-    String emailAddress = "laurenbishmilla@gmail.com";
-    String contactNumber = "+639674306842";
-
     /// Entries are displayed in reverse chronological order (most recent first)
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -59,7 +33,7 @@ class CaseDetailsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Case Details Header
-          Text (
+          Text(
             'Case Details',
             style: TextStyle(
               fontFamily: 'Montserrat-Black',
@@ -67,7 +41,7 @@ class CaseDetailsTab extends StatelessWidget {
               color: MoldifyColors.primaryColor,
             ),
           ),
-          Text (
+          Text(
             'View details reported by the farmer about the mold problem.',
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-Regular',
@@ -75,6 +49,7 @@ class CaseDetailsTab extends StatelessWidget {
               color: MoldifyColors.MoldifyGrey,
             ),
           ),
+
           /// End of Case Details Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -94,6 +69,7 @@ class CaseDetailsTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
+
                   /// Farmer Name
                   Text(
                     farmerName,
@@ -136,6 +112,7 @@ class CaseDetailsTab extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 10.0),
+
             /// Email Address Label
             child: Text(
               "Email Address:",
@@ -159,6 +136,7 @@ class CaseDetailsTab extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 10.0),
+
             /// Contact Number Label
             child: Text(
               "Contact Number:",
@@ -170,6 +148,7 @@ class CaseDetailsTab extends StatelessWidget {
             ),
           ),
           SizedBox(height: 4),
+
           /// Contact Number Value
           Text(
             contactNumber,
@@ -190,7 +169,8 @@ class CaseDetailsTab extends StatelessWidget {
             message: 'No information available.',
             icon: FontAwesomeIcons.circleInfo,
             height: MediaQuery.of(context).size.height - 500,
-          ): const SizedBox.shrink(),
+          )
+              : const SizedBox.shrink(),
           ...List.generate(
             entries.length,
                 (index) {
@@ -293,14 +273,17 @@ class _CaseTimelineTile extends StatelessWidget {
                           context: context,
                           barrierDismissible: true,
                           builder: (context) {
-                            final controller = PageController(initialPage: initialIndex);
+                            final controller =
+                            PageController(initialPage: initialIndex);
                             int currentIndex = initialIndex;
 
                             return StatefulBuilder(
                               builder: (context, setState) {
                                 return Dialog(
-                                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                                  backgroundColor: Colors.black.withValues(alpha: 0.9),
+                                  shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero),
+                                  backgroundColor:
+                                  Colors.black.withOpacity(0.9),
                                   insetPadding: EdgeInsets.zero,
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -316,7 +299,8 @@ class _CaseTimelineTile extends StatelessWidget {
                                         },
                                         itemBuilder: (context, index) {
                                           return Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8.0),
                                             child: InteractiveViewer(
                                               child: Center(
                                                 child: Image.network(
@@ -334,8 +318,10 @@ class _CaseTimelineTile extends StatelessWidget {
                                         top: 20,
                                         right: 15,
                                         child: IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                                          onPressed: () => Navigator.pop(context),
+                                          icon: const Icon(Icons.close,
+                                              color: Colors.white, size: 28),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
                                         ),
                                       ),
 
@@ -345,20 +331,23 @@ class _CaseTimelineTile extends StatelessWidget {
                                         left: 0,
                                         right: 0,
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                           children: [
                                             /// Left arrow
                                             IconButton(
                                               icon: const Icon(
                                                   Icons.arrow_back_ios_new,
-                                                  color: MoldifyColors.backgroundColor,
-                                                  size: 20
-                                              ),
+                                                  color: MoldifyColors
+                                                      .backgroundColor,
+                                                  size: 20),
                                               onPressed: currentIndex > 0
                                                   ? () {
                                                 controller.previousPage(
-                                                  duration: const Duration(milliseconds: 200),
-                                                  curve: Curves.easeInOut,
+                                                  duration: const Duration(
+                                                      milliseconds: 200),
+                                                  curve:
+                                                  Curves.easeInOut,
                                                 );
                                               }
                                                   : null,
@@ -369,9 +358,11 @@ class _CaseTimelineTile extends StatelessWidget {
                                             Text(
                                               "${currentIndex + 1} / ${imageUrls.length}",
                                               style: const TextStyle(
-                                                color: MoldifyColors.backgroundColor,
+                                                color: MoldifyColors
+                                                    .backgroundColor,
                                                 fontSize: 16,
-                                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                                fontFamily:
+                                                'Bricolage-Grotesque-Regular',
                                               ),
                                             ),
                                             const SizedBox(width: 16),
@@ -380,14 +371,17 @@ class _CaseTimelineTile extends StatelessWidget {
                                             IconButton(
                                               icon: const Icon(
                                                   Icons.arrow_forward_ios,
-                                                  color: MoldifyColors.backgroundColor,
-                                                  size: 20
-                                              ),
-                                              onPressed: currentIndex < imageUrls.length - 1
+                                                  color: MoldifyColors
+                                                      .backgroundColor,
+                                                  size: 20),
+                                              onPressed: currentIndex <
+                                                  imageUrls.length - 1
                                                   ? () {
                                                 controller.nextPage(
-                                                  duration: const Duration(milliseconds: 200),
-                                                  curve: Curves.easeInOut,
+                                                  duration: const Duration(
+                                                      milliseconds: 200),
+                                                  curve:
+                                                  Curves.easeInOut,
                                                 );
                                               }
                                                   : null,
@@ -403,6 +397,7 @@ class _CaseTimelineTile extends StatelessWidget {
                           },
                         );
                       },
+
                       /// --- Thumbnail image ---x
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -416,7 +411,6 @@ class _CaseTimelineTile extends StatelessWidget {
                               width: 100,
                               height: 100,
                               color: Colors.grey[300],
-                              child: const Icon(Icons.broken_image, color: Colors.grey),
                             );
                           },
                         ),

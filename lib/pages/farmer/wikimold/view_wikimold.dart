@@ -3,9 +3,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/images/circle_avatar.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
+import '../../misc/colors.dart';
+import '../../misc/images/cover_image.dart';
 
-import '../misc/colors.dart';
-import '../misc/images/cover_image.dart';
 
 class ViewWikiMoldScreen extends StatefulWidget {
   final String articleTitle;
