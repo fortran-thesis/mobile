@@ -56,13 +56,28 @@ class AuthService {
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
-    final String? cookie = response.headers['set-cookie'];
+    final String? setCookie = response.headers['set-cookie'];
+
+    print('success: $success');
+    print('data: $data');
+    print('error: $error');
+
+    String? sessionCookie;
+    if (setCookie != null) {
+      final cookies = setCookie.split(',');
+      for (final cookie in cookies) {
+        if (cookie.trim().startsWith('session=')) {
+          sessionCookie = cookie.trim().split(';').first;
+          break;
+        }
+      }
+    }
 
     return {
       'success': success,
       'data': data,
       'error': error,
-      'cookie': cookie,
+      'cookie': sessionCookie,
     };
   }
 

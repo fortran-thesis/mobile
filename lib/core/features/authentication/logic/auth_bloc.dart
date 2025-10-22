@@ -29,6 +29,7 @@ class AuthBloc {
   }
 
   Future<Map<String, dynamic>> loginOAuth(String token) async {
+    print(token);
     final result = await authService.loginOAuth(token);
     if (!result['success']) {
       return {
@@ -53,6 +54,7 @@ class AuthBloc {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
+        print('loginWithGoogle: Google sign-in cancelled by user');
         return {
           'success': false,
           'error': 'Google sign-in cancelled by user',
@@ -66,7 +68,9 @@ class AuthBloc {
       );
       final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
       final token = await userCredential.user?.getIdToken(true);
+      print('loginWithGoogle: Google token = $token');
       if (token == null) {
+        print('loginWithGoogle: Failed to get Google token');
         return {
           'success': false,
           'error': 'Failed to get Google token',
@@ -74,8 +78,10 @@ class AuthBloc {
         };
       }
       final result = await loginOAuth(token);
+      print('loginWithGoogle: loginOAuth result = $result');
       return result;
     } catch (e) {
+      print('loginWithGoogle: Exception = $e');
       return {
         'success': false,
         'error': 'Google sign-in failed: $e',

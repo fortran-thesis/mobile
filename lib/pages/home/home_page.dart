@@ -5,6 +5,12 @@ import 'package:moldify/pages/misc/chart/status_donut_chart.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/providers/auth_provider.dart';
 import 'package:moldify/pages/misc/tiles/home_banner.dart';
 import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
 import '../misc/images/circle_avatar.dart';
@@ -19,11 +25,42 @@ class HomeScreen extends StatefulWidget{
 }
 class _HomeScreenState extends State<HomeScreen> {
   int _unReadNotifications = 2;
+  late UserBloc _userBloc;
+  StreamSubscription? _userSub;
+  String fullName = 'Guest User';
+  String role = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _userBloc = UserBloc(userService: UserService());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+    });
+    _userSub = _userBloc.stream.listen((state) {
+      if (state is UserProfileLoaded) {
+        final profile = state.profile;
+        setState(() {
+          fullName = '${profile.firstName} ${profile.lastName}';
+          role = profile.role.isNotEmpty
+              ? profile.role[0].toUpperCase() + profile.role.substring(1)
+              : profile.role;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    _userBloc.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    String fullName = 'John Doe' ?? 'N/A';
-    String role = 'Mycologist' ?? 'N/A';
 
     /// Sample data for recent cases
     final recentCases = <Map<String, String>>[

@@ -30,12 +30,13 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AppAuthProvider>(context);
+    final bool isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
     return MaterialApp(
       title: 'Moldify',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-      ),
-      initialRoute: RouteNames.intro,
+      theme: ThemeData(),
+      initialRoute: isAuthenticated ? RouteNames.main : RouteNames.intro,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }
