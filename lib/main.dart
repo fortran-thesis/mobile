@@ -9,6 +9,10 @@ import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/identification/main_camera.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
+import 'package:moldify/pages/farmer/report/main_report.dart';
+import 'dart:async';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/core/features/user/services/user_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,40 +56,80 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int selectedPosition = 0;
 
-  /// List of pages to be displayed in the main page.
-  /// The first page is the HomeScreen, the second is the MainCameraScreen,
-  /// and the third is the MainMonitorScreen.
-  final List<Widget> _pages = [
+  // Bloc to fetch user profile and decide role-based layout
+  late UserBloc _userBloc;
+  StreamSubscription? _userSub;
+  bool _isExpert = true; // mycologist/curator => true; farmer/user => false
+
+  /// List of pages to be displayed in the main page. This is updated
+  /// depending on the user's role (expert vs farmer).
+  List<Widget> _pages = [
     const HomeScreen(),
     const MainCameraScreen(),
     const MainMonitorScreen(),
   ];
 
-  /// This method is called when the widget is first created.
-  /// It initializes the selectedPosition to 0, which means the first page (HomeScreen)
-  /// will be displayed initially.
+  @override
+  void initState() {
+    super.initState();
+    _userBloc = UserBloc(userService: UserService());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+    });
+
+    _userSub = _userBloc.stream.listen((state) {
+      if (state is UserProfileLoaded) {
+        final role = state.profile.role.toLowerCase();
+        final isExpert = !(role == 'farmer' || role == 'user');
+        if (isExpert != _isExpert) {
+          setState(() {
+            _isExpert = isExpert;
+            if (_isExpert) {
+              _pages = [const HomeScreen(), const MainCameraScreen(), const MainMonitorScreen()];
+            } else {
+              _pages = [const HomeScreen(), const MainReportScreen()];
+            }
+            if (selectedPosition >= _pages.length) selectedPosition = 0;
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    _userBloc.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
       body: _pages[selectedPosition],
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            selectedPosition = 1;
-          });
-        },
-        backgroundColor: MoldifyColors.primaryColor,
-        shape: const CircleBorder(),
-        child: Icon(
-          FontAwesomeIcons.camera,
-          size: 24,
-          color: selectedPosition == 1
-              ? MoldifyColors.accentColor
-              : MoldifyColors.backgroundColor,
-        ),
-      ),
+      floatingActionButton: _isExpert
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  // camera is index 1 in expert layout
+                  selectedPosition = 1;
+                });
+              },
+              backgroundColor: MoldifyColors.primaryColor,
+              shape: const CircleBorder(),
+              child: Icon(
+                FontAwesomeIcons.camera,
+                size: 24,
+                color: selectedPosition == 1
+                    ? MoldifyColors.accentColor
+                    : MoldifyColors.backgroundColor,
+              ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -104,18 +148,31 @@ class _MainPageState extends State<MainPage> {
         notchMargin: 5.0,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _tabItem(
-              icon: FontAwesomeIcons.house,
-              isSelected: selectedPosition == 0,
-              onTap: () => setState(() => selectedPosition = 0),
-            ),
-            _tabItem(
-              icon: FontAwesomeIcons.solidClipboard,
-              isSelected: selectedPosition == 2,
-              onTap: () => setState(() => selectedPosition = 2),
-            ),
-          ],
+          children: _isExpert
+              ? [
+                  _tabItem(
+                    icon: FontAwesomeIcons.house,
+                    isSelected: selectedPosition == 0,
+                    onTap: () => setState(() => selectedPosition = 0),
+                  ),
+                  _tabItem(
+                    icon: FontAwesomeIcons.solidClipboard,
+                    isSelected: selectedPosition == 2,
+                    onTap: () => setState(() => selectedPosition = 2),
+                  ),
+                ]
+              : [
+                  _tabItem(
+                    icon: FontAwesomeIcons.house,
+                    isSelected: selectedPosition == 0,
+                    onTap: () => setState(() => selectedPosition = 0),
+                  ),
+                  _tabItem(
+                    icon: FontAwesomeIcons.solidClipboard,
+                    isSelected: selectedPosition == 1,
+                    onTap: () => setState(() => selectedPosition = 1),
+                  ),
+                ],
         ),
       ),
     );

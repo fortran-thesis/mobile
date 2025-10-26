@@ -43,7 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (state is UserProfileLoaded) {
         final profile = state.profile;
         setState(() {
-          fullName = '${profile.firstName} ${profile.lastName}';
+          final first = profile.firstName.trim();
+          final last = profile.lastName.trim();
+
+          if (first.isEmpty && last.isEmpty) {
+            final user = profile.username.trim();
+            fullName = user.isNotEmpty ? user : 'Guest User';
+          } else {
+            fullName = ('$first $last').trim();
+          }
+
           role = profile.role.isNotEmpty
               ? profile.role[0].toUpperCase() + profile.role.substring(1)
               : profile.role;

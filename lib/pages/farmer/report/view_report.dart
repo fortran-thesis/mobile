@@ -2,8 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/report/content_tab/prevention_tactics_content.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/features/user/logic/user_bloc.dart';
 
-import '../../../core/constants/route_names.dart';
+import '../../../core/features/mold_report/models/mold_report.dart';
+import '../../../core/features/mold_report/repository/mold_report_repository.dart';
+import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
+import '../../../providers/auth_provider.dart';
+
+// route names not used here
 import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
@@ -21,9 +30,9 @@ class ViewReportScreen extends StatefulWidget {
 }
 
 class _ViewReportScreenState extends State<ViewReportScreen> {
-  String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
+  String? caseImageUrl;
   // Change the status to 'Resolved', 'Closed', 'In Progress', or 'Rejected' to see different UI states.
-  String caseStatus = 'Resolved';
+  String caseStatus = 'Pending';
 
   /// Builds a centered text widget to display messages for non-resolved statuses.
   Widget _buildStatusMessageWidget(String status) {
@@ -96,9 +105,97 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     },
   ];
 
+  // Backend-driven state
+  bool _isLoading = true;
+  String? _error;
+  MoldReport? _report;
+
+  Future<void> _loadReportFromArgs() async {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    print('ViewReport: args = $args');
+    String? id;
+    if (args is Map<String, dynamic>) {
+      id = args['id']?.toString();
+    } else if (args is String) {
+      id = args;
+    }
+
+    print('ViewReport: extracted id = $id');
+
+    if (id == null || id.isEmpty) {
+      setState(() {
+        _error = 'No report id provided';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      print('ViewReport: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
+
+      // Prefer existing repository from a surrounding MoldReportBloc if available
+      MoldReportRepository repo;
+      try {
+        final bloc = Provider.of<MoldReportBloc>(context, listen: false);
+        repo = bloc.repository;
+        print('ViewReport: using repository from MoldReportBloc');
+      } catch (_) {
+        // no bloc in context, create a local repository
+        repo = MoldReportRepository(pageSize: 10);
+        print('ViewReport: created new repository');
+      }
+
+      print('ViewReport: calling getReportById($id)');
+      final MoldReport? report = await repo.getReportById(id, sessionCookie: sessionCookie);
+      print('ViewReport: getReportById returned: $report');
+      
+      if (report == null) {
+        setState(() {
+          _error = 'Report not found';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      print('ViewReport: report.id = ${report.id}');
+      print('ViewReport: report.caseName = ${report.caseName}');
+      print('ViewReport: report.host = ${report.host}');
+      print('ViewReport: report.status = ${report.status}');
+      print('ViewReport: report.caseDetails.length = ${report.caseDetails.length}');
+
+      setState(() {
+        _report = report;
+        // Capitalize the first letter of status
+        String status = report.status.isNotEmpty ? report.status : 'Pending';
+        if (status.isNotEmpty) {
+          status = status[0].toUpperCase() + status.substring(1);
+        }
+        caseStatus = status;
+        caseImageUrl = report.caseDetails.isNotEmpty && report.caseDetails.first.coverPhoto.isNotEmpty
+            ? report.caseDetails.first.coverPhoto.first
+            : null;
+        print('ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl');
+        _isLoading = false;
+      });
+    } catch (e, stackTrace) {
+      print('ViewReport: ERROR - $e');
+      print('ViewReport: stackTrace - $stackTrace');
+      setState(() {
+        _error = 'Failed to load report: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    // trigger loading once after the first frame when arguments are available
+    if (_isLoading && _report == null && _error == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadReportFromArgs());
+    }
     return Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
@@ -133,12 +230,28 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             children: [
 
               ///1. Cover image for the case
-              BuildCoverImage(
-                imageUrl: caseImageUrl,
-                borderRadiusContainer: 8,
-                borderRadiusImage: 8,
-                isHeader: true,
-              ),
+              if (_isLoading)
+                SizedBox(
+                  height: 220,
+                  child: const Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                SizedBox(
+                  height: 220,
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                )
+              else
+                BuildCoverImage(
+                  imageUrl: caseImageUrl,
+                  borderRadiusContainer: 8,
+                  borderRadiusImage: 8,
+                  isHeader: true,
+                ),
 
               ///2. Case details
               Padding(
@@ -164,7 +277,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 15.0),
                           child: Text(
-                            'Tomato Mold',
+                            _report?.caseName ?? 'Case Details',
                             style: TextStyle(
                               fontFamily: 'Montserrat-Black',
                               fontSize: 24,
@@ -193,15 +306,15 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                         color: MoldifyColors.accentColor,
                                       ),
                                     ),
-                                    TextSpan(
-                                      text: "			Kamatis Tagalog",
-                                      style: TextStyle(
-                                        color: MoldifyColors.primaryColor,
-                                        fontSize: 12,
-                                        fontFamily:
-                                        'Bricolage-Grotesque-Regular',
+                                      TextSpan(
+                                        text: _report?.host ?? '\t\t\tUnknown crop',
+                                        style: TextStyle(
+                                          color: MoldifyColors.primaryColor,
+                                          fontSize: 12,
+                                          fontFamily:
+                                          'Bricolage-Grotesque-Regular',
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -221,15 +334,15 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                         color: MoldifyColors.accentColor,
                                       ),
                                     ),
-                                    TextSpan(
-                                      text: "			Ilocos Region",
-                                      style: TextStyle(
-                                        color: MoldifyColors.primaryColor,
-                                        fontSize: 12,
-                                        fontFamily:
-                                        'Bricolage-Grotesque-Regular',
+                                      TextSpan(
+                                        text: '\t\t\tUnknown location',
+                                        style: TextStyle(
+                                          color: MoldifyColors.primaryColor,
+                                          fontSize: 12,
+                                          fontFamily:
+                                          'Bricolage-Grotesque-Regular',
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -315,13 +428,53 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                     tabContents: [
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                        child: CaseDetailsTab(
-                                          entries: caseEntries,
-                                          farmerName: farmerName,
-                                          dateFirstObserved: dateFirstObserved,
-                                          emailAddress: emailAddress,
-                                          contactNumber: contactNumber,
-                                        ),
+                                        child: Builder(builder: (ctx) {
+                                          // derive display values from UserBloc when available, fall back to defaults
+                                          String displayFarmerName = farmerName;
+                                          String displayEmail = emailAddress;
+                                          String displayContact = contactNumber;
+
+                                          try {
+                                            final userState = BlocProvider.of<UserBloc>(ctx).state;
+                                            if (userState is UserProfileLoaded) {
+                                              final profile = userState.profile;
+                                              final fullName = ((profile.firstName.isNotEmpty || profile.lastName.isNotEmpty)
+                                                      ? '${profile.firstName} ${profile.lastName}'.trim()
+                                                      : profile.username);
+                                              displayFarmerName = fullName.isNotEmpty ? fullName : displayFarmerName;
+                                              displayEmail = profile.email.isNotEmpty ? profile.email : displayEmail;
+                                              displayContact = profile.phoneNumber.isNotEmpty ? profile.phoneNumber : displayContact;
+                                            }
+                                          } catch (_) {
+                                            // no UserBloc in context or other error; keep defaults
+                                          }
+
+                                          // format dateObserved when available
+                                          String formattedObserved(DateTime? dt) {
+                                            if (dt == null) return dateFirstObserved;
+                                            try {
+                                              return DateFormat('MMMM d, yyyy').format(dt.toLocal());
+                                            } catch (_) {
+                                              return dateFirstObserved;
+                                            }
+                                          }
+
+                                          final entries = _report != null
+                                              ? _report!.caseDetails.map((d) => {
+                                                  'date': formattedObserved(_report!.dateObserved),
+                                                  'notes': d.description,
+                                                  'images': d.coverPhoto,
+                                                }).toList()
+                                              : caseEntries;
+
+                                          return CaseDetailsTab(
+                                            entries: entries,
+                                            farmerName: _report != null ? displayFarmerName : farmerName,
+                                            dateFirstObserved: _report != null ? formattedObserved(_report!.dateObserved) : dateFirstObserved,
+                                            emailAddress: displayEmail,
+                                            contactNumber: displayContact,
+                                          );
+                                        }),
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),

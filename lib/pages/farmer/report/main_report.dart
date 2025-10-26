@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../misc/buttons/popmenu_button.dart';
 import '../../misc/colors.dart';
 import '../../misc/functions/empty_state.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/main_case_tile.dart';
+import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
+import '../../../core/features/mold_report/models/mold_report.dart';
+import '../../../core/features/mold_report/repository/mold_report_repository.dart';
+import '../../../providers/auth_provider.dart';
 
 class MainReportScreen extends StatefulWidget {
   const MainReportScreen({super.key});
@@ -16,30 +23,53 @@ class MainReportScreen extends StatefulWidget {
 
 class _MainReportScreenState extends State<MainReportScreen> {
   final TextEditingController searchController = TextEditingController();
+  late final MoldReportRepository _repository;
+  late final MoldReportBloc _bloc;
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = MoldReportRepository(pageSize: 10);
+    _bloc = MoldReportBloc(repository: _repository, pageSize: 10);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      _bloc.add(FetchMoldReports(sessionCookie: sessionCookie));
+    });
+
+    _scrollController.addListener(() {
+      final state = _bloc.state;
+      if (state is MoldReportLoaded) {
+        final max = _scrollController.position.maxScrollExtent;
+        final current = _scrollController.position.pixels;
+        if (current >= (max - 200)) {
+          if (!_isFetchingMore && state.hasMore && state.nextPageToken != null && state.nextPageToken!.isNotEmpty) {
+            _isFetchingMore = true;
+            final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+            final sessionCookie = authProvider.cookie;
+            _bloc.add(FetchMoldReports(pageToken: state.nextPageToken, useCache: false, sessionCookie: sessionCookie));
+            // Use a more reliable way to reset the flag after fetch completes
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted) _isFetchingMore = false;
+            });
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _bloc.close();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String?>> reportsSubmitted = [
-      {
-        'caseName': 'Wowerz',
-        'dateSubmitted': 'October 25, 2025',
-        'caseStatus': 'Pending',
-      },
-      {
-        'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
-        'dateSubmitted': 'October 20, 2025',
-        'caseStatus': 'Resolved',
-      },
-      {
-        'caseName': 'Wowersz',
-        'dateSubmitted': 'October 25, 2025',
-        'caseStatus': 'In Progress',
-      },
-      {
-        'caseName': 'Case Two Na sobrnag haba ba ganons ahsuhasuashushasuhsuh',
-        'dateSubmitted': 'October 20, 2025',
-        'caseStatus': 'Resolved',
-      },
-    ];
+    // Reports will be loaded from the backend using MoldReportBloc
 
     return Scaffold(
       body: Stack(
@@ -143,61 +173,87 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           rightIcon: FontAwesomeIcons.magnifyingGlass,
                         ),
                       ),
-                      /// This the empty state if there are no reports
-                      reportsSubmitted.isEmpty
-                          ? EmptyState(
-                        message: 'No reports available.',
+                      /// Reports list (infinite scroll)
+                      SizedBox(
                         height: MediaQuery.of(context).size.height - 300,
-                      ):
-                      /// The list of cases will be here
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: reportsSubmitted.length,
-                        itemBuilder: (context, index) {
-                          final report = reportsSubmitted[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 10.0),
-                            child: MainCaseTile(
-                                caseName: report['caseName']!,
-                                dateSubmitted: report['dateSubmitted']!,
-                                caseStatus: report['caseStatus']!,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/view-report',
-                                  );
+                        child: BlocProvider.value(
+                          value: _bloc,
+                          child: BlocBuilder<MoldReportBloc, MoldReportState>(
+                            builder: (context, state) {
+                              if (state is MoldReportLoading) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              if (state is MoldReportError) {
+                                return EmptyState(message: state.message, height: MediaQuery.of(context).size.height - 300);
+                              }
+
+                              final reports = state is MoldReportLoaded ? state.reports : <dynamic>[];
+
+                              if (reports.isEmpty) {
+                                return EmptyState(message: 'No reports available.', height: MediaQuery.of(context).size.height - 300);
+                              }
+
+                              return RefreshIndicator(
+                                onRefresh: () async {
+                                  final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
                                 },
-                                /// This is the pop menu button
-                                showPopupMenu: true,
-                                popupMenuItems: ['Treatment History', 'Export PDF'],
-                                popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
-                                onPopupMenuItemSelected: (index) {
-                                  // Handle the selection based on the index
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  itemCount: reports.length + (state is MoldReportLoaded && state.hasMore ? 1 : 0),
+                                  itemBuilder: (context, index) {
+                                    if (index >= reports.length) {
+                                      return const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                                        child: Center(child: CircularProgressIndicator()),
+                                      );
+                                    }
 
-                                  /// Treatment History
-                                  if (index == 0) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/treatment-history',
+                                    final report = reports[index] as MoldReport;
+                                    final String caseName = (report.host.isNotEmpty ? report.host : report.userId).toString();
+                                    // Capitalize the first letter of status
+                                    String caseStatus = (report.status).toString();
+                                    if (caseStatus.isNotEmpty) {
+                                      caseStatus = caseStatus[0].toUpperCase() + caseStatus.substring(1);
+                                    }
+                  final String dateSubmitted = report.dateObserved != null
+                    ? DateFormat('MMMM d, yyyy').format(report.dateObserved!.toLocal())
+                    : '';
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 10.0),
+                                      child: MainCaseTile(
+                                        caseName: caseName,
+                                        dateSubmitted: dateSubmitted,
+                                        caseStatus: caseStatus,
+                                        onTap: () {
+                                          print('MainReport: Navigating to view-report with id: ${report.id}');
+                                          print('MainReport: report = ${report.toJson()}');
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-report',
+                                            arguments: {'id': report.id},
+                                          );
+                                        },
+                                        showPopupMenu: true,
+                                        popupMenuItems: ['Treatment History', 'Export PDF'],
+                                        popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
+                                        onPopupMenuItemSelected: (menuIndex) {
+                                          if (menuIndex == 0) {
+                                            Navigator.pushNamed(context, '/treatment-history');
+                                          } else if (menuIndex == 1) {
+                                            // export
+                                          }
+                                        },
+                                      ),
                                     );
-                                  }
-                                  /// End of Identification History
-
-                                  /// Export PDF
-                                  else if (index == 1) {
-                                    // Navigator.pushNamed(
-                                    //   context,
-                                    //   '/treatment-history',
-                                    // );
-                                  }
-                                  /// End of Treatment History
-                                }
-                            ),
-                          );
-                        },
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                      SizedBox(height: 20.0), // To give some space at the bottom
                     ],
                   ),
                 ),

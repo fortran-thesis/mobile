@@ -30,6 +30,7 @@ import '../pages/monitor/view_case.dart';
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     return MaterialPageRoute(
+      settings: settings, // Pass settings so arguments are accessible
       builder: (context) {
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
@@ -56,7 +57,7 @@ class AppRoutes {
             }
             return IntroScreen();
           case RouteNames.main:
-            return MainReportScreen();
+            return MainPage();
           case RouteNames.setNewPassword:
             final args = settings.arguments as Map<String, dynamic>?;
             final token = args != null && args['token'] != null ? args['token'] as String : '';

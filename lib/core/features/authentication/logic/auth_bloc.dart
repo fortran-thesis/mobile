@@ -53,6 +53,7 @@ class AuthBloc {
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      print('GoogleSignIn email: ${googleUser?.email}');
       if (googleUser == null) {
         print('loginWithGoogle: Google sign-in cancelled by user');
         return {
