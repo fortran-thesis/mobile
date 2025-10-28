@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../buttons/popmenu_button.dart';
@@ -98,37 +99,41 @@ class _IdentificationHistoryTileState extends State<IdentificationHistoryTile> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
+                        AutoSizeText(
                           widget.moldName,
                           style: const TextStyle(
                               fontSize: 16.0,
                               fontFamily: 'Montserrat-Black',
-                              color: MoldifyColors.primaryColor),
+                              color: MoldifyColors.primaryColor
+                          ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
+                          minFontSize: 12,
                         ),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Date Identified: ',
-                                style: const TextStyle(
-                                  fontSize: 10.0,
-                                  color: MoldifyColors.primaryColor,
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                ),
+                        Row(
+                          children: [
+                            AutoSizeText(
+                              'Date Identified: ',
+                              style: const TextStyle(
+                                fontSize: 10.0,
+                                color: MoldifyColors.primaryColor,
+                                fontFamily: 'Bricolage-Grotesque-Bold',
                               ),
-                              TextSpan(
-                                text: widget.dateIdentified,
-                                style: const TextStyle(
-                                  fontSize: 10.0,
-                                  color: MoldifyColors.MoldifyBlack,
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                ),
+                              maxLines: 1,
+                              minFontSize: 8,
+                            ),
+                            AutoSizeText(
+                              widget.dateIdentified,
+                              style: const TextStyle(
+                                fontSize: 10.0,
+                                color: MoldifyColors.MoldifyBlack,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
                               ),
-                            ],
-                          ),
-                        ),
+                              maxLines: 1,
+                              minFontSize: 8,
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),

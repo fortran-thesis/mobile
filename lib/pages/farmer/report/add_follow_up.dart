@@ -55,6 +55,8 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                 onCancel: () {
                   Navigator.of(context).pop(false); //Return false to prevent pop
                 },
+                cancelText: 'No',
+                confirmText: 'Yes',
               );
             },
           );
@@ -152,6 +154,8 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                                 onCancel: (){
                                   Navigator.of(context).pop();
                                 },
+                                cancelText: 'No',
+                                confirmText: 'Yes',
                               );
                             },
                           );

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -62,10 +63,21 @@ class _BuildTabBarState extends State<BuildTabBar>
               color: MoldifyColors.accentColor,
               width: 4,
             ),
-            insets: const EdgeInsets.symmetric(horizontal: 80),
-
+            insets: EdgeInsets.zero,
           ),
-          tabs: widget.tabs.map((t) => Tab(text: t)).toList(),
+          tabs: widget.tabs.map((t) => Tab(
+            child: AutoSizeText(
+              t,
+              style: TextStyle(
+                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                fontSize: 16,
+                color: MoldifyColors.primaryColor,
+              ),
+              maxLines: 1,
+              minFontSize: 10,
+              overflow: TextOverflow.ellipsis,
+            ),
+          )).toList(),
         ),
 
         const Divider(

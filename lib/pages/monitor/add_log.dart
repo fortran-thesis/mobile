@@ -194,6 +194,8 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                       onCancel: (){
                                         Navigator.of(context).pop();
                                       },
+                                      cancelText: 'No',
+                                      confirmText: 'Yes',
                                     );
                                   },
                                 );

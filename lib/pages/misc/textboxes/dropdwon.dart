@@ -46,7 +46,7 @@ class _BuildDropdownState extends State<BuildDropdown> {
             style: const TextStyle(
               fontFamily: 'Bricolage-Grotesque-Regular',
               fontSize: 14,
-              color: Colors.black54,
+              color: MoldifyColors.MoldifyGrey,
             ),
           ),
           icon: const Icon(

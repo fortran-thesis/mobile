@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/home/notification_page.dart';
@@ -5,6 +6,7 @@ import 'package:moldify/pages/misc/chart/status_donut_chart.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
+import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
@@ -188,22 +190,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         /// User Name
-                        Text(
+                        AutoSizeText(
                           fullName,
                           style: TextStyle(
                             fontFamily: 'Montserrat-Black',
                             fontSize: 16,
                             color: MoldifyColors.primaryColor,
                           ),
+                          maxLines: 1,
+                          minFontSize: 12,
                         ),
                         /// User Role
-                        Text(
+                        AutoSizeText(
                           role,
                           style: TextStyle(
                             fontFamily: 'Bricolage-Grotesque-Regular',
                             fontSize: 12,
                             color: MoldifyColors.MoldifyBlack,
                           ),
+                          maxLines: 1,
+                          minFontSize: 10,
                         ),
                       ],
                     ),
@@ -224,13 +230,15 @@ class _HomeScreenState extends State<HomeScreen> {
               /// Case status breakdown label
               Padding(
                 padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: Text(
+                child: AutoSizeText(
                   'Case Status Breakdown',
                   style: TextStyle(
                     fontFamily: 'Bricolage-Grotesque-Bold',
                     fontSize: 16,
                     color: MoldifyColors.primaryColor,
                   ),
+                  maxLines: 1,
+                  minFontSize: 12,
                 ),
               ),
 
@@ -246,13 +254,15 @@ class _HomeScreenState extends State<HomeScreen> {
               /// Recently Assigned Cases Label
               Padding(
                 padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: Text(
+                child: AutoSizeText(
                   'Recently Assigned Cases',
                   style: TextStyle(
                     fontFamily: 'Bricolage-Grotesque-Bold',
                     fontSize: 16,
                     color: MoldifyColors.primaryColor,
                   ),
+                  maxLines: 1,
+                  minFontSize: 12,
                 ),
               ),
 
@@ -286,8 +296,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
+                    style: ButtonStyle(
+                      overlayColor: WidgetStateProperty.all(MoldifyColors.primaryColor.withValues(alpha: 0.1)),
+                    ),
                     onPressed: () {
-                      // TODO: Navigate to full cases list
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const MainMonitorScreen(),
+                        ),
+                      );
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

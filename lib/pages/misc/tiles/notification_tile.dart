@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../colors.dart';
@@ -51,7 +52,7 @@ class _BuildNotificationTileState extends State<BuildNotificationTile> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text.rich(
+                  child: AutoSizeText.rich(
                     TextSpan(
                       style: TextStyle(
                         fontFamily: 'Montserrat-Black',
@@ -74,6 +75,8 @@ class _BuildNotificationTileState extends State<BuildNotificationTile> {
                       ],
                     ),
                     textAlign: TextAlign.start,
+                    maxLines: 4,
+                    minFontSize: 10,
                   )
                 )
               ],

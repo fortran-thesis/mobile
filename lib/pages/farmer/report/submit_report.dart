@@ -136,6 +136,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     context,
                   ).pop(false); //Return false to prevent pop
                 },
+                cancelText: 'No',
+                confirmText: 'Yes',
               );
             },
           );
@@ -299,16 +301,16 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         barrierDismissible: false,
                         builder: (BuildContext context) {
                           return BuildConfirmationDialog(
-                            title:
-                                'Are you sure you want to submit this report?',
-                            subtitle:
-                                'Once submitted, you will not be able to edit the report details.',
+                            title: 'Are you sure you want to submit this report?',
+                            subtitle: 'Once submitted, you will not be able to edit the report details.',
                             onConfirm: () {
                               Navigator.of(context).pop(true);
                             },
                             onCancel: () {
                               Navigator.of(context).pop(false);
                             },
+                            cancelText: 'No',
+                            confirmText: 'Yes',
                           );
                         },
                       );
@@ -397,21 +399,18 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           sessionCookie: sessionCookie,
                         );
 
-                        // On success, show a confirmation and pop
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return BuildConfirmationDialog(
-                              title: 'Report submitted',
-                              subtitle:
-                                  'Your report has been submitted successfully.',
-                              onConfirm: () {
-                                Navigator.of(context).pop();
-                              },
-                              onCancel: () {},
-                            );
-                          },
+                        // On success, show a confirmation snackbar and pop
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Your report has been submitted successfully.',
+                              style: TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.backgroundColor
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
                         );
 
                         // Close the submit screen after a short delay so the user can see the dialog
@@ -421,8 +420,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         // Show error
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Failed to submit report: $e'),
+                            content: Text(
+                                'Failed to submit report: $e',
+                                style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor
+                            ),
                           ),
+                          backgroundColor: MoldifyColors.primaryColor,
+                        ),
                         );
                       } finally {
                         if (mounted) {

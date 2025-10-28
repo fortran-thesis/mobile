@@ -168,6 +168,8 @@ class _EditLogScreenState extends State<EditLogScreen> {
                                 onCancel: (){
                                   Navigator.of(context).pop();
                                 },
+                                cancelText: 'No',
+                                confirmText: 'Yes',
                               );
                             },
                           );

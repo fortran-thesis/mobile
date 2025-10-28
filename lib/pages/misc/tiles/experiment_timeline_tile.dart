@@ -97,8 +97,7 @@ class ExperimentTimelineTile extends StatelessWidget {
                       builder: (_) {
                         return Dialog(
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          // 2. Corrected `withValues` to `withOpacity`
-                          backgroundColor: Colors.black.withOpacity(0.9),
+                          backgroundColor: Colors.black.withValues(alpha: 0.9),
                           insetPadding: EdgeInsets.zero,
                           child: Stack(
                             children: [

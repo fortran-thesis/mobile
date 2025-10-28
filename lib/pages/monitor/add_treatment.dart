@@ -62,6 +62,8 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
           onCancel: () {
             Navigator.of(context).pop(); // Just close the dialog
           },
+          cancelText: 'No',
+          confirmText: 'Yes',
         );
       },
     );
@@ -213,6 +215,8 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
                                 onCancel: (){
                                   Navigator.of(context).pop();
                                 },
+                                cancelText: 'No',
+                                confirmText: 'Yes',
                               );
                             },
                           );

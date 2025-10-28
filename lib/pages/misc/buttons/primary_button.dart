@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -89,7 +90,7 @@ class BuildButton extends StatelessWidget {
                   height: svgHeight,
                 ),
               ),
-            Text(
+            AutoSizeText(
               buttonText,
               style: TextStyle(
                 overflow: TextOverflow.visible,
@@ -97,6 +98,9 @@ class BuildButton extends StatelessWidget {
                 fontSize: fontSize ?? 16.0,
                 color: textColor,
               ),
+              maxLines: 1,
+              minFontSize: 8,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

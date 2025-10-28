@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -113,13 +114,15 @@ class StatusDonutChart extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    AutoSizeText(
                       '${entry.value.toInt()} - ${entry.key}',
                       style: const TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         fontSize: 14,
                         color: Color(0xFF2F3A1D),
                       ),
+                      maxLines: 1,
+                      minFontSize: 8,
                     ),
                   ],
                 ),

@@ -377,6 +377,8 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                                 onCancel: (){
                                                   Navigator.of(context).pop();
                                                 },
+                                                cancelText: 'No',
+                                                confirmText: 'Yes',
                                               );
                                             },
                                           );

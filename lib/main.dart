@@ -6,7 +6,6 @@ import 'package:moldify/providers/auth_provider.dart';
 import 'routes/app_routes.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/home/home_page.dart';
-import 'package:moldify/pages/identification/main_camera.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:moldify/pages/farmer/report/main_report.dart';
@@ -65,7 +64,6 @@ class _MainPageState extends State<MainPage> {
   /// depending on the user's role (expert vs farmer).
   List<Widget> _pages = [
     const HomeScreen(),
-    const MainCameraScreen(),
     const MainMonitorScreen(),
   ];
 
@@ -87,7 +85,7 @@ class _MainPageState extends State<MainPage> {
           setState(() {
             _isExpert = isExpert;
             if (_isExpert) {
-              _pages = [const HomeScreen(), const MainCameraScreen(), const MainMonitorScreen()];
+              _pages = [const HomeScreen(), const MainMonitorScreen()];
             } else {
               _pages = [const HomeScreen(), const MainReportScreen()];
             }
@@ -111,25 +109,26 @@ class _MainPageState extends State<MainPage> {
       resizeToAvoidBottomInset: false,
       extendBody: true,
       body: _pages[selectedPosition],
-      floatingActionButton: _isExpert
-          ? FloatingActionButton(
-              onPressed: () {
-                setState(() {
-                  // camera is index 1 in expert layout
-                  selectedPosition = 1;
-                });
-              },
-              backgroundColor: MoldifyColors.primaryColor,
-              shape: const CircleBorder(),
-              child: Icon(
-                FontAwesomeIcons.camera,
-                size: 24,
-                color: selectedPosition == 1
-                    ? MoldifyColors.accentColor
-                    : MoldifyColors.backgroundColor,
-              ),
-            )
-          : null,
+      floatingActionButton: SizedBox(
+        height: 63.0,
+        width: 63.0,
+        child: FloatingActionButton(
+          onPressed: null,
+          backgroundColor: MoldifyColors.primaryColor,
+          shape: const CircleBorder(),
+          elevation: 0,
+          focusElevation: 0,
+          hoverElevation: 0,
+          highlightElevation: 0,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Image.asset(
+              'assets/images/moldify-logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -157,8 +156,8 @@ class _MainPageState extends State<MainPage> {
                   ),
                   _tabItem(
                     icon: FontAwesomeIcons.solidClipboard,
-                    isSelected: selectedPosition == 2,
-                    onTap: () => setState(() => selectedPosition = 2),
+                    isSelected: selectedPosition == 1,
+                    onTap: () => setState(() => selectedPosition = 1),
                   ),
                 ]
               : [

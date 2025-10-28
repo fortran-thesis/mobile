@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart'; // optional if you have custom colors
 
@@ -26,23 +27,27 @@ class TreatmentHistoryTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Date
-          Text(
+          AutoSizeText(
             date,
             style: TextStyle(
               color: MoldifyColors.MoldifyGrey,
               fontSize: 12,
               fontFamily: 'Bricolage-Grotesque-Regular',
             ),
+            maxLines: 1,
+            minFontSize: 8,
           ),
 
           // Recommended Fungicides
-          const Text(
+          AutoSizeText(
             'Recommended Fungicides',
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-SemiBold',
               color: MoldifyColors.primaryColor,
               fontSize: 16
             ),
+            maxLines: 1,
+            minFontSize: 10,
           ),
           const SizedBox(height: 6),
 
@@ -60,7 +65,7 @@ class TreatmentHistoryTile extends StatelessWidget {
                     style: TextStyle(fontSize: 15, height: 1.4),
                   ),
                   Expanded(
-                    child: Text(
+                    child: AutoSizeText(
                       fungicide,
                       style: const TextStyle(
                           height: 1.4,
@@ -68,6 +73,7 @@ class TreatmentHistoryTile extends StatelessWidget {
                           fontSize: 16,
                           color: MoldifyColors.MoldifyBlack
                       ),
+                      minFontSize: 10,
                     ),
                   ),
                 ],
@@ -88,7 +94,7 @@ class TreatmentHistoryTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          AutoSizeText(
             additionalNotes,
             style: const TextStyle(
                 height: 1.4,
@@ -96,6 +102,7 @@ class TreatmentHistoryTile extends StatelessWidget {
                 fontSize: 16,
                 color: MoldifyColors.MoldifyBlack
             ),
+            minFontSize: 10,
           ),
         ],
       ),

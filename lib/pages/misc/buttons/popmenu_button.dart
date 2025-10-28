@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -61,13 +62,16 @@ class PopupMenu extends StatelessWidget {
                     ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: AutoSizeText(
                       items[i],
                       style: const TextStyle(
                         fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.MoldifyBlack,
                       ),
+                      maxLines: 1,
+                      minFontSize: 10,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

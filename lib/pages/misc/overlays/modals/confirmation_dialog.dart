@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../colors.dart';
@@ -7,6 +8,8 @@ class BuildConfirmationDialog extends StatelessWidget {
   final String subtitle;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
+  final String cancelText;
+  final String confirmText;
 
   const BuildConfirmationDialog({
     Key? key,
@@ -14,6 +17,8 @@ class BuildConfirmationDialog extends StatelessWidget {
     required this.subtitle,
     required this.onConfirm,
     required this.onCancel,
+    required this.cancelText,
+    required this.confirmText,
   }) : super(key: key);
 
   @override
@@ -39,40 +44,46 @@ class BuildConfirmationDialog extends StatelessWidget {
                   height: 25,
                 ),
                 SizedBox(width: 10),
-                Text(
+                AutoSizeText(
                   'MOLDIFY',
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Montserrat-Bold',
                     color: MoldifyColors.accentColor,
                   ),
+                  maxLines: 1,
+                  minFontSize: 10,
                 )
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0),
-            child: Text(
+            child: AutoSizeText(
                 title,
                 style: TextStyle(
                   fontFamily: 'Montserrat-Black',
                   fontSize: 20,
                   color: MoldifyColors.primaryColor,
                 ),
-                textAlign: TextAlign.center
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                minFontSize: 14
             ),
           ),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-            child: Text(
+            child: AutoSizeText(
                 subtitle,
                 style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-Regular',
                     color: MoldifyColors.MoldifyBlack
                 ),
-                textAlign: TextAlign.center
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                minFontSize: 10,
             ),
           ),
           Padding(
@@ -97,7 +108,7 @@ class BuildConfirmationDialog extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Cancel',
+                    cancelText,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-Regular',
@@ -124,7 +135,7 @@ class BuildConfirmationDialog extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Confirm',
+                    confirmText,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-Bold',
