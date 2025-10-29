@@ -62,16 +62,13 @@ class PopupMenu extends StatelessWidget {
                     ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: AutoSizeText(
+                    child: Text(
                       items[i],
                       style: const TextStyle(
                         fontSize: 14,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.MoldifyBlack,
                       ),
-                      maxLines: 1,
-                      minFontSize: 10,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

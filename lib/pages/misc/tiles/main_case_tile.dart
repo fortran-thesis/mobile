@@ -1,5 +1,4 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
@@ -15,7 +14,7 @@ class MainCaseTile extends StatefulWidget {
   final double? imageWidth, imageHeight;
   final String? dateLabel;
 
-  // Properties for the optional PopupMenu
+  // PopupMenu properties
   final bool showPopupMenu;
   final List<String>? popupMenuItems;
   final List<IconData>? popupMenuIcons;
@@ -60,8 +59,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
     return GestureDetector(
       onTapDown: (_) {
         setState(() {
-          // Make the tile slightly darker on tap.
-          _containerColor = MoldifyColors.taupe.withOpacity(0.7);
+          _containerColor = MoldifyColors.taupe.withOpacity(0.8);
         });
       },
       onTapUp: (_) {
@@ -75,141 +73,130 @@ class _MainCaseTileState extends State<MainCaseTile> {
           _containerColor = MoldifyColors.taupe;
         });
       },
-      child: Material(
-        color: Colors.transparent,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 100),
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(7.0),
-          decoration: BoxDecoration(
-            color: _containerColor,
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                    width: widget.imageWidth ?? 90,
-                    height: widget.imageHeight ?? 90,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10.0),
-                      child: Image.asset(
-                        (widget.imageUrl != null && widget.imageUrl != "no_image")
-                            ? widget.imageUrl!
-                            : defaultImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: MoldifyColors.MoldifySoftGrey,
-                            child: const Center(
-                              child: Icon(
-                                Icons.broken_image,
-                                color: MoldifyColors.primaryColor,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15.0),
-                  Expanded(
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // This Padding widget prevents the text from overlapping with the status label.
-                        Padding(
-                          padding: const EdgeInsets.only(top: 15.0, right: 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.caseName,
-                                style: const TextStyle(
-                                    fontSize: 16.0,
-                                    fontFamily: 'Montserrat-Black',
-                                    color: MoldifyColors.primaryColor
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Row(
-                                children: [
-                                  AutoSizeText(
-                                    widget.dateLabel ?? 'Date Submitted: ',
-                                    style: const TextStyle(
-                                      fontSize: 10.0,
-                                      color: MoldifyColors.primaryColor,
-                                      fontFamily: 'Bricolage-Grotesque-Bold',
-                                    ),
-                                    maxLines: 1,
-                                    minFontSize: 8,
-                                  ),
-                                  AutoSizeText(
-                                    widget.dateSubmitted,
-                                    style: const TextStyle(
-                                      fontSize: 10.0,
-                                      color: MoldifyColors.MoldifyBlack,
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                    ),
-                                    maxLines: 1,
-                                    minFontSize: 8,
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          top: -14,
-                          right: 5,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (widget.priorityLevel != null) ...[
-                                StatusBox(status: widget.priorityLevel!),
-                                const SizedBox(width: 5),
-                              ],
-                              const SizedBox(width: 5),
-                              StatusBox(status: widget.caseStatus),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              // Optional PopupMenu positioned at the bottom right
-              if (widget.showPopupMenu == true &&
-                  widget.popupMenuItems != null &&
-                  widget.popupMenuItems!.isNotEmpty &&
-                  widget.onPopupMenuItemSelected != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Column(
-                    children: [
-                      Divider(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        padding: const EdgeInsets.all(15.0),
+        decoration: BoxDecoration(
+          color: _containerColor,
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        child: Stack(
+          children: [
+            // Main row (image + content)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10.0),
+                  child: Image.asset(
+                    (widget.imageUrl != null && widget.imageUrl != "no_image")
+                        ? widget.imageUrl!
+                        : defaultImageUrl,
+                    width: widget.imageWidth ?? 105,
+                    height: widget.imageHeight ?? 105,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: widget.imageWidth ?? 105,
+                        height: widget.imageHeight ?? 105,
                         color: MoldifyColors.MoldifySoftGrey,
-                        thickness: 1.0,
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: PopupMenu(
-                          popMenuIcon: widget.popupMenuIcon,
-                          items: widget.popupMenuItems!,
-                          icons: widget.popupMenuIcons,
-                          onItemSelected: widget.onPopupMenuItemSelected!,
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: MoldifyColors.primaryColor,
                         ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 15),
+
+                // Text + Status section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 5),
+
+                      // Case name
+                      Text(
+                        widget.caseName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Montserrat-Black',
+                          color: MoldifyColors.primaryColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
+
+                      const SizedBox(height: 4),
+
+                      // Date row
+                      Row(
+                        children: [
+                          AutoSizeText(
+                            widget.dateLabel ?? 'Date Submitted: ',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: MoldifyColors.primaryColor,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                            ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                          AutoSizeText(
+                            widget.dateSubmitted,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: MoldifyColors.MoldifyBlack,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                            ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Status labels
+                      Row(
+                        children: [
+                          if (widget.priorityLevel != null) ...[
+                            Flexible(
+                              fit: FlexFit.tight,
+                              child: StatusBox(status: widget.priorityLevel!),
+                            ),
+                            const SizedBox(width: 5),
+                          ],
+                          Flexible(
+                            fit: FlexFit.tight,
+                            child: StatusBox(status: widget.caseStatus),
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+
+            // Popup menu floated on top right
+            if (widget.showPopupMenu == true &&
+                widget.popupMenuItems != null &&
+                widget.popupMenuItems!.isNotEmpty &&
+                widget.onPopupMenuItemSelected != null)
+              Positioned(
+                top: -10  ,
+                right: 0,
+                child: PopupMenu(
+                  popMenuIcon: widget.popupMenuIcon,
+                  items: widget.popupMenuItems!,
+                  icons: widget.popupMenuIcons,
+                  onItemSelected: widget.onPopupMenuItemSelected!,
+                ),
+              ),
+          ],
         ),
       ),
     );

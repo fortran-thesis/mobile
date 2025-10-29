@@ -408,7 +408,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter address',
+                              hintText: 'Enter location',
                               controller: addressController,
                               showPassword: false,
                             ),

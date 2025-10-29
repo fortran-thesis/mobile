@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerLeft,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 15),
-                          child: Text.rich(
+                          child: AutoSizeText.rich(
                             TextSpan(
                               style: TextStyle(
                                 fontFamily: 'Montserrat-ExtraBold',
@@ -177,6 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             textAlign: TextAlign.start,
+                            maxLines: 3,
+                            minFontSize: 10,
+                            overflow: TextOverflow.visible,
+                            softWrap: true,
                           )
                         ),
                       ),

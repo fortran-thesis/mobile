@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
 import 'dart:typed_data';
 import '../misc/colors.dart';
 import 'dart:ui' as ui;
@@ -164,13 +165,41 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             },
           );
         } else {
-          Navigator.pushNamed(
-            context,
-            '/mold_result',
-            arguments: {
-              'croppedImagePath': file.path,
-              'modelResult': result,
-            },
+          showDialog(
+              context: context,
+              barrierDismissible: false, // User must choose an option
+              builder: (BuildContext dialogContext) {
+                return BuildConfirmationDialog(
+                  title: 'Improve Prediction',
+                  subtitle: 'Do you want to input additional characteristics for a more accurate result?',
+                  confirmText: 'Yes, Add Details',
+                  cancelText: 'No, See Result',
+                  onConfirm: () {
+                    // YES action: Navigate to Input Characteristics
+                    Navigator.of(dialogContext).pop(); // Dismiss dialog
+                    Navigator.pushNamed(
+                      context,
+                      '/input-characteristics',
+                      arguments: {
+                        'croppedImagePath': file.path,
+                        'modelResult': result,
+                      },
+                    );
+                  },
+                  onCancel: () {
+                    // NO action: Navigate directly to Mold Result
+                    Navigator.of(dialogContext).pop();
+                    Navigator.pushNamed(
+                      context,
+                      '/mold_result',
+                      arguments: {
+                        'croppedImagePath': file.path,
+                        'modelResult': result,
+                      },
+                    );
+                  },
+                );
+              },
           );
         }
       } catch (e) {

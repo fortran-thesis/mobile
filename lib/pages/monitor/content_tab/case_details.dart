@@ -255,6 +255,7 @@ class _CaseTimelineTile extends StatelessWidget {
                 color: Colors.black87,
                 height: 1.4,
               ),
+              textAlign: TextAlign.justify,
             ),
             const SizedBox(height: 12),
 

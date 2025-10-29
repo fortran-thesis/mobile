@@ -72,12 +72,15 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             size: 24,
                           ),
                           SizedBox(width: 30.0),
-                          Text(
-                            '+63 919 003 0344',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              color: MoldifyColors.MoldifyBlack,
+                          Flexible(
+                            child: Text(
+                              '+63 919 003 0344',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyBlack,
+                              ),
+                              softWrap: true,
                             ),
                           ),
                         ],
@@ -86,19 +89,23 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
                             FontAwesomeIcons.solidEnvelope,
                             color: MoldifyColors.accentColor,
                             size: 24,
                           ),
-                          SizedBox(width: 30.0),
-                          Text(
-                            'mycologicalsoc.ph@gmail.com',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              color: MoldifyColors.MoldifyBlack,
+                          const SizedBox(width: 30.0),
+                          Flexible(
+                            child: Text(
+                              'mycologicalsoc.ph@gmail.com',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyBlack,
+                              ),
+                              softWrap: true,
                             ),
                           ),
                         ],
@@ -112,12 +119,15 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             'assets/icons/facebook-icon.svg',
                           ),
                           SizedBox(width: 30.0),
-                          Text(
-                            'Mycological Society of the Philippines',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              color: MoldifyColors.MoldifyBlack,
+                          Flexible(
+                            child: Text(
+                              'Mycological Society of the Philippines',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyBlack,
+                              ),
+                              softWrap: true,
                             ),
                           ),
                         ],
@@ -131,12 +141,15 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             'assets/icons/instagram-icon.svg',
                           ),
                           SizedBox(width: 30.0),
-                          Text(
-                            'amagngpinas',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              color: MoldifyColors.MoldifyBlack,
+                          Flexible(
+                            child: Text(
+                              'amagngpinas',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyBlack,
+                              ),
+                              softWrap: true,
                             ),
                           ),
                         ],

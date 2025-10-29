@@ -305,18 +305,24 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         child: BuildTabBar(
                             tabs: ['Mold Info', 'Prevention Tactics'],
                             tabContents: [
-                              MoldInfoSection(
-                                  description: fullDescription,
-                                  taxonomy: taxonomy,
-                                healthContent: healthContent,
-                                plantThreatContent: plantThreatContent,
-                                additionalInfoContent: additionalInfoContent,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 15.0),
+                                child: MoldInfoSection(
+                                    description: fullDescription,
+                                    taxonomy: taxonomy,
+                                  healthContent: healthContent,
+                                  plantThreatContent: plantThreatContent,
+                                  additionalInfoContent: additionalInfoContent,
+                                ),
                               ),
-                              PreventionTreatmentContent(
-                                recommendedFungicides: recommendedFungicides,
-                                resistanceContent: resistanceContent,
-                                alternativeMethodsContent: alternativeMethodsContent,
-                                additionalInfoTreatmentContent: additionalInfoContent,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 15.0),
+                                child: PreventionTreatmentContent(
+                                  recommendedFungicides: recommendedFungicides,
+                                  resistanceContent: resistanceContent,
+                                  alternativeMethodsContent: alternativeMethodsContent,
+                                  additionalInfoTreatmentContent: additionalInfoContent,
+                                ),
                               ),
                             ]
                         ),

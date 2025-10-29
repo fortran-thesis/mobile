@@ -97,40 +97,46 @@ class StatusDonutChart extends StatelessWidget {
           const SizedBox(width: 24),
 
           // Legend
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: statusData.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: _getColorForStatus(entry.key),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+          Flexible(
+            child: SingleChildScrollView( // ensures no overflow even if too long
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: statusData.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: _getColorForStatus(entry.key),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // ✅ Flexible text inside a bounded layout
+                        Flexible(
+                          child: Text(
+                            '${entry.value.toInt()} - ${entry.key}',
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 14,
+                              color: Color(0xFF2F3A1D),
+                            ),
+                            softWrap: true,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    AutoSizeText(
-                      '${entry.value.toInt()} - ${entry.key}',
-                      style: const TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 14,
-                        color: Color(0xFF2F3A1D),
-                      ),
-                      maxLines: 1,
-                      minFontSize: 8,
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ],
-      ),
+      )
     );
   }
 

@@ -29,8 +29,8 @@ class BuildButton extends StatelessWidget {
   final IconData? leftIcon;
   final String? svg;
   final Color? iconColor;
-  final double? paddingIconText, iconSize, svgHeight, fontSize;
-  final double buttonHeight, buttonWidth, buttonRadius;
+  final double? paddingIconText, iconSize, svgHeight, fontSize, borderWidth, buttonWidth;
+  final double buttonHeight, buttonRadius;
 
   const BuildButton({
     Key? key,
@@ -39,8 +39,8 @@ class BuildButton extends StatelessWidget {
     required this.backgroundColor,
     required this.textColor,
     required this.buttonHeight,
-    required this.buttonWidth,
     required this.buttonRadius,
+    this.buttonWidth,
     this.borderColor,
     this.leftIcon,
     this.svg,
@@ -49,6 +49,7 @@ class BuildButton extends StatelessWidget {
     this.iconSize,
     this.svgHeight,
     this.fontSize,
+    this.borderWidth,
   }) : super(key: key);
 
   @override
@@ -64,7 +65,7 @@ class BuildButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(buttonRadius),
             side:BorderSide(
               color: borderColor ?? Colors.transparent,
-              width: 2.0,
+              width: borderWidth ?? 2.0,
             )
           ),
         ),

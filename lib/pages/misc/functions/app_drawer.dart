@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/support/contact_us.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
@@ -96,30 +97,33 @@ class _AppDrawerState extends State<AppDrawer> {
                           width: 70,
                         ),
                         const SizedBox(width: 20),
-                        const AutoSizeText.rich(
-                          TextSpan(
-                            style: TextStyle(
-                              fontFamily: 'Montserrat-Black',
-                              fontSize: 24,
-                              color: MoldifyColors.backgroundColor,
-                              height: 1.5,
-                            ),
-                            children: [
-                              TextSpan(text: 'MOLDIFY\n'),
-                              TextSpan(
-                                text: 'Identify Mold With Moldify',
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  fontSize: 12,
-                                  color: MoldifyColors.backgroundColor,
-                                ),
+                        const Expanded(
+                          child: AutoSizeText.rich(
+                            TextSpan(
+                              style: TextStyle(
+                                fontFamily: 'Montserrat-Black',
+                                fontSize: 24,
+                                color: MoldifyColors.backgroundColor,
+                                height: 1.5,
                               ),
-                            ],
+                              children: [
+                                TextSpan(text: 'MOLDIFY\n'),
+                                TextSpan(
+                                  text: 'Identify Mold With Moldify',
+                                  style: TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    fontSize: 12,
+                                    color: MoldifyColors.backgroundColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 3,
+                            minFontSize: 10,
+                            overflow: TextOverflow.visible,
+                            softWrap: true,
                           ),
-                          maxLines: 2,
-                          minFontSize: 10,
-                          overflow: TextOverflow.ellipsis,
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -175,7 +179,11 @@ class _AppDrawerState extends State<AppDrawer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const InputCharacteristicsScreen(),
+                      ),
+                    );
                   },
                 ),
 

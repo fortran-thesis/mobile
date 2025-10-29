@@ -106,232 +106,234 @@ class _HomeScreenState extends State<HomeScreen> {
         .where((c) => (c['caseStatus'] ?? '').toLowerCase() == 'pending')
         .toList();
 
-    return Scaffold(
-      backgroundColor: MoldifyColors.backgroundColor,
-      drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Header with Menu and Notification Icons
-              Row(
-                children: [
-                  Builder(
-                    builder: (BuildContext newContext) {
-                      return IconButton(
-                          onPressed: () {
-                            Scaffold.of(newContext).openDrawer();
-                          },
-                          icon: const Icon(
-                              FontAwesomeIcons.bars,
-                              color: MoldifyColors.primaryColor,
-                              size: 24.0
-                          )
-                      );
-                    }
-                  ),
-                  const Spacer(),
-                  Stack(
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _unReadNotifications = 0;
-                            });
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const NotificationScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon
-                            (
-                              FontAwesomeIcons.solidBell,
-                              color: MoldifyColors.primaryColor,
-                              size: 24.0
-                          )
-                      ),
-                      if (_unReadNotifications > 0)
-                        Positioned(
-                          right: 7,
-                          top: 15,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: MoldifyColors.backgroundColor,
-                                width: 2.0,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: CircleAvatar(
-                              radius: 5.0,
-                              backgroundColor: MoldifyColors.MoldifyRed,
-                            ),
-                          ),
-                        )
-                    ],
-                  ),
-                ],
-              ),
-              /// End Of Header with Menu and Notification Icons
-
-              /// User Info with role
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-                child: Row(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: MoldifyColors.backgroundColor,
+        drawer: const AppDrawer(),
+        body: SingleChildScrollView(
+          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// Header with Menu and Notification Icons
+                Row(
                   children: [
-                    /// User Profile Image
-                    CircleAvatarImage(
-                      radius: 22.0,
+                    Builder(
+                      builder: (BuildContext newContext) {
+                        return IconButton(
+                            onPressed: () {
+                              Scaffold.of(newContext).openDrawer();
+                            },
+                            icon: const Icon(
+                                FontAwesomeIcons.bars,
+                                color: MoldifyColors.primaryColor,
+                                size: 24.0
+                            )
+                        );
+                      }
                     ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Spacer(),
+                    Stack(
                       children: [
-                        /// User Name
-                        AutoSizeText(
-                          fullName,
-                          style: TextStyle(
-                            fontFamily: 'Montserrat-Black',
-                            fontSize: 16,
-                            color: MoldifyColors.primaryColor,
-                          ),
-                          maxLines: 1,
-                          minFontSize: 12,
+                        IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _unReadNotifications = 0;
+                              });
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const NotificationScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon
+                              (
+                                FontAwesomeIcons.solidBell,
+                                color: MoldifyColors.primaryColor,
+                                size: 24.0
+                            )
                         ),
-                        /// User Role
-                        AutoSizeText(
-                          role,
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 12,
-                            color: MoldifyColors.MoldifyBlack,
-                          ),
-                          maxLines: 1,
-                          minFontSize: 10,
-                        ),
+                        if (_unReadNotifications > 0)
+                          Positioned(
+                            right: 7,
+                            top: 15,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: MoldifyColors.backgroundColor,
+                                  width: 2.0,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: CircleAvatar(
+                                radius: 5.0,
+                                backgroundColor: MoldifyColors.MoldifyRed,
+                              ),
+                            ),
+                          )
                       ],
                     ),
                   ],
                 ),
-              ),
-              ///End User Info
-
-              /// Home Banner
-              Padding(
-                padding: const EdgeInsets.only(top: 5.0),
-                child: HomeBanner(
-                    title: 'Let’s start Identifying',
-                    subtitle: 'Begin your mold journey now!'
-                ),
-              ),
-
-              /// Case status breakdown label
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: AutoSizeText(
-                  'Case Status Breakdown',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Bold',
-                    fontSize: 16,
-                    color: MoldifyColors.primaryColor,
+                /// End Of Header with Menu and Notification Icons
+      
+                /// User Info with role
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+                  child: Row(
+                    children: [
+                      /// User Profile Image
+                      CircleAvatarImage(
+                        radius: 22.0,
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// User Name
+                          AutoSizeText(
+                            fullName,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat-Black',
+                              fontSize: 16,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 12,
+                          ),
+                          /// User Role
+                          AutoSizeText(
+                            role,
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 12,
+                              color: MoldifyColors.MoldifyBlack,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 10,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
-                  minFontSize: 12,
                 ),
-              ),
-
-              /// Case status breakdown chart
-              StatusDonutChart(
-                statusData: {
-                  'Pending': 8.0,
-                  'In Progress': 2.0,
-                  'Resolved': 10.0,
-                },
-              ),
-
-              /// Recently Assigned Cases Label
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: AutoSizeText(
-                  'Recently Assigned Cases',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Bold',
-                    fontSize: 16,
-                    color: MoldifyColors.primaryColor,
+                ///End User Info
+      
+                /// Home Banner
+                Padding(
+                  padding: const EdgeInsets.only(top: 5.0),
+                  child: HomeBanner(
+                      title: 'Let’s start Identifying',
+                      subtitle: 'Begin your mold journey now!'
                   ),
-                  maxLines: 1,
-                  minFontSize: 12,
                 ),
-              ),
-
-              pendingCases.isEmpty
-                  ? EmptyState(
-                  message: 'No Recently Assigned Cases',
-                  height: MediaQuery.of(context).size.height - 500,
-              )
-                  : const SizedBox.shrink(),
-              /// This displays only pending cases
-              ...pendingCases.take(3).map((c) => Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: MainCaseTile(
-                  caseName: c['caseName'] ?? 'Unknown',
-                  dateSubmitted: c['dateSubmitted'] ?? '',
-                  priorityLevel: c['priorityLevel'] ?? '',
-                  caseStatus: c['caseStatus'] ?? '',
-                  imageHeight: 70.0,
-                  imageWidth: 70.0,
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/view-case',
-                    );
+      
+                /// Case status breakdown label
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                  child: AutoSizeText(
+                    'Case Status Breakdown',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      fontSize: 16,
+                      color: MoldifyColors.primaryColor,
+                    ),
+                    maxLines: 1,
+                    minFontSize: 12,
+                  ),
+                ),
+      
+                /// Case status breakdown chart
+                StatusDonutChart(
+                  statusData: {
+                    'Pending': 8.0,
+                    'In Progress': 2.0,
+                    'Resolved': 10.0,
                   },
                 ),
-              )).toList(),
-
-              /// This shows 'View All Cases' when there are more than 3 case tiles
-              if (pendingCases.length > 3)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    style: ButtonStyle(
-                      overlayColor: WidgetStateProperty.all(MoldifyColors.primaryColor.withValues(alpha: 0.1)),
+      
+                /// Recently Assigned Cases Label
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                  child: AutoSizeText(
+                    'Recently Assigned Cases',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      fontSize: 16,
+                      color: MoldifyColors.primaryColor,
                     ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const MainMonitorScreen(),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text(
-                            'View All Cases',
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-SemiBold',
-                            fontSize: 14,
-                            color: MoldifyColors.primaryColor,
-                          ),
-                        ),
-                        SizedBox(width: 6),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                          color: MoldifyColors.primaryColor,
-                        ),
-                      ],
-                    ),
+                    maxLines: 1,
+                    minFontSize: 12,
                   ),
                 ),
-              SizedBox(height: 40.0)
-            ],
+      
+                pendingCases.isEmpty
+                    ? EmptyState(
+                    message: 'No Recently Assigned Cases',
+                    height: MediaQuery.of(context).size.height - 500,
+                )
+                    : const SizedBox.shrink(),
+                /// This displays only pending cases
+                ...pendingCases.take(3).map((c) => Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: MainCaseTile(
+                    caseName: c['caseName'] ?? 'Unknown',
+                    dateSubmitted: c['dateSubmitted'] ?? '',
+                    priorityLevel: c['priorityLevel'] ?? '',
+                    caseStatus: c['caseStatus'] ?? '',
+                    imageHeight: 70.0,
+                    imageWidth: 70.0,
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/view-case',
+                      );
+                    },
+                  ),
+                )).toList(),
+      
+                /// This shows 'View All Cases' when there are more than 3 case tiles
+                if (pendingCases.length > 3)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      style: ButtonStyle(
+                        overlayColor: WidgetStateProperty.all(MoldifyColors.primaryColor.withValues(alpha: 0.1)),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const MainMonitorScreen(),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text(
+                              'View All Cases',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                              fontSize: 14,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: MoldifyColors.primaryColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                SizedBox(height: 20.0)
+              ],
+            ),
           ),
-        ),
-      )
+        )
+      ),
     );
   }
 }

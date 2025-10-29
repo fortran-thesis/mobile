@@ -42,21 +42,23 @@ class StatusBox extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: AutoSizeText(
-        status,
-        style: TextStyle(
-          fontFamily: 'Bricolage-Grotesque-Bold',
-          fontSize: fontSize ?? 10,
-          color: status.toLowerCase() == 'pending' ||
-              status.toLowerCase() == 'low priority' ||
-              status.toLowerCase() == 'medium priority' ||
-              status.toLowerCase() == 'high priority'
-              ? MoldifyColors.MoldifyBlack
-              : MoldifyColors.backgroundColor
+      child: Center(
+        child: AutoSizeText(
+          status,
+          style: TextStyle(
+            fontFamily: 'Bricolage-Grotesque-Bold',
+            fontSize: fontSize ?? 10,
+            color: status.toLowerCase() == 'pending' ||
+                status.toLowerCase() == 'low priority' ||
+                status.toLowerCase() == 'medium priority' ||
+                status.toLowerCase() == 'high priority'
+                ? MoldifyColors.MoldifyBlack
+                : MoldifyColors.backgroundColor
+          ),
+          maxLines: 1,
+          minFontSize: 6,
+          overflow: TextOverflow.ellipsis,
         ),
-        maxLines: 1,
-        minFontSize: 6,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }

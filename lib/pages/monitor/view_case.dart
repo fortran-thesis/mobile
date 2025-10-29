@@ -299,48 +299,50 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                         if(!isCaseClosed)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
-                            child: Row (
+                            child: Row(
                               children: [
-                                BuildButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      RouteNames.mainCamera,
-                                      arguments: {'showAppBar': true},
-                                    );
-                                  },
-                                  buttonText: 'Identify Mold',
-                                  fontSize: 12,
-                                  backgroundColor: MoldifyColors.primaryColor,
-                                  textColor: MoldifyColors.backgroundColor,
-                                  leftIcon: FontAwesomeIcons.camera,
-                                  iconSize: 12,
-                                  iconColor: MoldifyColors.backgroundColor,
-                                  paddingIconText: 10,
-                                  buttonHeight: 30,
-                                  buttonWidth: 120,
-                                  buttonRadius: 7,
+                                Flexible(
+                                  child: BuildButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        RouteNames.mainCamera,
+                                        arguments: {'showAppBar': true},
+                                      );
+                                    },
+                                    buttonText: 'Identify Mold',
+                                    fontSize: 12,
+                                    backgroundColor: MoldifyColors.primaryColor,
+                                    textColor: MoldifyColors.backgroundColor,
+                                    leftIcon: FontAwesomeIcons.camera,
+                                    iconSize: 12,
+                                    iconColor: MoldifyColors.backgroundColor,
+                                    paddingIconText: 10,
+                                    buttonHeight: 30,
+                                    buttonRadius: 7,
+                                  ),
                                 ),
-                                SizedBox(width: 5),
-                                BuildButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/add-treatment',
-                                    );
-                                  },
-                                  buttonText: 'Add Treatment',
-                                  fontSize: 12,
-                                  backgroundColor: MoldifyColors.accentColor,
-                                  textColor: MoldifyColors.MoldifyBlack,
-                                  leftIcon: FontAwesomeIcons.plus,
-                                  iconSize: 12,
-                                  iconColor: MoldifyColors.MoldifyBlack,
-                                  paddingIconText: 10,
-                                  buttonHeight: 30,
-                                  buttonWidth: 120,
-                                  buttonRadius: 7,
-                                )
+                                const SizedBox(width: 5),
+                                Flexible(
+                                  child: BuildButton(
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/add-treatment',
+                                      );
+                                    },
+                                    buttonText: 'Add Treatment',
+                                    fontSize: 12,
+                                    backgroundColor: MoldifyColors.accentColor,
+                                    textColor: MoldifyColors.MoldifyBlack,
+                                    leftIcon: FontAwesomeIcons.plus,
+                                    iconSize: 12,
+                                    iconColor: MoldifyColors.MoldifyBlack,
+                                    paddingIconText: 10,
+                                    buttonHeight: 30,
+                                    buttonRadius: 7,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
