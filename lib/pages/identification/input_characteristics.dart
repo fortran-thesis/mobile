@@ -136,6 +136,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              /// Input Characteristics Header
               const Text(
                 'Input Characteristics',
                 style: TextStyle(
@@ -145,13 +146,15 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
                 ),
               ),
               const Text(
-                'Adding more characteristics improves prediction accuracy',
+                'Adding more characteristics improves prediction accuracy.',
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: 'Bricolage-Grotesque-Regular',
                   color: MoldifyColors.MoldifyBlack,
                 ),
               ),
+              /// End of Header
+
               const SizedBox(height: 20),
 
               StepIndicator(

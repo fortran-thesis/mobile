@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   final TextEditingController _dateFirstObservedController =
       TextEditingController();
   final TextEditingController _probDescController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -107,6 +109,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
         _cropNameController.text.isNotEmpty ||
         _dateFirstObservedController.text.isNotEmpty ||
         _probDescController.text.isNotEmpty ||
+        _addressController.text.isNotEmpty ||
         uploadedPhotos.isNotEmpty;
   }
 
@@ -221,6 +224,31 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   hintText: 'Enter crop name',
                   controller: _cropNameController,
                   showPassword: false,
+                ),
+
+                /// Location Label
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: AutoSizeText(
+                    'Location(City/Province)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontFamily: 'Bricolage-Grotesque-SemiBold',
+                      color: MoldifyColors.primaryColor,
+                    ),
+                    maxLines: 1,
+                    minFontSize: 12,
+                  ),
+                ),
+
+                /// Location TextBox
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: BuildTextBox(
+                    hintText: 'Enter location',
+                    controller: _addressController,
+                    showPassword: false,
+                  ),
                 ),
 
                 /// Date First Observed Label

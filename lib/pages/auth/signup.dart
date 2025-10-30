@@ -40,7 +40,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool isLoading = false;
   final phoneNumController = TextEditingController();
 
-  // This is no longer due to snackBars.
   String? _passwordErrorText;
   String? _confirmPasswordErrorText;
 

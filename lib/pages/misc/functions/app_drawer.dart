@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/pages/farmer/faq/main_faq.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/support/contact_us.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
@@ -148,7 +149,11 @@ class _AppDrawerState extends State<AppDrawer> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     onTap: () {
-                      // TODO: Navigate to FAQ Page
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const MainFAQSCreen(),
+                        ),
+                      );
                     },
                   ),
 
@@ -179,11 +184,6 @@ class _AppDrawerState extends State<AppDrawer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const InputCharacteristicsScreen(),
-                      ),
-                    );
                   },
                 ),
 
