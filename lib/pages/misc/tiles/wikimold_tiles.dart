@@ -57,13 +57,6 @@ class _WikiMoldTileState extends State<WikiMoldTile> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15.0),
           color: _containerColor,
-            boxShadow: const[
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4.0,
-                offset: Offset(1, 1),
-              ),
-            ]
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +80,7 @@ class _WikiMoldTileState extends State<WikiMoldTile> {
                   topRight: Radius.circular(12.0),
                 ),
                 child: (widget.imageUrl != null && widget.imageUrl != "no_image")
-                    ? Image.asset(
+                    ? Image.network(
                   widget.imageUrl!,
                   width: double.infinity,
                   height: double.infinity,

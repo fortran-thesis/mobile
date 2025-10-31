@@ -98,7 +98,7 @@ class StatusDonutChart extends StatelessWidget {
 
           // Legend
           Flexible(
-            child: SingleChildScrollView( // ensures no overflow even if too long
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: statusData.entries.map((entry) {
@@ -116,7 +116,7 @@ class StatusDonutChart extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // ✅ Flexible text inside a bounded layout
+                        // Flexible text inside a bounded layout
                         Flexible(
                           child: Text(
                             '${entry.value.toInt()} - ${entry.key}',
@@ -148,6 +148,8 @@ class StatusDonutChart extends StatelessWidget {
         return MoldifyColors.accentColor;
       case 'In Progress':
         return MoldifyColors.MoldifyBlue;
+        case 'Rejected':
+        return MoldifyColors.MoldifyRed;
       default:
         return Colors.grey;
     }

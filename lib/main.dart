@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'routes/app_routes.dart';
@@ -108,6 +109,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
+      drawer: selectedPosition == 0 ? const AppDrawer() : null,
       body: _pages[selectedPosition],
       floatingActionButton: SizedBox(
         height: 63.0,
