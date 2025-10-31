@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/core/utils/image_utils.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -112,7 +113,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: PrimaryAppBar(
         title: 'Edit Profile',
       ),
-      // FIX: Show a loading indicator while fetching data
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -146,10 +146,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Center(
                   child: Stack(
                     children: [
+                      // FIX: Used the same working pattern from MainAccountSettingsScreen
                       BuildProfileImage(
-                          _profileImageUrl as Image?,
-                          width: 180,
-                          height: 190
+                        imageFromUrlOrNull(_profileImageUrl),
+                        width: 180,
+                        height: 190,
                       ),
                       Positioned(
                         bottom: 10,

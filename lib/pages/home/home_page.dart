@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late UserBloc _userBloc;
   StreamSubscription? _userSub;
   String fullName = 'Guest User';
-  String role = 'farmer';
+  String role = '';
 
   @override
   void initState() {
@@ -268,10 +268,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 5.0),
                         child: HomeBanner(
-                          title: role == 'mycologist'
+                          title: role.toLowerCase() == 'mycologist'
                               ? 'Let’s start Identifying'
                               : 'Bold Against Mold',
-                          subtitle: role == 'farmer'
+                          subtitle: role.toLowerCase() == 'farmer'
                               ? 'Begin your mold journey now!'
                               : 'Take action, and protect your growing crops.',
                         ),

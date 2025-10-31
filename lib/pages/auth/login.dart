@@ -18,7 +18,9 @@ import '../../providers/auth_provider.dart';
 /// as well as a continue with Google option.
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  String? userRole;
+
+  LoginScreen({super.key, this.userRole});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -130,6 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMycologist = widget.userRole?.toLowerCase() == 'mycologist';
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       body: Stack(
@@ -304,96 +307,98 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      /// Sign Up Message
-                      Align(
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const AutoSizeText (
-                              'Don\'t have an account?',
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 14,
-                                color: MoldifyColors.MoldifyBlack,
-                              ),
-                              maxLines: 1,
-                              minFontSize: 12,
-                            ),
+                      if(!isMycologist) ... [
 
-                            /// Sign Up Button
-                            InkWell(
-                              onTap: () => navigateTo(context, RouteNames.signup),
-                              borderRadius: BorderRadius.circular(8),
-                              splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                              highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 4, horizontal: 6),
-                                child: AutoSizeText(
-                                  'Sign Up',
+                        /// Sign Up Message
+                        Align(
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const AutoSizeText (
+                                  'Don\'t have an account?',
                                   style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 14,
-                                    color: MoldifyColors.primaryColor,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: MoldifyColors.primaryColor,
-                                    decorationThickness: 2,
+                                    color: MoldifyColors.MoldifyBlack,
                                   ),
                                   maxLines: 1,
                                   minFontSize: 12,
                                 ),
-                              ),
-                            ),
-                          ],
-                        )
-                      ),
 
-                      /// Divider with "or continue with" text
-                      Padding(
-                        padding: const EdgeInsets.only(top: 30.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 2,
-                                decoration: BoxDecoration(
-                                  color: MoldifyColors.MoldifyBlack,
-                                  borderRadius: BorderRadius.circular(2),
+                                /// Sign Up Button
+                                InkWell(
+                                  onTap: () => navigateTo(context, RouteNames.signup),
+                                  borderRadius: BorderRadius.circular(8),
+                                  splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
+                                  highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 6),
+                                    child: AutoSizeText(
+                                      'Sign Up',
+                                      style: TextStyle(
+                                        fontFamily: 'Bricolage-Grotesque-Bold',
+                                        fontSize: 14,
+                                        color: MoldifyColors.primaryColor,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: MoldifyColors.primaryColor,
+                                        decorationThickness: 2,
+                                      ),
+                                      maxLines: 1,
+                                      minFontSize: 12,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                              child: AutoSizeText(
-                                'or continue with',
-                                style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                    fontSize: 12,
-                                    color: MoldifyColors.MoldifyBlack
-                                ),
-                                maxLines: 1,
-                                minFontSize: 10,
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 2,
-                                decoration: BoxDecoration(
-                                  color: MoldifyColors.MoldifyBlack,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ),
-                          ],
+                              ],
+                            )
                         ),
-                      ),
 
-                      /// Google Login Button
-                      Padding(
-                        padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
-                        child: BuildButton(
+                        /// Divider with "or continue with" text
+                        Padding(
+                          padding: const EdgeInsets.only(top: 30.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 2,
+                                  decoration: BoxDecoration(
+                                    color: MoldifyColors.MoldifyBlack,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: AutoSizeText(
+                                  'or continue with',
+                                  style: TextStyle(
+                                      fontFamily: 'Bricolage-Grotesque-Regular',
+                                      fontSize: 12,
+                                      color: MoldifyColors.MoldifyBlack
+                                  ),
+                                  maxLines: 1,
+                                  minFontSize: 10,
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  height: 2,
+                                  decoration: BoxDecoration(
+                                    color: MoldifyColors.MoldifyBlack,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        /// Google Login Button
+                        Padding(
+                          padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
+                          child: BuildButton(
                             buttonText: 'Google',
                             onPressed: _onGoogleSignInPressed,
                             backgroundColor: Colors.transparent,
@@ -404,9 +409,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderColor: MoldifyColors.primaryColor,
                             svg: 'assets/icons/google-icon.svg',
                             svgHeight: 20,
+                          ),
                         ),
-                      ),
-                      /// End of Google Login Button
+                        /// End of Google Login Button
+
+                      ],
+
 
                       /// Terms and Policy Agreement
                       /// This section provides a link to the Terms of Agreement and Privacy Policy.
