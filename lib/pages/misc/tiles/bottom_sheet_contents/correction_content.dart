@@ -17,16 +17,23 @@ import '../../textboxes/textboxes.dart';
 /// - [correctedGenusController]: The TextEditingController for the input field.
 /// - [onClose]: Callback for the close button.
 /// - [onSave]: Callback that passes the corrected text from the text field.
+/// - [onCancel]: Callback for cancel action.
+/// - [onConfirm]: Callback for confirm action.
+
 class CorrectionBottomSheetContent extends StatelessWidget {
   final TextEditingController correctedGenusController;
   final VoidCallback? onClose;
   final Function(String)? onSave;
+  final VoidCallback onCancel;
+  final VoidCallback onConfirm;
 
   const CorrectionBottomSheetContent({
     super.key,
     required this.correctedGenusController,
     this.onClose,
     this.onSave,
+    required this.onCancel,
+    required this.onConfirm,
   });
 
   @override
@@ -98,12 +105,16 @@ class CorrectionBottomSheetContent extends StatelessWidget {
                   return BuildConfirmationDialog(
                     title: 'Submit Correction?',
                     subtitle: 'Are you sure you want to submit correction?',
-                    onConfirm: () {
-                      onSave?.call(correctedGenusController.text);
-                    },
-                    onCancel: (){
-                      Navigator.of(context).pop();
-                    },
+                    onConfirm: onConfirm,
+                    onCancel: onCancel,
+                    // onConfirm: () {
+                    //   onSave?.call(correctedGenusController.text);
+                    // },
+                    // onCancel: (){
+                    //   Navigator.of(context).pop();
+                    // },
+                    cancelText: 'Yes',
+                    confirmText: 'No',
                   );
                 },
               );

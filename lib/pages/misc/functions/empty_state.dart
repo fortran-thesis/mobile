@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -31,7 +32,7 @@ class EmptyState extends StatelessWidget {
             color: iconColor ?? Colors.grey[400],
           ),
           const SizedBox(height: 10),
-          Text(
+          AutoSizeText(
             message,
             style: textStyle ??
                 TextStyle(
@@ -40,6 +41,9 @@ class EmptyState extends StatelessWidget {
                   fontFamily: 'Bricolage-Grotesque-Regular',
                 ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            minFontSize: 10,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

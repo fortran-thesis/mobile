@@ -6,6 +6,7 @@ import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/farmer/report/main_report.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
+import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
@@ -162,6 +163,8 @@ class AppRoutes {
               return ViewReportScreen();
           case RouteNames.addFollowUp:
               return AddFollowUpScreen();
+              case RouteNames.inputCharacteristics:
+                return InputCharacteristicsScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

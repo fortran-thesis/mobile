@@ -20,6 +20,7 @@ class RouteNames {
   static const String addLogInstructions = '/add-log-instructions';
   static const String addLog = '/add-log';
   static const String mainCamera = '/main-camera';
+  static const String inputCharacteristics = '/input-characteristics';
 
   /// for farmers
   static const String submitReport = '/submit-report';

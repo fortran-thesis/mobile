@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../buttons/popmenu_button.dart';
@@ -73,76 +74,84 @@ class _FlagHistoryTileState extends State<FlagHistoryTile> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'System Predicted: ',
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.primaryColor,
-                                fontFamily: 'Bricolage-Grotesque-Bold',
-                              ),
+                      Row(
+                        children: [
+                          AutoSizeText(
+                            'System Predicted: ',
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.primaryColor,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
                             ),
-                            TextSpan(
-                              text: widget.systemPredicted,
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.MoldifyBlack,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                              ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                          AutoSizeText(
+                            widget.systemPredicted,
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.MoldifyBlack,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
                             ),
-                          ],
-                        ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                        ],
                       ),
                       SizedBox(height: 5.0),
+
                       /// Corrected Genus
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Corrected Genus: ',
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.primaryColor,
-                                fontFamily: 'Bricolage-Grotesque-Bold',
-                              ),
+                      Row(
+                        children: [
+                          AutoSizeText(
+                            'Corrected Genus: ',
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.primaryColor,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
                             ),
-                            TextSpan(
-                              text: widget.correctedGenus,
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.MoldifyBlack,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                              ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                          AutoSizeText(
+                            widget.correctedGenus,
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.MoldifyBlack,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
                             ),
-                          ],
-                        ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                        ],
                       ),
+
                       SizedBox(height: 5.0),
                       /// Date Flagged
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Date Flagged: ',
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.primaryColor,
-                                fontFamily: 'Bricolage-Grotesque-Bold',
-                              ),
+                      Row(
+                        children: [
+                          AutoSizeText(
+                            'Date Flagged: ',
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.primaryColor,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
                             ),
-                            TextSpan(
-                              text: widget.dateFlagged,
-                              style: const TextStyle(
-                                fontSize: 10.0,
-                                color: MoldifyColors.MoldifyBlack,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                              ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                          AutoSizeText(
+                            widget.dateFlagged,
+                            style: const TextStyle(
+                              fontSize: 10.0,
+                              color: MoldifyColors.MoldifyBlack,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
                             ),
-                          ],
-                        ),
-                      ),
+                            maxLines: 1,
+                            minFontSize: 8,
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),

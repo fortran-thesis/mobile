@@ -1,10 +1,13 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/farmer/wikimold/main_wikimold.dart';
 import 'package:moldify/pages/home/notification_page.dart';
 import 'package:moldify/pages/misc/chart/status_donut_chart.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
+import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
@@ -13,7 +16,11 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:moldify/pages/misc/tiles/home_banner.dart';
 import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
+import '../farmer/faq/main_faq.dart';
+import '../farmer/wikimold/view_wikimold.dart';
 import '../misc/images/circle_avatar.dart';
+import '../misc/tiles/action_tile.dart';
+import '../misc/tiles/wikimold_tiles.dart';
 
 /// This is the homepage for mycologists
 
@@ -99,222 +106,457 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     ];
 
+    final List<Map<String, String?>> wikiArticles = [
+      {
+        'title': 'The Rise of Molds: Dive into the Microscopic Landscape of Growing Fungi',
+        'authorName': 'Karl Manuel Diata',
+        'imageUrl': null,
+      },
+      {
+        'title': 'Understanding Aspergillus: A Common Household Mold',
+        'authorName': 'Jane Doe',
+        'imageUrl': null,
+      },
+      {
+        'title': 'Penicillium: The Fungus That Gave Us Penicillin',
+        'authorName': 'John Smith',
+        'imageUrl': null,
+      },
+      {
+        'title': 'Stachybotrys (Black Mold): Risks and Remediation',
+        'authorName': 'Dr. Emily Carter',
+        'imageUrl': null,
+      },
+      {
+        'title': 'The Colorful World of Fusarium',
+        'authorName': 'Dr. Alan Grant',
+        'imageUrl': null,
+      },
+    ];
+
     /// Filter only pending cases
     final pendingCases = recentCases
         .where((c) => (c['caseStatus'] ?? '').toLowerCase() == 'pending')
         .toList();
 
-    return Scaffold(
-      backgroundColor: MoldifyColors.backgroundColor,
-      drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Header with Menu and Notification Icons
-              Row(
-                children: [
-                  Builder(
-                    builder: (BuildContext newContext) {
-                      return IconButton(
-                          onPressed: () {
-                            Scaffold.of(newContext).openDrawer();
-                          },
-                          icon: const Icon(
-                              FontAwesomeIcons.bars,
-                              color: MoldifyColors.primaryColor,
-                              size: 24.0
-                          )
-                      );
-                    }
-                  ),
-                  const Spacer(),
-                  Stack(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = 30.0; // same as page padding
+    // Choose tile width so it fits visually — tweak 0.85 if you want narrower tiles
+    final tileWidth = (screenWidth - (horizontalPadding * 2)) * 0.95;
+
+
+    return Material(
+      child: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Container(
+                color: MoldifyColors.backgroundColor,
+                width: double.infinity,
+                height: double.infinity,
+              // drawer: const AppDrawer(),
+              child: SingleChildScrollView(
+                child: Padding(padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _unReadNotifications = 0;
-                            });
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const NotificationScreen(),
+                      /// Header with Menu and Notification Icons
+                      Row(
+                        children: [
+                          Builder(
+                            builder: (BuildContext newContext) {
+                              return IconButton(
+                                  onPressed: () {
+                                    Scaffold.of(newContext).openDrawer();
+                                  },
+                                  icon: const Icon(
+                                      FontAwesomeIcons.bars,
+                                      color: MoldifyColors.primaryColor,
+                                      size: 24.0
+                                  )
+                              );
+                            }
+                          ),
+                          const Spacer(),
+                          Stack(
+                            children: [
+                              IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _unReadNotifications = 0;
+                                    });
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => const NotificationScreen(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon
+                                    (
+                                      FontAwesomeIcons.solidBell,
+                                      color: MoldifyColors.primaryColor,
+                                      size: 24.0
+                                  )
                               ),
-                            );
-                          },
-                          icon: const Icon
-                            (
-                              FontAwesomeIcons.solidBell,
-                              color: MoldifyColors.primaryColor,
-                              size: 24.0
-                          )
+                              if (_unReadNotifications > 0)
+                                Positioned(
+                                  right: 7,
+                                  top: 15,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: MoldifyColors.backgroundColor,
+                                        width: 2.0,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 5.0,
+                                      backgroundColor: MoldifyColors.MoldifyRed,
+                                    ),
+                                  ),
+                                )
+                            ],
+                          ),
+                        ],
                       ),
-                      if (_unReadNotifications > 0)
-                        Positioned(
-                          right: 7,
-                          top: 15,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: MoldifyColors.backgroundColor,
-                                width: 2.0,
-                              ),
-                              shape: BoxShape.circle,
+                      /// End Of Header with Menu and Notification Icons
+
+                      /// User Info with role
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+                        child: Row(
+                          children: [
+                            /// User Profile Image
+                            CircleAvatarImage(
+                              radius: 22.0,
                             ),
-                            child: CircleAvatar(
-                              radius: 5.0,
-                              backgroundColor: MoldifyColors.MoldifyRed,
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// User Name
+                                AutoSizeText(
+                                  fullName,
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat-Black',
+                                    fontSize: 16,
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                  maxLines: 1,
+                                  minFontSize: 12,
+                                ),
+                                /// User Role
+                                AutoSizeText(
+                                  role,
+                                  style: TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    fontSize: 12,
+                                    color: MoldifyColors.MoldifyBlack,
+                                  ),
+                                  maxLines: 1,
+                                  minFontSize: 10,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      ///End User Info
+
+                      /// Home Banner
+                      Padding(
+                        padding: const EdgeInsets.only(top: 5.0),
+                        child: HomeBanner(
+                          title: role.toLowerCase() == 'mycologist'
+                              ? 'Let’s start Identifying'
+                              : 'Bold Against Mold',
+                          subtitle: role.toLowerCase() == 'farmer'
+                              ? 'Begin your mold journey now!'
+                              : 'Take action, and protect your growing crops.',
+                        ),
+                      ),
+
+                      if(role.isEmpty)...[
+                        SizedBox(height: 20.0),
+                        Center(
+                          child: CircularProgressIndicator(
+                            color: MoldifyColors.primaryColor,
+                          ),
+                        ),
+                      ]
+                      else if (role.toLowerCase() == 'mycologist')...[
+                        /// Case status breakdown label
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                          child: AutoSizeText(
+                            'Case Status Breakdown',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 16,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 12,
+                          ),
+                        ),
+
+                        /// Case status breakdown chart
+                        StatusDonutChart(
+                          statusData: {
+                            'Pending': 8.0,
+                            'In Progress': 2.0,
+                            'Resolved': 10.0,
+                          },
+                        ),
+
+                        /// Recently Assigned Cases Label
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                          child: AutoSizeText(
+                            'Recently Assigned Cases',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 16,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 12,
+                          ),
+                        ),
+
+                        pendingCases.isEmpty
+                            ? EmptyState(
+                          message: 'No Recently Assigned Cases',
+                          height: MediaQuery.of(context).size.height - 500,
+                        )
+                            : const SizedBox.shrink(),
+                        /// This displays only pending cases
+                        ...pendingCases.take(3).map((c) => Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: MainCaseTile(
+                            caseName: c['caseName'] ?? 'Unknown',
+                            dateSubmitted: c['dateSubmitted'] ?? '',
+                            priorityLevel: c['priorityLevel'] ?? '',
+                            caseStatus: c['caseStatus'] ?? '',
+                            imageHeight: 70.0,
+                            imageWidth: 70.0,
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/view-case',
+                              );
+                            },
+                          ),
+                        )).toList(),
+
+                        /// This shows 'View All Cases' when there are more than 3 case tiles
+                        if (pendingCases.length > 3)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              style: ButtonStyle(
+                                overlayColor: WidgetStateProperty.all(MoldifyColors.primaryColor.withValues(alpha: 0.1)),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const MainMonitorScreen(),
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text(
+                                    'View All Cases',
+                                    style: TextStyle(
+                                      fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                      fontSize: 14,
+                                      color: MoldifyColors.primaryColor,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ] else if (role.toLowerCase() == 'farmer') ... [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: ActionTile(
+                                    icon: FontAwesomeIcons.solidCircleQuestion,
+                                    iconColor: MoldifyColors.MoldifyBlue,
+                                    label: 'FAQ',
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => const MainFAQSCreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ActionTile(
+                                    icon: FontAwesomeIcons.solidPaperPlane,
+                                    iconColor: MoldifyColors.primaryColor,
+                                    label: 'Submit Report',
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/submit-report',
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ActionTile(
+                                    icon: FontAwesomeIcons.bookOpen,
+                                    iconColor: MoldifyColors.MoldifyRed,
+                                    label: 'WikiMold',
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => const MainWikiMoldScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                          child: AutoSizeText(
+                            'Case Status Breakdown',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 16,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 12,
+                          ),
+                        ),
+
+                        /// Case status breakdown chart
+                        StatusDonutChart(
+                          statusData: {
+                            'Pending': 8.0,
+                            'In Progress': 2.0,
+                            'Resolved': 10.0,
+                            'Rejected': 1.0,
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+                          child: AutoSizeText(
+                            'WikiMold',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 16,
+                              color: MoldifyColors.primaryColor,
+                            ),
+                            maxLines: 1,
+                            minFontSize: 12,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 163.0,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.only(right: horizontalPadding),
+                            itemCount: wikiArticles.length > 2 ? 3 : wikiArticles.length,
+                            itemBuilder: (context, index) {
+                              if (index == 2 && wikiArticles.length > 2) {
+                                return   Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: Center(
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 32,
+                                        color: MoldifyColors.primaryColor,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => const MainWikiMoldScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              // Regular article tile
+                              final article = wikiArticles[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 15.0),
+                                child: SizedBox(
+                                  width: tileWidth,
+                                  child: WikiMoldTile(
+                                    title: article['title']!,
+                                    authorName: article['authorName']!,
+                                    imageUrl: article['imageUrl'],
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewWikiMoldScreen(
+                                            articleAuthor: article['authorName']!,
+                                            articleTitle: article['title']!,
+                                            articleImageUrl:
+                                            article['imageUrl'] ?? 'assets/images/Branding2.png',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                      ] else ...[
+                        SizedBox(height: 20.0),
+                        Center(
+                          child: Text(
+                            'Role not recognized.',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 14,
+                              color: MoldifyColors.MoldifyBlack,
                             ),
                           ),
                         )
+                      ],
+                      SizedBox(height: 70.0)
                     ],
                   ),
-                ],
-              ),
-              /// End Of Header with Menu and Notification Icons
-
-              /// User Info with role
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-                child: Row(
-                  children: [
-                    /// User Profile Image
-                    CircleAvatarImage(
-                      radius: 22.0,
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// User Name
-                        Text(
-                          fullName,
-                          style: TextStyle(
-                            fontFamily: 'Montserrat-Black',
-                            fontSize: 16,
-                            color: MoldifyColors.primaryColor,
-                          ),
-                        ),
-                        /// User Role
-                        Text(
-                          role,
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 12,
-                            color: MoldifyColors.MoldifyBlack,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
-              ),
-              ///End User Info
-
-              /// Home Banner
-              Padding(
-                padding: const EdgeInsets.only(top: 5.0),
-                child: HomeBanner(
-                    title: 'Let’s start Identifying',
-                    subtitle: 'Begin your mold journey now!'
-                ),
-              ),
-
-              /// Case status breakdown label
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: Text(
-                  'Case Status Breakdown',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Bold',
-                    fontSize: 16,
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
-              ),
-
-              /// Case status breakdown chart
-              StatusDonutChart(
-                statusData: {
-                  'Pending': 8.0,
-                  'In Progress': 2.0,
-                  'Resolved': 10.0,
-                },
-              ),
-
-              /// Recently Assigned Cases Label
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-                child: Text(
-                  'Recently Assigned Cases',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Bold',
-                    fontSize: 16,
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
-              ),
-
-              pendingCases.isEmpty
-                  ? EmptyState(
-                  message: 'No Recently Assigned Cases',
-                  height: MediaQuery.of(context).size.height - 500,
               )
-                  : const SizedBox.shrink(),
-              /// This displays only pending cases
-              ...pendingCases.take(3).map((c) => Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: MainCaseTile(
-                  caseName: c['caseName'] ?? 'Unknown',
-                  dateSubmitted: c['dateSubmitted'] ?? '',
-                  priorityLevel: c['priorityLevel'] ?? '',
-                  caseStatus: c['caseStatus'] ?? '',
-                  imageHeight: 70.0,
-                  imageWidth: 70.0,
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/view-case',
-                    );
-                  },
-                ),
-              )).toList(),
-
-              /// This shows 'View All Cases' when there are more than 3 case tiles
-              if (pendingCases.length > 3)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to full cases list
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text(
-                            'View All Cases',
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-SemiBold',
-                            fontSize: 14,
-                            color: MoldifyColors.primaryColor,
-                          ),
-                        ),
-                        SizedBox(width: 6),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                          color: MoldifyColors.primaryColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              SizedBox(height: 40.0)
-            ],
+            ),
           ),
-        ),
-      )
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -35,7 +36,7 @@ class HomeBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      AutoSizeText(
                         title,
                         style: TextStyle(
                           fontSize: 24,
@@ -44,15 +45,19 @@ class HomeBanner extends StatelessWidget {
                           color: MoldifyColors.backgroundColor,
                           height: 1.2,
                         ),
+                        maxLines: 2,
+                        minFontSize: 16,
                       ),
                       SizedBox(height: 2.0,),
-                      Text(
+                      AutoSizeText(
                         subtitle,
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'Bricolage-Grotesque-Regular',
                           color: MoldifyColors.backgroundColor,
                         ),
+                        maxLines: 2,
+                        minFontSize: 10,
                       ),
                     ],
                   ),

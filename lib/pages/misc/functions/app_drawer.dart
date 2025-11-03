@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/pages/farmer/faq/main_faq.dart';
+import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/support/contact_us.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
@@ -16,8 +21,49 @@ import 'package:moldify/providers/auth_provider.dart';
 /// It includes options for Terms of Use, Privacy Policy, Send Feedback,
 /// Report A Bug, Contact Us, Account Settings, and Log Out.
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  late UserBloc _userBloc;
+  StreamSubscription? _userSub;
+  bool _isExpert = false; // Default to non-expert
+
+  @override
+  void initState() {
+    super.initState();
+    _userBloc = UserBloc(userService: UserService());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      if (sessionCookie != null) {
+        _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+      }
+    });
+
+    _userSub = _userBloc.stream.listen((state) {
+      if (state is UserProfileLoaded) {
+        final role = state.profile.role.toLowerCase();
+        final isExpertUser = !(role == 'farmer' || role == 'user');
+        if (mounted && isExpertUser != _isExpert) {
+          setState(() {
+            _isExpert = isExpertUser;
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userSub?.cancel();
+    _userBloc.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +71,10 @@ class AppDrawer extends StatelessWidget {
       child: SizedBox(
         width: 270,
         child: Drawer(
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,
           ),
           backgroundColor: MoldifyColors.backgroundColor,
-
           child: SafeArea(
             bottom: true,
             top: false,
@@ -41,10 +86,10 @@ class AppDrawer extends StatelessWidget {
                 SizedBox(
                   height: 170,
                   child: DrawerHeader(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: MoldifyColors.primaryColor,
                     ),
-                    child: Row (
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Image.asset(
@@ -52,50 +97,93 @@ class AppDrawer extends StatelessWidget {
                           height: 70,
                           width: 70,
                         ),
-                        SizedBox(width: 20),
-                        Text.rich(
-                          TextSpan(
-                            style: TextStyle(
-                              fontFamily: 'Montserrat-Black',
-                              fontSize: 24,
-                              color: MoldifyColors.accentColor,
-                              height: 1.5,
-                            ),
-                            children: [
-                              const TextSpan(text: 'MOLDIFY\n'),
-                              TextSpan(
-                                text: 'Identify Mold With Moldify',
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  fontSize: 12,
-                                  color: MoldifyColors.backgroundColor,
-                                ),
+                        const SizedBox(width: 20),
+                        const Expanded(
+                          child: AutoSizeText.rich(
+                            TextSpan(
+                              style: TextStyle(
+                                fontFamily: 'Montserrat-Black',
+                                fontSize: 24,
+                                color: MoldifyColors.backgroundColor,
+                                height: 1.5,
                               ),
-                            ],
+                              children: [
+                                TextSpan(text: 'MOLDIFY\n'),
+                                TextSpan(
+                                  text: 'Identify Mold With Moldify',
+                                  style: TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    fontSize: 12,
+                                    color: MoldifyColors.backgroundColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            maxLines: 3,
+                            minFontSize: 10,
+                            overflow: TextOverflow.visible,
+                            softWrap: true,
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
                 ),
 
+                /// FAQ (only for non-experts)
+                if (!_isExpert)
+                  ListTile(
+                    leading: const Icon(
+                      FontAwesomeIcons.solidCircleQuestion,
+                      color: MoldifyColors.accentColor,
+                      size: 24,
+                    ),
+                    title: const AutoSizeText(
+                      'FAQ',
+                      style: TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-Bold',
+                          color: MoldifyColors.primaryColor,
+                          fontSize: 14),
+                      maxLines: 2,
+                      minFontSize: 10,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const MainFAQSCreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                if (!_isExpert)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                    child: Container(
+                      height: 1,
+                      color: MoldifyColors.MoldifySoftGrey,
+                    ),
+                  ),
+
                 /// Terms of Use
                 ListTile(
-                  leading: Icon(
+                  leading: const Icon(
                     FontAwesomeIcons.squarePen,
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const Text(
+                  title: const AutoSizeText(
                     'Terms of Use',
                     style: TextStyle(
-                      fontFamily: 'Bricolage-Grotesque-Bold',
-                      color: MoldifyColors.primaryColor,
-                      fontSize: 14
-                    ),
+                        fontFamily: 'Bricolage-Grotesque-Bold',
+                        color: MoldifyColors.primaryColor,
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    Navigator.pop(context);
                   },
                 ),
 
@@ -106,13 +194,15 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const Text(
+                  title: const AutoSizeText(
                     'Privacy Policy',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -134,13 +224,15 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const Text(
+                  title: const AutoSizeText(
                     'Send Feedback',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
                     Navigator.of(context).push(
@@ -158,12 +250,15 @@ class AppDrawer extends StatelessWidget {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const Text('Report A Bug',
+                  title: const AutoSizeText(
+                    'Report A Bug',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
                     Navigator.of(context).push(
@@ -176,17 +271,20 @@ class AppDrawer extends StatelessWidget {
 
                 /// Contact Us
                 ListTile(
-                  leading: Icon(
+                  leading: const Icon(
                     FontAwesomeIcons.phone,
                     color: MoldifyColors.accentColor,
                     size: 20,
                   ),
-                  title: const Text('Contact Us',
+                  title: const AutoSizeText(
+                    'Contact Us',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
                     Navigator.of(context).push(
@@ -206,18 +304,20 @@ class AppDrawer extends StatelessWidget {
 
                 /// Account Settings
                 ListTile(
-                  leading: Icon(
+                  leading: const Icon(
                     FontAwesomeIcons.solidUser,
                     color: MoldifyColors.accentColor,
                     size: 22,
                   ),
-                  title: const Text(
+                  title: const AutoSizeText(
                     'Account Settings',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
                     Navigator.of(context).push(
@@ -237,29 +337,32 @@ class AppDrawer extends StatelessWidget {
 
                 /// Log Out
                 ListTile(
-                  leading: Icon(
+                  leading: const Icon(
                     FontAwesomeIcons.rightFromBracket,
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const Text(
+                  title: const AutoSizeText(
                     'Log Out',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
-                        fontSize: 14
-                    ),
+                        fontSize: 14),
+                    maxLines: 2,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () async {
-
-                    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                    final authProvider =
+                    Provider.of<AppAuthProvider>(context, listen: false);
                     await authProvider.logout();
                     if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(RouteNames.login, (route) => false);
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                          RouteNames.login, (route) => false);
                     }
                   },
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 )
               ],

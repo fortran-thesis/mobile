@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -41,13 +42,16 @@ class BuildAccountSettingsTiles extends StatelessWidget {
               size: 16,
             ),
             const SizedBox(width: 20),
-            Text(
+            AutoSizeText(
               title,
               style: const TextStyle(
                 fontFamily: 'Bricolage-Grotesque-Bold',
                 color: MoldifyColors.primaryColor,
                 fontSize: 16,
               ),
+              maxLines: 1,
+              minFontSize: 10,
+              overflow: TextOverflow.ellipsis,
             ),
             const Spacer(),
             Icon(

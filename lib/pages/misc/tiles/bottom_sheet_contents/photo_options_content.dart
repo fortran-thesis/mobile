@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -35,13 +36,16 @@ class PhotoOptionsBottomSheetContent extends StatelessWidget {
             color: MoldifyColors.accentColor,
             size: 20.0
           ),
-          title: Text(
+          title: AutoSizeText(
             'Upload Photo',
             style: TextStyle(
                 fontFamily: 'Bricolage-Grotesque-Bold',
                 color: MoldifyColors.primaryColor,
                 fontSize: 16
-            )
+            ),
+            maxLines: 1,
+            minFontSize: 10,
+            overflow: TextOverflow.ellipsis,
           ),
           onTap: onUploadPhoto
         ),
@@ -51,13 +55,16 @@ class PhotoOptionsBottomSheetContent extends StatelessWidget {
             color: MoldifyColors.accentColor,
             size: 20.0
           ),
-          title: Text(
+          title: AutoSizeText(
             label2 ?? 'Remove Photo',
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-Bold',
               color: MoldifyColors.primaryColor,
               fontSize: 16
-            )
+            ),
+            maxLines: 1,
+            minFontSize: 10,
+            overflow: TextOverflow.ellipsis,
           ),
           onTap: onRemovePhoto
         ),

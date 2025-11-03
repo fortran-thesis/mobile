@@ -80,6 +80,8 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                 onCancel: () {
                   Navigator.of(context).pop(false); //Return false to prevent pop
                 },
+                cancelText: 'No',
+                confirmText: 'Yes, Go Back',
               );
             },
           );
@@ -263,6 +265,8 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                             onCancel: (){
                               Navigator.of(context).pop();
                             },
+                            cancelText: 'No',
+                            confirmText: 'Yes',
                           );
                         },
                       );

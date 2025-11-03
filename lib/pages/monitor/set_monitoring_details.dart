@@ -273,7 +273,7 @@ class _SetMonitoringDetailsScreenState
                             builder: (BuildContext context) {
                               return BuildConfirmationDialog(
                                 title: 'Apply Monitoring Setup?',
-                                subtitle: 'Make sure everything looks right before moving on.',
+                                subtitle: 'Are you sure you want to apply these monitoring details?',
                                 onConfirm: () {
                                   Navigator.of(context).pop();
                                   Navigator.of(context).pop();
@@ -281,6 +281,8 @@ class _SetMonitoringDetailsScreenState
                                 onCancel: (){
                                   Navigator.of(context).pop();
                                 },
+                                cancelText: 'No',
+                                confirmText: 'Yes',
                               );
                             },
                           );

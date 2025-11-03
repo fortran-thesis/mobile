@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -96,38 +97,46 @@ class StatusDonutChart extends StatelessWidget {
           const SizedBox(width: 24),
 
           // Legend
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: statusData.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: _getColorForStatus(entry.key),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: statusData.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: _getColorForStatus(entry.key),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Flexible text inside a bounded layout
+                        Flexible(
+                          child: Text(
+                            '${entry.value.toInt()} - ${entry.key}',
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 14,
+                              color: Color(0xFF2F3A1D),
+                            ),
+                            softWrap: true,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${entry.value.toInt()} - ${entry.key}',
-                      style: const TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 14,
-                        color: Color(0xFF2F3A1D),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ],
-      ),
+      )
     );
   }
 
@@ -139,6 +148,8 @@ class StatusDonutChart extends StatelessWidget {
         return MoldifyColors.accentColor;
       case 'In Progress':
         return MoldifyColors.MoldifyBlue;
+        case 'Rejected':
+        return MoldifyColors.MoldifyRed;
       default:
         return Colors.grey;
     }

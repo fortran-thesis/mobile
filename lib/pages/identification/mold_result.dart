@@ -1,9 +1,12 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:moldify/core/features/camera/models/camera_model_result.dart';
 import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/pages/identification/mold_result_content/mold_info_content.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/functions/tab_bar.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 
@@ -11,6 +14,7 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
+import 'mold_result_content/prevention_treatment_content.dart';
 
 
 class MoldResultScreen extends StatefulWidget {
@@ -26,6 +30,12 @@ class MoldResultScreen extends StatefulWidget {
 class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
+  final String healthContent =
+    "Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.";
+  final String plantThreatContent =
+    "Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.";
+  final String additionalInfoContent =
+    "Aspergillus species are also used in biotechnology for the production of enzymes and pharmaceuticals, showcasing their industrial significance.";
 
   final String fullDescription =
     "Aspergillus is a genus of common molds that can be found in various environments, "
@@ -52,6 +62,35 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "Family": "Aspergillaceae",
     "Genus": "Aspergillus",
   };
+
+  final List<String> recommendedFungicides = [
+    "Chlorothalonil",
+    "Mancozeb",
+    "Copper-based fungicides",
+  ];
+
+  final String resistanceContent = "To minimize the risk of mold developing "
+      "resistance to fungicides, rotate products that contain different active "
+      "ingredients or modes of action. Avoid repeated use of the same fungicide "
+      "type across multiple treatments. Always follow label recommendations for dosage "
+      "and application frequency. Overuse or incorrect application can reduce fungicide "
+      "effectiveness and contribute to resistance in future mold outbreaks.";
+
+  final String alternativeMethodsContent = "Implement non-chemical control methods alongside "
+      "fungicide use for best results. Improve ventilation in affected areas to reduce "
+      "moisture buildup, and use a dehumidifier where possible. Clean and dry surfaces "
+      "thoroughly, and remove contaminated materials to prevent further spread. UV light "
+      "treatment and natural antifungal agents like vinegar or hydrogen peroxide can help "
+      "control surface mold growth.";
+
+  final String additionalInfoTreatmentContent = "Always wear protective gloves and a mask "
+      "when handling mold or applying treatments. Dispose of contaminated "
+      "materials properly to prevent recontamination. For large or recurring "
+      "infestations, contact a certified mold remediation specialist. "
+      "Local regulations may require professional cleanup for certain mold species or "
+      "in public spaces. Keep records of treatments and observations to help monitor "
+      "mold recurrence and treatment effectiveness.";
+
 
   @override
   void initState() {
@@ -96,7 +135,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
     final TextEditingController correctedGenusController = TextEditingController();
 
-
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
@@ -106,6 +144,14 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         ),
         rightIconColor: MoldifyColors.MoldifyRed,
         onRightIconPressed: () {
+
+          // Define the save logic here so it can be referenced by both onSave and onConfirm
+          void onSave(String correctedText) {
+            // Add your save logic here
+            print('Corrected Text: $correctedText');
+            Navigator.of(context).pop(); // This will pop the bottom sheet
+          }
+
           showModalBottomSheet(
             context: context,
             // Make it non-dismissible
@@ -122,11 +168,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                     onClose: () {
                       Navigator.of(context).pop();
                     },
-                    onSave: (correctedText) {
-                      // Add your save logic here
-                      print('Corrected Text: $correctedText');
+                    onSave: onSave,
+
+                    /// This is for the confirmation dialog inside the bottom sheet
+                    /// You can implement the actual logic as needed
+
+                    /// This is the cancel action for the pop up dialog
+                    onCancel: () {
                       Navigator.of(context).pop();
                     },
+
+                    /// This is the confirm action for the pop up dialog
+                    onConfirm: () {
+                      onSave(correctedGenusController.text);                    },
                   ),
                 ),
               );
@@ -162,29 +216,32 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Verified Information Banner
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Text(
+                        child: AutoSizeText(
                           'Most probably identified mold genus:',
                           style: TextStyle(
                             fontSize: 12,
                             fontFamily: 'Bricolage-Grotesque-Regular',
                             color: MoldifyColors.MoldifyGrey,
                           ),
+                          maxLines: 1,
+                          minFontSize: 10,
                         )
                       ),
               
                       /// This is the Mold Genus Name
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Text(
+                        child: AutoSizeText(
                           moldGenus,
                           style: TextStyle(
                             fontSize: 40,
                             fontFamily: 'Montserrat-Black',
                             color: MoldifyColors.primaryColor,
                           ),
+                          maxLines: 1,
+                          minFontSize: 24,
                         ),
                       ),
               
@@ -196,208 +253,107 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             /// Date
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Icon(
-                                      FontAwesomeIcons.solidCalendar,
-                                      size: 16,
-                                      color: MoldifyColors.accentColor,
-                                    ),
+                            Row(
+                              children: [
+                                Icon(
+                                  FontAwesomeIcons.solidCalendar,
+                                  size: 16,
+                                  color: MoldifyColors.accentColor,
+                                ),
+                                SizedBox(width: 6),
+                                AutoSizeText(
+                                  today,
+                                  style: TextStyle(
+                                    color: MoldifyColors.primaryColor,
+                                    fontSize: 12,
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
                                   ),
-                                  TextSpan(
-                                    text: "			$today",
-                                    style: TextStyle(
-                                      color: MoldifyColors.primaryColor,
-                                      fontSize: 12,
-                                      fontFamily:
-                                      'Bricolage-Grotesque-Regular',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  maxLines: 1,
+                                  minFontSize: 8,
+                                ),
+                              ],
                             ),
               
                             /// Confidence Level
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Icon(
-                                      FontAwesomeIcons.chartSimple,
-                                      size: 16,
-                                      color: MoldifyColors.accentColor,
-                                    ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  FontAwesomeIcons.chartSimple,
+                                  size: 16,
+                                  color: MoldifyColors.accentColor,
+                                ),
+                                SizedBox(width: 6),
+                                AutoSizeText(
+                                  "Confidence level: $confidenceLevel%",
+                                  style: TextStyle(
+                                    color: MoldifyColors.primaryColor,
+                                    fontSize: 12,
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
                                   ),
-                                  TextSpan(
-                                    text:
-                                    "			Confidence level: $confidenceLevel%",
-                                    style: TextStyle(
-                                      color: MoldifyColors.primaryColor,
-                                      fontSize: 12,
-                                      fontFamily:
-                                      'Bricolage-Grotesque-Regular',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  maxLines: 1,
+                                  minFontSize: 8,
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
               
-                      Divider(color: MoldifyColors.MoldifySoftGrey),
-              
-                      /// Mold Description
-                      Padding(
-                        padding: const EdgeInsets.all(15.0),
-                        child: Text.rich(
-
-                          /// This is the description of the mold genus
-                          TextSpan(
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              color: MoldifyColors.MoldifyBlack,
-                              height: 1.5,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: (isLongText && !_showFullText)
-                                    ? words.take(40).join(' ')
-                                    : fullDescription,
-                              ),
-
-                              /// Tappable "Learn More" or "Show Less"
-                              if (isLongText)
-                                TextSpan(
-                                  text: _showFullText
-                                      ? ' Show Less'
-                                      : '... Show More',
-                                  style: TextStyle(
-                                    color: MoldifyColors.MoldifyBlue,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  recognizer: _tapRecognizer,
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: BuildTabBar(
+                            tabs: ['Mold Info', 'Prevention Tactics'],
+                            tabContents: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 15.0),
+                                child: MoldInfoSection(
+                                    description: fullDescription,
+                                    taxonomy: taxonomy,
+                                  healthContent: healthContent,
+                                  plantThreatContent: plantThreatContent,
+                                  additionalInfoContent: additionalInfoContent,
                                 ),
-                            ],
-                          ),
-                          textAlign: TextAlign.justify,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 15.0),
+                                child: PreventionTreatmentContent(
+                                  recommendedFungicides: recommendedFungicides,
+                                  resistanceContent: resistanceContent,
+                                  alternativeMethodsContent: alternativeMethodsContent,
+                                  additionalInfoTreatmentContent: additionalInfoContent,
+                                ),
+                              ),
+                            ]
                         ),
                       ),
 
-
-                      /// Taxonomy Section
+                      SizedBox(height: 10),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                            color: MoldifyColors.backgroundColor,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10.0),
-                            ),
-                            border: Border.all(
-                              color: MoldifyColors.primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-
-                                /// Taxonomy Header
-                                RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.middle,
-                                        child: Icon(
-                                          FontAwesomeIcons.sitemap,
-                                          size: 20,
-                                          color: MoldifyColors.accentColor,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: "			Taxonomy",
-                                        style: TextStyle(
-                                          color: MoldifyColors.primaryColor,
-                                          fontSize: 16,
-                                          fontFamily:
-                                          'Bricolage-Grotesque-Bold',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                /// Taxonomy Details
-                                /// Using a Column to list each taxonomy level
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: taxonomy.entries.map((entry) {
-                                      bool isFirst = taxonomy.keys.first == entry.key;
-                                      return buildTaxonomyRow(entry.key, entry.value, withPadding: !isFirst);
-                                    }).toList(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 40.0, left: 15.0, right: 15.0),
                         child: Text(
-                          "Disclaimer: This app only suggests possible mold genus based on image analysis. This should not replace expert advice or laboratory confirmation.",
+                          'Disclaimer: This app only suggests possible mold genus based on image analysis. This should not replace expert advice or laboratory confirmation.',
                           style: TextStyle(
-                              fontFamily: "Bricolage-Grotesque-Regular",
-                              fontSize: 12,
-                              color: MoldifyColors.MoldifyGrey,
+                            fontSize: 12,
+                            fontFamily: 'Bricolage-Grotesque-Regular',
+                            color: MoldifyColors.MoldifyGrey,
                           ),
                         ),
                       ),
-
-                      /// Save Log Button
                       Padding(
-                        padding: const EdgeInsets.only(top: 8.0, left: 15.0, right: 15.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: BuildButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (BuildContext context) {
-                                  return BuildConfirmationDialog(
-                                    title: 'Save Result?',
-                                    subtitle: 'Are you sure you want to save result?',
-                                    onConfirm: () {
-                                      Navigator.of(context).pop();
-                                      Navigator.of(context).pop();
-                                    },
-                                    onCancel: (){
-                                      Navigator.of(context).pop();
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            buttonText: 'Save Result',
-                            backgroundColor: MoldifyColors.primaryColor,
-                            textColor: MoldifyColors.backgroundColor,
-                            buttonHeight: 45,
-                            buttonWidth: MediaQuery.of(context).size.width,
-                            buttonRadius: 10
+                          onPressed: () {
+                            ///To do: Implement Save Result Functionality
+                          },
+                          buttonText: 'Save Result',
+                          backgroundColor: MoldifyColors.primaryColor,
+                          textColor: MoldifyColors.backgroundColor,
+                          buttonHeight: 45,
+                          buttonWidth: double.infinity,
+                          buttonRadius: 10,
                         ),
                       ),
-
                     ],
                   ),
                 ),
@@ -405,38 +361,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// A helper method to build a row for taxonomy information.
-  /// Parameters:
-  /// - [label]: The label for the taxonomy level (e.g., "Kingdom").
-  /// - [value]: The corresponding value for the taxonomy level (e.g., "Fungi").
-  /// - [withPadding]: A boolean indicating whether to add top padding to the row.
-  Widget buildTaxonomyRow(String label, String value, {bool withPadding = false}) {
-    return Padding(
-      padding: EdgeInsets.only(top: withPadding ? 8.0 : 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: MoldifyColors.primaryColor,
-              fontSize: 16,
-              fontFamily: 'Bricolage-Grotesque-Bold',
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: MoldifyColors.MoldifyBlack,
-              fontSize: 16,
-              fontFamily: 'Bricolage-Grotesque-Regular',
-            ),
-          ),
-        ],
       ),
     );
   }

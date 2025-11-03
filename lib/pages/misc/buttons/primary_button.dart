@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -28,8 +29,8 @@ class BuildButton extends StatelessWidget {
   final IconData? leftIcon;
   final String? svg;
   final Color? iconColor;
-  final double? paddingIconText, iconSize, svgHeight, fontSize;
-  final double buttonHeight, buttonWidth, buttonRadius;
+  final double? paddingIconText, iconSize, svgHeight, fontSize, borderWidth, buttonWidth;
+  final double buttonHeight, buttonRadius;
 
   const BuildButton({
     Key? key,
@@ -38,8 +39,8 @@ class BuildButton extends StatelessWidget {
     required this.backgroundColor,
     required this.textColor,
     required this.buttonHeight,
-    required this.buttonWidth,
     required this.buttonRadius,
+    this.buttonWidth,
     this.borderColor,
     this.leftIcon,
     this.svg,
@@ -48,6 +49,7 @@ class BuildButton extends StatelessWidget {
     this.iconSize,
     this.svgHeight,
     this.fontSize,
+    this.borderWidth,
   }) : super(key: key);
 
   @override
@@ -63,7 +65,7 @@ class BuildButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(buttonRadius),
             side:BorderSide(
               color: borderColor ?? Colors.transparent,
-              width: 2.0,
+              width: borderWidth ?? 2.0,
             )
           ),
         ),
@@ -89,7 +91,7 @@ class BuildButton extends StatelessWidget {
                   height: svgHeight,
                 ),
               ),
-            Text(
+            AutoSizeText(
               buttonText,
               style: TextStyle(
                 overflow: TextOverflow.visible,
@@ -97,6 +99,9 @@ class BuildButton extends StatelessWidget {
                 fontSize: fontSize ?? 16.0,
                 color: textColor,
               ),
+              maxLines: 1,
+              minFontSize: 8,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

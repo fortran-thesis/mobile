@@ -73,8 +73,9 @@ class InVitroTab extends StatelessWidget {
                   )
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 20, // horizontal spacing between items
+              runSpacing: 10, // vertical spacing if wrapped
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

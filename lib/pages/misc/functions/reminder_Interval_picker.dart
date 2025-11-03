@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -89,13 +90,15 @@ class _ReminderIntervalPickerState extends State<ReminderIntervalPicker> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    const Text(
+                    AutoSizeText(
                       'Every',
                       style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         fontSize: 16,
                         color: MoldifyColors.primaryColor,
                       ),
+                      maxLines: 1,
+                      minFontSize: 10,
                     ),
             
                     // Number picker
@@ -118,7 +121,7 @@ class _ReminderIntervalPickerState extends State<ReminderIntervalPicker> {
                         children: List.generate(widget.maxNumber, (index) {
                           final isSelected = index + 1 == selectedNumber;
                           return Center(
-                            child: Text(
+                            child: AutoSizeText(
                               '${index + 1}',
                               style: TextStyle(
                                 fontSize: 16,
@@ -127,6 +130,8 @@ class _ReminderIntervalPickerState extends State<ReminderIntervalPicker> {
                                     ? MoldifyColors.primaryColor
                                     : MoldifyColors.primaryColor.withValues(alpha: 0.5),
                               ),
+                              maxLines: 1,
+                              minFontSize: 10,
                             ),
                           );
                         }),
@@ -153,7 +158,7 @@ class _ReminderIntervalPickerState extends State<ReminderIntervalPicker> {
                         children: units.map((u) {
                           final isSelected = units[selectedUnitIndex] == u;
                           return Center(
-                            child: Text(
+                            child: AutoSizeText(
                               u,
                               style: TextStyle(
                                 fontSize: 16,
@@ -164,6 +169,8 @@ class _ReminderIntervalPickerState extends State<ReminderIntervalPicker> {
                                     ? MoldifyColors.primaryColor
                                     : MoldifyColors.primaryColor.withValues(alpha: 0.5),
                               ),
+                              maxLines: 1,
+                              minFontSize: 10,
                             ),
                           );
                         }).toList(),
