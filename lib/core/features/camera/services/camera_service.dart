@@ -13,7 +13,7 @@ class CameraService {
 		Future<Map<String, dynamic>> identifyImage({required List<int> imageBytes, required String filename, String? sessionCookie}) async {
 			print('CameraService: identifyImage called (multipart)');
 			print('Image bytes length: ${imageBytes.length}');
-			final uri = Uri.parse(ApiUrl.modelUrl + '/predict');
+			final uri = Uri.parse(ApiUrl.modelUrl + '/default/multimodal-prediction');
 			final request = http.MultipartRequest('POST', uri);
 			request.files.add(
 				http.MultipartFile.fromBytes('image', imageBytes, filename: filename),
