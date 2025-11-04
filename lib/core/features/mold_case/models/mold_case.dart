@@ -1,4 +1,5 @@
 class MoldCase {
+  final String id;
   final String mycologistId;
   final String name;
   final String moldReportId;
@@ -6,11 +7,12 @@ class MoldCase {
   final String priority; // "low" | "medium" | "high"
   final DateTime startDate;
   final DateTime? endDate;
-  final CultivationDetails cultivationDetails;
-  final List<CultivationLog> cultivationLogs;
+  final CultivationDetails? cultivationDetails;
+  final List<CultivationLog>? cultivationLogs;
   final bool isArchived;
 
   MoldCase({
+    required this.id,
     required this.mycologistId,
     required this.name,
     required this.moldReportId,
@@ -18,22 +20,22 @@ class MoldCase {
     required this.priority,
     required this.startDate,
     this.endDate,
-    required this.cultivationDetails,
-    required this.cultivationLogs,
+    this.cultivationDetails,
+    this.cultivationLogs,
     required this.isArchived,
   });
 
   factory MoldCase.fromJson(Map<String, dynamic> json) {
     // Parse cultivation_details
     final rawCultivationDetails = json['cultivation_details'];
-    CultivationDetails cultivationDetails = CultivationDetails.empty();
+    CultivationDetails? cultivationDetails;
     if (rawCultivationDetails is Map<String, dynamic>) {
       cultivationDetails = CultivationDetails.fromJson(rawCultivationDetails);
     }
 
     // Parse cultivation_logs
     final rawLogs = json['cultivation_logs'];
-    List<CultivationLog> logs = [];
+    List<CultivationLog>? logs;
     if (rawLogs is List) {
       logs = rawLogs
           .map((e) => CultivationLog.fromJson(e as Map<String, dynamic>))
@@ -41,6 +43,7 @@ class MoldCase {
     }
 
     return MoldCase(
+      id: json['id']?.toString() ?? '',
       mycologistId: json['mycologist_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       moldReportId: json['mold_report_id']?.toString() ?? '',
@@ -80,6 +83,7 @@ class MoldCase {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'mycologist_id': mycologistId,
       'name': name,
       'mold_report_id': moldReportId,
@@ -87,8 +91,8 @@ class MoldCase {
       'priority': priority,
       'start_date': startDate.toUtc().toIso8601String(),
       'end_date': endDate?.toUtc().toIso8601String(),
-      'cultivation_details': cultivationDetails.toJson(),
-      'cultivation_logs': cultivationLogs.map((e) => e.toJson()).toList(),
+      if (cultivationDetails != null) 'cultivation_details': cultivationDetails!.toJson(),
+      if (cultivationLogs != null) 'cultivation_logs': cultivationLogs!.map((e) => e.toJson()).toList(),
       'is_archived': isArchived,
     };
   }

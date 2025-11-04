@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
 
@@ -50,6 +49,24 @@ class MoldCaseService {
     throw Exception('Failed to fetch mold case $id: ${response.statusCode}');
   }
 
+  /// Get mold cases by report ID.
+  /// Endpoint: GET /by-report/:reportId
+  Future<Map<String, dynamic>> getMoldCasesByReportId(
+    String reportId, {
+    String? sessionCookie,
+  }) async {
+    final response = await _apiService.get(
+      '/by-report/$reportId',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to fetch mold cases for report $reportId: ${response.statusCode}');
+  }
+
   /// Update a mold case by id.
   Future<void> updateMoldCase(
     String id,
@@ -63,7 +80,7 @@ class MoldCaseService {
       sessionCookie: sessionCookie,
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception(
         'Failed to update mold case $id: ${response.statusCode} ${response.body}',
       );

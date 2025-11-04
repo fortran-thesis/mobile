@@ -96,41 +96,41 @@ class InVivoTab extends StatelessWidget {
 
             SizedBox(height: 12),
 
-            inVivoEntries.isEmpty
-                ? EmptyState(
-              message: 'No entries made yet.',
-              icon: FontAwesomeIcons.leaf,
-              height: MediaQuery.of(context).size.height - 400,
-            ): const SizedBox.shrink(),
-            /// Timeline Entries
-            ...List.generate(inVivoEntries.length, (index) {
-              final entry = inVivoEntries[index];
-              return ExperimentTimelineTile(
-                dateTime: entry['date'] ?? '',
-                imagePath: entry['imagePath'] ?? '',
-                sizeValue: entry['sizeValue'] ?? '',
-                colorValue: entry['colorValue'] ?? '',
-                notes: entry['notes'] ?? '',
-                isFirst: index == 0,
-                isLast: index == inVivoEntries.length - 1,
-                // Conditionally provide empty lists to hide the popup menu if the case is closed
-                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
-                popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
-                onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
-                  if (selectedIndex == 0) {
-                    Navigator.pushNamed(
-                        context,
-                        '/edit-log', arguments: {'tabName': 'In Vivo'}
-                    );
-                  }
-                  else if (selectedIndex == 1) {
-                    // Handle delete
-                  }
-                },
-                sizeLabel: 'Lesion Size',
-                colorLabel: 'Lesion Color',
-              );
-            }),
+            if (inVivoEntries.isEmpty)
+              EmptyState(
+                message: 'No entries made yet.',
+                icon: FontAwesomeIcons.leaf,
+                height: MediaQuery.of(context).size.height - 400,
+              )
+            else
+              ...List.generate(inVivoEntries.length, (index) {
+                final entry = inVivoEntries[index];
+                return ExperimentTimelineTile(
+                  dateTime: entry['date'] ?? '',
+                  imagePath: entry['imagePath'] ?? '',
+                  sizeValue: entry['sizeValue'] ?? '',
+                  colorValue: entry['colorValue'] ?? '',
+                  notes: entry['notes'] ?? '',
+                  isFirst: index == 0,
+                  isLast: index == inVivoEntries.length - 1,
+                  // Conditionally provide empty lists to hide the popup menu if the case is closed
+                  popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                  popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                  onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
+                    if (selectedIndex == 0) {
+                      Navigator.pushNamed(
+                          context,
+                          '/edit-log', arguments: {'tabName': 'In Vivo'}
+                      );
+                    }
+                    else if (selectedIndex == 1) {
+                      // Handle delete
+                    }
+                  },
+                  sizeLabel: 'Lesion Size',
+                  colorLabel: 'Lesion Color',
+                );
+              }),
           ],
         )
     );

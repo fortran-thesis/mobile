@@ -50,7 +50,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
             _isFetchingMore = true;
             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
             final sessionCookie = authProvider.cookie;
-            _bloc.add(FetchMoldReports(pageToken: state.nextPageToken, useCache: false, sessionCookie: sessionCookie));
+            _bloc.add(FetchMoldReports(pageToken: state.nextPageToken, sessionCookie: sessionCookie));
             // Use a more reliable way to reset the flag after fetch completes
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) _isFetchingMore = false;

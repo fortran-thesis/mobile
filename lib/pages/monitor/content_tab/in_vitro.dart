@@ -127,41 +127,41 @@ class InVitroTab extends StatelessWidget {
             ),
             SizedBox(height: 12),
 
-            inVitroEntries.isEmpty
-                ? EmptyState(
-              message: 'No entries made yet.',
-              icon: FontAwesomeIcons.flaskVial,
-              height: MediaQuery.of(context).size.height - 400,
-            ): const SizedBox.shrink(),
-            /// Timeline Entries
-            ...List.generate(inVitroEntries.length, (index) {
-              final entry = inVitroEntries[index];
-              return ExperimentTimelineTile(
-                dateTime: entry['date'] ?? '',
-                imagePath: entry['imagePath'] ?? '',
-                sizeValue: entry['sizeValue'] ?? '',
-                colorValue: entry['colorValue'] ?? '',
-                notes: entry['notes'] ?? '',
-                isFirst: index == 0,
-                isLast: index == inVitroEntries.length - 1,
-                //Conditionally provide empty lists to hide the popup menu if the case is closed
-                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
-                popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
-                onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
-                  if (selectedIndex == 0) {
-                    Navigator.pushNamed(
-                        context,
-                        '/edit-log', arguments: {'tabName': 'In Vitro'}
-                    );
-                  }
-                  else if (selectedIndex == 1) {
-                    // Handle delete
-                  }
-                },
-                sizeLabel: 'Colony Diameter',
-                colorLabel: 'Colony Color',
-              );
-            }),
+            if (inVitroEntries.isEmpty)
+              EmptyState(
+                message: 'No entries made yet.',
+                icon: FontAwesomeIcons.flaskVial,
+                height: MediaQuery.of(context).size.height - 400,
+              )
+            else
+              ...List.generate(inVitroEntries.length, (index) {
+                final entry = inVitroEntries[index];
+                return ExperimentTimelineTile(
+                  dateTime: entry['date'] ?? '',
+                  imagePath: entry['imagePath'] ?? '',
+                  sizeValue: entry['sizeValue'] ?? '',
+                  colorValue: entry['colorValue'] ?? '',
+                  notes: entry['notes'] ?? '',
+                  isFirst: index == 0,
+                  isLast: index == inVitroEntries.length - 1,
+                  //Conditionally provide empty lists to hide the popup menu if the case is closed
+                  popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                  popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash, ],
+                  onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
+                    if (selectedIndex == 0) {
+                      Navigator.pushNamed(
+                          context,
+                          '/edit-log', arguments: {'tabName': 'In Vitro'}
+                      );
+                    }
+                    else if (selectedIndex == 1) {
+                      // Handle delete
+                    }
+                  },
+                  sizeLabel: 'Colony Diameter',
+                  colorLabel: 'Colony Color',
+                );
+              }),
           ],
         )
     );

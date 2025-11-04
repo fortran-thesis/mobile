@@ -13,11 +13,10 @@ abstract class MoldReportEvent extends Equatable {
 
 class FetchMoldReports extends MoldReportEvent {
   final String? pageToken;
-  final bool useCache;
   final String? sessionCookie;
-  FetchMoldReports({this.pageToken, this.useCache = true, this.sessionCookie});
+  FetchMoldReports({this.pageToken, this.sessionCookie});
   @override
-  List<Object?> get props => [pageToken, useCache, sessionCookie];
+  List<Object?> get props => [pageToken, sessionCookie];
 }
 
 class RefreshMoldReports extends MoldReportEvent {
@@ -69,6 +68,10 @@ class MoldReportCreateSuccess extends MoldReportState {}
 class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   final MoldReportRepository repository;
   final int pageSize;
+  
+  // Track pages ourselves now that repository is simplified
+  final List<MoldReport> _allReports = [];
+  String? _nextPageToken;
 
   MoldReportBloc({required this.repository, this.pageSize = 20}) : super(MoldReportInitial()) {
     on<FetchMoldReports>(_onFetch);
@@ -78,16 +81,25 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
 
   Future<void> _onFetch(FetchMoldReports event, Emitter<MoldReportState> emit) async {
     try {
-      if (event.pageToken == null && !(event.useCache)) {
+      if (event.pageToken == null) {
         emit(MoldReportLoading());
       }
 
-  await repository.fetchPage(pageToken: event.pageToken, useCache: event.useCache, sessionCookie: event.sessionCookie);
-
-  final combined = repository.getCachedReports();
-      final nextToken = repository.getNextPageToken(event.pageToken);
-      final hasMore = nextToken != null && nextToken.isNotEmpty;
-      emit(MoldReportLoaded(reports: combined, nextPageToken: nextToken, hasMore: hasMore));
+      final pageReports = await repository.fetchPage(pageToken: event.pageToken, sessionCookie: event.sessionCookie);
+      
+      if (event.pageToken == null) {
+        // First page - reset all reports
+        _allReports.clear();
+        _nextPageToken = null;
+      }
+      
+      _allReports.addAll(pageReports);
+      // In a real implementation, you'd extract nextPageToken from response
+      // For now, assume if we got a full page, there might be more
+      _nextPageToken = pageReports.length >= pageSize ? event.pageToken : null;
+      
+      final hasMore = _nextPageToken != null && _nextPageToken!.isNotEmpty;
+      emit(MoldReportLoaded(reports: _allReports, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldReportError(e.toString()));
     }
@@ -96,12 +108,15 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   Future<void> _onRefresh(RefreshMoldReports event, Emitter<MoldReportState> emit) async {
     try {
       emit(MoldReportLoading());
-  repository.clearCache();
-  await repository.fetchPage(pageToken: null, useCache: false, sessionCookie: event.sessionCookie);
-  final combined = repository.getCachedReports();
-  final nextToken = repository.getNextPageToken(null);
-  final hasMore = nextToken != null && nextToken.isNotEmpty;
-  emit(MoldReportLoaded(reports: combined, nextPageToken: nextToken, hasMore: hasMore));
+      _allReports.clear();
+      _nextPageToken = null;
+      
+      final pageReports = await repository.fetchPage(pageToken: null, sessionCookie: event.sessionCookie);
+      _allReports.addAll(pageReports);
+      _nextPageToken = pageReports.length >= pageSize ? null : null; // First page, no token yet
+      
+      final hasMore = _nextPageToken != null && _nextPageToken!.isNotEmpty;
+      emit(MoldReportLoaded(reports: _allReports, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldReportError(e.toString()));
     }
@@ -110,13 +125,16 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   Future<void> _onCreate(CreateMoldReportEvent event, Emitter<MoldReportState> emit) async {
     try {
       emit(MoldReportCreating());
-      await repository.createReport(event.report, sessionCookie: event.sessionCookie);
-  emit(MoldReportCreateSuccess());
-  // refresh page 1 from cache
-  final combined = repository.getCachedReports();
-  final nextToken = repository.getNextPageToken(null);
-  final hasMore = nextToken != null && nextToken.isNotEmpty;
-  emit(MoldReportLoaded(reports: combined, nextPageToken: nextToken, hasMore: hasMore));
+      // Call service directly to create report
+      await repository.createMoldReport(event.report, sessionCookie: event.sessionCookie);
+      emit(MoldReportCreateSuccess());
+      // Refresh to get updated list
+      _allReports.clear();
+      _nextPageToken = null;
+      final pageReports = await repository.fetchPage(pageToken: null, sessionCookie: event.sessionCookie);
+      _allReports.addAll(pageReports);
+      final hasMore = _nextPageToken != null && _nextPageToken!.isNotEmpty;
+      emit(MoldReportLoaded(reports: _allReports, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldReportError(e.toString()));
     }

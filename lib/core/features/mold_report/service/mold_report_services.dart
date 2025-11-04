@@ -38,7 +38,7 @@ class MoldReportService {
     /// Postman/server logs. Note: this builds the request twice when enabled.
     bool debugDumpRawBytes = false,
   }) async {
-    final uri = Uri.parse('${ApiUrl.moldReport}/user');
+    final uri = Uri.parse('${ApiUrl.moldReport}');
 
     // Helper to build the MultipartRequest so we can snapshot bytes without
     // consuming the stream that would be sent.
@@ -150,7 +150,7 @@ class MoldReportService {
     String? sessionCookie,
     int? limit,
     String? pageToken,
-    String path = '/',
+    String path = '/user',
   }) async {
     final queryParams = <String, dynamic>{};
     if (limit != null) queryParams['limit'] = limit;

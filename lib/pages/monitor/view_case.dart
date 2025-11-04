@@ -16,6 +16,8 @@ import '../misc/images/cover_image.dart';
 import '../misc/tiles/status_tile.dart';
 import '../../../core/features/mold_case/models/mold_case.dart';
 import '../../../core/features/mold_case/repository/mold_case_repository.dart';
+import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../providers/auth_provider.dart';
 
 class ViewCaseScreen extends StatefulWidget {
@@ -28,115 +30,53 @@ class ViewCaseScreen extends StatefulWidget {
 class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
   String caseStatus = 'Pending';
+  String reportStatus = 'Unknown';
 
   // Backend-driven state
   bool _isLoading = true;
   String? _error;
   MoldCase? _case;
-
-  // Static fallback data
-  final String farmerName = 'Juan Dela Cruz';
-  final String dateFirstObserved = 'October 30, 2025';
-  final String emailAddress = 'juan.delacruz@example.com';
-  final String contactNumber = '+63 917 123 4567';
-  final List<Map<String, dynamic>> caseEntries = [
-    {
-      'date': 'October 30, 2025',
-      'notes': 'Initial report. Small, dark spots observed on the lower leaves of several tomato plants. The area is humid and has poor air circulation.',
-      'images': [
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-      ],
-    },
-    {
-      'date': 'November 2, 2025',
-      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
-      'images': [
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-      ],
-    },
-    {
-      'date': 'November 2, 2025',
-      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
-      'images': [
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-        'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
-      ],
-    },
-  ];
+  
+  // Farmer details from mold report
+  String farmerName = 'Juan Dela Cruz';
+  String dateFirstObserved = 'October 30, 2025';
+  String emailAddress = 'juan.delacruz@example.com';
+  String contactNumber = '+63 917 123 4567';
+  String location = 'Unknown Location';
+  late List<Map<String, dynamic>> caseEntries = [];
 
   // Data for In-Vitro Tab
-  final String inVitroDateTime = 'November 01, 2025 – 10:00 AM';
-  final String inVitroGrowthMedium = 'Potato Dextrose Agar';
-  final String inVitroIncubationTemperature = '25°C';
-  final List<Map<String, String>> inVitroEntries = [
-    {
-      'date': 'November 01, 2025 – 10:00 AM',
-      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
-      'sizeValue': '10 mm',
-      'colorValue': 'White',
-      'notes': 'Initial growth observed. Colony is circular and small.',
-    },
-    {
-      'date': 'November 03, 2025 – 10:00 AM',
-      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
-      'sizeValue': '25 mm',
-      'colorValue': 'Greenish-blue',
-      'notes': 'Color changing to a greenish-blue. Mycelium is spreading.',
-    },
-    {
-      'date': 'November 05, 2025 – 10:00 AM',
-      'imagePath': 'https://www.researchgate.net/profile/Upma-Narain/publication/302458334/figure/fig2/AS:360578246823939@1462979961979/Macroscopic-picture-of-Penicillium-crysogeniam.png',
-      'sizeValue': '50 mm',
-      'colorValue': 'Dark Green',
-      'notes': 'Colony has almost covered the plate. Spores are visible.',
-    },
-  ];
+  String inVitroDateTime = 'November 01, 2025 – 10:00 AM';
+  String inVitroGrowthMedium = 'Potato Dextrose Agar';
+  String inVitroIncubationTemperature = '25°C';
+  List<Map<String, String>> inVitroEntries = [];
 
   // Data for In-Vivo Tab
-  final String inVivoDateTime = 'November 01, 2025 – 10:00 AM';
-  final String inVivoEnvironmentalTemperature = '28°C';
-  final List<Map<String, String>> inVivoEntries = [
-    {
-      'date': 'November 02, 2025 – 9:00 AM',
-      'imagePath': 'https://extension.usu.edu/vegetableguide/images/solanaceae-images/black-mold-tomato.jpg',
-      'sizeValue': '5 mm',
-      'colorValue': 'Yellowish',
-      'notes': 'Small lesions appeared on the leaves. No significant wilting.',
-    },
-    {
-      'date': 'November 04, 2025 – 9:00 AM',
-      'imagePath': 'https://extension.usu.edu/vegetableguide/images/solanaceae-images/black-mold-tomato.jpg',
-      'sizeValue': '15 mm',
-      'colorValue': 'Brown with yellow halo',
-      'notes': 'Lesions have enlarged and developed a distinct yellow halo. Some leaf curling observed.',
-    },
-  ];
+  String inVivoDateTime = 'November 01, 2025 – 10:00 AM';
+  String inVivoEnvironmentalTemperature = '28°C';
+  List<Map<String, String>> inVivoEntries = [];
 
   String _getCaseCropName() {
-    if (_case == null) return 'Kamatis Tagalog';
-    return _case!.cultivationDetails?.growthMedium ?? 'Kamatis Tagalog';
+    if (_case == null || _case!.cultivationDetails == null) return 'Kamatis Tagalog';
+    final growthMedium = _case!.cultivationDetails!.growthMedium;
+    return growthMedium.isNotEmpty ? growthMedium : 'Kamatis Tagalog';
   }
 
   Future<void> _loadCaseFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
     print('ViewCase: args = $args');
-    String? id;
+    String? reportId;
     if (args is Map<String, dynamic>) {
-      id = args['id']?.toString();
+      reportId = args['id']?.toString();
     } else if (args is String) {
-      id = args;
+      reportId = args;
     }
 
-    print('ViewCase: extracted id = $id');
+    print('ViewCase: extracted reportId = $reportId');
 
-    if (id == null || id.isEmpty) {
+    if (reportId == null || reportId.isEmpty) {
       setState(() {
-        _error = 'No case id provided';
+        _error = 'No report id provided';
         _isLoading = false;
       });
       return;
@@ -150,26 +90,198 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       // Create a local repository
       final repo = MoldCaseRepository(pageSize: 10);
 
-      print('ViewCase: calling getCaseById($id)');
-      final MoldCase? moldCase = await repo.getCaseById(id, sessionCookie: sessionCookie);
-      print('ViewCase: getCaseById returned: $moldCase');
+      print('ViewCase: calling getCasesByReportId($reportId)');
+      final List<MoldCase> moldCases = await repo.getCasesByReportId(reportId, sessionCookie: sessionCookie);
+      print('ViewCase: getCasesByReportId returned ${moldCases.length} cases');
 
-      if (moldCase == null) {
+      if (moldCases.isEmpty) {
         setState(() {
-          _error = 'Case not found';
+          _error = 'No cases found for this report';
           _isLoading = false;
         });
         return;
       }
 
+      // Use the first case (or you could let user select if multiple)
+      final MoldCase moldCase = moldCases.first;
+
       print('ViewCase: case.mycologistId = ${moldCase.mycologistId}');
       print('ViewCase: case.name = ${moldCase.name}');
       print('ViewCase: case.priority = ${moldCase.priority}');
+      print('ViewCase: case.moldReportId = ${moldCase.moldReportId}');
+
+      // Fetch farmer details from the mold report
+      String localFarmerName = 'Juan Dela Cruz';
+      String localDateFirstObserved = 'October 30, 2025';
+      String localEmailAddress = 'juan.delacruz@example.com';
+      String localContactNumber = '+63 917 123 4567';
+      String localLocation = 'Unknown Location';
+      final List<Map<String, dynamic>> localCaseEntries = [];
+      String localReportStatus = 'Unknown';
+
+      if (moldCase.moldReportId.isNotEmpty) {
+        try {
+          print('ViewCase: fetching report ${moldCase.moldReportId} for farmer details');
+          final reportService = MoldReportService();
+          final reportData = await reportService.getMoldReportById(
+            moldCase.moldReportId,
+            sessionCookie: sessionCookie,
+          );
+          print('ViewCase: report data = $reportData');
+
+          // Extract farmer details from report data
+          final reportPayload = reportData['data'] is Map<String, dynamic> 
+              ? reportData['data'] as Map<String, dynamic>
+              : reportData;
+
+          // Extract status from report
+          final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
+          localReportStatus = statusRaw[0].toUpperCase() + statusRaw.substring(1);
+
+          // Extract reporter details from the report
+          final reporter = reportPayload['reporter'] as Map<String, dynamic>?;
+          if (reporter != null) {
+            final user = reporter['user'] as Map<String, dynamic>?;
+            final details = reporter['details'] as Map<String, dynamic>?;
+            
+            if (user != null) {
+              localFarmerName = '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'.trim();
+            }
+            if (details != null) {
+              localEmailAddress = details['email']?.toString() ?? localEmailAddress;
+              localContactNumber = details['phone_number']?.toString() ?? localContactNumber;
+              // Extract location from reporter details, fallback to address
+              localLocation = details['location']?.toString() ?? 
+                              details['address']?.toString() ?? 
+                              'Unknown Location';
+            }
+          }
+          
+          // Extract date observed from report, format it
+          final dateObserved = reportPayload['date_observed']?.toString();
+          if (dateObserved != null) {
+            localDateFirstObserved = formatIsoDateToDisplay(dateObserved);
+          }
+
+          // Extract case_details from report and build caseEntries
+          final caseDetails = reportPayload['case_details'] as List<dynamic>?;
+          print('ViewCase: case_details = $caseDetails');
+          if (caseDetails != null && caseDetails.isNotEmpty) {
+            print('ViewCase: processing ${caseDetails.length} case detail entries');
+            for (var i = 0; i < caseDetails.length; i++) {
+              final detail = caseDetails[i];
+              print('ViewCase: detail[$i] = $detail');
+              if (detail is Map<String, dynamic>) {
+                final description = detail['description']?.toString() ?? '';
+                final metadata = detail['metadata'] as Map<String, dynamic>?;
+                
+                // Extract created_at from metadata
+                String entryDate = localDateFirstObserved;
+                if (metadata != null && metadata['created_at'] != null) {
+                  entryDate = formatFirestoreTimestampToDisplay(
+                    metadata['created_at'] as Map<String, dynamic>?,
+                  );
+                }
+                
+                // Extract cover_photo images
+                final coverPhotos = detail['cover_photo'] as List<dynamic>?;
+                final images = coverPhotos is List 
+                    ? coverPhotos.whereType<String>().toList()
+                    : <String>[];
+                
+                print('ViewCase: adding entry with date=$entryDate, notes=$description, images=${images.length}');
+                localCaseEntries.add({
+                  'date': entryDate,
+                  'notes': description,
+                  'images': images,
+                });
+              }
+            }
+          }
+
+          print('ViewCase: extracted farmer details - name=$localFarmerName, email=$localEmailAddress');
+          print('ViewCase: extracted ${localCaseEntries.length} case entries from report');
+
+        } catch (e) {
+          print('ViewCase: WARNING - failed to fetch report for farmer details: $e');
+          // Continue with fallback data
+        }
+      }
+
+      // Extract cultivation details from the MoldCase
+      String localInVitroDateTime = 'No data';
+      String localInVitroGrowthMedium = 'Not specified';
+      String localInVitroIncubationTemperature = 'Not specified';
+      List<Map<String, String>> localInVitroEntries = [];
+      
+      String localInVivoDateTime = 'No data';
+      String localInVivoEnvironmentalTemperature = 'Not specified';
+      List<Map<String, String>> localInVivoEntries = [];
+
+      if (moldCase.cultivationDetails != null) {
+        final cultivationDetails = moldCase.cultivationDetails!;
+        
+        // Extract in vitro details
+        if (cultivationDetails.inVitroDetails != null) {
+          localInVitroIncubationTemperature = '${cultivationDetails.inVitroDetails!.incubationTemperature}°C';
+        }
+        localInVitroGrowthMedium = cultivationDetails.growthMedium.isNotEmpty 
+            ? cultivationDetails.growthMedium 
+            : 'Not specified';
+
+        // Extract cultivation logs and categorize them
+        if (moldCase.cultivationLogs != null && moldCase.cultivationLogs!.isNotEmpty) {
+          for (var log in moldCase.cultivationLogs!) {
+            if (log.type == 'vitro') {
+              localInVitroEntries.add({
+                'date': 'Log Entry',
+                'imagePath': '',
+                'sizeValue': log.characteristics['size']?.toString() ?? 'Not measured',
+                'colorValue': log.characteristics['color']?.toString() ?? 'Not specified',
+                'notes': log.additionalInfo,
+              });
+              if (localInVitroDateTime == 'No data') {
+                localInVitroDateTime = DateFormat('MMMM dd, yyyy – hh:mm a').format(DateTime.now());
+              }
+            } else if (log.type == 'vivo') {
+              localInVivoEntries.add({
+                'date': 'Log Entry',
+                'imagePath': '',
+                'sizeValue': log.characteristics['size']?.toString() ?? 'Not measured',
+                'colorValue': log.characteristics['color']?.toString() ?? 'Not specified',
+                'notes': log.additionalInfo,
+              });
+              if (localInVivoDateTime == 'No data') {
+                localInVivoDateTime = DateFormat('MMMM dd, yyyy – hh:mm a').format(DateTime.now());
+              }
+            }
+          }
+        }
+
+        // Extract in vivo details
+        if (cultivationDetails.inVivoDetails != null) {
+          localInVivoEnvironmentalTemperature = '${cultivationDetails.inVivoDetails!.environmentalTemperature}°C';
+        }
+      }
 
       setState(() {
         _case = moldCase;
         caseStatus = _case!.priority[0].toUpperCase() + _case!.priority.substring(1);
+        reportStatus = localReportStatus;
         caseImageUrl = _case!.photoUrl ?? caseImageUrl;
+        farmerName = localFarmerName;
+        dateFirstObserved = localDateFirstObserved;
+        emailAddress = localEmailAddress;
+        contactNumber = localContactNumber;
+        location = localLocation;
+        caseEntries = localCaseEntries;
+        inVitroDateTime = localInVitroDateTime;
+        inVitroGrowthMedium = localInVitroGrowthMedium;
+        inVitroIncubationTemperature = localInVitroIncubationTemperature;
+        inVitroEntries = localInVitroEntries;
+        inVivoDateTime = localInVivoDateTime;
+        inVivoEnvironmentalTemperature = localInVivoEnvironmentalTemperature;
+        inVivoEntries = localInVivoEntries;
         _isLoading = false;
       });
     } catch (e, stackTrace) {
@@ -234,7 +346,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
               final selectedItem = popupMenuItems[index];
 
               if (selectedItem == 'Set Monitoring Details') {
-                Navigator.pushNamed(context, '/set-monitoring-details');
+                Navigator.pushNamed(
+                  context, 
+                  '/set-monitoring-details',
+                  arguments: {'moldCase': _case},
+                );
               }
               else if (selectedItem == 'Identification History') {
                 Navigator.pushNamed(context, '/identification-history');
@@ -318,7 +434,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                           children: [
                             StatusBox(status: priorityLevel, fontSize: 12,),
                             SizedBox(width: 5),
-                            StatusBox(status: caseStatus, fontSize: 12,),
+                            StatusBox(status: reportStatus, fontSize: 12,),
                           ],
                         ),
                         Padding(
@@ -407,7 +523,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: "			${_case?.moldReportId ?? 'Ilocos Region'}",
+                                      text: "			$location",
                                       style: TextStyle(
                                         color: MoldifyColors.primaryColor,
                                         fontSize: 12,

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/features/mold_case/models/mold_case.dart';
+import 'package:moldify/core/features/mold_case/repository/mold_case_repository.dart';
+import 'package:moldify/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/functions/reminder_Interval_picker.dart';
@@ -10,8 +14,9 @@ import '../misc/textboxes/dropdwon.dart';
 import '../misc/textboxes/textboxes.dart';
 
 class SetMonitoringDetailsScreen extends StatefulWidget {
+  final MoldCase moldCase;
 
-  SetMonitoringDetailsScreen({super.key});
+  SetMonitoringDetailsScreen({required this.moldCase, super.key});
 
   @override
   _SetMonitoringDetailsScreenState createState() =>
@@ -24,6 +29,109 @@ class _SetMonitoringDetailsScreenState
     final TextEditingController _endDateController = TextEditingController();
     final TextEditingController _incubationTempController = TextEditingController();
     final TextEditingController _environmentalTempController = TextEditingController();
+    
+    final MoldCaseRepository _repository = MoldCaseRepository();
+    
+    String? _selectedGrowthMedium;
+    bool _isLoading = false;
+
+    @override
+    void initState() {
+      super.initState();
+      _initializeFields();
+    }
+    
+    void _initializeFields() {
+      // Initialize with existing data if available
+      final details = widget.moldCase.cultivationDetails;
+      
+      _startDateController.text = DateFormat('MMMM dd, yyyy').format(widget.moldCase.startDate);
+      
+      if (widget.moldCase.endDate != null) {
+        _endDateController.text = DateFormat('MMMM dd, yyyy').format(widget.moldCase.endDate!);
+      }
+      
+      if (details != null) {
+        _selectedGrowthMedium = details.growthMedium;
+        
+        if (details.inVitroDetails != null) {
+          _incubationTempController.text = details.inVitroDetails!.incubationTemperature.toString();
+        }
+        
+        if (details.inVivoDetails != null) {
+          _environmentalTempController.text = details.inVivoDetails!.environmentalTemperature.toString();
+        }
+      }
+    }
+    
+    Future<void> _updateMoldCase() async {
+      try {
+        setState(() => _isLoading = true);
+        
+        // Parse temperatures
+        final incubationTemp = _incubationTempController.text.isNotEmpty 
+            ? double.tryParse(_incubationTempController.text) ?? 0
+            : 0;
+        final environmentalTemp = _environmentalTempController.text.isNotEmpty
+            ? double.tryParse(_environmentalTempController.text) ?? 0
+            : 0;
+        
+        print('SetMonitoringDetails: updating case ${widget.moldCase.id}');
+        print('SetMonitoringDetails: growthMedium=$_selectedGrowthMedium, incubationTemp=$incubationTemp, environmentalTemp=$environmentalTemp');
+        
+        // Build cultivation details
+        final cultivationDetails = CultivationDetails(
+          growthMedium: _selectedGrowthMedium ?? '',
+          inVitroDetails: InVitroDetails(incubationTemperature: incubationTemp),
+          inVivoDetails: InVivoDetails(environmentalTemperature: environmentalTemp),
+        );
+        
+        // Build updated mold case
+        final updatedCase = MoldCase(
+          id: widget.moldCase.id,
+          mycologistId: widget.moldCase.mycologistId,
+          name: widget.moldCase.name,
+          moldReportId: widget.moldCase.moldReportId,
+          photoUrl: widget.moldCase.photoUrl,
+          priority: widget.moldCase.priority,
+          startDate: widget.moldCase.startDate,
+          endDate: widget.moldCase.endDate,
+          cultivationDetails: cultivationDetails,
+          cultivationLogs: widget.moldCase.cultivationLogs,
+          isArchived: widget.moldCase.isArchived,
+        );
+        
+        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+        final sessionCookie = authProvider.cookie;
+        
+        // Update via repository - use PATCH /:id endpoint
+        print('SetMonitoringDetails: calling repository.updateMoldCase()');
+        await _repository.updateMoldCase(
+          widget.moldCase.id,
+          updatedCase.toJson(),
+          sessionCookie: sessionCookie,
+        );
+        
+        print('SetMonitoringDetails: case updated successfully');
+        
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        
+        // Show success and pop
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Monitoring details updated successfully')),
+        );
+        Navigator.of(context).pop();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        
+        print('Error updating mold case: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    }
 
   @override
   void dispose() {
@@ -220,7 +328,9 @@ class _SetMonitoringDetailsScreenState
                       'Other',
                     ],
                     onChanged: (value) {
-                      print('Selected growth medium: $value');
+                      setState(() {
+                        _selectedGrowthMedium = value;
+                      });
                     },
                   ),
 
@@ -267,6 +377,7 @@ class _SetMonitoringDetailsScreenState
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
                         onPressed: () {
+                          if (_isLoading) return;
                           showDialog(
                             context: context,
                             barrierDismissible: false,
@@ -276,7 +387,7 @@ class _SetMonitoringDetailsScreenState
                                 subtitle: 'Are you sure you want to apply these monitoring details?',
                                 onConfirm: () {
                                   Navigator.of(context).pop();
-                                  Navigator.of(context).pop();
+                                  _updateMoldCase();
                                 },
                                 onCancel: (){
                                   Navigator.of(context).pop();
@@ -287,7 +398,7 @@ class _SetMonitoringDetailsScreenState
                             },
                           );
                         },
-                        buttonText: 'Save Changes',
+                        buttonText: _isLoading ? 'Saving...' : 'Save Changes',
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
                         buttonHeight: 45,

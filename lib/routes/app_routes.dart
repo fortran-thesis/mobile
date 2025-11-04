@@ -100,7 +100,17 @@ class AppRoutes {
             }
 
           case RouteNames.setMonitoringDetails:
-            return SetMonitoringDetailsScreen();
+            if (settings.arguments is Map<String, dynamic>) {
+              final args = settings.arguments as Map<String, dynamic>;
+              if (args.containsKey('moldCase')) {
+                final moldCase = args['moldCase'];
+                return SetMonitoringDetailsScreen(moldCase: moldCase);
+              } else {
+                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('moldCase missing')));
+              }
+            } else {
+              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for setMonitoringDetails')));
+            }
 
           case RouteNames.viewCase:
             return ViewCaseScreen();

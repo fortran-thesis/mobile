@@ -27,6 +27,11 @@ class CaseDetailsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     /// Entries are displayed in reverse chronological order (most recent first)
+    print('CaseDetailsTab.build(): entries.length = ${entries.length}');
+    for (var i = 0; i < entries.length; i++) {
+      print('  entry[$i]: ${entries[i]}');
+    }
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -164,25 +169,27 @@ class CaseDetailsTab extends StatelessWidget {
           ),
 
           /// This is the list of case timeline entries provided by the farmers
-          entries.isEmpty
-              ? EmptyState(
-            message: 'No information available.',
-            icon: FontAwesomeIcons.circleInfo,
-            height: MediaQuery.of(context).size.height - 500,
-          )
-              : const SizedBox.shrink(),
-          ...List.generate(
-            entries.length,
-                (index) {
-              final reversedIndex = entries.length - 1 - index;
-              return _CaseTimelineTile(
-                dateTime: entries[reversedIndex]["date"],
-                notes: entries[reversedIndex]["notes"],
-                imageUrls: List<String>.from(entries[reversedIndex]["images"]),
-                isLast: index == entries.length - 1,
-              );
-            },
-          ),
+          if (entries.isEmpty)
+            EmptyState(
+              message: 'No information available.',
+              icon: FontAwesomeIcons.circleInfo,
+              height: MediaQuery.of(context).size.height - 500,
+            )
+          else
+            ...List.generate(
+              entries.length,
+              (index) {
+                print('CaseDetailsTab: generating tile for index=$index, entries.length=${entries.length}');
+                final reversedIndex = entries.length - 1 - index;
+                print('CaseDetailsTab: reversedIndex=$reversedIndex, entry=${entries[reversedIndex]}');
+                return _CaseTimelineTile(
+                  dateTime: entries[reversedIndex]["date"],
+                  notes: entries[reversedIndex]["notes"],
+                  imageUrls: List<String>.from(entries[reversedIndex]["images"]),
+                  isLast: index == entries.length - 1,
+                );
+              },
+            ),
         ],
       ),
     );
@@ -207,6 +214,7 @@ class _CaseTimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('_CaseTimelineTile.build(): dateTime=$dateTime, notes=$notes, imageUrls=$imageUrls, isLast=$isLast');
     return TimelineTile(
       alignment: TimelineAlign.start,
       lineXY: 0.1,
@@ -419,6 +427,19 @@ class _CaseTimelineTile extends StatelessWidget {
                     );
                   },
                 ).toList(),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Text(
+                  'No images available for this entry.',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 14,
+                    color: MoldifyColors.MoldifyGrey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ),
           ],
         ),

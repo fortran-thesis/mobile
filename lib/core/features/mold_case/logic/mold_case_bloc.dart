@@ -13,11 +13,10 @@ abstract class MoldCaseEvent extends Equatable {
 
 class FetchMoldCases extends MoldCaseEvent {
   final String? pageToken;
-  final bool useCache;
   final String? sessionCookie;
-  FetchMoldCases({this.pageToken, this.useCache = true, this.sessionCookie});
+  FetchMoldCases({this.pageToken, this.sessionCookie});
   @override
-  List<Object?> get props => [pageToken, useCache, sessionCookie];
+  List<Object?> get props => [pageToken, sessionCookie];
 }
 
 class RefreshMoldCases extends MoldCaseEvent {
@@ -57,6 +56,10 @@ class MoldCaseError extends MoldCaseState {
 class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   final MoldCaseRepository repository;
   final int pageSize;
+  
+  // Track pages ourselves now that repository is simplified
+  final List<MoldCase> _allCases = [];
+  String? _nextPageToken;
 
   MoldCaseBloc({required this.repository, this.pageSize = 20}) : super(MoldCaseInitial()) {
     on<FetchMoldCases>(_onFetch);
@@ -65,16 +68,28 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
 
   Future<void> _onFetch(FetchMoldCases event, Emitter<MoldCaseState> emit) async {
     try {
-      if (event.pageToken == null && !(event.useCache)) {
+      if (event.pageToken == null) {
         emit(MoldCaseLoading());
+        // First page - reset all cases
+        _allCases.clear();
+        _nextPageToken = null;
       }
 
-      await repository.fetchPage(pageToken: event.pageToken, useCache: event.useCache, sessionCookie: event.sessionCookie);
-
-      final combined = repository.getCachedCases();
-      final nextToken = repository.getNextPageToken(event.pageToken);
-      final hasMore = nextToken != null && nextToken.isNotEmpty;
-      emit(MoldCaseLoaded(cases: combined, nextPageToken: nextToken, hasMore: hasMore));
+      final pageCases = await repository.fetchPage(pageToken: event.pageToken, sessionCookie: event.sessionCookie);
+      
+      // Deduplicate: only add cases with IDs we haven't seen yet
+      final existingIds = _allCases.map((c) => c.id).toSet();
+      final newCases = pageCases.where((c) => !existingIds.contains(c.id)).toList();
+      
+      print('MoldCaseBloc: fetched ${pageCases.length} cases, adding ${newCases.length} new unique cases (filtered ${pageCases.length - newCases.length} duplicates)');
+      
+      _allCases.addAll(newCases);
+      // If we got fewer items than pageSize, there's no more data
+      // hasMore is determined by: did we get a full page? If so, assume there could be more
+      final hasMore = pageCases.length >= pageSize;
+      _nextPageToken = hasMore ? (pageCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+      
+      emit(MoldCaseLoaded(cases: List.from(_allCases), nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldCaseError(e.toString()));
     }
@@ -83,12 +98,17 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   Future<void> _onRefresh(RefreshMoldCases event, Emitter<MoldCaseState> emit) async {
     try {
       emit(MoldCaseLoading());
-      repository.clearCache();
-      await repository.fetchPage(pageToken: null, useCache: false, sessionCookie: event.sessionCookie);
-      final combined = repository.getCachedCases();
-      final nextToken = repository.getNextPageToken(null);
-      final hasMore = nextToken != null && nextToken.isNotEmpty;
-      emit(MoldCaseLoaded(cases: combined, nextPageToken: nextToken, hasMore: hasMore));
+      _allCases.clear();
+      _nextPageToken = null;
+      
+      final pageCases = await repository.fetchPage(pageToken: null, sessionCookie: event.sessionCookie);
+      _allCases.addAll(pageCases);
+      
+      // If we got fewer items than pageSize, there's no more data
+      final hasMore = pageCases.length >= pageSize;
+      _nextPageToken = hasMore ? (pageCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+      
+      emit(MoldCaseLoaded(cases: _allCases, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldCaseError(e.toString()));
     }
