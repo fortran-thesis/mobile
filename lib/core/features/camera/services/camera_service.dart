@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'package:moldify/core/constants/api_url.dart';
-import 'package:moldify/services/api_service.dart';
 import 'package:http/http.dart' as http;
 
 class CameraService {
-	final ApiService _apiService = ApiService(baseUrl: ApiUrl.modelUrl);
 
 		/// Sends an image to the ML model API for identification as multipart/form-data.
 		/// [imageBytes] is the raw bytes of the image file.
