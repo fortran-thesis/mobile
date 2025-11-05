@@ -74,7 +74,7 @@ class IntroScreen extends StatelessWidget {
                       },
                       backgroundColor: MoldifyColors.accentColor,
                       textColor: MoldifyColors.MoldifyBlack,
-                      buttonHeight: 45.0,
+                      buttonHeight: 40.0,
                       buttonWidth: MediaQuery.of(context).size.width,
                       buttonRadius: 10.0),
                 ),

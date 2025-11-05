@@ -415,6 +415,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           // separately as the multipart file). We no longer wrap details
                           // under `case_details`.
                           'description': _probDescController.text.trim(),
+                          'location': _addressController.text.trim(),
                         };
 
                         final File? cover = uploadedPhotos.isNotEmpty

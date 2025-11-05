@@ -31,6 +31,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
   String caseStatus = 'Pending';
   String reportStatus = 'Unknown';
+  String cropName = '';
+
 
   // Backend-driven state
   bool _isLoading = true;
@@ -57,9 +59,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   List<Map<String, String>> inVivoEntries = [];
 
   String _getCaseCropName() {
-    if (_case == null || _case!.cultivationDetails == null) return 'Kamatis Tagalog';
-    final growthMedium = _case!.cultivationDetails!.growthMedium;
-    return growthMedium.isNotEmpty ? growthMedium : 'Kamatis Tagalog';
+    return cropName.isNotEmpty ? cropName : 'Kamatis Tagalog';
+
   }
 
   Future<void> _loadCaseFromArgs() async {
@@ -133,7 +134,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           final reportPayload = reportData['data'] is Map<String, dynamic> 
               ? reportData['data'] as Map<String, dynamic>
               : reportData;
-
+          cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';          print('Report crop_name: ${reportPayload['crop_name']}');
           // Extract status from report
           final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
           localReportStatus = statusRaw[0].toUpperCase() + statusRaw.substring(1);
@@ -282,7 +283,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         inVivoDateTime = localInVivoDateTime;
         inVivoEnvironmentalTemperature = localInVivoEnvironmentalTemperature;
         inVivoEntries = localInVivoEntries;
+        cropName = cropName;
         _isLoading = false;
+
       });
     } catch (e, stackTrace) {
       print('ViewCase: ERROR - $e');

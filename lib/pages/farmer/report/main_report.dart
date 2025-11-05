@@ -210,8 +210,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                     }
 
                                     final report = reports[index] as MoldReport;
-                                    final String caseName = (report.host.isNotEmpty ? report.host : report.userId).toString();
-                                    // Capitalize the first letter of status
+                                    final String caseName = (report.caseName.isNotEmpty ? report.caseName : "Untitled Case").toString();                                    // Capitalize the first letter of status
                                     String caseStatus = (report.status).toString();
                                     if (caseStatus.isNotEmpty) {
                                       caseStatus = caseStatus[0].toUpperCase() + caseStatus.substring(1);
