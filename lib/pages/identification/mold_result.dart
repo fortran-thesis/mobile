@@ -20,8 +20,9 @@ import 'mold_result_content/prevention_treatment_content.dart';
 class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
   final Map<String, dynamic>? modelResult;
+  final Map<String, dynamic>? moldDetails;
 
-  const MoldResultScreen({super.key, required this.croppedImagePath, this.modelResult});
+  const MoldResultScreen({super.key, required this.croppedImagePath, this.modelResult, this.moldDetails});
 
   @override
   State<MoldResultScreen> createState() => _MoldResultScreenState();
@@ -95,6 +96,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   @override
   void initState() {
     super.initState();
+    print('MoldResult: initState called');
+    print('MoldResult: modelResult = ${widget.modelResult}');
+    print('MoldResult: moldDetails = ${widget.moldDetails}');
+    
     _tapRecognizer = TapGestureRecognizer()
       ..onTap = () {
         setState(() {
@@ -102,22 +107,41 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         });
       };
     // Initialize from modelResult argument
-  // Convert probability from decimal to percentage string
-  final prob = widget.modelResult?['probability'];
-  if (prob != null) {
-    double percent = 0.0;
-    if (prob is String) {
-      percent = double.tryParse(prob) ?? 0.0;
-    } else if (prob is num) {
-      percent = prob.toDouble();
+    // Convert probability from decimal to percentage string
+    final prob = widget.modelResult?['probability'];
+    if (prob != null) {
+      double percent = 0.0;
+      if (prob is String) {
+        percent = double.tryParse(prob) ?? 0.0;
+      } else if (prob is num) {
+        percent = prob.toDouble();
+      }
+      confidenceLevel = (percent * 100).toStringAsFixed(2);
+      print('MoldResult: Confidence level calculated: $confidenceLevel%');
+    } else {
+      confidenceLevel = '';
+      print('MoldResult: No probability found in modelResult');
     }
-    confidenceLevel = (percent * 100).toStringAsFixed(2);
-  } else {
-    confidenceLevel = '';
-  }
-  // Extract only the genus from 'genus_spp' format
-  final predictedClass = widget.modelResult?['predicted_class']?.toString() ?? '';
-  moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
+    // Extract only the genus from 'genus_spp' format
+    final predictedClass = widget.modelResult?['predicted_class']?.toString() ?? '';
+    moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
+    print('MoldResult: Predicted class: $predictedClass, Genus: $moldGenus');
+    
+    // Use moldDetails if available to populate data instead of hardcoded values
+    if (widget.moldDetails != null && (widget.moldDetails?.isEmpty ?? true) == false) {
+      print('MoldResult: Using moldDetails from API');
+      print('MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}');
+      
+      if (widget.moldDetails!.containsKey('error')) {
+        print('MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}');
+      } else {
+        print('MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...');
+      }
+      // TODO: Parse moldDetails and update the data variables
+      // This will be used to populate healthContent, plantThreatContent, fullDescription, taxonomy, fungicides, etc.
+    } else {
+      print('MoldResult: No moldDetails provided, using hardcoded fallback data');
+    }
   }
 
   @override

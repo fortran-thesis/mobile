@@ -73,6 +73,8 @@ class MoldCaseService {
     Map<String, dynamic> update, {
     String? sessionCookie,
   }) async {
+    print('MoldCaseService.updateMoldCase: id=$id');
+    print('MoldCaseService.updateMoldCase: update=$update');
     final response = await _apiService.patch(
       '/$id',
       headers: {'Content-Type': 'application/json'},

@@ -86,20 +86,12 @@ class _SetMonitoringDetailsScreenState
           inVivoDetails: InVivoDetails(environmentalTemperature: environmentalTemp),
         );
         
-        // Build updated mold case
-        final updatedCase = MoldCase(
-          id: widget.moldCase.id,
-          mycologistId: widget.moldCase.mycologistId,
-          name: widget.moldCase.name,
-          moldReportId: widget.moldCase.moldReportId,
-          photoUrl: widget.moldCase.photoUrl,
-          priority: widget.moldCase.priority,
-          startDate: widget.moldCase.startDate,
-          endDate: widget.moldCase.endDate,
-          cultivationDetails: cultivationDetails,
-          cultivationLogs: widget.moldCase.cultivationLogs,
-          isArchived: widget.moldCase.isArchived,
-        );
+        // Build ONLY the cultivation details payload (PATCH request - backend expects key 'details')
+        final updatePayload = {
+          'details': cultivationDetails.toJson(),
+        };
+        
+        print('SetMonitoringDetails: updatePayload=$updatePayload');
         
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final sessionCookie = authProvider.cookie;
@@ -108,7 +100,7 @@ class _SetMonitoringDetailsScreenState
         print('SetMonitoringDetails: calling repository.updateMoldCase()');
         await _repository.updateMoldCase(
           widget.moldCase.id,
-          updatedCase.toJson(),
+          updatePayload,
           sessionCookie: sessionCookie,
         );
         

@@ -39,7 +39,15 @@ class ApiService {
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
       }
-      return await http.patch(url, headers: allHeaders, body: json.encode(body));
+      final encodedBody = json.encode(body);
+      print('ApiService.patch: endpoint=$endpoint');
+      print('ApiService.patch: url=$url');
+      print('ApiService.patch: headers=$allHeaders');
+      print('ApiService.patch: body=$encodedBody');
+      final response = await http.patch(url, headers: allHeaders, body: encodedBody);
+      print('ApiService.patch: response status=${response.statusCode}');
+      print('ApiService.patch: response body=${response.body}');
+      return response;
     } catch (e) {
       throw Exception('PATCH request failed: $e');
     }

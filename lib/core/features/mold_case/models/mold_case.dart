@@ -47,7 +47,7 @@ class MoldCase {
       mycologistId: json['mycologist_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       moldReportId: json['mold_report_id']?.toString() ?? '',
-      photoUrl: json['photo_url']?.toString(),
+      photoUrl: _parsePhotoUrl(json['photo_url']),
       priority: json['priority']?.toString() ?? 'low',
       startDate: _parseDate(json['start_date']) ?? DateTime.now(),
       endDate: _parseDate(json['end_date']),
@@ -59,6 +59,23 @@ class MoldCase {
               ? json['is_archived'] as bool
               : (json['is_archived'].toString() == '1' || json['is_archived'].toString().toLowerCase() == 'true')),
     );
+  }
+
+  static String? _parsePhotoUrl(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is String) {
+      // Filter out string representations of empty arrays or null
+      if (raw.isEmpty || raw == '[]' || raw == 'null') return null;
+      return raw;
+    }
+    if (raw is List) {
+      // If it's a list, try to get the first URL
+      if (raw.isEmpty) return null;
+      final first = raw.first;
+      if (first is String && first.isNotEmpty) return first;
+      return null;
+    }
+    return null;
   }
 
   static DateTime? _parseDate(dynamic raw) {
