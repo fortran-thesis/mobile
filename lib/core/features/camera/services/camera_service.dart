@@ -42,13 +42,13 @@ class CameraService {
 	}) async {
 		print('CameraService: identifyImage called (JSON with base64)');
 		print('Image bytes length: ${imageBytes.length}');
-		print('Url: ${ApiUrl.modelUrl}/default/multimodal-prediction');
+		print('Url: ${ApiUrl.modelUrl}/v2/predict');
 		
 		// Convert image bytes to base64
 		final String imageBase64 = base64Encode(imageBytes);
 		print('Base64 encoded image length: ${imageBase64.length}');
 		
-		final uri = Uri.parse('${ApiUrl.modelUrl}/default/multimodal-prediction');
+		final uri = Uri.parse('${ApiUrl.modelUrl}/v2/predict');
 		
 		// Build request body
 		final Map<String, dynamic> requestBody = {
