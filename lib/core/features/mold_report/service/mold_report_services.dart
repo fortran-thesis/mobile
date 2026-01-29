@@ -269,4 +269,89 @@ class MoldReportService {
       );
     }
   }
+
+  /// Dashboard: Get report counts by status for mycologist dashboard
+  /// Endpoint: GET /counts/statuses
+  /// Returns: {pending: int, in_progress: int, resolved: int, rejected: int}
+  Future<Map<String, dynamic>> getReportCounts({String? sessionCookie}) async {
+    final response = await _apiService.get(
+      '/counts/statuses',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to fetch report counts: ${response.statusCode}');
+  }
+
+  /// Dashboard: Get assigned reports count for mycologist
+  /// Endpoint: GET /assigned/count
+  /// Returns: {count: int}
+  Future<Map<String, dynamic>> getAssignedReportsCount({String? sessionCookie}) async {
+    final response = await _apiService.get(
+      '/assigned/count',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to fetch assigned reports count: ${response.statusCode}');
+  }
+
+  /// Dashboard: Get monthly totals for reporting metrics
+  /// Endpoint: GET /counts/monthly
+  /// Returns: {months: List<{month: string, total: int}>}
+  Future<Map<String, dynamic>> getMonthlyTotals({String? sessionCookie}) async {
+    final response = await _apiService.get(
+      '/counts/monthly',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to fetch monthly totals: ${response.statusCode}');
+  }
+
+  /// Dashboard: Get combined total counts (all reports, cases, etc.)
+  /// Endpoint: GET /counts/totals
+  /// Returns: {total_reports: int, total_cases: int, ...}
+  Future<Map<String, dynamic>> getCombinedTotalCounts({String? sessionCookie}) async {
+    final response = await _apiService.get(
+      '/counts/totals',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to fetch combined total counts: ${response.statusCode}');
+  }
+
+  /// Dashboard: Get moldipedia articles for WikiMold section
+  /// Endpoint: GET /moldipedia?limit=3
+  /// Returns: {data: {snapshot: List<{id, title, author_id, cover_photo, ...}>}}
+  Future<List<Map<String, dynamic>>> getMoldipediaArticles({
+    String? sessionCookie,
+    int limit = 3,
+  }) async {
+    final response = await _apiService.get(
+      '/moldipedia?limit=$limit',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final snapshot = (data['data']?['snapshot'] as List<dynamic>?) ?? [];
+      return snapshot.map((item) => item as Map<String, dynamic>).toList();
+    }
+    throw Exception('Failed to fetch moldipedia articles: ${response.statusCode}');
+  }
 }

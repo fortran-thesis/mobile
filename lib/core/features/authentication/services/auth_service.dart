@@ -9,7 +9,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     final response = await _apiService.post(
-      '/login',
+      '/login?device=mobile',
       headers: {'Content-Type': 'application/json'},
       body: {
         'username': username,
@@ -45,7 +45,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> loginOAuth(String token) async {
     final response = await _apiService.post(
-      '/login/oauth',
+      '/login/oauth?device=mobile',
       headers: {'Content-Type': 'application/json'},
       body: {
         'token': token,

@@ -31,8 +31,16 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   final GlobalKey _dottedBoxKey = GlobalKey();
   final TransformationController _transformationController = TransformationController();
 
+  @override
+  void initState() {
+    super.initState();
+    print('🚀🚀🚀 ImagePreview: initState called - CODE VERSION WITH DEBUG LOGS LOADED 🚀🚀🚀');
+    print('ImagePreview: source = ${widget.source}, sourceTab = ${widget.sourceTab}');
+  }
+
   /// Captures the current UI preview, crops it based on a defined box, and navigates to the appropriate screen.
   Future<void> _captureAndCropImage() async {
+    print('🎬 ImagePreview: _captureAndCropImage called - starting capture process');
     if (_isProcessing) return;
 
     // Set the processing flag to true to indicate a task is in progress
@@ -143,72 +151,57 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       await file.writeAsBytes(pngBytes);
       print('Cropped image saved to: ${file.path}');
 
-      // Send image to model API
-      try {
-        // Import CameraService at the top of the file:
-        // import 'package:moldify/core/features/camera/services/camera_service.dart';
-        final cameraService = CameraService();
-        final result = await cameraService.identifyImage(
-          imageBytes: pngBytes,
-          filename: fileName,
+      if (!mounted) return;
+      
+      // Check the source to determine next action
+      if (widget.source == 'add_log') {
+        // For add_log source, navigate directly without API call
+        Navigator.pushNamed(
+          context,
+          '/add-log',
+          arguments: {
+            'imagePath': file.path,
+            'sourceTab': widget.sourceTab,
+          },
         );
-        print('Model API result: $result');
-
-        if (!mounted) return;
-        if (widget.source == 'add_log') {
-          Navigator.pushNamed(
-            context,
-            '/add-log',
-            arguments: {
-              'imagePath': file.path,
-              'sourceTab': widget.sourceTab,
+      } else {
+        // For main_camera source, show modal to let user choose
+        print('🔷 ImagePreview: Showing confirmation dialog');
+        showDialog(
+            context: context,
+            barrierDismissible: false, // User must choose an option
+            builder: (BuildContext dialogContext) {
+              print('🔷 ImagePreview: Dialog builder called');
+              return BuildConfirmationDialog(
+                title: 'Improve Prediction',
+                subtitle: 'Do you want to input additional characteristics for a more accurate result?',
+                confirmText: 'Yes, Add Details',
+                cancelText: 'No, See Result',
+                onConfirm: () {
+                  // YES action: Navigate to Input Characteristics (no API call yet)
+                  print('🟠 ImagePreview: User selected "Yes, Add Details"');
+                  Navigator.of(dialogContext).pop(); // Dismiss dialog
+                  Navigator.pushNamed(
+                    context,
+                    '/input-characteristics',
+                    arguments: {
+                      'croppedImagePath': file.path,
+                      'imageBytes': pngBytes,
+                      'fileName': fileName,
+                    },
+                  );
+                },
+                onCancel: () {
+                  // NO action: Call identifyImage API, then fetch mold details
+                  print('🔵 ImagePreview: BUTTON CLICKED - No, See Result');
+                  Navigator.of(dialogContext).pop();
+                  
+                  // Call async function to handle the API calls
+                  _handleNoSeeResult(context, file.path, pngBytes, fileName);
+                },
+              );
             },
-          );
-        } else {
-          showDialog(
-              context: context,
-              barrierDismissible: false, // User must choose an option
-              builder: (BuildContext dialogContext) {
-                return BuildConfirmationDialog(
-                  title: 'Improve Prediction',
-                  subtitle: 'Do you want to input additional characteristics for a more accurate result?',
-                  confirmText: 'Yes, Add Details',
-                  cancelText: 'No, See Result',
-                  onConfirm: () {
-                    // YES action: Navigate to Input Characteristics
-                    Navigator.of(dialogContext).pop(); // Dismiss dialog
-                    Navigator.pushNamed(
-                      context,
-                      '/input-characteristics',
-                      arguments: {
-                        'croppedImagePath': file.path,
-                        'modelResult': result,
-                      },
-                    );
-                  },
-                  onCancel: () {
-                    // NO action: Navigate directly to Mold Result
-                    Navigator.of(dialogContext).pop();
-                    Navigator.pushNamed(
-                      context,
-                      '/mold_result',
-                      arguments: {
-                        'croppedImagePath': file.path,
-                        'modelResult': result,
-                      },
-                    );
-                  },
-                );
-              },
-          );
-        }
-      } catch (e) {
-        print('Error sending image to model API: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to send image for identification.')),
-          );
-        }
+        );
       }
 
     } catch (e, s) {
@@ -350,5 +343,98 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
       ],
     );
+  }
+
+  /// Helper method to handle "No, See Result" button action
+  Future<void> _handleNoSeeResult(BuildContext context, String imagePath, Uint8List imageBytes, String fileName) async {
+    print('🟢 ImagePreview: _handleNoSeeResult called');
+    
+    // Show loading indicator
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    try {
+      // Step 1: Call identifyImage to get the mold prediction
+      print('🟡 ImagePreview: Step 1 - Calling identifyImage API');
+      final cameraService = CameraService();
+      final modelResult = await cameraService.identifyImage(
+        imageBytes: imageBytes,
+        filename: fileName,
+      );
+      print('📊 ImagePreview: identifyImage result: $modelResult');
+      
+      // Step 2: Extract genus from predicted_class
+      final predictedClass = modelResult['predicted_class']?.toString() ?? '';
+      final genus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
+      
+      print('🟡 ImagePreview: Step 2 - Predicted class: $predictedClass');
+      print('🟡 ImagePreview: Extracted genus: $genus');
+      
+      // Step 3: Fetch detailed mold information
+      print('🟡 ImagePreview: Step 3 - Calling getMoldDetails(genus: $genus)');
+      final moldDetails = await cameraService.getMoldDetails(genus: genus);
+      
+      print('✅ ImagePreview: getMoldDetails completed');
+      print('✅ ImagePreview: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
+      
+      if (moldDetails.containsKey('error')) {
+        print('❌ ImagePreview: ERROR in moldDetails response: ${moldDetails['error']}');
+      } else {
+        print('✅ ImagePreview: moldDetails keys: ${moldDetails.keys.toList()}');
+      }
+      
+      // Dismiss loading
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      if (!mounted) return;
+      
+      print('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
+      Navigator.pushNamed(
+        context,
+        '/mold_result',
+        arguments: {
+          'croppedImagePath': imagePath,
+          'modelResult': modelResult,
+          'moldDetails': moldDetails,
+        },
+      );
+    } catch (e, stackTrace) {
+      print('❌ ImagePreview: EXCEPTION in _handleNoSeeResult: $e');
+      print('❌ ImagePreview: Stack trace: $stackTrace');
+      
+      // Dismiss loading
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process image: $e')),
+        );
+      }
+      
+      // Navigate anyway with error data
+      if (mounted) {
+        Navigator.pushNamed(
+          context,
+          '/mold_result',
+          arguments: {
+            'croppedImagePath': imagePath,
+            'modelResult': {'error': e.toString()},
+            'moldDetails': {'error': e.toString()},
+          },
+        );
+      }
+    }
   }
 }

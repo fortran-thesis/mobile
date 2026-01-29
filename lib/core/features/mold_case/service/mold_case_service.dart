@@ -73,6 +73,8 @@ class MoldCaseService {
     Map<String, dynamic> update, {
     String? sessionCookie,
   }) async {
+    print('MoldCaseService.updateMoldCase: id=$id');
+    print('MoldCaseService.updateMoldCase: update=$update');
     final response = await _apiService.patch(
       '/$id',
       headers: {'Content-Type': 'application/json'},
@@ -103,4 +105,54 @@ class MoldCaseService {
       );
     }
   }
-}
+
+  /// Get all archived (closed) mold cases for the user.
+  /// Endpoint: GET /archive
+  Future<Map<String, dynamic>> getArchivedCases({
+    String? sessionCookie,
+    int? limit,
+    String? pageToken,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (limit != null) queryParams['limit'] = limit;
+    if (pageToken != null) queryParams['pageToken'] = pageToken;
+
+    final response = await _apiService.get(
+      '/archive',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+      queryParams: queryParams.isEmpty ? null : queryParams,
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> decoded =
+          json.decode(response.body) as Map<String, dynamic>;
+      return decoded;
+    } else {
+      throw Exception('Failed to fetch archived cases: ${response.statusCode}');
+    }
+  }
+
+  /// Dashboard: Get mold case priority breakdown for analytics
+  /// Endpoint: GET /counts/priorities (from moldReport routes)
+  /// Returns: {high: int, medium: int, low: int}
+  /// Note: This uses the moldReport service endpoint for priority analytics
+  Future<Map<String, dynamic>> getPriorityBreakdown({
+    String? sessionCookie,
+  }) async {
+    // Create temporary service for report analytics
+    final reportService = _apiService;
+    final response = await reportService.get(
+      '/counts/priorities',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> decoded =
+          json.decode(response.body) as Map<String, dynamic>;
+      return decoded;
+    } else {
+      throw Exception('Failed to fetch priority breakdown: ${response.statusCode}');
+    }
+  }}

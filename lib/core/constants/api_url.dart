@@ -1,6 +1,6 @@
 class ApiUrl {
   static const String baseUrl = 'https://api-2p4weeh6lq-as.a.run.app';
-  static final String modelUrl = 'https://d218dsengdlj56.cloudfront.net';
+  static final String modelUrl = 'https://ftfs9zk6.asse.devtunnels.ms:5000';
   
   static final String test = '$baseUrl/api/v1/test';
   static final String auth = '$baseUrl/api/v1/auth';

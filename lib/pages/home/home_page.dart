@@ -21,6 +21,9 @@ import '../farmer/wikimold/view_wikimold.dart';
 import '../misc/images/circle_avatar.dart';
 import '../misc/tiles/action_tile.dart';
 import '../misc/tiles/wikimold_tiles.dart';
+import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
+import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 
 /// This is the homepage for mycologists
 
@@ -36,6 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _userSub;
   String fullName = 'Guest User';
   String role = '';
+  
+  // Dashboard data
+  Map<String, dynamic> _reportCounts = {};
+  List<MoldCase> _assignedCases = [];
+  Map<String, String> _caseStatusMap = {}; // Map caseId -> status from mold report
+  List<Map<String, dynamic>> _moldipediaArticles = [];
+  bool _isLoadingDashboard = true;
+  String? _dashboardError;
 
   @override
   void initState() {
@@ -45,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
       _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+      _loadDashboardData(sessionCookie);
     });
     _userSub = _userBloc.stream.listen((state) {
       if (state is UserProfileLoaded) {
@@ -66,6 +78,71 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  Future<void> _loadDashboardData(String? sessionCookie) async {
+    if (sessionCookie == null) return;
+    
+    try {
+      final reportService = MoldReportService();
+      final caseService = MoldCaseService();
+      
+      setState(() => _isLoadingDashboard = true);
+      
+      // Fetch report counts
+      final countsResponse = await reportService.getReportCounts(sessionCookie: sessionCookie);
+      
+      // Fetch assigned cases (if mycologist)
+      List<MoldCase> assignedCases = [];
+      Map<String, String> caseStatusMap = {};
+      if (role.toLowerCase() == 'mycologist') {
+        final casesResponse = await caseService.fetchAssignedMycologists(
+          sessionCookie: sessionCookie,
+          limit: 3,
+        );
+        // Parse cases into MoldCase objects
+        if (casesResponse['data'] is List) {
+          assignedCases = (casesResponse['data'] as List)
+              .map((c) => MoldCase.fromJson(c as Map<String, dynamic>))
+              .toList();
+          
+          // Fetch report status for each case
+          for (final case_ in assignedCases) {
+            try {
+              final reportResponse = await reportService.getMoldReportById(
+                case_.moldReportId,
+                sessionCookie: sessionCookie,
+              );
+              final status = reportResponse['data']?['status'] as String? ?? 'unknown';
+              caseStatusMap[case_.id] = status;
+            } catch (e) {
+              // Fallback if report fetch fails
+              caseStatusMap[case_.id] = 'unknown';
+            }
+          }
+        }
+      }
+      
+      // Fetch moldipedia articles for WikiMold section
+      final articlesResponse = await reportService.getMoldipediaArticles(
+        sessionCookie: sessionCookie,
+        limit: 3,
+      );
+      
+      setState(() {
+        _reportCounts = countsResponse['data'] ?? {};
+        _assignedCases = assignedCases;
+        _caseStatusMap = caseStatusMap;
+        _moldipediaArticles = articlesResponse;
+        _isLoadingDashboard = false;
+        _dashboardError = null;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingDashboard = false;
+        _dashboardError = 'Failed to load dashboard: $e';
+      });
+    }
   }
 
   @override
@@ -103,34 +180,6 @@ class _HomeScreenState extends State<HomeScreen> {
         'dateSubmitted': 'October 10, 2025',
         'caseStatus': 'Pending',
         'priorityLevel': 'Low Priority',
-      },
-    ];
-
-    final List<Map<String, String?>> wikiArticles = [
-      {
-        'title': 'The Rise of Molds: Dive into the Microscopic Landscape of Growing Fungi',
-        'authorName': 'Karl Manuel Diata',
-        'imageUrl': null,
-      },
-      {
-        'title': 'Understanding Aspergillus: A Common Household Mold',
-        'authorName': 'Jane Doe',
-        'imageUrl': null,
-      },
-      {
-        'title': 'Penicillium: The Fungus That Gave Us Penicillin',
-        'authorName': 'John Smith',
-        'imageUrl': null,
-      },
-      {
-        'title': 'Stachybotrys (Black Mold): Risks and Remediation',
-        'authorName': 'Dr. Emily Carter',
-        'imageUrl': null,
-      },
-      {
-        'title': 'The Colorful World of Fusarium',
-        'authorName': 'Dr. Alan Grant',
-        'imageUrl': null,
       },
     ];
 
@@ -301,12 +350,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        /// Case status breakdown chart
-                        StatusDonutChart(
+                        /// Case status breakdown chart - NOW USING REAL DATA
+                        _isLoadingDashboard
+                            ? Center(
+                          child: CircularProgressIndicator(
+                            color: MoldifyColors.primaryColor,
+                          ),
+                        )
+                            : StatusDonutChart(
                           statusData: {
-                            'Pending': 8.0,
-                            'In Progress': 2.0,
-                            'Resolved': 10.0,
+                            'Pending': (_reportCounts['pending'] ?? 0).toDouble(),
+                            'In Progress': (_reportCounts['in_progress'] ?? 0).toDouble(),
+                            'Resolved': (_reportCounts['resolved'] ?? 0).toDouble(),
                           },
                         ),
 
@@ -331,14 +386,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: MediaQuery.of(context).size.height - 500,
                         )
                             : const SizedBox.shrink(),
-                        /// This displays only pending cases
-                        ...pendingCases.take(3).map((c) => Padding(
+                        /// This displays assigned cases from API
+                        ..._assignedCases.take(3).map((case_) => Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: MainCaseTile(
-                            caseName: c['caseName'] ?? 'Unknown',
-                            dateSubmitted: c['dateSubmitted'] ?? '',
-                            priorityLevel: c['priorityLevel'] ?? '',
-                            caseStatus: c['caseStatus'] ?? '',
+                            caseName: case_.name,
+                            dateSubmitted: case_.startDate.toString().split(' ')[0],
+                            priorityLevel: '${case_.priority[0].toUpperCase()}${case_.priority.substring(1)} Priority',
+                            caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
                             imageHeight: 70.0,
                             imageWidth: 70.0,
                             onTap: () {
@@ -351,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         )).toList(),
 
                         /// This shows 'View All Cases' when there are more than 3 case tiles
-                        if (pendingCases.length > 3)
+                        if (_assignedCases.length > 3)
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -455,13 +510,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        /// Case status breakdown chart
-                        StatusDonutChart(
+                        /// Case status breakdown chart - NOW USING REAL DATA
+                        _isLoadingDashboard
+                            ? Center(
+                          child: CircularProgressIndicator(
+                            color: MoldifyColors.primaryColor,
+                          ),
+                        )
+                            : StatusDonutChart(
                           statusData: {
-                            'Pending': 8.0,
-                            'In Progress': 2.0,
-                            'Resolved': 10.0,
-                            'Rejected': 1.0,
+                            'Pending': (_reportCounts['pending'] ?? 0).toDouble(),
+                            'In Progress': (_reportCounts['in_progress'] ?? 0).toDouble(),
+                            'Resolved': (_reportCounts['resolved'] ?? 0).toDouble(),
+                            'Rejected': (_reportCounts['rejected'] ?? 0).toDouble(),
                           },
                         ),
                         Padding(
@@ -479,13 +540,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(
                           height: 163.0,
-                          child: ListView.builder(
+                          child: _isLoadingDashboard
+                              ? Center(
+                            child: CircularProgressIndicator(
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          )
+                              : _moldipediaArticles.isEmpty
+                              ? Center(
+                            child: Text(
+                              'No articles available',
+                              style: TextStyle(
+                                fontFamily: 'Montserrat-Regular',
+                                fontSize: 14,
+                                color: MoldifyColors.MoldifyGrey,
+                              ),
+                            ),
+                          )
+                              : ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: EdgeInsets.only(right: horizontalPadding),
-                            itemCount: wikiArticles.length > 2 ? 3 : wikiArticles.length,
+                            itemCount: _moldipediaArticles.length > 2 ? 3 : _moldipediaArticles.length,
                             itemBuilder: (context, index) {
-                              if (index == 2 && wikiArticles.length > 2) {
-                                return   Padding(
+                              if (index == 2 && _moldipediaArticles.length > 2) {
+                                return Padding(
                                   padding: const EdgeInsets.only(right: 12.0),
                                   child: Center(
                                     child: IconButton(
@@ -506,24 +584,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                 );
                               }
 
-                              // Regular article tile
-                              final article = wikiArticles[index];
+                              // Regular article tile from API data
+                              final article = _moldipediaArticles[index];
+                              final title = article['title'] as String? ?? 'Untitled';
+                              final authorId = article['author_id'] as String? ?? 'Unknown Author';
+                              final coverPhoto = article['cover_photo'] as String?;
                               return Padding(
                                 padding: const EdgeInsets.only(right: 15.0),
                                 child: SizedBox(
                                   width: tileWidth,
                                   child: WikiMoldTile(
-                                    title: article['title']!,
-                                    authorName: article['authorName']!,
-                                    imageUrl: article['imageUrl'],
+                                    title: title,
+                                    authorName: authorId,
+                                    imageUrl: coverPhoto,
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (context) => ViewWikiMoldScreen(
-                                            articleAuthor: article['authorName']!,
-                                            articleTitle: article['title']!,
-                                            articleImageUrl:
-                                            article['imageUrl'] ?? 'assets/images/Branding2.png',
+                                            articleAuthor: authorId,
+                                            articleTitle: title,
+                                            articleImageUrl: coverPhoto ?? 'assets/images/Branding2.png',
                                           ),
                                         ),
                                       );
