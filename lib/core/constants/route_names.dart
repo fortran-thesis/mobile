@@ -21,6 +21,7 @@ class RouteNames {
   static const String addLog = '/add-log';
   static const String mainCamera = '/main-camera';
   static const String inputCharacteristics = '/input-characteristics';
+  static const String splash = '/splash';
 
   /// for farmers
   static const String submitReport = '/submit-report';

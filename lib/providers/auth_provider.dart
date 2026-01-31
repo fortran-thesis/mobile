@@ -4,8 +4,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class AppAuthProvider extends ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   String? _cookie;
+  bool _isLoading = true;  // ADD THIS
 
   String? get cookie => _cookie;
+  bool get isLoading => _isLoading;  // ADD THIS
 
   Future<void> saveCookie(String? cookie) async {
     if (cookie != null) {
@@ -16,7 +18,9 @@ class AppAuthProvider extends ChangeNotifier {
   }
 
   Future<void> loadCookie() async {
+    _isLoading = true;  // ADD THIS
     _cookie = await _storage.read(key: 'auth_cookie');
+    _isLoading = false;  // ADD THIS
     notifyListeners();
   }
 
@@ -28,7 +32,5 @@ class AppAuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     await clearCookie();
-    // Optionally, clear other user data here
   }
 }
-

@@ -27,6 +27,7 @@ import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
 import '../pages/monitor/view_case.dart';
+import '../splash_screen.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -36,6 +37,8 @@ class AppRoutes {
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
         switch (settings.name) {
+          case RouteNames.splash:
+            return const SplashScreen();
           case RouteNames.login:
             if (isAuthenticated) {
               return MainPage();
