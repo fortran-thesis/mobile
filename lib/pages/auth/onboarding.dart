@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+
+import '../misc/colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,16 +20,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      image: 'assets/images/onboarding_camera.svg',
+      image: 'assets/images/onboarding_farmer.png',
       title: 'Submit Mold Cases with ',
       titleHighlight: 'Ease',
       subtitle: 'Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.',
     ),
     OnboardingPage(
-      image: 'assets/images/onboarding_scientist.svg',
+      image: 'assets/images/onboarding_scientist.png',
       title: 'Expert Review by ',
       titleHighlight: 'Mycologists',
-      subtitle: 'Moldify supports expert assessment and informed agricultural decision.',
+      subtitle: 'Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.',
       isLastPage: true,
     ),
   ];
@@ -71,20 +74,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5DC),
+      backgroundColor: MoldifyColors.backgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
             // Skip button
             Positioned(
-              top: 20,
-              right: 20,
+              top: 5,
+              right: 5,
               child: TextButton(
                 onPressed: _skip,
                 child: const Text(
                   'Skip',
                   style: TextStyle(
-                    color: Color(0xFF3D5A3C),
+                    color: MoldifyColors.primaryColor,
+                    fontFamily: 'Bricolage-Grotesque-Regular',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -101,7 +105,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Text(
                   'MOLDIFY',
                   style: TextStyle(
-                    color: const Color(0xFFE8B23C),
+                    color: MoldifyColors.accentColor,
+                    fontFamily: 'Montserrat-Bold',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
@@ -123,59 +128,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Bottom section
+            // Bottom section - indicators and button in ROW
             Positioned(
               bottom: 40,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Column(
-                  children: [
-                    // Page indicators (showing 3 total)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildIndicator(false), // Welcome page (already passed)
-                        _buildIndicator(_currentPage == 0),
-                        _buildIndicator(_currentPage == 1),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    // Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _pages[_currentPage].isLastPage ? _finish : _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8B23C),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _pages[_currentPage].isLastPage ? 'Continue To App' : 'Next',
-                              style: const TextStyle(
-                                color: Color(0xFF3D5A3C),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              Icons.arrow_forward,
-                              color: Color(0xFF3D5A3C),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              left: 15,
+              right: 15,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Page indicators (showing 3 total: welcome + 2 onboarding)
+                  Row(
+                    children: [
+                      _buildIndicator(false), // Welcome page (already passed)
+                      _buildIndicator(_currentPage == 0),
+                      _buildIndicator(_currentPage == 1),
+                    ],
+                  ),
+
+                  // Next/Continue button
+                  BuildButton(
+                    buttonText: _pages[_currentPage].isLastPage ? 'Continue To App' : 'Next',
+                    onPressed: _pages[_currentPage].isLastPage ? _finish : _nextPage,
+                    backgroundColor: MoldifyColors.accentColor,
+                    textColor: MoldifyColors.MoldifyBlack,
+                    buttonHeight: 35,
+                    buttonRadius: 10,
+                    rightIcon: Icons.arrow_forward,
+                    rightIconColor: MoldifyColors.MoldifyBlack,
+                    rightIconSize: 18,
+                    paddingIconText: 8,
+                  ),
+                ],
               ),
             ),
           ],
@@ -185,38 +168,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildPage(OnboardingPage page) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
+    return Column(
+      children: [
+        const SizedBox(height: 40),
 
-          // Image
-          Expanded(
-            flex: 3,
-            child: Center(
-              child: SvgPicture.asset(
-                page.image,
-                fit: BoxFit.contain,
-              ),
-            ),
+        Expanded(
+          flex: 3,
+          child: Image.asset(
+            page.image,
+            width: double.infinity,
+            fit: BoxFit.cover,
           ),
+        ),
 
-          const SizedBox(height: 40),
+        const SizedBox(height: 40),
 
-          // Text content
-          Expanded(
-            flex: 2,
+        // Text content - LEFT aligned
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // LEFT aligned
               children: [
-                // Title with highlight
+                // Title with highlight - LEFT aligned
                 RichText(
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left, // LEFT aligned
                   text: TextSpan(
                     style: const TextStyle(
-                      color: Color(0xFF3D5A3C),
+                      color: MoldifyColors.primaryColor,
+                      fontFamily: 'Montserrat-Black',
                       fontSize: 32,
-                      fontWeight: FontWeight.bold,
                       height: 1.2,
                     ),
                     children: [
@@ -224,30 +206,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       TextSpan(
                         text: page.titleHighlight,
                         style: const TextStyle(
-                          color: Color(0xFFE8B23C),
+                          color: MoldifyColors.accentColor,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Subtitle
+                // Subtitle - LEFT aligned
                 Text(
                   page.subtitle,
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.left, // LEFT aligned
                   style: const TextStyle(
-                    color: Color(0xFF3D5A3C),
-                    fontSize: 14,
+                    color: MoldifyColors.MoldifyBlack,
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 16,
                     height: 1.5,
                   ),
                 ),
               ],
             ),
           ),
+        ),
 
-          const SizedBox(height: 120), // Space for buttons
-        ],
-      ),
+        const SizedBox(height: 20), // Space for buttons
+      ],
     );
   }
 
@@ -258,8 +241,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 8,
       decoration: BoxDecoration(
         color: isActive
-            ? const Color(0xFF3D5A3C)
-            : const Color(0xFF3D5A3C).withOpacity(0.3),
+            ? MoldifyColors.primaryColor
+            : MoldifyColors.primaryColor.withOpacity(0.3),
         borderRadius: BorderRadius.circular(4),
       ),
     );
