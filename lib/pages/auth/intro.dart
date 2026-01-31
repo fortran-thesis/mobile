@@ -16,11 +16,11 @@ class IntroScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SvgPicture.asset(
-            'assets/images/bacteria-with-spores.svg',
+            'assets/images/bacteria_with_leaves_upsidedown.svg',
             width: MediaQuery.of(context).size.width,
             fit: BoxFit.cover,
           ),
-          SizedBox(height: 50,),
+          SizedBox(height: 90,),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0),
             child: Column(

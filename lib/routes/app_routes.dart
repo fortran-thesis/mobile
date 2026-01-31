@@ -15,6 +15,8 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
+import '../pages/auth/onboarding.dart';
+import '../pages/auth/welcome.dart';
 import '../pages/farmer/report/add_follow_up.dart';
 import '../pages/farmer/report/submit_report.dart';
 import '../pages/farmer/report/view_report.dart';
@@ -39,6 +41,10 @@ class AppRoutes {
         switch (settings.name) {
           case RouteNames.splash:
             return const SplashScreen();
+          case RouteNames.welcome:
+            return const WelcomeScreen();
+          case RouteNames.onboarding:
+            return const OnboardingScreen();
           case RouteNames.login:
             if (isAuthenticated) {
               return MainPage();

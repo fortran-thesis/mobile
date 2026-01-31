@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 1.0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -41,15 +41,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate after 3.5 seconds total
+    // Navigate after animation
     Future.delayed(const Duration(milliseconds: 3500), () {
       if (mounted) {
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
+        final hasSeenIntro = authProvider.hasSeenIntro;
 
-        Navigator.of(context).pushReplacementNamed(
-          isAuthenticated ? RouteNames.main : RouteNames.intro,
-        );
+        String route;
+
+        if (isAuthenticated) {
+          // User is logged in -> go to main
+          route = RouteNames.main;
+        } else if (hasSeenIntro) {
+          // Not logged in, but has seen intro -> go to login
+          route = RouteNames.login;
+        } else {
+          // First time user -> show welcome screen
+          route = RouteNames.welcome;
+        }
+
+        Navigator.of(context).pushReplacementNamed(route);
       }
     });
   }
