@@ -397,7 +397,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         /// Google Login Button
                         Padding(
-                          padding: const EdgeInsets.only(top: 30.0, bottom: 30.0),
+                          padding: const EdgeInsets.only(top: 30.0),
                           child: BuildButton(
                             buttonText: 'Google',
                             onPressed: _onGoogleSignInPressed,
@@ -422,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 30.0),
                           child:
                           Text.rich(
                             TextSpan(
