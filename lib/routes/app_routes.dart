@@ -43,8 +43,6 @@ class AppRoutes {
             return const SplashScreen();
           case RouteNames.welcome:
             return const WelcomeScreen();
-          case RouteNames.onboarding:
-            return const OnboardingScreen();
           case RouteNames.login:
             if (isAuthenticated) {
               return MainPage();
@@ -184,6 +182,8 @@ class AppRoutes {
               return AddFollowUpScreen();
               case RouteNames.inputCharacteristics:
                 return InputCharacteristicsScreen();
+
+
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

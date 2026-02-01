@@ -1,14 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  // Data-driven page model
+  final List<OnboardingPageData> _pages = [
+    OnboardingPageData(
+      type: PageType.welcome,
+      image: 'assets/images/welcome_farmer.png',
+      title: 'Welcome To',
+      titleLarge: 'MOLDIFY',
+      subtitle: 'A Mold Investigation System for Agriculture',
+    ),
+    OnboardingPageData(
+      type: PageType.standard,
+      image: 'assets/images/onboarding_farmer.png',
+      title: 'Submit Mold Cases with ',
+      titleHighlight: 'Ease',
+      subtitle: 'Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.',
+    ),
+    OnboardingPageData(
+      type: PageType.standard,
+      image: 'assets/images/onboarding_scientist.png',
+      title: 'Expert Review by ',
+      titleHighlight: 'Mycologists',
+      subtitle: 'Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.',
+      isLastPage: true,
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+  }
+
+  void _nextPage() {
+    if (_currentPage < _pages.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _skip() async {
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    await authProvider.markIntroAsSeen();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed(RouteNames.intro);
+    }
+  }
+
+  void _finish() async {
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    await authProvider.markIntroAsSeen();
+    if (mounted) {
+      Navigator.of(context).pushReplacementNamed(RouteNames.intro);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,151 +87,82 @@ class WelcomeScreen extends StatelessWidget {
       backgroundColor: MoldifyColors.backgroundColor,
       body: Stack(
         children: [
-          // BIG Farmer illustration - positioned to show most of it
+          // PageView with all pages
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            itemCount: _pages.length,
+            itemBuilder: (context, index) {
+              final page = _pages[index];
+              return page.type == PageType.welcome
+                  ? _buildWelcomePage(page, screenHeight)
+                  : _buildStandardPage(page);
+            },
+          ),
+
           Positioned(
-            top: 25, // Start from very top
-            left: -60,
-            right: -5,
-            bottom: screenHeight * 0.25, // Stop before green section fully covers it
-            child: Image.asset(
-              'assets/images/welcome_farmer.png',
-              fit: BoxFit.contain,
+            top: 30,
+            right: 5,
+            child: TextButton(
+              onPressed: _skip,
+              child: const Text(
+                'Skip',
+                style: TextStyle(
+                  color: MoldifyColors.primaryColor,
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
 
-          // Safe Area wrapper for UI elements
-          SafeArea(
-            child: Stack(
+          Positioned(
+            top: 45,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'MOLDIFY',
+                style: TextStyle(
+                  color: MoldifyColors.accentColor,
+                  fontFamily: 'Montserrat-Bold',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom controls - Positioned DIRECTLY in Stack
+          Positioned(
+            bottom: 40,
+            left: _currentPage == 0 ? 30 : 15,
+            right: _currentPage == 0 ? 30 : 15,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Skip button - ON TOP
-                Positioned(
-                  top: 5,
-                  right: 5,
-                  child: TextButton(
-                    onPressed: () async {
-                      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                      await authProvider.markIntroAsSeen();
-                      if (context.mounted) {
-                        Navigator.of(context).pushReplacementNamed(RouteNames.login);
-                      }
-                    },
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        color: MoldifyColors.primaryColor,
-                        fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                // Indicators
+                Row(
+                  children: List.generate(
+                    _pages.length,
+                        (index) => _buildIndicator(index),
                   ),
                 ),
 
-                // MOLDIFY text at top - ON TOP
-                Positioned(
-                  top: 20,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Text(
-                      'MOLDIFY',
-                      style: TextStyle(
-                        color: MoldifyColors.accentColor,
-                        fontFamily: 'Montserrat-Bold',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Green bottom section - ON TOP
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: ClipPath(
-                    clipper: CurvedTopClipper(),
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.35,
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                          color: MoldifyColors.primaryColor
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 60,
-                          left: 30,
-                          right: 30,
-                          bottom: 40,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Welcome To',
-                              style: TextStyle(
-                                color: MoldifyColors.backgroundColor,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 16,
-                              ),
-                            ),
-                            const Text(
-                              'MOLDIFY',
-                              style: TextStyle(
-                                color: MoldifyColors.backgroundColor,
-                                fontFamily: 'Montserrat-Black',
-                                fontSize: 48,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                            const Text(
-                              'A Mold Investigation System for Agriculture',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: MoldifyColors.backgroundColor,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                fontSize: 16,
-                                height: 1.5,
-                              ),
-                            ),
-                            const Spacer(),
-
-                            // Page indicators and Next button in a ROW
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Page indicators on the left
-                                Row(
-                                  children: [
-                                    _buildIndicator(true),
-                                    _buildIndicator(false),
-                                    _buildIndicator(false),
-                                  ],
-                                ),
-
-                                BuildButton(
-                                  buttonText: "Next",
-                                  onPressed: () {
-                                    Navigator.of(context).pushReplacementNamed(
-                                      RouteNames.onboarding,
-                                    );
-                                  },
-                                  backgroundColor: MoldifyColors.backgroundColor,
-                                  textColor: MoldifyColors.primaryColor,
-                                  buttonHeight: 35,
-                                  buttonRadius: 10,
-                                  rightIcon: Icons.arrow_forward,
-                                  rightIconColor: MoldifyColors.primaryColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                // Next/Continue button
+                BuildButton(
+                  buttonText: _pages[_currentPage].isLastPage ? 'Continue To App' : 'Next',
+                  onPressed: _pages[_currentPage].isLastPage ? _finish : _nextPage,
+                  backgroundColor: _currentPage == 0 ? MoldifyColors.backgroundColor : MoldifyColors.accentColor,
+                  textColor: _currentPage == 0 ? MoldifyColors.primaryColor : MoldifyColors.MoldifyBlack,
+                  buttonHeight: 35,
+                  buttonRadius: 10,
+                  rightIcon: Icons.arrow_forward,
+                  rightIconColor: _currentPage == 0 ? MoldifyColors.primaryColor : MoldifyColors.MoldifyBlack,
+                  rightIconSize: 18,
+                  paddingIconText: 8,
                 ),
               ],
             ),
@@ -172,20 +172,188 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIndicator(bool isActive) {
-    return Container(
+  Widget _buildWelcomePage(OnboardingPageData page, double screenHeight) {
+    return Stack(
+      children: [
+        // Farmer illustration
+        Positioned(
+          top: 25,
+          left: -60,
+          right: -5,
+          bottom: screenHeight * 0.25,
+          child: Image.asset(
+            page.image,
+            fit: BoxFit.contain,
+          ),
+        ),
+
+        // Green bottom section
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: ClipPath(
+            clipper: CurvedTopClipper(),
+            child: Container(
+              height: screenHeight * 0.35,
+              width: double.infinity,
+              decoration: const BoxDecoration(color: MoldifyColors.primaryColor),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 60,
+                  left: 30,
+                  right: 30,
+                  bottom: 100,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      page.title,
+                      style: const TextStyle(
+                        color: MoldifyColors.backgroundColor,
+                        fontFamily: 'Bricolage-Grotesque-Regular',
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      page.titleLarge ?? '',
+                      style: const TextStyle(
+                        color: MoldifyColors.backgroundColor,
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 48,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    Text(
+                      page.subtitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: MoldifyColors.backgroundColor,
+                        fontFamily: 'Bricolage-Grotesque-Regular',
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStandardPage(OnboardingPageData page) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          Expanded(
+            flex: 3,
+            child: Image.asset(
+              page.image,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    textAlign: TextAlign.left,
+                    text: TextSpan(
+                      style: const TextStyle(
+                        color: MoldifyColors.primaryColor,
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 32,
+                        height: 1.2,
+                      ),
+                      children: [
+                        TextSpan(text: page.title),
+                        if (page.titleHighlight != null)
+                          TextSpan(
+                            text: page.titleHighlight,
+                            style: const TextStyle(color: MoldifyColors.accentColor),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    page.subtitle,
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      color: MoldifyColors.MoldifyBlack,
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicator(int index) {
+    final isActive = _currentPage == index;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       width: isActive ? 24 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isActive ? MoldifyColors.backgroundColor : MoldifyColors.backgroundColor.withOpacity(0.3),
+        color: isActive
+            ? (_currentPage == 0 ? MoldifyColors.backgroundColor : MoldifyColors.primaryColor)
+            : Colors.transparent,
+        border: Border.all(
+          color: _currentPage == 0 ? MoldifyColors.backgroundColor : MoldifyColors.primaryColor,
+          width: 2,
+        ),
         borderRadius: BorderRadius.circular(4),
       ),
     );
   }
 }
 
-// Custom clipper for the curved top
+// Data model
+enum PageType { welcome, standard }
+
+class OnboardingPageData {
+  final PageType type;
+  final String image;
+  final String title;
+  final String? titleLarge;
+  final String? titleHighlight;
+  final String subtitle;
+  final bool isLastPage;
+
+  OnboardingPageData({
+    required this.type,
+    required this.image,
+    required this.title,
+    this.titleLarge,
+    this.titleHighlight,
+    required this.subtitle,
+    this.isLastPage = false,
+  });
+}
+
+// Custom clipper
 class CurvedTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {

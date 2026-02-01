@@ -189,11 +189,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // LEFT aligned
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title with highlight - LEFT aligned
+                // Title with highlight
                 RichText(
-                  textAlign: TextAlign.left, // LEFT aligned
+                  textAlign: TextAlign.left,
                   text: TextSpan(
                     style: const TextStyle(
                       color: MoldifyColors.primaryColor,
@@ -213,10 +213,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Subtitle - LEFT aligned
+                // Subtitle
                 Text(
                   page.subtitle,
-                  textAlign: TextAlign.left, // LEFT aligned
+                  textAlign: TextAlign.left,
                   style: const TextStyle(
                     color: MoldifyColors.MoldifyBlack,
                     fontFamily: 'Bricolage-Grotesque-Regular',
@@ -229,7 +229,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
 
-        const SizedBox(height: 20), // Space for buttons
+        const SizedBox(height: 20),
       ],
     );
   }

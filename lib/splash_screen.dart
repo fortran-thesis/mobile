@@ -110,7 +110,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: SvgPicture.asset(
                 'assets/images/bacteria_with_leaves.svg',
                 width: MediaQuery.of(context).size.width,
-                height: 250, // Give it a height
                 fit: BoxFit.cover,
               ),
             ),
