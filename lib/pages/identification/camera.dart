@@ -7,11 +7,13 @@ import '../misc/colors.dart';
 class CameraScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
+  final String? caseId;
 
   const CameraScreen({
     super.key,
     this.source,
     this.sourceTab,
+    this.caseId,
   });
 
   @override
@@ -106,7 +108,8 @@ class _CameraScreenState extends State<CameraScreen> {
           arguments: {
             'imagePath': imageFile.path,
             'source': widget.source,
-            'sourceTab': widget.sourceTab
+            'sourceTab': widget.sourceTab,
+            'caseId': widget.caseId,
           },
         );
       }

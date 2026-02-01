@@ -74,7 +74,8 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final source = args?['source'] as String?;
             final sourceTab = args?['sourceTab'] as String?;
-            return CameraScreen(source: source, sourceTab: sourceTab);
+            final caseId = args?['caseId'] as String?;
+            return CameraScreen(source: source, sourceTab: sourceTab, caseId: caseId);
 
           case RouteNames.imagePreview:
             if (settings.arguments is Map<String, dynamic>) {
@@ -83,7 +84,8 @@ class AppRoutes {
                 final String imagePath = args['imagePath'] as String;
                 final String? source = args['source'] as String?;
                 final String? sourceTab = args['sourceTab'] as String?;
-                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab);
+                final String? caseId = args['caseId'] as String?;
+                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab, caseId: caseId);
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('imagePath missing')));
               }
@@ -146,20 +148,23 @@ class AppRoutes {
           case RouteNames.addLogInstructions:
             final args = settings.arguments as Map<String, dynamic>?;
             final sourceTab = args?['sourceTab'] as String?;
-            return AddLogInstructionsScreen(sourceTab: sourceTab);
+            final caseId = args?['caseId'] as String?;
+            return AddLogInstructionsScreen(sourceTab: sourceTab, caseId: caseId);
 
           case RouteNames.addLog:
             if (settings.arguments is Map<String, dynamic>) {
               final args = settings.arguments as Map<String, dynamic>;
               if (args.containsKey('imagePath') && args['imagePath'] is String &&
-                  args.containsKey('sourceTab') && args['sourceTab'] is String) {
+                  args.containsKey('sourceTab') && args['sourceTab'] is String &&
+                  args.containsKey('caseId') && args['caseId'] is String) {
                 final imagePath = args['imagePath'] as String;
                 final sourceTab = args['sourceTab'] as String;
-                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab);
+                final caseId = args['caseId'] as String;
+                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab, caseId: caseId);
               } else {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Argument Error')),
-                  body: const Center(child: Text('AddLog: imagePath or sourceTab missing or invalid.')),
+                  body: const Center(child: Text('AddLog: imagePath, sourceTab, or caseId missing or invalid.')),
                 );
               }
             } else {

@@ -67,4 +67,53 @@ class MoldReportRepository {
   Future<void> createMoldReport(MoldReport report, {String? sessionCookie}) async {
     await _service.createMoldReport(report.toJson(), sessionCookie: sessionCookie);
   }
+
+  /// Search and filter mold reports.
+  /// Returns paginated results with nextPageToken for cursor-based pagination.
+  Future<List<MoldReport>> searchReports({
+    String? search,
+    String? status,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    print('MoldReportRepository: searching with query="$search", status="$status", pageToken="$pageToken"');
+    final result = await _service.searchMoldReports(
+      search: search,
+      status: status,
+      limit: pageSize,
+      pageToken: pageToken,
+      sessionCookie: sessionCookie,
+    );
+
+    print('MoldReportRepository: search API response: $result');
+
+    // Normalize the returned data shape
+    dynamic raw = result;
+    if (result.containsKey('data')) raw = result['data'];
+
+    List<dynamic> rawDataList = <dynamic>[];
+    if (raw is List) {
+      rawDataList = raw;
+    } else if (raw is Map) {
+      if (raw['snapshot'] is List) {
+        rawDataList = raw['snapshot'] as List<dynamic>;
+      } else if (raw['data'] is List) {
+        rawDataList = raw['data'] as List<dynamic>;
+      } else {
+        rawDataList = [raw];
+      }
+    } else {
+      rawDataList = <dynamic>[];
+    }
+
+    print('MoldReportRepository: normalized search results (${rawDataList.length} items)');
+
+    final List<MoldReport> reports = rawDataList
+        .map((e) => MoldReport.fromJson(e as Map<String, dynamic>))
+        .where((r) => r.id.isNotEmpty)
+        .toList();
+
+    print('MoldReportRepository: parsed ${reports.length} valid search results');
+    return reports;
+  }
 }

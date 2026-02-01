@@ -87,7 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final reportService = MoldReportService();
       final caseService = MoldCaseService();
       
-      setState(() => _isLoadingDashboard = true);
+      if (mounted) {
+        setState(() => _isLoadingDashboard = true);
+      }
       
       // Fetch report counts
       final countsResponse = await reportService.getReportCounts(sessionCookie: sessionCookie);
@@ -108,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // Fetch report status for each case
           for (final case_ in assignedCases) {
+            if (!mounted) return;
             try {
               final reportResponse = await reportService.getMoldReportById(
                 case_.moldReportId,
@@ -129,19 +132,23 @@ class _HomeScreenState extends State<HomeScreen> {
         limit: 3,
       );
       
-      setState(() {
-        _reportCounts = countsResponse['data'] ?? {};
-        _assignedCases = assignedCases;
-        _caseStatusMap = caseStatusMap;
-        _moldipediaArticles = articlesResponse;
-        _isLoadingDashboard = false;
-        _dashboardError = null;
-      });
+      if (mounted) {
+        setState(() {
+          _reportCounts = countsResponse['data'] ?? {};
+          _assignedCases = assignedCases;
+          _caseStatusMap = caseStatusMap;
+          _moldipediaArticles = articlesResponse;
+          _isLoadingDashboard = false;
+          _dashboardError = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoadingDashboard = false;
-        _dashboardError = 'Failed to load dashboard: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingDashboard = false;
+          _dashboardError = 'Failed to load dashboard: $e';
+        });
+      }
     }
   }
 

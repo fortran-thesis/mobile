@@ -9,8 +9,9 @@ import '../misc/colors.dart';
 class AddLogInstructionsScreen extends StatefulWidget {
   // 1. Add sourceTab as a constructor argument
   final String? sourceTab;
+  final String? caseId;
 
-  const AddLogInstructionsScreen({super.key, this.sourceTab});
+  const AddLogInstructionsScreen({super.key, this.sourceTab, this.caseId});
 
   @override
   State<AddLogInstructionsScreen> createState() => _AddLogInstructionsScreenState();
@@ -45,7 +46,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
           arguments: {
             'imagePath': imageFile.path,
             'source': 'add_log',
-            'sourceTab': widget.sourceTab
+            'sourceTab': widget.sourceTab,
+            'caseId': widget.caseId
           },
         );
       } else {
@@ -71,7 +73,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
       RouteNames.camera,
       arguments: {
         'source': 'add_log',
-        'sourceTab': widget.sourceTab
+        'sourceTab': widget.sourceTab,
+        'caseId': widget.caseId
       },
     );
   }

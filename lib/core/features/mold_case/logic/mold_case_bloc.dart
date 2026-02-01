@@ -26,6 +26,15 @@ class RefreshMoldCases extends MoldCaseEvent {
   List<Object?> get props => [sessionCookie];
 }
 
+class SearchMoldCases extends MoldCaseEvent {
+  final String? searchQuery;
+  final String? priorityFilter;
+  final String? sessionCookie;
+  SearchMoldCases({this.searchQuery, this.priorityFilter, this.sessionCookie});
+  @override
+  List<Object?> get props => [searchQuery, priorityFilter, sessionCookie];
+}
+
 // States
 abstract class MoldCaseState extends Equatable {
   @override
@@ -64,6 +73,7 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   MoldCaseBloc({required this.repository, this.pageSize = 20}) : super(MoldCaseInitial()) {
     on<FetchMoldCases>(_onFetch);
     on<RefreshMoldCases>(_onRefresh);
+    on<SearchMoldCases>(_onSearch);
   }
 
   Future<void> _onFetch(FetchMoldCases event, Emitter<MoldCaseState> emit) async {
@@ -109,6 +119,28 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       _nextPageToken = hasMore ? (pageCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
       
       emit(MoldCaseLoaded(cases: _allCases, nextPageToken: _nextPageToken, hasMore: hasMore));
+    } catch (e) {
+      emit(MoldCaseError(e.toString()));
+    }
+  }
+
+  Future<void> _onSearch(SearchMoldCases event, Emitter<MoldCaseState> emit) async {
+    try {
+      emit(MoldCaseLoading());
+      _allCases.clear();
+      _nextPageToken = null;
+
+      final searchCases = await repository.searchCases(
+        search: event.searchQuery,
+        priority: event.priorityFilter,
+        sessionCookie: event.sessionCookie,
+      );
+
+      _allCases.addAll(searchCases);
+      final hasMore = searchCases.length >= pageSize;
+      _nextPageToken = hasMore ? (searchCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+
+      emit(MoldCaseLoaded(cases: List.from(_allCases), nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
       emit(MoldCaseError(e.toString()));
     }

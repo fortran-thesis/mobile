@@ -94,4 +94,39 @@ class MoldCaseRepository {
   }) async {
     await _service.updateMoldCase(id, update, sessionCookie: sessionCookie);
   }
+
+  /// Search assigned mold cases by mycologist with optional filters
+  Future<List<MoldCase>> searchCases({
+    String? search,
+    String? priority,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    final result = await _service.searchMoldCases(
+      search: search,
+      priority: priority,
+      limit: pageSize,
+      pageToken: pageToken,
+      sessionCookie: sessionCookie,
+    );
+
+    dynamic raw = result;
+    if (result.containsKey('data')) raw = result['data'];
+
+    List<dynamic> rawDataList = <dynamic>[];
+    if (raw is List) {
+      rawDataList = raw;
+    } else if (raw is Map) {
+      if (raw['snapshot'] is List) {
+        rawDataList = raw['snapshot'] as List<dynamic>;
+      } else if (raw['data'] is List) {
+        rawDataList = raw['data'] as List<dynamic>;
+      }
+    }
+
+    return rawDataList
+        .map((e) => MoldCase.fromJson(e as Map<String, dynamic>))
+        .where((c) => c.id.isNotEmpty)
+        .toList();
+  }
 }

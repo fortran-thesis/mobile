@@ -29,6 +29,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isFetchingMore = false;
   final MoldReportService _reportService = MoldReportService();
+  String? _activePriorityFilter;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -60,14 +62,41 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
         }
       }
     });
+
+    searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    final searchText = searchController.text.trim();
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    final sessionCookie = authProvider.cookie;
+
+    if (searchText.isEmpty && !_isSearching) {
+      return;
+    }
+
+    if (searchText.isEmpty) {
+      _isSearching = false;
+      _bloc.add(RefreshMoldCases(sessionCookie: sessionCookie));
+    } else {
+      _isSearching = true;
+      _bloc.add(SearchMoldCases(
+        searchQuery: searchText,
+        priorityFilter: _activePriorityFilter,
+        sessionCookie: sessionCookie,
+      ));
+    }
   }
 
   @override
   void dispose() {
+    searchController.removeListener(_onSearchChanged);
+    searchController.dispose();
     _scrollController.dispose();
     _bloc.close();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,14 +144,34 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               color: MoldifyColors.accentColor,
                               size: 20.0
                             ),
-                            items: ['All', 'In Progress', 'Resolved'],
+                            items: ['All', 'Low', 'Medium', 'High'],
                             onItemSelected: (index) {
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              final sessionCookie = authProvider.cookie;
                               if (index == 0) {
-                                // All was tapped
+                                setState(() => _activePriorityFilter = null);
+                                _bloc.add(RefreshMoldCases(sessionCookie: sessionCookie));
                               } else if (index == 1) {
-                                // In Progress was tapped
+                                setState(() => _activePriorityFilter = 'low');
+                                _bloc.add(SearchMoldCases(
+                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
+                                  priorityFilter: 'low',
+                                  sessionCookie: sessionCookie,
+                                ));
                               } else if (index == 2) {
-                                // Resolved was tapped
+                                setState(() => _activePriorityFilter = 'medium');
+                                _bloc.add(SearchMoldCases(
+                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
+                                  priorityFilter: 'medium',
+                                  sessionCookie: sessionCookie,
+                                ));
+                              } else if (index == 3) {
+                                setState(() => _activePriorityFilter = 'high');
+                                _bloc.add(SearchMoldCases(
+                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
+                                  priorityFilter: 'high',
+                                  sessionCookie: sessionCookie,
+                                ));
                               }
                             },
                           ),

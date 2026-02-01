@@ -13,6 +13,7 @@ class InVivoTab extends StatelessWidget {
   final String dateTime;
   final String environmentalTemperature;
   final List<Map<String, String>> inVivoEntries;
+  final String caseId;
 
   const InVivoTab({
     super.key,
@@ -20,6 +21,7 @@ class InVivoTab extends StatelessWidget {
     required this.dateTime,
     required this.environmentalTemperature,
     required this.inVivoEntries,
+    required this.caseId,
   });
 
   @override
@@ -64,7 +66,7 @@ class InVivoTab extends StatelessWidget {
                         Navigator.pushNamed(
                           context,
                           RouteNames.addLogInstructions,
-                          arguments: {'sourceTab': 'in-vivo'},
+                          arguments: {'sourceTab': 'in-vivo', 'caseId': caseId},
                         );
                       }
                   )

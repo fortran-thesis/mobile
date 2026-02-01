@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
-import 'package:moldify/core/features/mold_case/repository/mold_case_repository.dart';
+import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../misc/appbar/primary_app_bar.dart';
@@ -30,7 +30,7 @@ class _SetMonitoringDetailsScreenState
     final TextEditingController _incubationTempController = TextEditingController();
     final TextEditingController _environmentalTempController = TextEditingController();
     
-    final MoldCaseRepository _repository = MoldCaseRepository();
+    final MoldCaseService _service = MoldCaseService();
     
     String? _selectedGrowthMedium;
     bool _isLoading = false;
@@ -86,9 +86,9 @@ class _SetMonitoringDetailsScreenState
           inVivoDetails: InVivoDetails(environmentalTemperature: environmentalTemp),
         );
         
-        // Build ONLY the cultivation details payload (PATCH request - backend expects key 'details')
+        // Build payload for service
         final updatePayload = {
-          'details': cultivationDetails.toJson(),
+          'cultivation_details': cultivationDetails.toJson(),
         };
         
         print('SetMonitoringDetails: updatePayload=$updatePayload');
@@ -96,9 +96,9 @@ class _SetMonitoringDetailsScreenState
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final sessionCookie = authProvider.cookie;
         
-        // Update via repository - use PATCH /:id endpoint
-        print('SetMonitoringDetails: calling repository.updateMoldCase()');
-        await _repository.updateMoldCase(
+        // Update via service - use updateCultivationDetails endpoint
+        print('SetMonitoringDetails: calling service.updateCultivationDetails()');
+        await _service.updateCultivationDetails(
           widget.moldCase.id,
           updatePayload,
           sessionCookie: sessionCookie,

@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:provider/provider.dart';
+import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
@@ -14,12 +17,14 @@ class AddLogScreen extends StatefulWidget {
   // 1. Add parameters for imagePath and the new sourceTab
   final String imagePath;
   final String sourceTab;
+  final String caseId; // Add caseId for API call
 
   // 2. Update the constructor to require them
   const AddLogScreen({
     super.key,
     required this.imagePath,
     required this.sourceTab,
+    required this.caseId,
   });
 
   @override
@@ -28,11 +33,54 @@ class AddLogScreen extends StatefulWidget {
 
 class _AddLogScreenState extends State<AddLogScreen> {
   final TextEditingController _logNotesController = TextEditingController();
+  bool _isSaving = false;
 
   @override
   void dispose() {
     _logNotesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveCultivationLog() async {
+    try {
+      setState(() => _isSaving = true);
+
+      final service = MoldCaseService();
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      // Build log data based on sourceTab
+      final logData = {
+        'type': widget.sourceTab == 'in-vivo' ? 'vivo' : 'vitro',
+        'characteristics': widget.sourceTab == 'in-vivo'
+            ? {'lesion_size': 0, 'lesion_color': 'Unknown'}
+            : {'colony_diameter': 0, 'colony_color': 'Unknown'},
+        'additional_info': _logNotesController.text,
+      };
+
+      // Call service to add cultivation log with image file
+      await service.addCultivationLog(
+        widget.caseId,
+        logData,
+        imagePath: widget.imagePath,
+        sessionCookie: sessionCookie,
+      );
+
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cultivation log saved successfully!')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save log: $e')),
+      );
+    }
   }
 
   @override
@@ -179,7 +227,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 70.0),
                           child: BuildButton(
-                              onPressed: () {
+                              onPressed: _isSaving ? () {} : () {
                                 showDialog(
                                   context: context,
                                   barrierDismissible: false,
@@ -189,7 +237,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                       subtitle: 'Are you sure you want to save log?',
                                       onConfirm: () {
                                         Navigator.of(context).pop();
-                                        Navigator.of(context).pop();
+                                        _saveCultivationLog();
                                       },
                                       onCancel: (){
                                         Navigator.of(context).pop();
@@ -200,7 +248,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                   },
                                 );
                               },
-                              buttonText: 'Save Log',
+                              buttonText: _isSaving ? 'Saving...' : 'Save Log',
                               backgroundColor: MoldifyColors.primaryColor,
                               textColor: MoldifyColors.backgroundColor,
                               buttonHeight: 45,
