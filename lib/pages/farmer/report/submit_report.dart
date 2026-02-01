@@ -422,11 +422,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                             ? uploadedPhotos.first
                             : null;
 
-                        await service.createMoldReport(
-                          reportPayload,
-                          coverPhoto: cover,
-                          sessionCookie: sessionCookie,
-                        );
+                        // If multiple photos are uploaded, pass them all; otherwise use legacy single photo
+                        if (uploadedPhotos.length > 1) {
+                          await service.createMoldReport(
+                            reportPayload,
+                            coverPhotos: uploadedPhotos,
+                            sessionCookie: sessionCookie,
+                          );
+                        } else {
+                          await service.createMoldReport(
+                            reportPayload,
+                            coverPhoto: cover,
+                            sessionCookie: sessionCookie,
+                          );
+                        }
 
                         // On success, show a confirmation snackbar and pop
                         ScaffoldMessenger.of(context).showSnackBar(

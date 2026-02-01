@@ -8,7 +8,12 @@ class ApiService {
 
   Future<http.Response> get(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
+      final uri = Uri.parse('$baseUrl$endpoint');
+      // Only replace query parameters if new ones are provided
+      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
+      final url = queryParams != null && queryParams.isNotEmpty
+          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
+          : uri;
       final allHeaders = {...?headers};
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
@@ -21,7 +26,12 @@ class ApiService {
 
   Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
+      final uri = Uri.parse('$baseUrl$endpoint');
+      // Only replace query parameters if new ones are provided
+      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
+      final url = queryParams != null && queryParams.isNotEmpty
+          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
+          : uri;
       final allHeaders = {...?headers};
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
@@ -34,7 +44,12 @@ class ApiService {
 
   Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
+      final uri = Uri.parse('$baseUrl$endpoint');
+      // Only replace query parameters if new ones are provided
+      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
+      final url = queryParams != null && queryParams.isNotEmpty
+          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
+          : uri;
       final allHeaders = {...?headers};
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
@@ -55,7 +70,12 @@ class ApiService {
 
   Future<http.Response> delete(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint').replace(queryParameters: queryParams?.map((k, v) => MapEntry(k, v.toString())));
+      final uri = Uri.parse('$baseUrl$endpoint');
+      // Only replace query parameters if new ones are provided
+      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
+      final url = queryParams != null && queryParams.isNotEmpty
+          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
+          : uri;
       final allHeaders = {...?headers};
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';

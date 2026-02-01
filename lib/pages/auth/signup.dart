@@ -115,6 +115,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _confirmPasswordErrorText = null;
     });
 
+    // Check terms & conditions FIRST before any other validation
+    if (!_agreedToTerms) {
+      _showErrorSnackBar('You must agree to the terms and privacy policy.');
+      return;
+    }
+
     setState(() => isLoading = true);
     // Client-side validation
     if (usernameController.text.isEmpty ||
@@ -167,10 +173,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _showErrorSnackBar(error);
         }
       }
-    }
-    if (!_agreedToTerms) {
-      _showErrorSnackBar('You must agree to the terms and policy.');
-      return;
     }
   }
 

@@ -25,6 +25,7 @@ class MoldReportService {
   Future<Map<String, dynamic>> createMoldReport(
     Map<String, dynamic> report, {
     File? coverPhoto,
+    List<File>? coverPhotos,
     String? sessionCookie,
     /// When true, prints the raw `report` Map (pretty JSON) before it's
     /// converted into multipart form fields. Useful for debugging what the
@@ -52,9 +53,13 @@ class MoldReportService {
       // field (JSON blob). This mirrors the current server expectations.
       request.fields['details'] = json.encode(report);
 
-      if (coverPhoto != null) {
-        final filename = coverPhoto.path.split(Platform.pathSeparator).last;
-        final bytes = await coverPhoto.readAsBytes();
+      // Support both single coverPhoto (legacy) and multiple coverPhotos
+      final photosToUpload = coverPhotos ?? (coverPhoto != null ? [coverPhoto] : <File>[]);
+      
+      for (int photoIdx = 0; photoIdx < photosToUpload.length; photoIdx++) {
+        final photo = photosToUpload[photoIdx];
+        final filename = photo.path.split(Platform.pathSeparator).last;
+        final bytes = await photo.readAsBytes();
 
         String ext = filename.split('.').length > 1 ? filename.split('.').last.toLowerCase() : 'jpeg';
         String subtype = 'jpeg';
@@ -63,7 +68,7 @@ class MoldReportService {
         else if (ext == 'webp') subtype = 'webp';
 
         final multipartFile = http.MultipartFile.fromBytes(
-          'cover_photo',
+          'cover_photo',  // Backend accepts multiple files with same field name
           bytes,
           filename: filename,
           contentType: MediaType('image', subtype),

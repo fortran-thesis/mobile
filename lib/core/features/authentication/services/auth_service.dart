@@ -44,13 +44,19 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> loginOAuth(String token) async {
+    final endpoint = '/login/oauth?device=mobile';
+    print('🔵 loginOAuth: Making request to $endpoint');
+    
     final response = await _apiService.post(
-      '/login/oauth?device=mobile',
+      endpoint,
       headers: {'Content-Type': 'application/json'},
       body: {
         'token': token,
       },
     );
+
+    print('🔵 loginOAuth: Response URL = ${response.request?.url}');
+    print('🔵 loginOAuth: Response status = ${response.statusCode}');
 
     final Map<String, dynamic> jsonResponse = json.decode(response.body);
     final bool success = jsonResponse['success'] ?? false;
@@ -61,6 +67,7 @@ class AuthService {
     print('success: $success');
     print('data: $data');
     print('error: $error');
+    print('setCookie: $setCookie');
 
     String? sessionCookie;
     if (setCookie != null) {
