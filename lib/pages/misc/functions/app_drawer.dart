@@ -7,10 +7,12 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/pages/farmer/faq/main_faq.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/support/contact_us.dart';
+import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/support/terms_of_agreement.dart';
 import '../../../core/constants/route_names.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
@@ -174,7 +176,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     size: 24,
                   ),
                   title: const AutoSizeText(
-                    'Terms of Use',
+                    'Terms of Agreement',
                     style: TextStyle(
                         fontFamily: 'Bricolage-Grotesque-Bold',
                         color: MoldifyColors.primaryColor,
@@ -184,6 +186,11 @@ class _AppDrawerState extends State<AppDrawer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TermsOfAgreementScreen(),
+                      ),
+                    );
                   },
                 ),
 
@@ -205,7 +212,11 @@ class _AppDrawerState extends State<AppDrawer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen(),
+                      ),
+                    );
                   },
                 ),
 

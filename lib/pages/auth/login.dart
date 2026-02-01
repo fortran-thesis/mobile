@@ -445,7 +445,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     decorationColor: MoldifyColors.primaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()..onTap = () {
-                                    // Handle Terms of Agreement tap here
+                                    navigateTo(context, RouteNames.terms);
                                   },
                                 ),
                                 const TextSpan(text: ' and '),
@@ -459,7 +459,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     decorationColor: MoldifyColors.primaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()..onTap = () {
-                                    // Handle Privacy Policy tap here
+                                    navigateTo(context, RouteNames.privacy);
                                   },
                                 ),
                                 const TextSpan(text: '.'),

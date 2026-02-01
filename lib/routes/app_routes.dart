@@ -8,6 +8,8 @@ import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
+import 'package:moldify/pages/support/privacy_policy.dart';
+import 'package:moldify/pages/support/terms_of_agreement.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -186,8 +188,10 @@ class AppRoutes {
               return AddFollowUpScreen();
               case RouteNames.inputCharacteristics:
                 return InputCharacteristicsScreen();
-
-
+          case RouteNames.terms:
+            return TermsOfAgreementScreen();
+          case RouteNames.privacy:
+            return PrivacyPolicyScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),
