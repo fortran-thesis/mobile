@@ -17,9 +17,14 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Create provider and WAIT for cookie to load
+  final authProvider = AppAuthProvider();
+  await authProvider.loadCookie();  // <-- WAIT here!
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppAuthProvider()..loadCookie(),
+    ChangeNotifierProvider.value(
+      value: authProvider,
       child: const MyApp(),
     ),
   );
@@ -40,7 +45,7 @@ class MyApp extends StatelessWidget {
       title: 'Moldify',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(),
-      initialRoute: isAuthenticated ? RouteNames.main : RouteNames.intro,
+      initialRoute: RouteNames.splash,
       onGenerateRoute: AppRoutes.generateRoute,
     );
   }

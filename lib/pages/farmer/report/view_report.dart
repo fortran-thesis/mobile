@@ -199,7 +199,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     return Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
-            title: 'View Case',
+            title: 'View Report',
             showPopupMenu: true,
             popupMenuItems: ['Treatment History', 'Export PDF'],
             popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
@@ -307,7 +307,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       ),
                                     ),
                                       TextSpan(
-                                        text: _report?.host ?? '\t\t\tUnknown crop',
+                                        text: '\t\t\t${_report?.host ?? 'Unknown crop'}',
                                         style: TextStyle(
                                           color: MoldifyColors.primaryColor,
                                           fontSize: 12,
