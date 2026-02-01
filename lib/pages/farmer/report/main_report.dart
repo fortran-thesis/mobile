@@ -26,6 +26,11 @@ class _MainReportScreenState extends State<MainReportScreen> {
   late final MoldReportRepository _repository;
   late final MoldReportBloc _bloc;
   final ScrollController _scrollController = ScrollController();
+  
+  // Search and filter state
+  String? _activeStatusFilter; // null for "All", or status string
+  bool _isSearching = false;
+  
   bool _isFetchingMore = false;
 
   @override
@@ -146,18 +151,19 @@ class _MainReportScreenState extends State<MainReportScreen> {
                               ),
                               items: ['All', 'In Progress', 'Pending', 'Resolved', 'Rejected'],
                               onItemSelected: (index) {
-                                // Handle the selection based on the index
-                                if (index == 0) {
-                                  // All was tapped
-                                } else if (index == 1) {
-                                  // In Progress was tapped
-                                } else if (index == 2) {
-                                  // Pending was tapped
-                                } else if (index == 3) {
-                                  // Resolved was tapped
-                                } else if (index == 4) {
-                                  // Rejected was tapped
-                                }
+                                final selectedStatus = ['All', 'In Progress', 'Pending', 'Resolved', 'Rejected'][index];
+                                setState(() {
+                                  _activeStatusFilter = selectedStatus == 'All' ? null : selectedStatus;
+                                  _isSearching = false;
+                                  searchController.clear();
+                                });
+                                // Trigger search with new filter
+                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                _bloc.add(SearchMoldReports(
+                                  searchQuery: null,
+                                  statusFilter: _activeStatusFilter,
+                                  sessionCookie: authProvider.cookie,
+                                ));
                               },
                             ),
                           ],
@@ -172,6 +178,32 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           showPassword: false,
                           rightIcon: FontAwesomeIcons.magnifyingGlass,
                         ),
+                      ),
+                      /// Trigger search when text changes
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: searchController,
+                        builder: (context, value, child) {
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (mounted && searchController.text.isNotEmpty) {
+                              setState(() {
+                                _isSearching = true;
+                                _activeStatusFilter = null;
+                              });
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              _bloc.add(SearchMoldReports(
+                                searchQuery: searchController.text,
+                                statusFilter: null,
+                                sessionCookie: authProvider.cookie,
+                              ));
+                            } else if (mounted && searchController.text.isEmpty && _isSearching) {
+                              setState(() => _isSearching = false);
+                              // Refresh to all reports
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                            }
+                          });
+                          return const SizedBox.shrink();
+                        },
                       ),
                       /// Reports list (infinite scroll)
                       SizedBox(

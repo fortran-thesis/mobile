@@ -36,6 +36,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   bool _isLoading = true;
   String? _error;
   MoldCase? _case;
+  String? _reportId; // Store the report ID for status updates
+  bool _isMarkingResolved = false;
   
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
@@ -60,6 +62,70 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     if (_case == null || _case!.cultivationDetails == null) return 'Kamatis Tagalog';
     final growthMedium = _case!.cultivationDetails!.growthMedium;
     return growthMedium.isNotEmpty ? growthMedium : 'Kamatis Tagalog';
+  }
+
+  Future<void> _markCaseAsResolved() async {
+    if (_reportId == null || _reportId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Report ID not found')),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Mark Case as Resolved?'),
+        content: const Text(
+          'Are you sure you want to mark this case as resolved? '
+          'If the farmer adds a follow-up, the status will reset to pending.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Resolve'),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (!confirmed) return;
+
+    try {
+      setState(() => _isMarkingResolved = true);
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      final reportService = MoldReportService();
+
+      // Update the mold report status to "resolved"
+      await reportService.patchMoldReport(
+        _reportId!,
+        {'status': 'resolved'},
+        sessionCookie: sessionCookie,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _isMarkingResolved = false;
+        caseStatus = 'Resolved';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Case marked as resolved!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isMarkingResolved = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark case as resolved: $e')),
+      );
+    }
   }
 
   Future<void> _loadCaseFromArgs() async {
@@ -266,6 +332,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       setState(() {
         _case = moldCase;
+        _reportId = reportId; // Store report ID for status updates
         caseStatus = _case!.priority[0].toUpperCase() + _case!.priority.substring(1);
         reportStatus = localReportStatus;
         caseImageUrl = _case!.photoUrl ?? caseImageUrl;
@@ -321,6 +388,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     //Dynamically build the list of menu items based on the case status.
     final List<String> popupMenuItems = [
       if (!isCaseClosed) 'Set Monitoring Details',
+      if (!isCaseClosed) 'Mark as Resolved',
       'Identification History',
       'Treatment History',
       'Export PDF'
@@ -328,6 +396,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     final List<IconData> popupMenuIcons = [
       if (!isCaseClosed) FontAwesomeIcons.circleInfo,
+      if (!isCaseClosed) FontAwesomeIcons.checkCircle,
       FontAwesomeIcons.clockRotateLeft,
       FontAwesomeIcons.sprayCan,
       FontAwesomeIcons.solidFilePdf,
@@ -351,6 +420,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                   '/set-monitoring-details',
                   arguments: {'moldCase': _case},
                 );
+              }
+              else if (selectedItem == 'Mark as Resolved') {
+                _markCaseAsResolved();
               }
               else if (selectedItem == 'Identification History') {
                 Navigator.pushNamed(context, '/identification-history');
@@ -613,6 +685,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                     growthMedium: inVitroGrowthMedium,
                                     incubationTemperature: inVitroIncubationTemperature,
                                     inVitroEntries: inVitroEntries,
+                                    caseId: _case!.id,
                                   ),
                                 ),
                                 Padding(
@@ -622,6 +695,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                     dateTime: inVivoDateTime,
                                     environmentalTemperature: inVivoEnvironmentalTemperature,
                                     inVivoEntries: inVivoEntries,
+                                    caseId: _case!.id,
                                   ),
                                 ),
                               ],

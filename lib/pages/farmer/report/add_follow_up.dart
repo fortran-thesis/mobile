@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/buttons/primary_button.dart';
@@ -8,6 +9,8 @@ import '../../misc/colors.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/photo_uploader.dart';
+import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../providers/auth_provider.dart';
 
 class AddFollowUpScreen extends StatefulWidget {
   const AddFollowUpScreen({super.key});
@@ -19,6 +22,7 @@ class AddFollowUpScreen extends StatefulWidget {
 class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
   final TextEditingController _descController = TextEditingController();
   List<File> uploadedPhotos = [];
+  bool _isSubmitting = false;
 
   void _handlePhotoChange(List<File> photos) {
     setState(() {
@@ -29,6 +33,67 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
   bool _hasUnsavedChanges() {
     return _descController.text.isNotEmpty ||
         uploadedPhotos.isNotEmpty;
+  }
+
+  Future<void> _submitFollowUp() async {
+    try {
+      setState(() => _isSubmitting = true);
+
+      final args = ModalRoute.of(context)?.settings.arguments;
+      String? reportId;
+      if (args is Map<String, dynamic>) {
+        reportId = args['id']?.toString();
+      } else if (args is String) {
+        reportId = args;
+      }
+
+      if (reportId == null || reportId.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Report ID not found')),
+        );
+        return;
+      }
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final reportService = MoldReportService();
+
+      // Prepare case detail data
+      final detailData = {
+        'description': _descController.text,
+        'metadata': {
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        'cover_photo': uploadedPhotos.isNotEmpty
+            ? uploadedPhotos.map((f) => f.path).toList()
+            : [],
+      };
+
+      await reportService.addCaseDetailToReport(
+        reportId,
+        detailData,
+        sessionCookie: sessionCookie,
+      );
+
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Follow-up submitted successfully!')),
+      );
+
+      // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit follow-up: $e')),
+      );
+    }
   }
 
   @override
@@ -139,7 +204,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
-                        onPressed: () {
+                        onPressed: _isSubmitting ? () {} : () {
                           showDialog(
                             context: context,
                             barrierDismissible: false,
@@ -149,7 +214,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                                 subtitle: 'Once submitted, you will not be able to edit it.',
                                 onConfirm: () {
                                   Navigator.of(context).pop();
-                                  Navigator.of(context).pop();
+                                  _submitFollowUp();
                                 },
                                 onCancel: (){
                                   Navigator.of(context).pop();
@@ -160,7 +225,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                             },
                           );
                         },
-                        buttonText: 'Submit Follow Up',
+                        buttonText: _isSubmitting ? 'Submitting...' : 'Submit Follow Up',
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
                         buttonHeight: 45,

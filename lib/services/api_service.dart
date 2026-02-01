@@ -66,5 +66,42 @@ class ApiService {
     }
   }
 
+  Future<http.Response> postMultipart(
+    String endpoint, {
+    Map<String, String>? fields,
+    String? fileFieldName,
+    String? filePath,
+    Map<String, String>? headers,
+    String? sessionCookie,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl$endpoint');
+      final request = http.MultipartRequest('POST', url);
 
+      // Add headers
+      if (sessionCookie != null) {
+        request.headers['Cookie'] = 'session=$sessionCookie';
+      }
+      if (headers != null) {
+        request.headers.addAll(headers);
+      }
+
+      // Add fields
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // Add file
+      if (fileFieldName != null && filePath != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(fileFieldName, filePath),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      return await http.Response.fromStream(streamedResponse);
+    } catch (e) {
+      throw Exception('Multipart POST request failed: $e');
+    }
+  }
 }

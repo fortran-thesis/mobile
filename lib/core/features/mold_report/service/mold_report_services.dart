@@ -224,6 +224,15 @@ class MoldReportService {
     );
   }
 
+  /// Alias for postCaseDetail for consistency with other service methods
+  Future<Map<String, dynamic>> addCaseDetailToReport(
+    String reportId,
+    Map<String, dynamic> caseDetail, {
+    String? sessionCookie,
+  }) async {
+    return postCaseDetail(reportId, caseDetail, sessionCookie: sessionCookie);
+  }
+
   /// Patch a mold report by id.
   Future<void> patchMoldReport(
     String id,
@@ -353,5 +362,41 @@ class MoldReportService {
       return snapshot.map((item) => item as Map<String, dynamic>).toList();
     }
     throw Exception('Failed to fetch moldipedia articles: ${response.statusCode}');
+  }
+
+  /// Search and filter mold reports
+  /// Endpoint: GET /search
+  /// Query parameters:
+  ///   - search: search query (searches case name, host, location, reporter name, status)
+  ///   - status: filter by status (pending, in progress, resolved, rejected)
+  ///   - limit: results per page (default: 10)
+  ///   - pageToken: pagination token
+  Future<Map<String, dynamic>> searchMoldReports({
+    String? search,
+    String? status,
+    int? limit,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    final queryParams = <String, String>{};
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+    if (status != null && status.isNotEmpty) queryParams['status'] = status;
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
+
+    final uri = Uri.parse('${ApiUrl.moldReport}/search').replace(queryParameters: queryParams);
+    final response = await _apiService.get(
+      '/search?${Uri(queryParameters: queryParams).query}',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to search mold reports: ${response.statusCode} ${response.body}',
+      );
+    }
+
+    return json.decode(response.body) as Map<String, dynamic>;
   }
 }

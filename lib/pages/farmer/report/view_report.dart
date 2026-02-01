@@ -403,6 +403,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                           Navigator.pushNamed(
                                             context,
                                             '/add-follow-up',
+                                            arguments: {'id': _report?.id},
                                           );
                                         },
                                         buttonText: 'Add Follow-up',

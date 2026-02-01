@@ -15,6 +15,7 @@ class InVitroTab extends StatelessWidget {
   final String growthMedium;
   final String incubationTemperature;
   final List<Map<String, String>> inVitroEntries;
+  final String caseId;
 
   const InVitroTab({
     super.key,
@@ -23,6 +24,7 @@ class InVitroTab extends StatelessWidget {
     required this.growthMedium,
     required this.incubationTemperature,
     required this.inVitroEntries,
+    required this.caseId,
   });
 
   @override
@@ -67,7 +69,7 @@ class InVitroTab extends StatelessWidget {
                         Navigator.pushNamed(
                           context,
                           RouteNames.addLogInstructions,
-                          arguments: {'sourceTab': 'in-vitro'},
+                          arguments: {'sourceTab': 'in-vitro', 'caseId': caseId},
                         );
                       }
                   )

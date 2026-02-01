@@ -13,12 +13,14 @@ class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
   final String? source;
   final String? sourceTab;
+  final String? caseId;
 
   const ImagePreviewScreen({
     super.key,
     required this.imagePath,
     this.source,
     this.sourceTab,
+    this.caseId,
   });
 
   @override
@@ -162,6 +164,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           arguments: {
             'imagePath': file.path,
             'sourceTab': widget.sourceTab,
+            'caseId': widget.caseId,
           },
         );
       } else {

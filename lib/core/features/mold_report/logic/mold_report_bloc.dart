@@ -34,6 +34,19 @@ class CreateMoldReportEvent extends MoldReportEvent {
   List<Object?> get props => [report, sessionCookie];
 }
 
+class SearchMoldReports extends MoldReportEvent {
+  final String? searchQuery;
+  final String? statusFilter;
+  final String? sessionCookie;
+  SearchMoldReports({
+    this.searchQuery,
+    this.statusFilter,
+    this.sessionCookie,
+  });
+  @override
+  List<Object?> get props => [searchQuery, statusFilter, sessionCookie];
+}
+
 // States
 abstract class MoldReportState extends Equatable {
   @override
@@ -77,6 +90,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
     on<FetchMoldReports>(_onFetch);
     on<RefreshMoldReports>(_onRefresh);
     on<CreateMoldReportEvent>(_onCreate);
+    on<SearchMoldReports>(_onSearch);
   }
 
   Future<void> _onFetch(FetchMoldReports event, Emitter<MoldReportState> emit) async {
@@ -133,6 +147,40 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
       _nextPageToken = null;
       final pageReports = await repository.fetchPage(pageToken: null, sessionCookie: event.sessionCookie);
       _allReports.addAll(pageReports);
+      final hasMore = _nextPageToken != null && _nextPageToken!.isNotEmpty;
+      emit(MoldReportLoaded(reports: _allReports, nextPageToken: _nextPageToken, hasMore: hasMore));
+    } catch (e) {
+      emit(MoldReportError(e.toString()));
+    }
+  }
+
+  Future<void> _onSearch(SearchMoldReports event, Emitter<MoldReportState> emit) async {
+    try {
+      emit(MoldReportLoading());
+      _allReports.clear();
+      _nextPageToken = null;
+
+      // Normalize status filter to lowercase
+      String? normalizedStatus = event.statusFilter;
+      if (normalizedStatus != null) {
+        if (normalizedStatus.toLowerCase() == 'all') {
+          normalizedStatus = null; // No filter for "All"
+        } else {
+          // Convert "In Progress" -> "in progress", etc.
+          normalizedStatus = normalizedStatus.toLowerCase().replaceAll(' ', ' ');
+        }
+      }
+
+      final searchResults = await repository.searchReports(
+        search: event.searchQuery,
+        status: normalizedStatus,
+        pageToken: null,
+        sessionCookie: event.sessionCookie,
+      );
+
+      _allReports.addAll(searchResults);
+      _nextPageToken = searchResults.length >= pageSize ? null : null;
+
       final hasMore = _nextPageToken != null && _nextPageToken!.isNotEmpty;
       emit(MoldReportLoaded(reports: _allReports, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
