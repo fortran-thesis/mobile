@@ -15,7 +15,6 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
-import '../pages/auth/onboarding.dart';
 import '../pages/auth/welcome.dart';
 import '../pages/farmer/report/add_follow_up.dart';
 import '../pages/farmer/report/submit_report.dart';

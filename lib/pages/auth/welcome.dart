@@ -5,6 +5,17 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+/// ===============================
+/// WELCOME / ONBOARDING SCREEN
+/// ===============================
+///
+/// Displays a multi-page onboarding flow for Moldify.
+/// Uses PageView for swipe navigation and shows:
+/// 1. Welcome screen
+/// 2. Feature explanation
+/// 3. Expert validation overview
+///
+
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -16,7 +27,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Data-driven page model
+  /// -------------------------------
+  /// ONBOARDING PAGE DATA
+  /// -------------------------------
+  /// This makes the onboarding UI easy to update
   final List<OnboardingPageData> _pages = [
     OnboardingPageData(
       type: PageType.welcome,
@@ -42,18 +56,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     ),
   ];
 
+  /// Dispose controller to avoid memory leaks
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
   }
 
+  /// Updates the active page index when swiping
   void _onPageChanged(int page) {
     setState(() {
       _currentPage = page;
     });
   }
 
+  /// Navigates to the next onboarding page
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -63,6 +80,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  /// Skips onboarding and marks it as seen in the app
   void _skip() async {
     final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
     await authProvider.markIntroAsSeen();
@@ -71,6 +89,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  /// Completes onboarding on the last page
   void _finish() async {
     final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
     await authProvider.markIntroAsSeen();
@@ -87,7 +106,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       body: Stack(
         children: [
-          // PageView with all pages
+          /// -------------------------------
+          /// PAGE VIEW (MAIN CONTENT)
+          /// -------------------------------
           PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
@@ -100,6 +121,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             },
           ),
 
+          /// -------------------------------
+          /// SKIP BUTTON (TOP RIGHT)
+          /// -------------------------------
           Positioned(
             top: 30,
             right: 5,
@@ -117,6 +141,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ),
 
+          /// -------------------------------
+          /// APP TITLE (TOP CENTER)
+          /// -------------------------------
           Positioned(
             top: 45,
             left: 0,
@@ -135,7 +162,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ),
 
-          // Bottom controls - Positioned DIRECTLY in Stack
+          /// -------------------------------
+          /// BOTTOM CONTROLS
+          /// (Indicators + Next Button)
+          /// -------------------------------
           Positioned(
             bottom: 40,
             left: _currentPage == 0 ? 30 : 15,
@@ -172,6 +202,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
+  /// ===============================
+  /// WELCOME PAGE LAYOUT
+  /// ===============================
   Widget _buildWelcomePage(OnboardingPageData page, double screenHeight) {
     return Stack(
       children: [
@@ -245,6 +278,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
+  /// ===============================
+  /// STANDARD ONBOARDING PAGE
+  /// ===============================
   Widget _buildStandardPage(OnboardingPageData page) {
     return Padding(
       padding: const EdgeInsets.only(top: 60),
@@ -307,6 +343,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
+  /// ===============================
+  /// PAGE INDICATOR DOT
+  /// ===============================
   Widget _buildIndicator(int index) {
     final isActive = _currentPage == index;
 
@@ -330,7 +369,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 }
 
-// Data model
+/// ===============================
+/// PAGE TYPE ENUM
+/// ===============================
 enum PageType { welcome, standard }
 
 class OnboardingPageData {
@@ -353,7 +394,9 @@ class OnboardingPageData {
   });
 }
 
-// Custom clipper
+/// ===============================
+/// CUSTOM CLIPPER FOR HALF CIRCLE SHAPE
+/// ===============================
 class CurvedTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
