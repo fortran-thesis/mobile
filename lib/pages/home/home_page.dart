@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget{
 }
 class _HomeScreenState extends State<HomeScreen> {
   int _unReadNotifications = 2;
-  late UserBloc _userBloc;
+  // late UserBloc _userBloc;
   StreamSubscription? _userSub;
   String fullName = 'Guest User';
   String role = '';
@@ -51,32 +51,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _userBloc = UserBloc(userService: UserService());
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      final sessionCookie = authProvider.cookie;
-      _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
-      _loadDashboardData(sessionCookie);
-    });
-    _userSub = _userBloc.stream.listen((state) {
-      if (state is UserProfileLoaded) {
-        final profile = state.profile;
-        setState(() {
-          final first = profile.firstName.trim();
-          final last = profile.lastName.trim();
-
-          if (first.isEmpty && last.isEmpty) {
-            final user = profile.username.trim();
-            fullName = user.isNotEmpty ? user : 'Guest User';
-          } else {
-            fullName = ('$first $last').trim();
-          }
-
-          role = profile.role.isNotEmpty
-              ? profile.role[0].toUpperCase() + profile.role.substring(1)
-              : profile.role;
-        });
-      }
+      final authProvider = context.read<AppAuthProvider>();
+      context.read<UserBloc>().add(
+        FetchUserProfile(sessionCookie: authProvider.cookie),
+      );
     });
   }
 
@@ -152,12 +132,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _userSub?.cancel();
-    _userBloc.close();
-    super.dispose();
-  }
+
+
+  // @override
+  // void dispose() {
+  //   _userSub?.cancel();
+  //   // _userBloc.close();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -197,11 +179,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = 30.0; // same as page padding
-    // Choose tile width so it fits visually — tweak 0.85 if you want narrower tiles
     final tileWidth = (screenWidth - (horizontalPadding * 2)) * 0.95;
 
 
-    return Material(
+    return BlocListener<UserBloc, UserState>(
+        listener: (context, state) async {
+          if (state is UserProfileLoaded) {
+            final profile = state.profile;
+            final authProvider = context.read<AppAuthProvider>();
+
+            setState(() {
+              final first = profile.firstName.trim();
+              final last = profile.lastName.trim();
+
+              fullName = ('$first $last').trim().isEmpty
+                  ? profile.username
+                  : ('$first $last').trim();
+
+              role = profile.role.isNotEmpty
+                  ? '${profile.role[0].toUpperCase()}${profile.role.substring(1).toLowerCase()}'
+                  : '';
+            });
+
+            await _loadDashboardData(authProvider.cookie);
+          }
+        },
+        child: Material(
       child: Stack(
         children: [
           SafeArea(
@@ -644,6 +647,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    )
     );
   }
 }
