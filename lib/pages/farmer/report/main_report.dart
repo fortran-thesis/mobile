@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,8 @@ class _MainReportScreenState extends State<MainReportScreen> {
   // Search and filter state
   String? _activeStatusFilter; // null for "All", or status string
   bool _isSearching = false;
+  Timer? _searchDebounce;
+  String _lastQuery = '';
   
   bool _isFetchingMore = false;
 
@@ -68,6 +71,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController.dispose();
     _bloc.close();
     super.dispose();
@@ -183,23 +187,35 @@ class _MainReportScreenState extends State<MainReportScreen> {
                       ValueListenableBuilder<TextEditingValue>(
                         valueListenable: searchController,
                         builder: (context, value, child) {
-                          Future.delayed(const Duration(milliseconds: 500), () {
-                            if (mounted && searchController.text.isNotEmpty) {
+                          if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
+                          
+                          _searchDebounce = Timer(const Duration(milliseconds: 800), () {
+                            if (!mounted) return;
+
+                            final query = searchController.text;
+                            // Prevent redundant loads if text hasn't strictly changed
+                            if (query == _lastQuery) return;
+                            _lastQuery = query;
+
+                            if (query.isNotEmpty) {
                               setState(() {
                                 _isSearching = true;
                                 _activeStatusFilter = null;
                               });
                               final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                               _bloc.add(SearchMoldReports(
-                                searchQuery: searchController.text,
+                                searchQuery: query,
                                 statusFilter: null,
                                 sessionCookie: authProvider.cookie,
                               ));
-                            } else if (mounted && searchController.text.isEmpty && _isSearching) {
-                              setState(() => _isSearching = false);
-                              // Refresh to all reports
-                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                              _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                            } else if (query.isEmpty) {
+                              // Only load "all" if we were searching previously (avoids auto-load on filter change)
+                              if (_isSearching) {
+                                setState(() => _isSearching = false);
+                                // Refresh to all reports
+                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                              }
                             }
                           });
                           return const SizedBox.shrink();
