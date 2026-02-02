@@ -8,6 +8,8 @@ import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
+import 'package:moldify/pages/support/privacy_policy.dart';
+import 'package:moldify/pages/support/terms_of_agreement.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +17,6 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../main.dart';
 import 'package:moldify/pages/auth/set_new_password.dart';
 
-import '../pages/auth/onboarding.dart';
 import '../pages/auth/welcome.dart';
 import '../pages/farmer/report/add_follow_up.dart';
 import '../pages/farmer/report/submit_report.dart';
@@ -43,8 +44,6 @@ class AppRoutes {
             return const SplashScreen();
           case RouteNames.welcome:
             return const WelcomeScreen();
-          case RouteNames.onboarding:
-            return const OnboardingScreen();
           case RouteNames.login:
             if (isAuthenticated) {
               return MainPage();
@@ -189,6 +188,10 @@ class AppRoutes {
               return AddFollowUpScreen();
               case RouteNames.inputCharacteristics:
                 return InputCharacteristicsScreen();
+          case RouteNames.terms:
+            return TermsOfAgreementScreen();
+          case RouteNames.privacy:
+            return PrivacyPolicyScreen();
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

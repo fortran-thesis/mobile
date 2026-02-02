@@ -23,7 +23,8 @@ class RouteNames {
   static const String inputCharacteristics = '/input-characteristics';
   static const String splash = '/splash';
   static const String welcome = '/welcome';
-  static const String onboarding = '/onboarding';
+  static const String terms = '/terms-of-agreement';
+  static const String privacy = '/privacy-policy';
   /// for farmers
   static const String submitReport = '/submit-report';
   static const String viewReport = '/view-report';
