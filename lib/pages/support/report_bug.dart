@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/textboxes/textboxes.dart';
 
 class ReportBugScreen extends StatefulWidget {
@@ -223,7 +224,24 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 50.0),
                         child: BuildButton(
-                          onPressed: _submitReport,
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return BuildConfirmationDialog(
+                                  title: 'Are you sure you want to submit your bug report?',
+                                  subtitle: 'Once submitted, your bug report cannot be changed.',
+                                  confirmText: 'Save',
+                                  cancelText: 'Cancel',
+                                  onCancel: () => Navigator.of(context).pop(),
+                                  onConfirm: () {
+                                    Navigator.of(context).pop();
+                                    _submitReport();
+                                  },
+                                );
+                              },
+                            );
+                          },
                           buttonText: 'Submit Report',
                           backgroundColor: MoldifyColors.primaryColor,
                           textColor: MoldifyColors.backgroundColor,

@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/textboxes/textboxes.dart';
 
 /// This screen allows users to send feedback about the app.
@@ -34,7 +35,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
 
     if (feedbackController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please describe the bug')),
+        const SnackBar(content: Text('Please describe the feedback')),
       );
       return;
     }
@@ -241,7 +242,24 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0),
                         child: BuildButton(
-                            onPressed: _submitReport,
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return BuildConfirmationDialog(
+                                    title: 'Are you sure you want to submit your feedback?',
+                                    subtitle: 'Once submitted, your feedback cannot be changed.',
+                                    confirmText: 'Save',
+                                    cancelText: 'Cancel',
+                                    onCancel: () => Navigator.of(context).pop(),
+                                    onConfirm: () {
+                                      Navigator.of(context).pop();
+                                      _submitReport();
+                                    },
+                                  );
+                                },
+                              );
+                            },
                             buttonText: 'Submit Feedback',
                             backgroundColor: MoldifyColors.primaryColor,
                             textColor: MoldifyColors.backgroundColor,
