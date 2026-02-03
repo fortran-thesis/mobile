@@ -41,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _userSub;
   String fullName = 'Guest User';
   String role = '';
-  
+
   // Dashboard data
   Map<String, dynamic> _reportCounts = {};
   List<MoldCase> _assignedCases = [];
@@ -62,74 +62,257 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _loadDashboardData(String? sessionCookie) async {
-    if (sessionCookie == null) return;
+  Future<void> _loadDashboardData(String? sessionCookie, String userRole) async {
+    print('🔵 _loadDashboardData called with role: $userRole');
+    print('🔵 Session cookie: ${sessionCookie?.substring(0, 20)}...');
+
+    if (sessionCookie == null) {
+      print('🔴 Session cookie is null, returning early');
+      return;
+    }
+
+    print('🔵 Starting dashboard data load...');
 
     try {
       final reportService = MoldReportService();
       final caseService = MoldCaseService();
 
+      print('🔵 Services initialized');
+
       if (mounted) {
         setState(() => _isLoadingDashboard = true);
+        print('🔵 Set loading state to true');
       }
 
-      // Fetch report counts
-      final countsResponse = await reportService.getReportCounts(sessionCookie: sessionCookie);
+      // Fetch report counts - different logic for different roles
+      Map<String, dynamic> reportCounts = {};
+      print('🔵 About to fetch report counts...');
+
+      try {
+        if (userRole.toLowerCase() == 'mycologist') {
+          // Mycologists use the dedicated counts endpoint
+          final countsResponse = await reportService.getReportCounts(sessionCookie: sessionCookie);
+          print('✅ Mycologist report counts received: $countsResponse');
+          reportCounts = countsResponse['data'] ?? {};
+        } else if (userRole.toLowerCase() == 'farmer') {
+          // Farmers need to fetch their own reports and count them manually
+          print('🔵 Fetching farmer reports to count by status...');
+          final userReportsResponse = await reportService.fetchMoldReports(
+            sessionCookie: sessionCookie,
+            path: '/user',
+            limit: 1000, // Fetch enough to get all reports (adjust if needed)
+          );
+
+          print('✅ Farmer reports received: $userReportsResponse');
+
+          // Extract the reports list
+          final List<dynamic> reports = userReportsResponse['data'] ?? [];
+          print('🔵 Total farmer reports: ${reports.length}');
+
+          // Count by status
+          int pending = 0;
+          int inProgress = 0;
+          int resolved = 0;
+          int rejected = 0;
+
+          for (var report in reports) {
+            final status = (report['status'] as String?)?.toLowerCase() ?? '';
+            print('Report status: $status');
+
+            if (status == 'pending') {
+              pending++;
+            } else if (status == 'in_progress' || status == 'in progress') {
+              inProgress++;
+            } else if (status == 'resolved') {
+              resolved++;
+            } else if (status == 'rejected') {
+              rejected++;
+            }
+          }
+
+          reportCounts = {
+            'pending': pending,
+            'in_progress': inProgress,
+            'resolved': resolved,
+            'rejected': rejected,
+          };
+
+          print('✅ Counted farmer reports by status: $reportCounts');
+        }
+
+        print('Final report counts: $reportCounts');
+      } catch (e, stackTrace) {
+        print('❌ Failed to fetch report counts: $e');
+        print('Stack trace: $stackTrace');
+      }
+
+      print('🔵 About to check role for mycologist-specific data...');
 
       // Fetch assigned cases (if mycologist)
       List<MoldCase> assignedCases = [];
       Map<String, String> caseStatusMap = {};
-      if (role.toLowerCase() == 'mycologist') {
-        final casesResponse = await caseService.fetchAssignedMycologists(
-          sessionCookie: sessionCookie,
-          limit: 3,
-        );
-        // Parse cases into MoldCase objects
-        if (casesResponse['data'] is List) {
-          assignedCases = (casesResponse['data'] as List)
-              .map((c) => MoldCase.fromJson(c as Map<String, dynamic>))
-              .toList();
+      if (userRole.toLowerCase() == 'mycologist') {
+        print('🔵 User is mycologist, fetching assigned cases...');
+        try {
+          final casesResponse = await caseService.fetchAssignedMycologists(
+            sessionCookie: sessionCookie,
+            limit: 3,
+          );
 
-          // Fetch report status for each case
-          for (final case_ in assignedCases) {
-            if (!mounted) return;
-            try {
-              final reportResponse = await reportService.getMoldReportById(
-                case_.moldReportId,
-                sessionCookie: sessionCookie,
-              );
-              final status = reportResponse['data']?['status'] as String? ?? 'unknown';
-              caseStatusMap[case_.id] = status;
-            } catch (e) {
-              // Fallback if report fetch fails
-              caseStatusMap[case_.id] = 'unknown';
+          if (casesResponse['data'] is List) {
+            assignedCases = (casesResponse['data'] as List)
+                .map((c) => MoldCase.fromJson(c as Map<String, dynamic>))
+                .toList();
+
+            for (final case_ in assignedCases) {
+              if (!mounted) return;
+              try {
+                final reportResponse = await reportService.getMoldReportById(
+                  case_.moldReportId,
+                  sessionCookie: sessionCookie,
+                );
+                final status = reportResponse['data']?['status'] as String? ?? 'unknown';
+                caseStatusMap[case_.id] = status;
+              } catch (e) {
+                print('Failed to fetch report for case ${case_.id}: $e');
+                caseStatusMap[case_.id] = 'unknown';
+              }
             }
           }
+        } catch (e, stackTrace) {
+          print('❌ Failed to fetch assigned cases: $e');
+          print('Stack trace: $stackTrace');
         }
+      } else if (userRole.toLowerCase() == 'farmer') {
+        // Farmers need to fetch their own reports and count them manually
+        print('🔵 Fetching farmer reports to count by status...');
+        final userReportsResponse = await reportService.fetchMoldReports(
+          sessionCookie: sessionCookie,
+          path: '/user',
+          limit: 1000, // Fetch enough to get all reports (adjust if needed)
+        );
+
+        print('✅ Farmer reports response received:');
+        print('Full response: $userReportsResponse');
+        print('Response type: ${userReportsResponse.runtimeType}');
+        print('Data field: ${userReportsResponse['data']}');
+        print('Data type: ${userReportsResponse['data'].runtimeType}');
+
+        // The response might be paginated with structure like:
+        // {data: {snapshot: [...], nextPageToken: ...}}
+        // OR {data: [...]}
+        // Let's handle both cases
+
+        List<dynamic> reports = [];
+
+        if (userReportsResponse['data'] is List) {
+          // Case 1: data is directly a list
+          reports = userReportsResponse['data'] as List<dynamic>;
+        } else if (userReportsResponse['data'] is Map) {
+          // Case 2: data is a map containing a 'snapshot' or similar field
+          final dataMap = userReportsResponse['data'] as Map<String, dynamic>;
+          print('Data map keys: ${dataMap.keys}');
+
+          // Try common field names
+          if (dataMap.containsKey('snapshot')) {
+            reports = dataMap['snapshot'] as List<dynamic>? ?? [];
+          } else if (dataMap.containsKey('reports')) {
+            reports = dataMap['reports'] as List<dynamic>? ?? [];
+          } else if (dataMap.containsKey('items')) {
+            reports = dataMap['items'] as List<dynamic>? ?? [];
+          } else {
+            print('⚠️ Unknown data structure, data map: $dataMap');
+          }
+        }
+
+        print('🔵 Total farmer reports: ${reports.length}');
+
+        // Count by status
+        int pending = 0;
+        int inProgress = 0;
+        int resolved = 0;
+        int rejected = 0;
+
+        for (var report in reports) {
+          if (report is! Map) continue;
+
+          final status = (report['status'] as String?)?.toLowerCase()?.trim() ?? '';
+          print('Report ID: ${report['id']}, Status: "$status"');
+
+          if (status == 'pending') {
+            pending++;
+          } else if (status == 'in_progress' || status == 'in progress' || status == 'inprogress') {
+            inProgress++;
+          } else if (status == 'resolved') {
+            resolved++;
+          } else if (status == 'rejected') {
+            rejected++;
+          } else if (status.isNotEmpty) {
+            print('⚠️ Unknown status: "$status"');
+          }
+        }
+
+        reportCounts = {
+          'pending': pending,
+          'in_progress': inProgress,
+          'resolved': resolved,
+          'rejected': rejected,
+        };
+
+        print('✅ Counted farmer reports by status:');
+        print('  Pending: $pending');
+        print('  In Progress: $inProgress');
+        print('  Resolved: $resolved');
+        print('  Rejected: $rejected');
       }
 
-      // Fetch moldipedia articles for WikiMold section
-      final wikiService = WikiService();
-      final result = await wikiService.fetchMoldipedia(sessionCookie: sessionCookie);
+      // Fetch moldipedia articles
+      print('🔵 About to fetch WikiMold articles...');
+      List<WikiArticle> formattedArticles = [];
+      try {
+        final wikiService = WikiService();
+        final result = await wikiService.fetchMoldipedia(sessionCookie: sessionCookie);
+        print('✅ WikiMold response received: ${result.toString()}');
 
-// NO need to map again; result['articles'] is already List<WikiArticle>
-      final List<WikiArticle> formattedArticles = result['articles'] as List<WikiArticle>? ?? [];
+        formattedArticles = result['articles'] as List<WikiArticle>? ?? [];
 
+        print('✅ Loaded ${formattedArticles.length} WikiMold articles');
+        for (var a in formattedArticles) {
+          print('Article: ${a.title} by ${a.authorId}');
+        }
+      } catch (e, stackTrace) {
+        print('❌ Failed to fetch WikiMold articles: $e');
+        print('Stack trace: $stackTrace');
+      }
+
+      print('🔵 About to update state with fetched data...');
+
+      // Update state with all fetched data
       if (mounted) {
         setState(() {
+          _reportCounts = reportCounts;
+          _assignedCases = assignedCases;
+          _caseStatusMap = caseStatusMap;
           _moldipediaArticles = formattedArticles;
         });
-      }
-      print('Loaded ${_moldipediaArticles.length} WikiMold articles');
-      for (var a in _moldipediaArticles) {
-        print('Article: ${a.title} by ${a.authorId}');
+        print('✅ State updated successfully');
+        print('Final _reportCounts: $_reportCounts');
+      } else {
+        print('⚠️ Widget not mounted, skipping state update');
       }
 
-    } catch (e) {
-      print('Dashboard load error: $e');
-      _dashboardError = 'Failed to load dashboard';
+    } catch (e, stackTrace) {
+      print('❌ Dashboard load error: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _dashboardError = 'Failed to load dashboard';
+        });
+      }
     } finally {
+      print('🔵 Finally block - setting loading to false');
       if (mounted) setState(() => _isLoadingDashboard = false);
+      print('✅ Dashboard load complete');
     }
   }
 
@@ -202,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : '';
             });
 
-            await _loadDashboardData(authProvider.cookie);
+            await _loadDashboardData(authProvider.cookie, profile.role);
           }
         },
         child: Material(
