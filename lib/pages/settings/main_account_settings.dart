@@ -177,12 +177,20 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           leftIcon: FontAwesomeIcons.userPen,
                           rightIcon: FontAwesomeIcons.angleRight,
                           title: 'Edit Profile',
-                          onTap: () {
-                            Navigator.of(context).push(
+                          onTap: () async {
+                            // CHANGE: Wait for result and refresh if updated
+                            final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => const EditProfileScreen(),
                               ),
                             );
+
+                            // If profile was updated, refresh this page
+                            if (result == true && mounted) {
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              final sessionCookie = authProvider.cookie;
+                              _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+                            }
                           },
                         ),
 

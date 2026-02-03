@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:provider/provider.dart';
@@ -23,8 +24,13 @@ void main() async {
   await authProvider.loadCookie();  // <-- WAIT here!
 
   runApp(
-    ChangeNotifierProvider.value(
-      value: authProvider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: authProvider),
+        BlocProvider(
+          create: (_) => UserBloc(userService: UserService()),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -111,7 +117,24 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<UserBloc, UserState>(
+        listener: (context, state) {
+          if (state is UserProfileLoaded) {
+            final role = state.profile.role.toLowerCase();
+            final isExpert = !(role == 'farmer' || role == 'user');
+
+            if (isExpert != _isExpert) {
+              setState(() {
+                _isExpert = isExpert;
+                _pages = isExpert
+                    ? [const HomeScreen(), const MainMonitorScreen()]
+                    : [const HomeScreen(), const MainReportScreen()];
+                selectedPosition = 0;
+              });
+            }
+          }
+        },
+        child: Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
       drawer: selectedPosition == 0 ? const AppDrawer() : null,
@@ -138,6 +161,7 @@ class _MainPageState extends State<MainPage> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomNavigationBar(),
+    )
     );
   }
 

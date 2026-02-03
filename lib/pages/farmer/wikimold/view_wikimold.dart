@@ -3,169 +3,125 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/images/circle_avatar.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
+import 'package:provider/provider.dart';
+import '../../../core/features/wikimold/models/wikimold.dart';
+import '../../../core/features/wikimold/services/wikimold_services.dart';
+import '../../../providers/auth_provider.dart';
 import '../../misc/colors.dart';
 import '../../misc/images/cover_image.dart';
 
 
 class ViewWikiMoldScreen extends StatefulWidget {
-  final String articleTitle;
-  final String articleAuthor;
-  final String articleImageUrl;
+  final String articleId;
 
-  const ViewWikiMoldScreen({super.key,
-    required this.articleTitle,
-    required this.articleAuthor,
-    required this.articleImageUrl,
-  });
+  const ViewWikiMoldScreen({super.key, required this.articleId});
 
   @override
   State<ViewWikiMoldScreen> createState() => _ViewWikiMoldScreenState();
 }
 
-
 class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
-  String datePublished = 'June 1, 2024';
-  String articleContent = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-      'Ut et massa mi. Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla,'
-      ' mattis ligula consectetur, ultrices mauris. Maecenas vitae mattis tellus. Nullam quis '
-      'imperdiet augue. Vestibulum auctor ornare leo, non suscipit magna interdum eu. Curabitur '
-      'pellentesque nibh nibh, at maximus ante fermentum sit amet. Pellentesque commodo lacus at '
-      'sodales sodales. Quisque sagittis orci ut diam condimentum, vel euismod erat placerat. '
-      'In iaculis arcu eros, eget tempus orci facilisis id.Lorem ipsum dolor sit amet, consectetur '
-      'adipiscing elit. Ut et massa mi. Aliquam in hendrerit urna. Pellentesque sit amet sapien '
-      'fringilla, mattis ligula consectetur, ultrices mauris. Maecenas vitae mattis tellus. '
-      'Nullam quis imperdiet augue. Vestibulum auctor ornare leo, non suscipit magna interdum eu. '
-      'Curabitur pellentesque nibh nibh, at maximus ante fermentum sit amet. Pellentesque commodo lacus at '
-      'sodales sodales. Quisque sagittis orci ut diam condimentum, vel euismod erat placerat. In iaculis arcu eros, '
-      'eget tempus orci facilisis id. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et massa mi. '
-      'Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla, mattis ligula consectetur, ultrices'
-      ' mauris. Maecenas vitae mattis tellus. Nullam quis imperdiet augue. Vestibulum auctor ornare leo, non s'
-      'uscipit magna interdum eu. Curabitur pellentesque nibh nibh, at maximus ante fermentum sit amet. Pellentesque commodo ';
+  final WikiService _wikiService = WikiService();
+  WikiArticle? _article;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadArticle();
+  }
+
+  Future<void> _loadArticle() async {
+    setState(() => _isLoading = true);
+    try {
+      final authProvider =
+      Provider.of<AppAuthProvider>(context, listen: false);
+      final cookie = authProvider.cookie;
+
+      if (cookie == null) {
+        setState(() {
+          _error = 'Authentication error. Please log in again.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final article = await _wikiService.fetchWikiArticleById(
+        articleId: widget.articleId,
+        sessionCookie: cookie,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _article = article;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        body: Center(child: Text(_error!)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(
-        title: 'View WikiMold',
-        rightIcon: Icon(
-          Icons.report,
-        ),
-        onRightIconPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ReportACuratorScreen(),
-            ),
-          );
-        },
-        rightIconColor: MoldifyColors.MoldifyRed,
-      ),
+      appBar: PrimaryAppBar(title: _article!.title),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 30.0),
-          child: Stack(
+          padding: const EdgeInsets.all(15.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 1. Article Image
-              BuildCoverImage(
-                imageUrl: widget.articleImageUrl,
-                borderRadiusContainer: 8,
-                borderRadiusImage: 8,
-                isHeader: true,
-              ),
-
-              /// 2. Article Information and Content
-              Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: MoldifyColors.backgroundColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.articleTitle,
-                          style: TextStyle(
-                            fontFamily: 'Montserrat-Black',
-                            fontSize: 20,
-                            color: MoldifyColors.primaryColor,
-                            height: 1.2,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-
-                          /// Author and Date Published
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-
-                              /// Author's Profile Image and Author Name
-                              Row(
-                                children: [
-                                  CircleAvatarImage(
-                                    radius: 15.0,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'By ${widget.articleAuthor}',
-                                    style: TextStyle(
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      fontSize: 14,
-                                      color: MoldifyColors.primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              /// End of Author's Profile Image and Author Name
-
-                              /// Date Published
-                              Row(
-                                children: [
-                                  Icon (
-                                    FontAwesomeIcons.solidCalendar,
-                                    size: 12,
-                                    color: MoldifyColors.accentColor,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    datePublished ?? 'Unknown Date',
-                                    style: TextStyle(
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      fontSize: 14,
-                                      color: MoldifyColors.primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          /// End of Author and Date Published
-                        ),
-
-                        /// Article Content
-                        Text(
-                          articleContent,
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 16,
-                            color: MoldifyColors.MoldifyBlack,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.justify,
-                        ),
-                      ],
-                    ),
-                  ),
+              if (_article!.coverPhoto != null)
+                BuildCoverImage(
+                  imageUrl: _article!.coverPhoto!,
+                  borderRadiusContainer: 8,
+                  borderRadiusImage: 8,
+                  isHeader: true,
                 ),
+              const SizedBox(height: 20),
+              Text(
+                _article!.title,
+                style: const TextStyle(
+                  fontFamily: 'Montserrat-Black',
+                  fontSize: 24,
+                  color: MoldifyColors.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'By ${_article!.authorId}',
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _article!.body,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.justify,
               ),
             ],
           ),

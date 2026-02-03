@@ -5,6 +5,8 @@ import 'package:moldify/pages/misc/buttons/radio_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 
+import '../../core/features/userReport/models/report_model.dart';
+import '../../core/features/userReport/services/report_services.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 
@@ -75,10 +77,10 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                 title: 'Are you sure you want to go back?',
                 subtitle: 'Going back now will lose all your progress.',
                 onConfirm: () {
-                  Navigator.of(context).pop(true); //Return true to allow pop
+                  Navigator.of(context).pop(true);
                 },
                 onCancel: () {
-                  Navigator.of(context).pop(false); //Return false to prevent pop
+                  Navigator.of(context).pop(false);
                 },
                 cancelText: 'No',
                 confirmText: 'Yes, Go Back',
@@ -258,9 +260,57 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                           return BuildConfirmationDialog(
                             title: 'Are you sure you want to submit this report?',
                             subtitle: 'This will alert our team to review the curator\'s content.',
-                            onConfirm: () {
-                              Navigator.of(context).pop();
-                              Navigator.of(context).pop();
+                            onConfirm:  () async {
+                              Navigator.of(context).pop(); // Close confirmation dialog
+
+                              try {
+                                // Assume you have current user ID and reported curator ID
+                                final reporterId = 'CURRENT_USER_ID';
+                                final reportedUserId = 'CURATOR_USER_ID';
+
+                                // Map selectedRadio to reason string
+                                const reasonMap = [
+                                  'Misleading or Unverified Information',
+                                  'Offensive or Inappropriate Language',
+                                  'Intellectual Property Violation',
+                                  'Graphic or Violent Content',
+                                  'Sexual or Harassing Content',
+                                  'Regulated or Restricted Content',
+                                  'Something Else',
+                                ];
+
+                                final report = UserReport(
+                                  reporterId: reporterId,
+                                  reportedUserId: reportedUserId,
+                                  reason: reasonMap[selectedRadio],
+                                  details: detailsController.text,
+                                );
+
+                                final service = UserReportService();
+                                await service.createReport(
+                                  report: report,
+                                  sessionCookie: 'YOUR_SESSION_COOKIE_HERE',
+                                );
+
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Report submitted successfully.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                Navigator.of(context).pop(); // Go back after submission
+
+                              } catch (e) {
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to submit report: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             onCancel: (){
                               Navigator.of(context).pop();

@@ -86,26 +86,19 @@ class _WikiMoldTileState extends State<WikiMoldTile> {
                   height: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return Image.network(
+                    return Image.asset(
                       defaultImageUrl,
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.transparent,
-                          child: const Center(
-                            child: Icon(Icons.broken_image,
-                                color: MoldifyColors.primaryColor),
-                          ),
-                        );
-                      },
                     );
                   },
                 )
                     : Image.asset(
-                    'assets/images/Branding2.png',
-                    fit: BoxFit.cover
+                  defaultImageUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),

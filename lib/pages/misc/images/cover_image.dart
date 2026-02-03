@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../misc/colors.dart';
 
 class BuildCoverImage extends StatelessWidget {
   final String? imageUrl;
@@ -16,39 +17,39 @@ class BuildCoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasImage = imageUrl != null && imageUrl!.isNotEmpty;
+    // Check if imageUrl is valid
+    final bool hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+    const String fallbackAsset = 'assets/images/Branding2.png';
 
     return Container(
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadiusContainer),
-        color: hasImage ? null : Colors.grey.shade300,
+        color: Colors.grey.shade300,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadiusImage),
         child: hasImage
             ? Image.network(
-          imageUrl!,
+          imageUrl!.trim(),
           width: double.infinity,
           height: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
-            return _fallbackWidget();
+            // If the network image fails, fallback to asset
+            return Image.asset(
+              fallbackAsset,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+            );
           },
         )
-            : _fallbackWidget(),
-      ),
-    );
-  }
-
-  Widget _fallbackWidget() {
-    return Container(
-      color: Colors.grey.shade300,
-      child: Center(
-        child: Icon(
-          isHeader ? Icons.photo : Icons.add_a_photo,
-          size: 50,
-          color: Colors.grey.shade700,
+            : Image.asset(
+          fallbackAsset,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
         ),
       ),
     );

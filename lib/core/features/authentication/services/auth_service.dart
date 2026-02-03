@@ -221,4 +221,27 @@ class AuthService {
       'error': error,
     };
   }
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String? sessionCookie,
+  }) async {
+    final response = await _apiService.post(
+      '/change-password',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      },
+      sessionCookie: sessionCookie,
+    );
+
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+    return {
+      'success': jsonResponse['success'] ?? false,
+      'data': jsonResponse['data'],
+      'error': jsonResponse['error'],
+    };
+  }
 }

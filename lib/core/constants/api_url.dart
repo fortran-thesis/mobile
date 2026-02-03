@@ -7,4 +7,8 @@ class ApiUrl {
   static final String user = '$baseUrl/api/v1/user';
   static final String moldReport = '$baseUrl/api/v1/mold-report';
   static final String moldCase = '$baseUrl/api/v1/mold-case';
+
+  static final String moldipedia = '$baseUrl/api/v1/moldipedia';
+  static final String userReport = '$baseUrl/api/v1/reports';
+  static final String sysReq = '$baseUrl/api/v1/system-request';
 }
