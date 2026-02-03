@@ -1,13 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/constants/route_names.dart';
+import '../../core/features/systemRequest/service/system_request_service.dart';
+import '../../core/features/user/logic/user_bloc.dart';
+import '../../core/utils/route_utils.dart';
+import '../../providers/auth_provider.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
-
-/// ReportBugScreen is a screen that allows users to report bugs in the application.
 
 class ReportBugScreen extends StatefulWidget {
   const ReportBugScreen({Key? key}) : super(key: key);
@@ -18,6 +22,106 @@ class ReportBugScreen extends StatefulWidget {
 
 class _ReportBugScreenState extends State<ReportBugScreen> {
   final TextEditingController reportBugController = TextEditingController();
+  final SystemRequestService _service = SystemRequestService();
+  bool _isLoading = false;
+
+  Future<void> _submitReport() async {
+
+    if (_isLoading) {
+      return;
+    }
+
+    if (reportBugController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please describe the bug')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Get session cookie
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+
+      if (sessionCookie == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Not authenticated')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Get userId from UserBloc
+      final userState = context.read<UserBloc>().state;
+
+      String? userId;
+      if (userState is UserProfileLoaded) {
+        userId = userState.profile.id;
+      } else {
+      }
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not loaded yet')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Call the service
+      final response = await _service.submitRequest(
+        sessionCookie: sessionCookie,
+        type: 'bug',
+        userId: userId,
+        message: reportBugController.text.trim(),
+      );
+
+      if (response.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bug report submitted successfully!'),
+              backgroundColor: MoldifyColors.primaryColor,
+            ),
+          );
+          reportBugController.clear();
+          Navigator.pop(context);
+        }
+      } else {
+        print('Failed. Error: ${response.error}');
+        // Show the actual error from the API
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.error ?? 'Failed to submit report'),
+              backgroundColor: MoldifyColors.MoldifyRed,
+            ),
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      // This catches actual exceptions (network errors, parsing errors, etc.)
+      print('Exception caught: $e');
+      print('Stack trace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Network error: ${e.toString()}'),
+            backgroundColor: MoldifyColors.MoldifyRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -27,51 +131,44 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
         title: 'Report A Bug',
         color: MoldifyColors.primaryColor,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// -------- Report Bug Header Image --------
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: SvgPicture.asset(
-                'assets/images/bug_phone_curve.svg',
-                width: MediaQuery.of(context).size.width,
-                fit: BoxFit.cover,
-              ),
-            ),
-            /// -------- End of Report Bug Header Image --------
-            Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 20.0),
-                    /// -------- Report Bug Header --------
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                          'SUBMIT BUG REPORT',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontFamily: 'Montserrat-Black',
-                            color: MoldifyColors.primaryColor,
-                          )
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: SvgPicture.asset(
+                    'assets/images/bug_phone_curve.svg',
+                    width: MediaQuery.of(context).size.width,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 0.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20.0),
+                      const Text(
+                        'SUBMIT BUG REPORT',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontFamily: 'Montserrat-Black',
+                          color: MoldifyColors.primaryColor,
+                        ),
                       ),
-                    ),
-                    Text(
+                      const Text(
                         'Encountering app issues or errors? Report them now!',
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'Bricolage-Grotesque-Regular',
                           color: MoldifyColors.MoldifyBlack,
-                        )
-                    ),
-                    /// -------- End of Report Bug Header --------
-
-                    /// Feedback Label
-                    Padding(
-                      padding: const EdgeInsets.only(top: 40.0),
-                      child: const Text(
+                        ),
+                      ),
+                      const SizedBox(height: 40.0),
+                      const Text(
                         'Describe what happened, and what you expected instead.',
                         style: TextStyle(
                           fontSize: 16,
@@ -79,26 +176,20 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                           color: MoldifyColors.primaryColor,
                         ),
                       ),
-                    ),
-
-                    /// Feedback TextBox
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                      child: BuildTextBox(
-                        hintText: 'Please add your report detail here',
-                        controller: reportBugController,
-                        showPassword: false,
-                        isMultiline: true,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: BuildTextBox(
+                          hintText: 'Please add your report detail here',
+                          controller: reportBugController,
+                          showPassword: false,
+                          isMultiline: true,
+                        ),
                       ),
-                    ),
-
-                    /// Privacy Policy Agreement
-                    Align(
-                      alignment: Alignment.center,
-                      child: Padding(
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child:
-                          Text.rich(
+                          child: Text.rich(
                             TextSpan(
                               style: const TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
@@ -109,48 +200,59 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
                                 const TextSpan(
                                   text: 'Submitting this form indicates your agreement to Moldify’s data processing as stated in our ',
                                 ),
-                                /// Privacy Policy link
                                 TextSpan(
                                   text: 'Privacy Policy',
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
-                                    color: MoldifyColors.accentColor,
+                                    color: MoldifyColors.primaryColor,
                                     decoration: TextDecoration.underline,
                                     decorationThickness: 2,
-                                    decorationColor: MoldifyColors.accentColor,
+                                    decorationColor: MoldifyColors.primaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()..onTap = () {
-                                    // Handle Privacy Policy tap here
+                                    navigateTo(context, RouteNames.privacy);
                                   },
                                 ),
                                 const TextSpan(text: '.'),
                               ],
                             ),
                             textAlign: TextAlign.center,
-                          )
+                          ),
+                        ),
                       ),
-                    ),
-
-                    /// Send Code Button
-                    Padding(
-                      padding: const EdgeInsets.only(top: 50.0),
-                      child: BuildButton(
-                          onPressed: () {
-
-                          },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 50.0),
+                        child: BuildButton(
+                          onPressed: _submitReport,
                           buttonText: 'Submit Report',
                           backgroundColor: MoldifyColors.primaryColor,
                           textColor: MoldifyColors.backgroundColor,
                           buttonHeight: 45,
                           buttonWidth: MediaQuery.of(context).size.width,
-                          buttonRadius: 10
+                          buttonRadius: 10,
+                        ),
                       ),
-                    )
-                  ]
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            Positioned.fill(
+              child: AbsorbPointer(
+                absorbing: true,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: MoldifyColors.backgroundColor,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

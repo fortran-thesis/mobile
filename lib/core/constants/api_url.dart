@@ -10,4 +10,5 @@ class ApiUrl {
 
   static final String moldipedia = '$baseUrl/api/v1/moldipedia';
   static final String userReport = '$baseUrl/api/v1/reports';
+  static final String sysReq = '$baseUrl/api/v1/system-request';
 }
