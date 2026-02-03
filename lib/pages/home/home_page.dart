@@ -16,6 +16,8 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:moldify/pages/misc/tiles/home_banner.dart';
 import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
+import '../../core/features/wikimold/models/wikimold.dart';
+import '../../core/features/wikimold/services/wikimold_services.dart';
 import '../farmer/faq/main_faq.dart';
 import '../farmer/wikimold/view_wikimold.dart';
 import '../misc/images/circle_avatar.dart';
@@ -44,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _reportCounts = {};
   List<MoldCase> _assignedCases = [];
   Map<String, String> _caseStatusMap = {}; // Map caseId -> status from mold report
-  List<Map<String, dynamic>> _moldipediaArticles = [];
+  List<WikiArticle> _moldipediaArticles = [];
   bool _isLoadingDashboard = true;
   String? _dashboardError;
 
@@ -62,18 +64,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadDashboardData(String? sessionCookie) async {
     if (sessionCookie == null) return;
-    
+
     try {
       final reportService = MoldReportService();
       final caseService = MoldCaseService();
-      
+
       if (mounted) {
         setState(() => _isLoadingDashboard = true);
       }
-      
+
       // Fetch report counts
       final countsResponse = await reportService.getReportCounts(sessionCookie: sessionCookie);
-      
+
       // Fetch assigned cases (if mycologist)
       List<MoldCase> assignedCases = [];
       Map<String, String> caseStatusMap = {};
@@ -87,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
           assignedCases = (casesResponse['data'] as List)
               .map((c) => MoldCase.fromJson(c as Map<String, dynamic>))
               .toList();
-          
+
           // Fetch report status for each case
           for (final case_ in assignedCases) {
             if (!mounted) return;
@@ -105,30 +107,29 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
       }
-      
+
       // Fetch moldipedia articles for WikiMold section
-      final articlesResponse = await reportService.getMoldipediaArticles(
-        sessionCookie: sessionCookie,
-        limit: 3,
-      );
-      
+      final wikiService = WikiService();
+      final result = await wikiService.fetchMoldipedia(sessionCookie: sessionCookie);
+
+// NO need to map again; result['articles'] is already List<WikiArticle>
+      final List<WikiArticle> formattedArticles = result['articles'] as List<WikiArticle>? ?? [];
+
       if (mounted) {
         setState(() {
-          _reportCounts = countsResponse['data'] ?? {};
-          _assignedCases = assignedCases;
-          _caseStatusMap = caseStatusMap;
-          _moldipediaArticles = articlesResponse;
-          _isLoadingDashboard = false;
-          _dashboardError = null;
+          _moldipediaArticles = formattedArticles;
         });
       }
+      print('Loaded ${_moldipediaArticles.length} WikiMold articles');
+      for (var a in _moldipediaArticles) {
+        print('Article: ${a.title} by ${a.authorId}');
+      }
+
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingDashboard = false;
-          _dashboardError = 'Failed to load dashboard: $e';
-        });
-      }
+      print('Dashboard load error: $e');
+      _dashboardError = 'Failed to load dashboard';
+    } finally {
+      if (mounted) setState(() => _isLoadingDashboard = false);
     }
   }
 
@@ -493,9 +494,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     iconColor: MoldifyColors.MoldifyRed,
                                     label: 'WikiMold',
                                     onTap: () {
-                                      Navigator.of(context).push(
+                                      Navigator.push(
+                                        context,
                                         MaterialPageRoute(
-                                          builder: (context) => const MainWikiMoldScreen(),
+                                          builder: (context) => MainWikiMoldScreen(
+                                          ),
                                         ),
                                       );
                                     },
@@ -567,64 +570,60 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           )
-                              : ListView.builder(
+                              : ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: EdgeInsets.only(right: horizontalPadding),
-                            itemCount: _moldipediaArticles.length > 2 ? 3 : _moldipediaArticles.length,
+                            itemCount: _moldipediaArticles.length > 2
+                                ? 3
+                                : _moldipediaArticles.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 15),
                             itemBuilder: (context, index) {
+                              // If there are more than 2 articles and this is the last tile, show "See All" button
                               if (index == 2 && _moldipediaArticles.length > 2) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12.0),
-                                  child: Center(
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.chevron_right_rounded,
-                                        size: 32,
-                                        color: MoldifyColors.primaryColor,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => const MainWikiMoldScreen(),
-                                          ),
-                                        );
-                                      },
+                                return Center(
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 32,
+                                      color: MoldifyColors.primaryColor,
                                     ),
-                                  ),
-                                );
-                              }
-
-                              // Regular article tile from API data
-                              final article = _moldipediaArticles[index];
-                              final title = article['title'] as String? ?? 'Untitled';
-                              final authorId = article['author_id'] as String? ?? 'Unknown Author';
-                              final coverPhoto = article['cover_photo'] as String?;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 15.0),
-                                child: SizedBox(
-                                  width: tileWidth,
-                                  child: WikiMoldTile(
-                                    title: title,
-                                    authorName: authorId,
-                                    imageUrl: coverPhoto,
-                                    onTap: () {
-                                      Navigator.of(context).push(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
                                         MaterialPageRoute(
-                                          builder: (context) => ViewWikiMoldScreen(
-                                            articleAuthor: authorId,
-                                            articleTitle: title,
-                                            articleImageUrl: coverPhoto ?? 'assets/images/Branding2.png',
-                                          ),
+                                          builder: (context) => const MainWikiMoldScreen(),
                                         ),
                                       );
                                     },
                                   ),
-                                ),
+                                );
+                              }
+
+                              final article = _moldipediaArticles[index];
+                              final title = article.title;
+                              final authorId = article.authorId;
+                              final coverPhoto = article.coverPhoto;
+                              final articleId = article.id;
+
+                              return SizedBox(
+                                width: tileWidth,
+                                child: WikiMoldTile(
+                                  title: title,
+                                  authorName: authorId,
+                                  imageUrl: coverPhoto,
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ViewWikiMoldScreen(articleId: articleId),
+                                      ),
+                                    );
+                                  },
+                                )
+
                               );
                             },
                           ),
                         ),
-
                       ] else ...[
                         SizedBox(height: 20.0),
                         Center(
