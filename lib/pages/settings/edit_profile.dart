@@ -109,6 +109,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final username = usernameController.text.trim();
       final firstName = fnameController.text.trim();
       final lastName = lnameController.text.trim();
+      final address = addressController.text.trim();
+      final phoneNumber = phoneNumController.text.trim();
 
       // Auto-generate displayName from firstName + lastName
       final displayName = '$firstName $lastName'.trim();
@@ -121,12 +123,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final result = await UserService().editProfile(
         sessionCookie: sessionCookie,
-        username: username, // Send username
-        firstName: firstName,
-        lastName: lastName,
-        displayName: displayName, // Send displayName (auto-generated)
-        address: _isExpert ? null : addressController.text.trim(),
-        phoneNumber: _isExpert ? null : phoneNumController.text.trim(),
+        username: username == _initialProfile?.username ? null : username,
+        firstName: firstName == _initialProfile?.firstName ? null : firstName,
+        lastName: lastName == _initialProfile?.lastName ? null : lastName,
+        displayName:
+            (firstName == _initialProfile?.firstName && lastName == _initialProfile?.lastName)
+                ? null
+                : displayName,
+        address: _isExpert ? null : (address == _initialProfile?.address ? null : address),
+        phoneNumber:
+            _isExpert ? null : (phoneNumber == _initialProfile?.phoneNumber ? null : phoneNumber),
         photoFile: _selectedPhoto,
       );
 

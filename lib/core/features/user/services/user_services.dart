@@ -98,7 +98,7 @@ class UserService {
 
       // 1. Ensure the Cookie header is correctly formatted
       if (sessionCookie != null && sessionCookie.isNotEmpty) {
-        request.headers['cookie'] = sessionCookie;
+        request.headers['cookie'] = 'session=$sessionCookie';
       }
 
       // 2. Add other necessary headers

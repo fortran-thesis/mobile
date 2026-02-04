@@ -2,7 +2,7 @@ class WikiArticle {
   final String id;
   final String title;
   final String body;
-  final String authorId;
+  final String author;
   final String? coverPhoto;
   final List<String> tags;
 
@@ -10,7 +10,7 @@ class WikiArticle {
     required this.id,
     required this.title,
     required this.body,
-    required this.authorId,
+    required this.author,
     this.coverPhoto,
     required this.tags,
   });
@@ -20,7 +20,7 @@ class WikiArticle {
       id: json['id'],
       title: json['title'],
       body: json['body'],
-      authorId: json['author_id'],
+      author: json['author'] ?? 'Unknown',
       coverPhoto: json['cover_photo'],
       tags: List<String>.from(json['tags'] ?? []),
     );

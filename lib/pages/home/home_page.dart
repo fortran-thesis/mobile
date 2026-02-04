@@ -274,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         print('Loaded ${formattedArticles.length} WikiMold articles');
         for (var a in formattedArticles) {
-          print('Article: ${a.title} by ${a.authorId}');
+          print('Article: ${a.title} by ${a.author}');
         }
       } catch (e, stackTrace) {
         print('Failed to fetch WikiMold articles: $e');
@@ -780,7 +780,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                               final article = _moldipediaArticles[index];
                               final title = article.title;
-                              final authorId = article.authorId;
+                              final author = article.author;
                               final coverPhoto = article.coverPhoto;
                               final articleId = article.id;
 
@@ -788,7 +788,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: tileWidth,
                                 child: WikiMoldTile(
                                   title: title,
-                                  authorName: authorId,
+                                  authorName: author,
                                   imageUrl: coverPhoto,
                                   onTap: () {
                                     Navigator.of(context).push(

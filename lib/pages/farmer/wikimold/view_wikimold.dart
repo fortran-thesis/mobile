@@ -107,7 +107,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'By ${_article!.authorId}',
+                'By ${_article!.author}',
                 style: const TextStyle(
                   fontFamily: 'Bricolage-Grotesque-Regular',
                   fontSize: 14,

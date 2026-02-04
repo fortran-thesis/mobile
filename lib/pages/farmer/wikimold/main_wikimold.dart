@@ -204,15 +204,12 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                 }
 
                 final article = _filteredArticles[index];
-                final authorDisplay = article.authorId.length > 8
-                    ? '${article.authorId.substring(0, 8)}...'
-                    : article.authorId;
-
+                
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 15.0),
                   child: WikiMoldTile(
                     title: article.title,
-                    authorName: 'Author: $authorDisplay',
+                    authorName: 'Author: ${article.author}',
                     imageUrl: article.coverPhoto,
                       onTap: () {
                         if(article.id.length >= 22) {
