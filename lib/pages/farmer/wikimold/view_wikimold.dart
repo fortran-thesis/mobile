@@ -47,10 +47,12 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         return;
       }
 
+      print('📖 Fetching article with ID: ${widget.articleId}');
       final article = await _wikiService.fetchWikiArticleById(
         articleId: widget.articleId,
         sessionCookie: cookie,
       );
+      print('✅ Article loaded successfully: ${article.title}');
 
       if (!mounted) return;
       setState(() {
@@ -58,6 +60,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      print('❌ Error loading article: $e');
       if (!mounted) return;
       setState(() {
         _error = e.toString();

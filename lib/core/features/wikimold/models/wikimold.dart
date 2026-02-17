@@ -17,9 +17,9 @@ class WikiArticle {
 
   factory WikiArticle.fromJson(Map<String, dynamic> json) {
     return WikiArticle(
-      id: json['id'],
-      title: json['title'],
-      body: json['body'],
+      id: json['id'] ?? '',
+      title: json['title'] ?? 'Untitled',
+      body: json['body'] ?? '',
       author: json['author'] ?? 'Unknown',
       coverPhoto: json['cover_photo'],
       tags: List<String>.from(json['tags'] ?? []),

@@ -40,7 +40,7 @@ class SystemRequestService {
         body: jsonEncode({
           'type': type,
           'message': message,
-          'userId': userId,
+          'user_id': userId,
         }),
       );
 

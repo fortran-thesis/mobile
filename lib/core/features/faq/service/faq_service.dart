@@ -21,7 +21,7 @@ class FAQService {
       };
 
       final response = await _apiService.get(
-        '/faq',
+        '/api/v1/faq',
         queryParams: queryParams,
         sessionCookie: sessionCookie,
       );
@@ -52,7 +52,7 @@ class FAQService {
   }) async {
     try {
       final response = await _apiService.get(
-        '/faq/$id',
+        '/api/v1/faq/$id',
         sessionCookie: sessionCookie,
       );
 
@@ -89,7 +89,7 @@ class FAQService {
       };
 
       final response = await _apiService.post(
-        '/faq',
+        '/api/v1/faq',
         body: body,
         sessionCookie: sessionCookie,
       );
@@ -132,7 +132,7 @@ class FAQService {
       }
 
       final response = await _apiService.patch(
-        '/faq/$id',
+        '/api/v1/faq/$id',
         body: body,
         sessionCookie: sessionCookie,
       );
@@ -164,7 +164,7 @@ class FAQService {
   }) async {
     try {
       final response = await _apiService.delete(
-        '/faq/soft/$id',
+        '/api/v1/faq/soft/$id',
         sessionCookie: sessionCookie,
       );
 
@@ -190,7 +190,7 @@ class FAQService {
   }) async {
     try {
       final response = await _apiService.delete(
-        '/faq/hard/$id',
+        '/api/v1/faq/hard/$id',
         sessionCookie: sessionCookie,
       );
 

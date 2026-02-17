@@ -212,7 +212,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                     authorName: 'Author: ${article.author}',
                     imageUrl: article.coverPhoto,
                       onTap: () {
-                        if(article.id.length >= 22) {
+                        if(article.id.isNotEmpty) {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => ViewWikiMoldScreen(articleId: article.id),
