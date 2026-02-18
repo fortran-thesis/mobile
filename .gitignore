@@ -46,3 +46,5 @@ app.*.map.json
 
 /android/app/src/main/res/xml
 /android/app/google-services.json
+/android/app/keystore.properties
+/android/app/moldify_prod.keystore

@@ -20,7 +20,20 @@ dependencies {
     // https://firebase.google.com/docs/android/setup#available-libraries
 }
 
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    
     namespace = "com.fortranthesis.moldify"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "29.0.13846066"
