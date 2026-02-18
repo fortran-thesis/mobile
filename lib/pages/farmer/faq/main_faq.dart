@@ -44,7 +44,7 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
 
       final response = await _faqService.getAllFAQ(
         sessionCookie: sessionCookie,
-        pageSize: 100,
+        limit: 100,
       );
 
       if (mounted) {

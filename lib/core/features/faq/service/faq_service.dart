@@ -8,15 +8,16 @@ class FAQService {
   /// Get all FAQs with pagination
   /// 
   /// Pass [sessionCookie] for authenticated requests.
-  /// [pageSize] defaults to 10, [pageToken] is for pagination.
+  /// [limit] defaults to 10, [pageToken] is for pagination.
+  /// Use the new [limit] parameter instead of [pageSize].
   Future<Map<String, dynamic>> getAllFAQ({
     String? sessionCookie,
-    int pageSize = 10,
+    int limit = 10,
     String? pageToken,
   }) async {
     try {
       final queryParams = {
-        'pageSize': pageSize.toString(),
+        'limit': limit.toString(),
         if (pageToken != null) 'pageToken': pageToken,
       };
 
@@ -39,6 +40,47 @@ class FAQService {
       throw Exception('Failed to fetch FAQs: ${response.statusCode}');
     } catch (e) {
       print('FAQService.getAllFAQ: error=$e');
+      rethrow;
+    }
+  }
+
+  /// Search FAQs with optional query filter
+  /// 
+  /// [search] - search query for question/answer
+  /// [limit] defaults to 10
+  /// [pageToken] - for pagination
+  Future<Map<String, dynamic>> searchFAQ({
+    String? search,
+    int limit = 10,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      queryParams['limit'] = limit.toString();
+      if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
+
+      final response = await _apiService.get(
+        '/api/v1/faq',
+        queryParams: queryParams,
+        sessionCookie: sessionCookie,
+      );
+
+      print('FAQService.searchFAQ: status=${response.statusCode}');
+      print('FAQService.searchFAQ: search=$search');
+      print('FAQService.searchFAQ: body=${response.body}');
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        if (json['success'] == true) {
+          return json['data'] as Map<String, dynamic>;
+        }
+        throw Exception('Failed to search FAQs: ${json['error']}');
+      }
+      throw Exception('Failed to search FAQs: ${response.statusCode}');
+    } catch (e) {
+      print('FAQService.searchFAQ: error=$e');
       rethrow;
     }
   }

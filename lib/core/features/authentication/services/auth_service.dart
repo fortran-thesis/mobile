@@ -47,45 +47,56 @@ class AuthService {
     final endpoint = '/login/oauth?device=mobile';
     print('🔵 loginOAuth: Making request to $endpoint');
     
-    final response = await _apiService.post(
-      endpoint,
-      headers: {'Content-Type': 'application/json'},
-      body: {
-        'token': token,
-      },
-    );
+    try {
+      final response = await _apiService.post(
+        endpoint,
+        headers: {'Content-Type': 'application/json'},
+        body: {
+          'token': token,
+        },
+      );
 
-    print('🔵 loginOAuth: Response URL = ${response.request?.url}');
-    print('🔵 loginOAuth: Response status = ${response.statusCode}');
+      print('🔵 loginOAuth: Response URL = ${response.request?.url}');
+      print('🔵 loginOAuth: Response status = ${response.statusCode}');
+      print('🔵 loginOAuth: Response body = ${response.body}');
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
-    final bool success = jsonResponse['success'] ?? false;
-    final dynamic data = jsonResponse['data'];
-    final dynamic error = jsonResponse['error'];
-    final String? setCookie = response.headers['set-cookie'];
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      final bool success = jsonResponse['success'] ?? false;
+      final dynamic data = jsonResponse['data'];
+      final dynamic error = jsonResponse['error'];
+      final String? setCookie = response.headers['set-cookie'];
 
-    print('success: $success');
-    print('data: $data');
-    print('error: $error');
-    print('setCookie: $setCookie');
+      print('success: $success');
+      print('data: $data');
+      print('error: $error');
+      print('setCookie: $setCookie');
 
-    String? sessionCookie;
-    if (setCookie != null) {
-      final cookies = setCookie.split(',');
-      for (final cookie in cookies) {
-        if (cookie.trim().startsWith('session=')) {
-          sessionCookie = cookie.trim().split(';').first;
-          break;
+      String? sessionCookie;
+      if (setCookie != null) {
+        final cookies = setCookie.split(',');
+        for (final cookie in cookies) {
+          if (cookie.trim().startsWith('session=')) {
+            sessionCookie = cookie.trim().split(';').first;
+            break;
+          }
         }
       }
-    }
 
-    return {
-      'success': success,
-      'data': data,
-      'error': error,
-      'cookie': sessionCookie,
-    };
+      return {
+        'success': success,
+        'data': data,
+        'error': error,
+        'sessionValue': sessionCookie,
+      };
+    } catch (e) {
+      print('❌ loginOAuth: Exception occurred: $e');
+      return {
+        'success': false,
+        'data': null,
+        'error': 'Failed to connect to server: $e',
+        'sessionValue': null,
+      };
+    }
   }
 
   Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber) async {

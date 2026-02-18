@@ -109,6 +109,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  /// Validates password meets all requirements
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must contain at least one number';
+    }
+    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(password)) {
+      return 'Password must contain at least one special character';
+    }
+    return null; // Password is valid
+  }
+
   Future<void> _handleUserSignUp() async {
     setState(() {
       _passwordErrorText = null;
@@ -121,7 +141,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    setState(() => isLoading = true);
     // Client-side validation
     if (usernameController.text.isEmpty ||
         emailController.text.isEmpty ||
@@ -132,14 +151,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
         phoneNumController.text.isEmpty ||
         addressController.text.isEmpty) {
       _showErrorSnackBar('All fields are required.');
-      setState(() => isLoading = false); // Stop loading indicator
       return;
     }
+
     if (passwordController.text != confirmPasswordController.text) {
       _showErrorSnackBar('Passwords do not match.');
-      setState(() => isLoading = false); // Stop loading indicator
       return;
     }
+
+    // Validate password meets all requirements BEFORE sending to server
+    final passwordValidationError = _validatePassword(passwordController.text);
+    if (passwordValidationError != null) {
+      setState(() {
+        _passwordErrorText =
+            'Password must contain the following:\n'
+            '\u2022 At least 8 characters\n'
+            '\u2022 At least one lowercase letter\n'
+            '\u2022 At least one uppercase letter\n'
+            '\u2022 At least one number\n'
+            '\u2022 At least one special character';
+      });
+      return;
+    }
+
+    setState(() => isLoading = true);
 
     final result = await _loginBloc.registerUser(
       usernameController.text,
@@ -161,17 +196,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else {
       final error = result['error'];
       if (error != null) {
-        if (error.toLowerCase().contains('password')) {
-          setState(() {
-            _passwordErrorText =
-            'Password must contain the following:\n'
-                '\u2022 At least 8 characters\n'
-                '\u2022 At least one number\n'
-                '\u2022 At least one special character';
-          });
-        } else {
-          _showErrorSnackBar(error);
-        }
+        _showErrorSnackBar(error);
       }
     }
   }
