@@ -475,7 +475,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   fontSize: 16,
                                   fontFamily: 'Bricolage-Grotesque-Regular',
                                 ),
-                                maxLines: 1,
+                                maxLines: 10,
                                 minFontSize: 12,
                               ),
                             ),
