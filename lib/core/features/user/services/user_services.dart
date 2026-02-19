@@ -52,20 +52,24 @@ class UserService {
 
 
       if (photoFile == null) {
-        final Map<String, dynamic> body = {};
+        final Map<String, dynamic> details = {};
 
         if (firstName != null && firstName.isNotEmpty)
-          body['firstName'] = firstName;
+          details['firstName'] = firstName;
         if (lastName != null && lastName.isNotEmpty)
-          body['lastName'] = lastName;
+          details['lastName'] = lastName;
         if (username != null && username.isNotEmpty)
-          body['username'] = username;
+          details['username'] = username;
         if (displayName != null && displayName.isNotEmpty)
-          body['displayName'] = displayName;
+          details['displayName'] = displayName;
         if (address != null && address.isNotEmpty)
-          body['address'] = address;
+          details['address'] = address;
         if (phoneNumber != null && phoneNumber.isNotEmpty)
-          body['phoneNumber'] = phoneNumber;
+          details['phoneNumber'] = phoneNumber;
+
+        final body = {
+          'details': details,
+        };
 
         print('Request body: $body');
 
