@@ -76,7 +76,8 @@ class AuthService {
         final cookies = setCookie.split(',');
         for (final cookie in cookies) {
           if (cookie.trim().startsWith('session=')) {
-            sessionCookie = cookie.trim().split(';').first;
+            // Extract just the JWT value (after 'session='), removing any semicolons
+            sessionCookie = cookie.trim().split(';').first.split('=').last;
             break;
           }
         }

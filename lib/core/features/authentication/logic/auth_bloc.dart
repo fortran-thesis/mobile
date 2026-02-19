@@ -38,11 +38,7 @@ class AuthBloc {
         'sessionValue': null,
       };
     }
-    final cookieString = result['cookie'];
-    String? sessionValue;
-    if (cookieString != null) {
-      sessionValue = cookieString.split(';').first.split('=').last;
-    }
+    final sessionValue = result['sessionValue'];
     return {
       'success': true,
       'error': null,
