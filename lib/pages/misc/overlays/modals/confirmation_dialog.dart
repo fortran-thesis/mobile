@@ -29,127 +29,130 @@ class BuildConfirmationDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.0),
       ),
       contentPadding: EdgeInsets.all(0.0),
-      content: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: 500),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/moldify-logo-v2.png',
-                      width: 25,
-                      height: 25,
-                    ),
-                    SizedBox(width: 10),
-                    AutoSizeText(
-                      'MOLDIFY',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Montserrat-Bold',
-                        color: MoldifyColors.accentColor,
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/moldify-logo-v2.png',
+                        width: 25,
+                        height: 25,
                       ),
-                      maxLines: 1,
-                      minFontSize: 10,
-                    )
-                  ],
+                      SizedBox(width: 10),
+                      AutoSizeText(
+                        'MOLDIFY',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Montserrat-Bold',
+                          color: MoldifyColors.accentColor,
+                        ),
+                        maxLines: 1,
+                        minFontSize: 10,
+                      )
+                    ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: AutoSizeText(
-                    title,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: AutoSizeText(
+                      title,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 20,
+                        color: MoldifyColors.primaryColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      minFontSize: 14
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
+                  child: AutoSizeText(
+                    subtitle,
                     style: TextStyle(
-                      fontFamily: 'Montserrat-Black',
-                      fontSize: 20,
-                      color: MoldifyColors.primaryColor,
+                      fontSize: 16,
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      color: MoldifyColors.MoldifyBlack
                     ),
                     textAlign: TextAlign.center,
-                    maxLines: 2,
-                    minFontSize: 14
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-                child: AutoSizeText(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    color: MoldifyColors.MoldifyBlack
+                    maxLines: 3,
+                    minFontSize: 10,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  minFontSize: 10,
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Divider(
-                  color: MoldifyColors.MoldifySoftGrey,
-                  height: 1,
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: onCancel,
-                      style: TextButton.styleFrom(
-                        foregroundColor: MoldifyColors.MoldifyBlack,
-                        padding: EdgeInsets.symmetric(vertical: 15.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        cancelText,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          color: MoldifyColors.MoldifyBlack,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 50,
+                Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Divider(
                     color: MoldifyColors.MoldifySoftGrey,
+                    height: 1,
                   ),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: onConfirm,
-                      style: TextButton.styleFrom(
-                        foregroundColor: MoldifyColors.primaryColor,
-                        padding: EdgeInsets.symmetric(vertical: 15.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(10.0),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: onCancel,
+                        style: TextButton.styleFrom(
+                          foregroundColor: MoldifyColors.MoldifyBlack,
+                          padding: EdgeInsets.symmetric(vertical: 15.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          cancelText,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Bricolage-Grotesque-Regular',
+                            color: MoldifyColors.MoldifyBlack,
                           ),
                         ),
                       ),
-                      child: Text(
-                        confirmText,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: 'Bricolage-Grotesque-Bold',
-                          color: MoldifyColors.primaryColor,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 50,
+                      color: MoldifyColors.MoldifySoftGrey,
+                    ),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: onConfirm,
+                        style: TextButton.styleFrom(
+                          foregroundColor: MoldifyColors.primaryColor,
+                          padding: EdgeInsets.symmetric(vertical: 15.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(10.0),
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          confirmText,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Bricolage-Grotesque-Bold',
+                            color: MoldifyColors.primaryColor,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
