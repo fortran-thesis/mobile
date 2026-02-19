@@ -57,9 +57,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AppAuthProvider>();
-      context.read<UserBloc>().add(
-        FetchUserProfile(sessionCookie: authProvider.cookie),
-      );
+      final userBloc = context.read<UserBloc>();
+      
+      // Check if profile already loaded in the bloc
+      final state = userBloc.state;
+      if (state is UserProfileLoaded) {
+        _populateControllers(state.profile);
+      } else {
+        // Fetch profile if not already loaded
+        userBloc.add(
+          FetchUserProfile(sessionCookie: authProvider.cookie),
+        );
+      }
+    });
+  }
+
+  void _populateControllers(UserProfile profile) {
+    final role = profile.role.toLowerCase();
+    final isExpert = !(role == 'farmer' || role == 'user');
+
+    setState(() {
+      _isExpert = isExpert;
+      _profileImageUrl = profile.photoUrl;
+      _initialProfile = profile;
+
+      usernameController.text = profile.username;
+      fnameController.text = profile.firstName;
+      lnameController.text = profile.lastName;
+      emailController.text = profile.email;
+
+      if (!isExpert) {
+        phoneNumController.text = profile.phoneNumber;
+        addressController.text = profile.address;
+      }
+
+      _isLoading = false;
     });
   }
 
@@ -206,27 +238,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return BlocListener<UserBloc, UserState>(
         listener: (context, state) {
           if (state is UserProfileLoaded) {
-            final profile = state.profile;
-            _initialProfile = profile;
-            final role = profile.role.toLowerCase();
-            final isExpert = !(role == 'farmer' || role == 'user');
-
-            setState(() {
-              _isExpert = isExpert;
-              _profileImageUrl = profile.photoUrl;
-
-              usernameController.text = profile.username;
-              fnameController.text = profile.firstName;
-              lnameController.text = profile.lastName;
-              emailController.text = profile.email;
-
-              if (!isExpert) {
-                phoneNumController.text = profile.phoneNumber;
-                addressController.text = profile.address;
-              }
-
-              _isLoading = false;
-            });
+            _populateControllers(state.profile);
           }
         },
         child: Scaffold(

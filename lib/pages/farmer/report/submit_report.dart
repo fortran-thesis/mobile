@@ -324,6 +324,88 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   child: BuildButton(
                     onPressed: () async {
                       if (_isSubmitting) return;
+
+                      // Validate required fields
+                      if (_caseNameController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Case name is required',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor,
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (_cropNameController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Crop name is required',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor,
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (_addressController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Location is required',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor,
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (_dateFirstObservedController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Date first observed is required',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor,
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (_probDescController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Problem description is required',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.backgroundColor,
+                              ),
+                            ),
+                            backgroundColor: MoldifyColors.primaryColor,
+                          ),
+                        );
+                        return;
+                      }
+
                       final shouldSubmit = await showDialog<bool>(
                         context: context,
                         barrierDismissible: false,
