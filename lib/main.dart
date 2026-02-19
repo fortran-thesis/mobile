@@ -90,20 +90,29 @@ class _MainPageState extends State<MainPage> {
     });
 
     _userSub = _userBloc.stream.listen((state) {
+      print('🔵 UserBloc state: $state');
       if (state is UserProfileLoaded) {
         final role = state.profile.role.toLowerCase();
         final isExpert = !(role == 'farmer' || role == 'user');
+        print('🔵 User role from profile: ${state.profile.role} (lowercase: $role)');
+        print('🔵 Is expert: $isExpert, Current _isExpert: $_isExpert');
         if (isExpert != _isExpert) {
           setState(() {
             _isExpert = isExpert;
             if (_isExpert) {
               _pages = [const HomeScreen(), const MainMonitorScreen()];
+              print('🔵 Pages set to EXPERT mode (Home + Monitor)');
             } else {
               _pages = [const HomeScreen(), const MainReportScreen()];
+              print('🔵 Pages set to FARMER mode (Home + Report)');
             }
             if (selectedPosition >= _pages.length) selectedPosition = 0;
           });
+        } else {
+          print('🔵 isExpert did not change, no setState called');
         }
+      } else {
+        print('🔵 UserBloc state is not UserProfileLoaded: ${state.runtimeType}');
       }
     });
   }
@@ -178,6 +187,7 @@ class _MainPageState extends State<MainPage> {
         notchMargin: 5.0,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.max,
           children: _isExpert
               ? [
                   _tabItem(
