@@ -45,6 +45,33 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
 
+    // Validate password complexity (must match server PasswordSchema)
+    if (newPassword.length < 8) {
+      _showSnackBar('Password must be at least 8 characters long');
+      setState(() => _isLoading = false);
+      return;
+    }
+    if (!RegExp(r'[a-z]').hasMatch(newPassword)) {
+      _showSnackBar('Password must contain at least one lowercase letter');
+      setState(() => _isLoading = false);
+      return;
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(newPassword)) {
+      _showSnackBar('Password must contain at least one uppercase letter');
+      setState(() => _isLoading = false);
+      return;
+    }
+    if (!RegExp(r'[0-9]').hasMatch(newPassword)) {
+      _showSnackBar('Password must contain at least one number');
+      setState(() => _isLoading = false);
+      return;
+    }
+    if (!RegExp(r'[^a-zA-Z0-9]').hasMatch(newPassword)) {
+      _showSnackBar('Password must contain at least one special character');
+      setState(() => _isLoading = false);
+      return;
+    }
+
     try {
       final authProvider = context.read<AppAuthProvider>();
       final sessionCookie = authProvider.cookie;
