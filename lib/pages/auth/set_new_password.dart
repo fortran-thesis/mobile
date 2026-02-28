@@ -45,6 +45,37 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       );
       return;
     }
+    // Validate password complexity (must match server PasswordSchema)
+    if (newPassword.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password must be at least 8 characters long'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
+    if (!RegExp(r'[a-z]').hasMatch(newPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password must contain at least one lowercase letter'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(newPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password must contain at least one uppercase letter'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
+    if (!RegExp(r'[0-9]').hasMatch(newPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password must contain at least one number'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
+    if (!RegExp(r'[^a-zA-Z0-9]').hasMatch(newPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password must contain at least one special character'), backgroundColor: Colors.red,)
+      );
+      return;
+    }
     final result = await _authBloc.verifiedForgotPassword(widget.token, newPassword);
     if (!result['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
