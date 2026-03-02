@@ -9,8 +9,6 @@ class ApiService {
   Future<http.Response> get(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
-      // Only replace query parameters if new ones are provided
-      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
       final url = queryParams != null && queryParams.isNotEmpty
           ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
           : uri;
@@ -18,8 +16,13 @@ class ApiService {
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
       }
-      return await http.get(url, headers: allHeaders);
+      print('🌐 [GET] $url');
+      final response = await http.get(url, headers: allHeaders);
+      print('✅ [GET] ${response.statusCode} $url');
+      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
+      return response;
     } catch (e) {
+      print('❌ [GET] $baseUrl$endpoint → $e');
       throw Exception('GET request failed: $e');
     }
   }
@@ -27,8 +30,6 @@ class ApiService {
   Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
-      // Only replace query parameters if new ones are provided
-      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
       final url = queryParams != null && queryParams.isNotEmpty
           ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
           : uri;
@@ -36,8 +37,14 @@ class ApiService {
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
       }
-      return await http.post(url, headers: allHeaders, body: json.encode(body));
+      print('🌐 [POST] $url');
+      print('   body: ${json.encode(body)}');
+      final response = await http.post(url, headers: allHeaders, body: json.encode(body));
+      print('✅ [POST] ${response.statusCode} $url');
+      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
+      return response;
     } catch (e) {
+      print('❌ [POST] $baseUrl$endpoint → $e');
       throw Exception('POST request failed: $e');
     }
   }
@@ -45,8 +52,6 @@ class ApiService {
   Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
-      // Only replace query parameters if new ones are provided
-      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
       final url = queryParams != null && queryParams.isNotEmpty
           ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
           : uri;
@@ -55,15 +60,14 @@ class ApiService {
         allHeaders['Cookie'] = 'session=$sessionCookie';
       }
       final encodedBody = json.encode(body);
-      print('ApiService.patch: endpoint=$endpoint');
-      print('ApiService.patch: url=$url');
-      print('ApiService.patch: headers=$allHeaders');
-      print('ApiService.patch: body=$encodedBody');
+      print('🌐 [PATCH] $url');
+      print('   body: $encodedBody');
       final response = await http.patch(url, headers: allHeaders, body: encodedBody);
-      print('ApiService.patch: response status=${response.statusCode}');
-      print('ApiService.patch: response body=${response.body}');
+      print('✅ [PATCH] ${response.statusCode} $url');
+      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
       return response;
     } catch (e) {
+      print('❌ [PATCH] $baseUrl$endpoint → $e');
       throw Exception('PATCH request failed: $e');
     }
   }
@@ -71,8 +75,6 @@ class ApiService {
   Future<http.Response> delete(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
-      // Only replace query parameters if new ones are provided
-      // This preserves any query params already in the endpoint string (e.g., ?device=mobile)
       final url = queryParams != null && queryParams.isNotEmpty
           ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
           : uri;
@@ -80,8 +82,12 @@ class ApiService {
       if (sessionCookie != null) {
         allHeaders['Cookie'] = 'session=$sessionCookie';
       }
-      return await http.delete(url, headers: allHeaders);
+      print('🌐 [DELETE] $url');
+      final response = await http.delete(url, headers: allHeaders);
+      print('✅ [DELETE] ${response.statusCode} $url');
+      return response;
     } catch (e) {
+      print('❌ [DELETE] $baseUrl$endpoint → $e');
       throw Exception('DELETE request failed: $e');
     }
   }

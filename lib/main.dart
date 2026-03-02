@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +18,7 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ApiUrl.logConfig();
   await Firebase.initializeApp();
 
   // Create provider and WAIT for cookie to load
