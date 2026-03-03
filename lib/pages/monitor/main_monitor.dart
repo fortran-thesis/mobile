@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +32,10 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
   bool _isFetchingMore = false;
   final MoldReportService _reportService = MoldReportService();
   String? _activePriorityFilter;
-  bool _isSearching = false;
+  Timer? _searchDebounce;
+  final Map<String, String> _coverPhotoByReportId = {};
+  bool _isLoadingUserReportPhotos = false;
+  bool _hasLoadedUserReportPhotos = false;
 
   @override
   void initState() {
@@ -42,6 +47,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
       _bloc.add(FetchMoldCases(sessionCookie: sessionCookie));
+      _loadUserReportCoverPhotos(sessionCookie);
     });
 
     _scrollController.addListener(() {
@@ -50,6 +56,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
         final max = _scrollController.position.maxScrollExtent;
         final current = _scrollController.position.pixels;
         if (current >= (max - 200)) {
+          if (_hasActiveSearchOrFilter) return;
           if (!_isFetchingMore && state.hasMore && state.nextPageToken != null && state.nextPageToken!.isNotEmpty) {
             _isFetchingMore = true;
             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
@@ -66,30 +73,141 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     searchController.addListener(_onSearchChanged);
   }
 
+  bool get _hasActiveSearchOrFilter {
+    return searchController.text.trim().isNotEmpty || _activePriorityFilter != null;
+  }
+
+  String _normalizePriority(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll('priority', '')
+        .trim();
+  }
+
+  List<MoldCase> _applyClientFilters(List<MoldCase> cases) {
+    final searchText = searchController.text.trim().toLowerCase();
+    return cases.where((moldCase) {
+      final matchesSearch = searchText.isEmpty || moldCase.name.toLowerCase().contains(searchText);
+      final casePriority = _normalizePriority(moldCase.priority);
+      final activePriority = _activePriorityFilter == null ? null : _normalizePriority(_activePriorityFilter!);
+      final matchesPriority = activePriority == null || casePriority == activePriority;
+      return matchesSearch && matchesPriority;
+    }).toList();
+  }
+
+  String? _extractPhotoUrl(dynamic raw) {
+    if (raw is String) {
+      final normalized = raw.trim();
+      if (normalized.isNotEmpty && normalized != 'no_image' && normalized != '[]' && normalized != 'null') {
+        return normalized;
+      }
+      return null;
+    }
+
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is String) {
+          final normalized = item.trim();
+          if (normalized.isNotEmpty && normalized != 'no_image') {
+            return normalized;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String? _extractCoverPhotoFromReport(Map<String, dynamic> payload) {
+    final topLevelPhoto = _extractPhotoUrl(payload['cover_photo']);
+    if (topLevelPhoto != null) return topLevelPhoto;
+
+    final caseDetails = payload['case_details'];
+    if (caseDetails is List) {
+      for (final detail in caseDetails) {
+        if (detail is Map<String, dynamic>) {
+          final photo = _extractPhotoUrl(detail['cover_photo']);
+          if (photo != null) return photo;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _loadUserReportCoverPhotos(String? sessionCookie) async {
+    if (_isLoadingUserReportPhotos || _hasLoadedUserReportPhotos) return;
+
+    _isLoadingUserReportPhotos = true;
+    try {
+      String? pageToken;
+      final localMap = <String, String>{};
+
+      for (var page = 0; page < 10; page++) {
+        final response = await _reportService.fetchMoldReports(
+          sessionCookie: sessionCookie,
+          limit: 50,
+          pageToken: pageToken,
+          path: '/user',
+        );
+
+        final data = response['data'];
+        if (data is! Map<String, dynamic>) break;
+
+        final snapshot = data['snapshot'];
+        if (snapshot is! List) break;
+
+        for (final item in snapshot) {
+          if (item is! Map<String, dynamic>) continue;
+          final reportId = item['id']?.toString().trim() ?? '';
+          if (reportId.isEmpty) continue;
+
+          final coverPhotoUrl = _extractCoverPhotoFromReport(item);
+          if (coverPhotoUrl != null && coverPhotoUrl.isNotEmpty) {
+            localMap[reportId] = coverPhotoUrl;
+          }
+        }
+
+        final nextToken = data['nextPageToken']?.toString();
+        if (nextToken == null || nextToken.isEmpty) {
+          pageToken = null;
+          break;
+        }
+
+        pageToken = nextToken;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _coverPhotoByReportId.addAll(localMap);
+      });
+      _hasLoadedUserReportPhotos = true;
+    } catch (_) {}
+    finally {
+      _isLoadingUserReportPhotos = false;
+    }
+  }
+
+  String? _resolveTileImageUrl(MoldCase moldCase) {
+    final directPhoto = _extractPhotoUrl(moldCase.photoUrl);
+    if (directPhoto != null) return directPhoto;
+    return _coverPhotoByReportId[moldCase.moldReportId.trim()];
+  }
+
+  void _dispatchSearchOrFilter() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   void _onSearchChanged() {
-    final searchText = searchController.text.trim();
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    final sessionCookie = authProvider.cookie;
-
-    if (searchText.isEmpty && !_isSearching) {
-      return;
-    }
-
-    if (searchText.isEmpty) {
-      _isSearching = false;
-      _bloc.add(RefreshMoldCases(sessionCookie: sessionCookie));
-    } else {
-      _isSearching = true;
-      _bloc.add(SearchMoldCases(
-        searchQuery: searchText,
-        priorityFilter: _activePriorityFilter,
-        sessionCookie: sessionCookie,
-      ));
-    }
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _dispatchSearchOrFilter);
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     _scrollController.dispose();
@@ -146,33 +264,17 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                             ),
                             items: ['All', 'Low', 'Medium', 'High'],
                             onItemSelected: (index) {
-                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                              final sessionCookie = authProvider.cookie;
-                              if (index == 0) {
-                                setState(() => _activePriorityFilter = null);
-                                _bloc.add(RefreshMoldCases(sessionCookie: sessionCookie));
-                              } else if (index == 1) {
-                                setState(() => _activePriorityFilter = 'low');
-                                _bloc.add(SearchMoldCases(
-                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
-                                  priorityFilter: 'low',
-                                  sessionCookie: sessionCookie,
-                                ));
+                              String? selectedPriority;
+                              if (index == 1) {
+                                selectedPriority = 'low';
                               } else if (index == 2) {
-                                setState(() => _activePriorityFilter = 'medium');
-                                _bloc.add(SearchMoldCases(
-                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
-                                  priorityFilter: 'medium',
-                                  sessionCookie: sessionCookie,
-                                ));
+                                selectedPriority = 'medium';
                               } else if (index == 3) {
-                                setState(() => _activePriorityFilter = 'high');
-                                _bloc.add(SearchMoldCases(
-                                  searchQuery: searchController.text.isEmpty ? null : searchController.text,
-                                  priorityFilter: 'high',
-                                  sessionCookie: sessionCookie,
-                                ));
+                                selectedPriority = 'high';
                               }
+
+                              setState(() => _activePriorityFilter = selectedPriority);
+                              _dispatchSearchOrFilter();
                             },
                           ),
                         ),
@@ -206,9 +308,11 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               height: MediaQuery.of(context).size.height - 300,
                             );
                           } else if (state is MoldCaseLoaded) {
-                            if (state.cases.isEmpty) {
+                            final filteredCases = _applyClientFilters(state.cases);
+
+                            if (filteredCases.isEmpty) {
                               return EmptyState(
-                                message: 'No cases available.',
+                                message: 'No cases match your current search/filter.',
                                 height: MediaQuery.of(context).size.height - 300,
                               );
                             }
@@ -219,9 +323,9 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                 ListView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: state.cases.length,
+                                  itemCount: filteredCases.length,
                                   itemBuilder: (context, index) {
-                                    final moldCase = state.cases[index];
+                                    final moldCase = filteredCases[index];
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 10.0),
                                       child: MainCaseTile(
@@ -229,6 +333,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                           dateSubmitted: DateFormat('MMMM dd, yyyy').format(moldCase.startDate),
                                           priorityLevel: '${moldCase.priority[0].toUpperCase()}${moldCase.priority.substring(1)} Priority',
                                           caseStatus: 'In Progress',
+                                          imageUrl: _resolveTileImageUrl(moldCase),
                                           onTap: () {
                                             Navigator.pushNamed(
                                               context,

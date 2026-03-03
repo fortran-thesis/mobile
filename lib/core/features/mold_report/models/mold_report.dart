@@ -5,6 +5,7 @@ class MoldReport {
 	final List<MoldReportDetails> caseDetails;
 	final String host;
 	final String caseName;
+	final DateTime? createdAt;
 	final DateTime? dateObserved;
 	final String status;
 	final bool isArchived;
@@ -16,13 +17,13 @@ class MoldReport {
 		required this.caseDetails,
 		required this.host,
 		required this.caseName,
+		this.createdAt,
 		this.dateObserved,
 		required this.status,
 		required this.isArchived,
 	});
 
 	factory MoldReport.fromJson(Map<String, dynamic> json) {
-		print('MoldReport.fromJson: parsing json: $json');
 		
 		// defensive parsing for case_details which may be a List, a Map wrapping a list,
 		// or a single object depending on backend shape
@@ -45,7 +46,6 @@ class MoldReport {
 		}
 
 		final parsedId = json['id']?.toString() ?? json['_id']?.toString() ?? json['report_id']?.toString() ?? '';
-		print('MoldReport.fromJson: parsed id="$parsedId", userId="${json['user_id']}", caseName="${json['case_name']}", host="${json['host']}"');
 
 		return MoldReport(
 			id: parsedId,
@@ -54,6 +54,7 @@ class MoldReport {
 			caseDetails: parsedCaseDetails,
 			host: json['host']?.toString() ?? '',
 			caseName: json['case_name']?.toString() ?? '',
+			createdAt: _parseTimestamp(json['created_at']),
 			dateObserved: _parseDateObserved(json['date_observed']),
 			status: json['status']?.toString() ?? '',
 			isArchived: json['is_archived'] == null
@@ -68,10 +69,8 @@ class MoldReport {
 	/// - ISO8601 string
 	/// - integer milliseconds / seconds
 	/// - Firestore-like map { seconds: ..., nanoseconds: ... } or {_seconds, _nanoseconds}
-	static DateTime? _parseDateObserved(dynamic raw) {
+	static DateTime? _parseTimestamp(dynamic raw) {
 		if (raw == null) return null;
-		// Backend now returns ISO8601 strings for date_observed. Keep parsing
-		// minimal: accept DateTime or ISO string only.
 		if (raw is DateTime) return raw.toUtc();
 		if (raw is String) {
 			try {
@@ -80,7 +79,21 @@ class MoldReport {
 				return null;
 			}
 		}
+		if (raw is int) {
+			final milliseconds = raw > 9999999999 ? raw : raw * 1000;
+			return DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true);
+		}
+		if (raw is Map<String, dynamic>) {
+			final seconds = raw['_seconds'] ?? raw['seconds'];
+			if (seconds is int) {
+				return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+			}
+		}
 		return null;
+	}
+
+	static DateTime? _parseDateObserved(dynamic raw) {
+		return _parseTimestamp(raw);
 	}
 
 	Map<String, dynamic> toJson() {
@@ -91,6 +104,7 @@ class MoldReport {
 			'case_details': caseDetails.map((e) => e.toJson()).toList(),
 			'host': host,
 			'case_name': caseName,
+			'created_at': createdAt?.toUtc().toIso8601String(),
 			'date_observed': dateObserved?.toUtc().toIso8601String(),
 			'status': status,
 			'is_archived': isArchived,
