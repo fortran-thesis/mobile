@@ -16,6 +16,7 @@ import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/repository/notification_repository.dart';
+import 'package:moldify/core/services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,11 @@ void main() async {
   // Create provider and WAIT for cookie to load
   final authProvider = AppAuthProvider();
   await authProvider.loadCookie();  // <-- WAIT here!
+
+  // Initialise FCM (request permission, get token, register with backend)
+  await FCMService.instance.initialise(
+    sessionCookie: authProvider.cookie,
+  );
 
   runApp(
     MultiProvider(
