@@ -23,6 +23,7 @@ import 'package:moldify/core/features/mold_report/service/mold_report_services.d
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/utils/logger.dart';
+import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -49,6 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final authProvider = context.read<AppAuthProvider>();
       context.read<UserBloc>().add(
         FetchUserProfile(sessionCookie: authProvider.cookie),
+      );
+      context.read<NotificationBloc>().add(
+        FetchUnreadCount(sessionCookie: authProvider.cookie),
       );
     });
   }
@@ -315,14 +319,45 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         ),
         const Spacer(),
-        IconButton(
-          onPressed: () {
-            setState(() {});
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const NotificationScreen()),
-            );
-          },
-          icon: const Icon(FontAwesomeIcons.solidBell, color: MoldifyColors.primaryColor, size: 24.0)
+        Stack(
+          children: [
+            IconButton(
+              onPressed: () {
+                setState(() {});
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                );
+              },
+              icon: const Icon(FontAwesomeIcons.solidBell, color: MoldifyColors.primaryColor, size: 24.0)
+            ),
+            BlocBuilder<NotificationBloc, NotificationState>(
+              builder: (context, state) {
+                final count = state is NotificationLoaded ? state.unreadCount : 0;
+                if (count == 0) return const SizedBox.shrink();
+                return Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.MoldifyRed,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontFamily: 'Montserrat-Black',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );

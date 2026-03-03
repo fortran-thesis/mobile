@@ -28,7 +28,7 @@ class CacheConfig {
   // ── Default options (applied globally by the interceptor) ──────────────
   static final CacheOptions defaultOptions = CacheOptions(
     store: store,
-    policy: CachePolicy.request, // network-first, fallback to cache
+    policy: CachePolicy.refreshForceCache, // network-first, fallback to cache
     maxStale: volatileMaxStale,
     hitCacheOnErrorExcept: [401, 403], // serve stale on server errors
   );
@@ -45,7 +45,7 @@ class CacheConfig {
   /// For **volatile / user** data: always try network first but fall back
   /// to cached response when offline or on error.
   static CacheOptions get volatileData => defaultOptions.copyWith(
-        policy: CachePolicy.request,
+        policy: CachePolicy.refreshForceCache,
         maxStale: const Nullable(volatileMaxStale),
       );
 

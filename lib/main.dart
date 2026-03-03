@@ -14,6 +14,8 @@ import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:moldify/pages/farmer/report/main_report.dart';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
+import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
+import 'package:moldify/core/features/notification/repository/notification_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +32,9 @@ void main() async {
         ChangeNotifierProvider.value(value: authProvider),
         BlocProvider(
           create: (_) => UserBloc(userService: UserService()),
+        ),
+        BlocProvider(
+          create: (_) => NotificationBloc(repository: NotificationRepository()),
         ),
       ],
       child: const MyApp(),

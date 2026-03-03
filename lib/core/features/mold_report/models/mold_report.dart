@@ -5,6 +5,7 @@ class MoldReport {
 	final List<MoldReportDetails> caseDetails;
 	final String host;
 	final String caseName;
+	final String? location;
 	final DateTime? createdAt;
 	final DateTime? dateObserved;
 	final String status;
@@ -17,6 +18,7 @@ class MoldReport {
 		required this.caseDetails,
 		required this.host,
 		required this.caseName,
+		this.location,
 		this.createdAt,
 		this.dateObserved,
 		required this.status,
@@ -54,6 +56,7 @@ class MoldReport {
 			caseDetails: parsedCaseDetails,
 			host: json['host']?.toString() ?? '',
 			caseName: json['case_name']?.toString() ?? '',
+			location: json['location']?.toString(),
 			createdAt: _parseTimestamp(json['created_at']),
 			dateObserved: _parseDateObserved(json['date_observed']),
 			status: json['status']?.toString() ?? '',
@@ -104,6 +107,7 @@ class MoldReport {
 			'case_details': caseDetails.map((e) => e.toJson()).toList(),
 			'host': host,
 			'case_name': caseName,
+			'location': location,
 			'created_at': createdAt?.toUtc().toIso8601String(),
 			'date_observed': dateObserved?.toUtc().toIso8601String(),
 			'status': status,

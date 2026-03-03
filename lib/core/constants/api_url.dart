@@ -21,4 +21,5 @@ class ApiUrl {
   static String get moldipedia => '$_v1/moldipedia';
   static String get userReport => '$_v1/reports';
   static String get sysReq => '$_v1/system-request';
+  static String get notification => '$_v1/notification';
 }

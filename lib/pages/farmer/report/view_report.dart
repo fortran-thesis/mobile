@@ -334,7 +334,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       ),
                                     ),
                                       TextSpan(
-                                        text: '\t\t\tUnknown location',
+                                        text: '\t\t\t${_report?.location ?? "Unknown location"}',
                                         style: TextStyle(
                                           color: MoldifyColors.primaryColor,
                                           fontSize: 12,
