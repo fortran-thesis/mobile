@@ -5,20 +5,22 @@ import 'package:moldify/pages/misc/colors.dart';
 class HomeBanner extends StatelessWidget {
   final String title;
   final String subtitle;
+  // 1. Define the variable for the image path
+  final String imagePath;
 
   const HomeBanner({
     super.key,
     required this.title,
     required this.subtitle,
+    // 2. Add it to the constructor
+    required this.imagePath,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
-      // 2. Allow the image to draw outside the stack's bounds
       clipBehavior: Clip.none,
       children: [
-        // 3. The main banner container (Bottom Layer)
         Container(
           width: MediaQuery.of(context).size.width,
           height: 170.0,
@@ -30,7 +32,6 @@ class HomeBanner extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 15.0),
             child: Row(
               children: [
-                // Text section
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +49,7 @@ class HomeBanner extends StatelessWidget {
                         maxLines: 2,
                         minFontSize: 16,
                       ),
-                      SizedBox(height: 2.0,),
+                      const SizedBox(height: 2.0,),
                       AutoSizeText(
                         subtitle,
                         style: TextStyle(
@@ -62,14 +63,12 @@ class HomeBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Reserve space for the image that will be placed on top
                 const SizedBox(width: 170),
               ],
             ),
           ),
         ),
 
-        // 4. The image
         Positioned(
           right: -4.0,
           top: -12.0,
@@ -77,7 +76,8 @@ class HomeBanner extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(100),
             child: Image.asset(
-              'assets/images/mold_home_banner.png',
+              // 3. Use the variable here
+              imagePath,
               width: 170,
               height: 170,
               fit: BoxFit.cover,

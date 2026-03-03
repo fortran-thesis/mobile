@@ -30,11 +30,11 @@ class _MainReportScreenState extends State<MainReportScreen> {
   
   // Search and filter state
   String? _activeStatusFilter; // null for "All", or status string
-  bool _isSearching = false;
   Timer? _searchDebounce;
-  String _lastQuery = '';
   
   bool _isFetchingMore = false;
+  final Map<String, MoldReport> _detailedReportById = {};
+  final Set<String> _requestedDetailedReportIds = {};
 
   @override
   void initState() {
@@ -54,6 +54,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
         final max = _scrollController.position.maxScrollExtent;
         final current = _scrollController.position.pixels;
         if (current >= (max - 200)) {
+          if (_hasActiveSearchOrFilter) return;
           if (!_isFetchingMore && state.hasMore && state.nextPageToken != null && state.nextPageToken!.isNotEmpty) {
             _isFetchingMore = true;
             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
@@ -67,11 +68,100 @@ class _MainReportScreenState extends State<MainReportScreen> {
         }
       }
     });
+
+    searchController.addListener(_onSearchChanged);
+  }
+
+  bool get _hasActiveSearchOrFilter {
+    return searchController.text.trim().isNotEmpty || _activeStatusFilter != null;
+  }
+
+  String _normalizeStatus(String value) {
+    return value.toLowerCase().replaceAll('_', ' ').trim();
+  }
+
+  List<MoldReport> _applyClientFilters(List<MoldReport> reports) {
+    final searchText = searchController.text.trim().toLowerCase();
+    return reports.where((report) {
+      final caseName = report.caseName.toLowerCase();
+      final host = report.host.toLowerCase();
+      final matchesSearch = searchText.isEmpty || caseName.contains(searchText) || host.contains(searchText);
+
+      final reportStatus = _normalizeStatus(report.status);
+      final activeStatus = _activeStatusFilter == null ? null : _normalizeStatus(_activeStatusFilter!);
+      final matchesStatus = activeStatus == null || reportStatus == activeStatus;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+  }
+
+  String? _extractPhotoUrl(dynamic raw) {
+    if (raw is String) {
+      final normalized = raw.trim();
+      if (normalized.isNotEmpty && normalized != 'no_image' && normalized != '[]' && normalized != 'null') {
+        return normalized;
+      }
+    }
+
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is String) {
+          final normalized = item.trim();
+          if (normalized.isNotEmpty && normalized != 'no_image') {
+            return normalized;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String? _resolveReportCoverPhoto(MoldReport report) {
+    final displayReport = _detailedReportById[report.id] ?? report;
+    for (final detail in displayReport.caseDetails) {
+      final photo = _extractPhotoUrl(detail.coverPhoto);
+      if (photo != null) return photo;
+    }
+    return null;
+  }
+
+  Future<void> _fetchDetailedReportById(String reportId, String? sessionCookie) async {
+    try {
+      final detailed = await _repository.getReportById(reportId, sessionCookie: sessionCookie);
+      if (detailed == null || !mounted) return;
+      setState(() {
+        _detailedReportById[reportId] = detailed;
+      });
+    } catch (_) {}
+  }
+
+  void _prefetchDetailedReports(List<MoldReport> reports) {
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    final sessionCookie = authProvider.cookie;
+
+    for (final report in reports) {
+      if (_detailedReportById.containsKey(report.id)) continue;
+      if (_requestedDetailedReportIds.contains(report.id)) continue;
+
+      _requestedDetailedReportIds.add(report.id);
+      _fetchDetailedReportById(report.id, sessionCookie);
+    }
+  }
+
+  void _onSearchChanged() {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    searchController.removeListener(_onSearchChanged);
+    searchController.dispose();
     _scrollController.dispose();
     _bloc.close();
     super.dispose();
@@ -158,16 +248,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 final selectedStatus = ['All', 'In Progress', 'Pending', 'Resolved', 'Rejected'][index];
                                 setState(() {
                                   _activeStatusFilter = selectedStatus == 'All' ? null : selectedStatus;
-                                  _isSearching = false;
-                                  searchController.clear();
                                 });
-                                // Trigger search with new filter
-                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                _bloc.add(SearchMoldReports(
-                                  searchQuery: null,
-                                  statusFilter: _activeStatusFilter,
-                                  sessionCookie: authProvider.cookie,
-                                ));
                               },
                             ),
                           ],
@@ -183,44 +264,6 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           rightIcon: FontAwesomeIcons.magnifyingGlass,
                         ),
                       ),
-                      /// Trigger search when text changes
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: searchController,
-                        builder: (context, value, child) {
-                          if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
-                          
-                          _searchDebounce = Timer(const Duration(milliseconds: 800), () {
-                            if (!mounted) return;
-
-                            final query = searchController.text;
-                            // Prevent redundant loads if text hasn't strictly changed
-                            if (query == _lastQuery) return;
-                            _lastQuery = query;
-
-                            if (query.isNotEmpty) {
-                              setState(() {
-                                _isSearching = true;
-                                _activeStatusFilter = null;
-                              });
-                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                              _bloc.add(SearchMoldReports(
-                                searchQuery: query,
-                                statusFilter: null,
-                                sessionCookie: authProvider.cookie,
-                              ));
-                            } else if (query.isEmpty) {
-                              // Only load "all" if we were searching previously (avoids auto-load on filter change)
-                              if (_isSearching) {
-                                setState(() => _isSearching = false);
-                                // Refresh to all reports
-                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
-                              }
-                            }
-                          });
-                          return const SizedBox.shrink();
-                        },
-                      ),
                       /// Reports list (infinite scroll)
                       SizedBox(
                         height: MediaQuery.of(context).size.height - 300,
@@ -235,10 +278,12 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 return EmptyState(message: state.message, height: MediaQuery.of(context).size.height - 300);
                               }
 
-                              final reports = state is MoldReportLoaded ? state.reports : <dynamic>[];
+                              final reports = state is MoldReportLoaded ? state.reports : <MoldReport>[];
+                              final filteredReports = _applyClientFilters(reports);
+                              _prefetchDetailedReports(filteredReports);
 
-                              if (reports.isEmpty) {
-                                return EmptyState(message: 'No reports available.', height: MediaQuery.of(context).size.height - 300);
+                              if (filteredReports.isEmpty) {
+                                return EmptyState(message: 'No reports match your current search/filter.', height: MediaQuery.of(context).size.height - 300);
                               }
 
                               return RefreshIndicator(
@@ -248,24 +293,26 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 },
                                 child: ListView.builder(
                                   controller: _scrollController,
-                                  itemCount: reports.length + (state is MoldReportLoaded && state.hasMore ? 1 : 0),
+                                  itemCount: filteredReports.length + (state is MoldReportLoaded && state.hasMore && !_hasActiveSearchOrFilter ? 1 : 0),
                                   itemBuilder: (context, index) {
-                                    if (index >= reports.length) {
+                                    if (index >= filteredReports.length) {
                                       return const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12.0),
                                         child: Center(child: CircularProgressIndicator()),
                                       );
                                     }
 
-                                    final report = reports[index] as MoldReport;
+                                    final report = filteredReports[index];
+                                    final displayReport = _detailedReportById[report.id] ?? report;
                                     final String caseName = (report.caseName.isNotEmpty ? report.caseName : "Untitled Case").toString();                                    // Capitalize the first letter of status
                                     String caseStatus = (report.status).toString();
                                     if (caseStatus.isNotEmpty) {
                                       caseStatus = caseStatus[0].toUpperCase() + caseStatus.substring(1);
                                     }
-                  final String dateSubmitted = report.dateObserved != null
-                    ? DateFormat('MMMM d, yyyy').format(report.dateObserved!.toLocal())
-                    : '';
+                  final DateTime? createdDate = displayReport.createdAt;
+                  final String dateSubmitted = createdDate != null
+                    ? DateFormat('MMMM d, yyyy').format(createdDate.toLocal())
+                    : '-';
 
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 10.0),
@@ -273,9 +320,8 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                         caseName: caseName,
                                         dateSubmitted: dateSubmitted,
                                         caseStatus: caseStatus,
+                                        imageUrl: _resolveReportCoverPhoto(report),
                                         onTap: () {
-                                          print('MainReport: Navigating to view-report with id: ${report.id}');
-                                          print('MainReport: report = ${report.toJson()}');
                                           Navigator.pushNamed(
                                             context,
                                             '/view-report',

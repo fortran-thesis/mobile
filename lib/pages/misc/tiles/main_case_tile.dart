@@ -40,7 +40,7 @@ class MainCaseTile extends StatefulWidget {
   });
 
   @override
-  _MainCaseTileState createState() => _MainCaseTileState();
+  State<MainCaseTile> createState() => _MainCaseTileState();
 }
 
 class _MainCaseTileState extends State<MainCaseTile> {
@@ -52,153 +52,134 @@ class _MainCaseTileState extends State<MainCaseTile> {
     _containerColor = MoldifyColors.taupe;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final String defaultImageUrl = 'assets/images/Branding2.png';
+ @override
+Widget build(BuildContext context) {
+  final String defaultImageUrl = 'assets/images/Branding2.png';
+  final String caseImageUrl = widget.imageUrl ?? '';
+  
+  final bool isNetworkImage = caseImageUrl.startsWith('http');
+  final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
 
-    return GestureDetector(
-      onTapDown: (_) {
-        setState(() {
-          _containerColor = MoldifyColors.taupe.withOpacity(0.8);
-        });
-      },
-      onTapUp: (_) {
-        setState(() {
-          _containerColor = MoldifyColors.taupe;
-        });
-        widget.onTap();
-      },
-      onTapCancel: () {
-        setState(() {
-          _containerColor = MoldifyColors.taupe;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        padding: const EdgeInsets.all(15.0),
-        decoration: BoxDecoration(
-          color: _containerColor,
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        child: Stack(
-          children: [
-            // Main row (image + content)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10.0),
-                  child: Image.asset(
-                    (widget.imageUrl != null && widget.imageUrl != "no_image")
-                        ? widget.imageUrl!
-                        : defaultImageUrl,
-                    width: widget.imageWidth ?? 105,
-                    height: widget.imageHeight ?? 105,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: widget.imageWidth ?? 105,
-                        height: widget.imageHeight ?? 105,
-                        color: MoldifyColors.MoldifySoftGrey,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: MoldifyColors.primaryColor,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 15),
+  final String priorityDisplay = (widget.priorityLevel == null || widget.priorityLevel!.isEmpty)
+      ? "Not Available"
+      : widget.priorityLevel!;
 
-                // Text + Status section
-                Expanded(
+  return GestureDetector(
+    onTapDown: (_) => setState(() => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8)),
+    onTapUp: (_) {
+      setState(() => _containerColor = MoldifyColors.taupe);
+      widget.onTap();
+    },
+    onTapCancel: () => setState(() => _containerColor = MoldifyColors.taupe),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 100),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: _containerColor,
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Stack( // Using Stack to keep PopupMenu from affecting text layout
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
+                child: isNetworkImage
+                    ? Image.network(
+                        caseImageUrl,
+                        width: 95,
+                        height: 95,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.asset(defaultImageUrl, width: 95, height: 95, fit: BoxFit.cover),
+                      )
+                    : Image.asset(
+                        hasValidPath ? caseImageUrl : defaultImageUrl,
+                        width: 95,
+                        height: 95,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.asset(defaultImageUrl, width: 95, height: 95, fit: BoxFit.cover),
+                      ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // 2. Content
+              Expanded(
+                child: SizedBox(
+                  height: 95, // Matches image height
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 5),
-
-                      // Case name
-                      Text(
-                        widget.caseName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontFamily: 'Montserrat-Black',
-                          color: MoldifyColors.primaryColor,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // Date row
-                      Row(
+                      // Text Group (Pinned to top)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min, // Takes only required space
                         children: [
-                          AutoSizeText(
-                            widget.dateLabel ?? 'Date Submitted: ',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: MoldifyColors.primaryColor,
-                              fontFamily: 'Bricolage-Grotesque-Bold',
-                            ),
+                          Text(
+                            widget.caseName,
                             maxLines: 1,
-                            minFontSize: 8,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Montserrat-Black',
+                              color: MoldifyColors.primaryColor,
+                              height: 1.0, // Removes extra vertical padding from font
+                            ),
                           ),
-                          AutoSizeText(
-                            widget.dateSubmitted,
+                          // Minimal spacing here
+                          const SizedBox(height: 2), 
+                          Text(
+                            "${widget.dateLabel ?? 'Date'}: ${widget.dateSubmitted}",
                             style: const TextStyle(
                               fontSize: 10,
                               color: MoldifyColors.MoldifyBlack,
                               fontFamily: 'Bricolage-Grotesque-Regular',
+                              height: 1.0,
                             ),
-                            maxLines: 1,
-                            minFontSize: 8,
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const Spacer(), // Pushes the status tiles to the bottom
 
-                      // Status labels
+                      // 3. Status Tiles
                       Row(
                         children: [
-                          if (widget.priorityLevel != null) ...[
-                            Flexible(
-                              fit: FlexFit.tight,
-                              child: StatusBox(status: widget.priorityLevel!),
-                            ),
-                            const SizedBox(width: 5),
-                          ],
-                          Flexible(
-                            fit: FlexFit.tight,
+                          Expanded(
+                            child: StatusBox(status: priorityDisplay),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
                             child: StatusBox(status: widget.caseStatus),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            // Popup menu floated on top right
-            if (widget.showPopupMenu == true &&
-                widget.popupMenuItems != null &&
-                widget.popupMenuItems!.isNotEmpty &&
-                widget.onPopupMenuItemSelected != null)
-              Positioned(
-                top: -10  ,
-                right: 0,
-                child: PopupMenu(
-                  popMenuIcon: widget.popupMenuIcon,
-                  items: widget.popupMenuItems!,
-                  icons: widget.popupMenuIcons,
-                  onItemSelected: widget.onPopupMenuItemSelected!,
-                ),
               ),
-          ],
-        ),
+            ],
+          ),
+
+          // 4. Popup Menu (Positioned so it doesn't push text)
+          if (widget.showPopupMenu)
+            Positioned(
+              top: -10,
+              right: -5,
+              child: PopupMenu(
+                popMenuIcon: widget.popupMenuIcon,
+                items: widget.popupMenuItems!,
+                icons: widget.popupMenuIcons,
+                onItemSelected: widget.onPopupMenuItemSelected!,
+              ),
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

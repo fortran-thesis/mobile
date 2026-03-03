@@ -196,7 +196,7 @@ class _MainPageState extends State<MainPage> {
                     onTap: () => setState(() => selectedPosition = 0),
                   ),
                   _tabItem(
-                    icon: FontAwesomeIcons.solidClipboard,
+                    icon: FontAwesomeIcons.seedling,
                     isSelected: selectedPosition == 1,
                     onTap: () => setState(() => selectedPosition = 1),
                   ),
@@ -208,7 +208,7 @@ class _MainPageState extends State<MainPage> {
                     onTap: () => setState(() => selectedPosition = 0),
                   ),
                   _tabItem(
-                    icon: FontAwesomeIcons.solidClipboard,
+                    icon: FontAwesomeIcons.seedling,
                     isSelected: selectedPosition == 1,
                     onTap: () => setState(() => selectedPosition = 1),
                   ),
