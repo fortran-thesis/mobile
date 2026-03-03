@@ -1,3 +1,4 @@
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
@@ -17,7 +18,8 @@ class BuildRadioButton extends StatefulWidget {
   final Function(int) onButtonSelected;
   final int? selectedIndex;
 
-  BuildRadioButton({
+  const BuildRadioButton({
+    super.key,
     required this.numberOfButtons,
     required this.buttonLabels,
     required this.buttonSubtexts,
@@ -57,7 +59,9 @@ class _BuildRadioButtonState extends State<BuildRadioButton> {
               children: [
                 Radio<int>(
                   value: index,
+                  // ignore: deprecated_member_use
                   groupValue: selectedValue,
+                  // ignore: deprecated_member_use
                   onChanged: (int? value) {
                     setState(() {
                       selectedValue = value;

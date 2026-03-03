@@ -10,6 +10,7 @@ import '../../misc/tiles/expansion_tile.dart';
 import '../../../core/features/faq/models/faq.dart';
 import '../../../core/features/faq/service/faq_service.dart';
 import '../../../providers/auth_provider.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class MainFAQSCreen extends StatefulWidget {
   const MainFAQSCreen({super.key});
@@ -65,7 +66,7 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
         });
       }
     } catch (e) {
-      print('Failed to load FAQs: $e');
+      AppLogger.e('Failed to load FAQs', error: e);
       if (mounted) {
         setState(() {
           _isLoading = false;

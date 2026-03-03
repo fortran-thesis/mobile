@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
 
@@ -13,7 +11,7 @@ class TestService {
       sessionCookie: sessionCookie,
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     return {
       'success': jsonResponse['success'] ?? false,
       'data': jsonResponse['data'],

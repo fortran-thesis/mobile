@@ -1,5 +1,4 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:moldify/core/features/camera/models/camera_model_result.dart';
 import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +10,10 @@ import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 
 import '../misc/buttons/primary_button.dart';
-import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
 import 'mold_result_content/prevention_treatment_content.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 
 class MoldResultScreen extends StatefulWidget {
@@ -96,9 +95,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   @override
   void initState() {
     super.initState();
-    print('MoldResult: initState called');
-    print('MoldResult: modelResult = ${widget.modelResult}');
-    print('MoldResult: moldDetails = ${widget.moldDetails}');
+    AppLogger.d('MoldResult: initState called');
+    AppLogger.d('MoldResult: modelResult = ${widget.modelResult}');
+    AppLogger.d('MoldResult: moldDetails = ${widget.moldDetails}');
     
     _tapRecognizer = TapGestureRecognizer()
       ..onTap = () {
@@ -117,30 +116,30 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         percent = prob.toDouble();
       }
       confidenceLevel = (percent * 100).toStringAsFixed(2);
-      print('MoldResult: Confidence level calculated: $confidenceLevel%');
+      AppLogger.d('MoldResult: Confidence level calculated: $confidenceLevel%');
     } else {
       confidenceLevel = '';
-      print('MoldResult: No probability found in modelResult');
+      AppLogger.d('MoldResult: No probability found in modelResult');
     }
     // Extract only the genus from 'genus_spp' format
     final predictedClass = widget.modelResult?['predicted_class']?.toString() ?? '';
     moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
-    print('MoldResult: Predicted class: $predictedClass, Genus: $moldGenus');
+    AppLogger.d('MoldResult: Predicted class: $predictedClass, Genus: $moldGenus');
     
     // Use moldDetails if available to populate data instead of hardcoded values
     if (widget.moldDetails != null && (widget.moldDetails?.isEmpty ?? true) == false) {
-      print('MoldResult: Using moldDetails from API');
-      print('MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}');
+      AppLogger.d('MoldResult: Using moldDetails from API');
+      AppLogger.d('MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}');
       
       if (widget.moldDetails!.containsKey('error')) {
-        print('MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}');
+        AppLogger.e('MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}');
       } else {
-        print('MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...');
+        AppLogger.d('MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...');
       }
       // TODO: Parse moldDetails and update the data variables
       // This will be used to populate healthContent, plantThreatContent, fullDescription, taxonomy, fungicides, etc.
     } else {
-      print('MoldResult: No moldDetails provided, using hardcoded fallback data');
+      AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
     }
   }
 
@@ -153,9 +152,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   @override
   Widget build(BuildContext context) {
     final String today = DateFormat('MMMM d, y').format(DateTime.now());
-
-    final List<String> words = fullDescription.split(' ');
-    final bool isLongText = words.length > 40;
 
     final TextEditingController correctedGenusController = TextEditingController();
 
@@ -172,7 +168,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
           // Define the save logic here so it can be referenced by both onSave and onConfirm
           void onSave(String correctedText) {
             // Add your save logic here
-            print('Corrected Text: $correctedText');
+            AppLogger.d('Corrected Text: $correctedText');
             Navigator.of(context).pop(); // This will pop the bottom sheet
           }
 

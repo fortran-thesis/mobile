@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
-import 'package:moldify/pages/misc/images/circle_avatar.dart';
-import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:provider/provider.dart';
 import '../../../core/features/wikimold/models/wikimold.dart';
 import '../../../core/features/wikimold/services/wikimold_services.dart';
 import '../../../providers/auth_provider.dart';
 import '../../misc/colors.dart';
 import '../../misc/images/cover_image.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 
 class ViewWikiMoldScreen extends StatefulWidget {
@@ -48,12 +46,12 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         return;
       }
 
-      print('📖 Fetching article with ID: ${widget.articleId}');
+      AppLogger.d('📖 Fetching article with ID: ${widget.articleId}');
       final article = await _wikiService.fetchWikiArticleById(
         articleId: widget.articleId,
         sessionCookie: cookie,
       );
-      print('✅ Article loaded successfully: ${article.title}');
+      AppLogger.d('✅ Article loaded successfully: ${article.title}');
 
       if (!mounted) return;
       setState(() {
@@ -61,7 +59,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Error loading article: $e');
+      AppLogger.e('❌ Error loading article', error: e);
       if (!mounted) return;
       setState(() {
         _error = e.toString();

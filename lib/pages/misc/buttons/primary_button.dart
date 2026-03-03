@@ -38,7 +38,7 @@ class BuildButton extends StatelessWidget {
   final double buttonHeight, buttonRadius;
 
   const BuildButton({
-    Key? key,
+    super.key,
     required this.buttonText,
     required this.onPressed,
     required this.backgroundColor,
@@ -58,7 +58,7 @@ class BuildButton extends StatelessWidget {
     this.svgHeight,
     this.fontSize,
     this.borderWidth,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

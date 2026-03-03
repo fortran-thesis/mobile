@@ -1,17 +1,14 @@
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
-import '../misc/functions/reminder_Interval_picker.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
-import '../misc/textboxes/dropdwon.dart';
 import '../misc/textboxes/textboxes.dart';
 
 class EditLogScreen extends StatefulWidget {
   final String tabName;
-  EditLogScreen({super.key, required this.tabName});
+  const EditLogScreen({super.key, required this.tabName});
 
   @override
   _EditLogScreenState createState() =>

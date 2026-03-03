@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/repository/mold_case_repository.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 // Events
 abstract class MoldCaseEvent extends Equatable {
@@ -91,7 +92,7 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       final existingIds = _allCases.map((c) => c.id).toSet();
       final newCases = pageCases.where((c) => !existingIds.contains(c.id)).toList();
       
-      print('MoldCaseBloc: fetched ${pageCases.length} cases, adding ${newCases.length} new unique cases (filtered ${pageCases.length - newCases.length} duplicates)');
+      AppLogger.d('MoldCaseBloc: fetched ${pageCases.length} cases, adding ${newCases.length} new unique cases (filtered ${pageCases.length - newCases.length} duplicates)');
       
       _allCases.addAll(newCases);
       // If we got fewer items than pageSize, there's no more data

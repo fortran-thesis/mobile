@@ -1,98 +1,161 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:moldify/core/config/app_config.dart';
+import 'package:moldify/core/config/cache_config.dart';
 
+/// Centralised HTTP client built on [Dio].
+///
+/// Features added over the old `http`-based wrapper:
+///  - Session-cookie injection via interceptor (no per-call boilerplate)
+///  - Debug-only request/response logging (replaces scattered `print()` calls)
+///  - Global connect / receive timeouts
+///  - `validateStatus: (_) => true` so callers can still inspect status codes
+///    themselves (non-breaking for existing service code)
+///  - Multipart upload helper using Dio's [FormData]
 class ApiService {
   final String baseUrl;
+  late final Dio _dio;
 
-  ApiService({required this.baseUrl});
+  ApiService({required this.baseUrl}) {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
+        // Let callers handle status codes — don't throw on non-2xx.
+        validateStatus: (_) => true,
+        responseType: ResponseType.json,
+      ),
+    );
 
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+    // ── Logging (debug builds only) ──────────────────────────────────────
+    if (AppConfig.debugMode) {
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          // ignore: avoid_print
+          logPrint: (obj) => print(obj), // uses dart:developer in release
+        ),
+      );
+    }
+
+    // ── Response caching ─────────────────────────────────────────────────
+    _dio.interceptors.add(
+      DioCacheInterceptor(options: CacheConfig.defaultOptions),
+    );
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  /// Build the common headers map, injecting the session cookie when present.
+  Map<String, dynamic> _buildHeaders(
+    Map<String, String>? extra,
+    String? sessionCookie,
+  ) {
+    final h = <String, dynamic>{...?extra};
+    if (sessionCookie != null) {
+      h['Cookie'] = 'session=$sessionCookie';
+    }
+    return h;
+  }
+
+  // ── Public API (same signatures as before) ─────────────────────────────
+
+  Future<Response> get(
+    String endpoint, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParams,
+    String? sessionCookie,
+    CacheOptions? cacheOptions,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      final url = queryParams != null && queryParams.isNotEmpty
-          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
-          : uri;
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
+      final options = Options(headers: _buildHeaders(headers, sessionCookie));
+      if (cacheOptions != null) {
+        options.extra = <String, dynamic>{
+          ...?options.extra,
+          ...cacheOptions.toExtra(),
+        };
       }
-      print('🌐 [GET] $url');
-      final response = await http.get(url, headers: allHeaders);
-      print('✅ [GET] ${response.statusCode} $url');
-      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
-      return response;
-    } catch (e) {
-      print('❌ [GET] $baseUrl$endpoint → $e');
+      return await _dio.get(
+        endpoint,
+        queryParameters: queryParams,
+        options: options,
+      );
+    } on DioException catch (e) {
       throw Exception('GET request failed: $e');
     }
   }
 
-  Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> post(
+    String endpoint, {
+    Map<String, String>? headers,
+    Object? body,
+    Map<String, dynamic>? queryParams,
+    String? sessionCookie,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      final url = queryParams != null && queryParams.isNotEmpty
-          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
-          : uri;
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      print('🌐 [POST] $url');
-      print('   body: ${json.encode(body)}');
-      final response = await http.post(url, headers: allHeaders, body: json.encode(body));
-      print('✅ [POST] ${response.statusCode} $url');
-      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
-      return response;
-    } catch (e) {
-      print('❌ [POST] $baseUrl$endpoint → $e');
+      return await _dio.post(
+        endpoint,
+        data: body,
+        queryParameters: queryParams,
+        options: Options(
+          headers: _buildHeaders(headers, sessionCookie),
+          extra: CacheConfig.noCache.toExtra(),
+        ),
+      );
+    } on DioException catch (e) {
       throw Exception('POST request failed: $e');
     }
   }
 
-  Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> patch(
+    String endpoint, {
+    Map<String, String>? headers,
+    Object? body,
+    Map<String, dynamic>? queryParams,
+    String? sessionCookie,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      final url = queryParams != null && queryParams.isNotEmpty
-          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
-          : uri;
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      final encodedBody = json.encode(body);
-      print('🌐 [PATCH] $url');
-      print('   body: $encodedBody');
-      final response = await http.patch(url, headers: allHeaders, body: encodedBody);
-      print('✅ [PATCH] ${response.statusCode} $url');
-      print('   body: ${response.body.length > 300 ? response.body.substring(0, 300) + "..." : response.body}');
-      return response;
-    } catch (e) {
-      print('❌ [PATCH] $baseUrl$endpoint → $e');
+      return await _dio.patch(
+        endpoint,
+        data: body,
+        queryParameters: queryParams,
+        options: Options(
+          headers: _buildHeaders(headers, sessionCookie),
+          extra: CacheConfig.noCache.toExtra(),
+        ),
+      );
+    } on DioException catch (e) {
       throw Exception('PATCH request failed: $e');
     }
   }
 
-  Future<http.Response> delete(String endpoint, {Map<String, String>? headers, Map<String, dynamic>? queryParams, String? sessionCookie}) async {
+  Future<Response> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? queryParams,
+    String? sessionCookie,
+  }) async {
     try {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      final url = queryParams != null && queryParams.isNotEmpty
-          ? uri.replace(queryParameters: queryParams.map((k, v) => MapEntry(k, v.toString())))
-          : uri;
-      final allHeaders = {...?headers};
-      if (sessionCookie != null) {
-        allHeaders['Cookie'] = 'session=$sessionCookie';
-      }
-      print('🌐 [DELETE] $url');
-      final response = await http.delete(url, headers: allHeaders);
-      print('✅ [DELETE] ${response.statusCode} $url');
-      return response;
-    } catch (e) {
-      print('❌ [DELETE] $baseUrl$endpoint → $e');
+      return await _dio.delete(
+        endpoint,
+        queryParameters: queryParams,
+        options: Options(
+          headers: _buildHeaders(headers, sessionCookie),
+          extra: CacheConfig.noCache.toExtra(),
+        ),
+      );
+    } on DioException catch (e) {
       throw Exception('DELETE request failed: $e');
     }
   }
 
-  Future<http.Response> postMultipart(
+  /// Multipart POST (file upload).
+  ///
+  /// Accepts an optional single file via [fileFieldName] + [filePath],
+  /// and/or a map of extra [FormData] [fields].
+  Future<Response> postMultipart(
     String endpoint, {
     Map<String, String>? fields,
     String? fileFieldName,
@@ -101,33 +164,55 @@ class ApiService {
     String? sessionCookie,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$endpoint');
-      final request = http.MultipartRequest('POST', url);
+      final formMap = <String, dynamic>{...?fields};
 
-      // Add headers
-      if (sessionCookie != null) {
-        request.headers['Cookie'] = 'session=$sessionCookie';
-      }
-      if (headers != null) {
-        request.headers.addAll(headers);
-      }
-
-      // Add fields
-      if (fields != null) {
-        request.fields.addAll(fields);
-      }
-
-      // Add file
       if (fileFieldName != null && filePath != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(fileFieldName, filePath),
-        );
+        formMap[fileFieldName] = await MultipartFile.fromFile(filePath);
       }
 
-      final streamedResponse = await request.send();
-      return await http.Response.fromStream(streamedResponse);
-    } catch (e) {
+      return await _dio.post(
+        endpoint,
+        data: FormData.fromMap(formMap),
+        options: Options(
+          headers: _buildHeaders(headers, sessionCookie),
+          extra: CacheConfig.noCache.toExtra(),
+        ),
+      );
+    } on DioException catch (e) {
       throw Exception('Multipart POST request failed: $e');
     }
   }
+
+  /// Multipart PATCH (file upload for updates).
+  Future<Response> patchMultipart(
+    String endpoint, {
+    Map<String, String>? fields,
+    String? fileFieldName,
+    String? filePath,
+    Map<String, String>? headers,
+    String? sessionCookie,
+  }) async {
+    try {
+      final formMap = <String, dynamic>{...?fields};
+
+      if (fileFieldName != null && filePath != null) {
+        formMap[fileFieldName] = await MultipartFile.fromFile(filePath);
+      }
+
+      return await _dio.patch(
+        endpoint,
+        data: FormData.fromMap(formMap),
+        options: Options(
+          headers: _buildHeaders(headers, sessionCookie),
+          extra: CacheConfig.noCache.toExtra(),
+        ),
+      );
+    } on DioException catch (e) {
+      throw Exception('Multipart PATCH request failed: $e');
+    }
+  }
+
+  /// Expose the underlying [Dio] instance for advanced use cases
+  /// (e.g. custom interceptors, download, streaming).
+  Dio get dio => _dio;
 }

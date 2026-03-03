@@ -1,3 +1,4 @@
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -12,11 +13,12 @@ import '../misc/functions/reminder_Interval_picker.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/textboxes/dropdwon.dart';
 import '../misc/textboxes/textboxes.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class SetMonitoringDetailsScreen extends StatefulWidget {
   final MoldCase moldCase;
 
-  SetMonitoringDetailsScreen({required this.moldCase, super.key});
+  const SetMonitoringDetailsScreen({required this.moldCase, super.key});
 
   @override
   _SetMonitoringDetailsScreenState createState() =>
@@ -76,8 +78,8 @@ class _SetMonitoringDetailsScreenState
             ? double.tryParse(_environmentalTempController.text) ?? 0
             : 0;
         
-        print('SetMonitoringDetails: updating case ${widget.moldCase.id}');
-        print('SetMonitoringDetails: growthMedium=$_selectedGrowthMedium, incubationTemp=$incubationTemp, environmentalTemp=$environmentalTemp');
+        AppLogger.d('SetMonitoringDetails: updating case ${widget.moldCase.id}');
+        AppLogger.d('SetMonitoringDetails: growthMedium=$_selectedGrowthMedium, incubationTemp=$incubationTemp, environmentalTemp=$environmentalTemp');
         
         // Build cultivation details
         final cultivationDetails = CultivationDetails(
@@ -91,20 +93,20 @@ class _SetMonitoringDetailsScreenState
           'cultivation_details': cultivationDetails.toJson(),
         };
         
-        print('SetMonitoringDetails: updatePayload=$updatePayload');
+        AppLogger.d('SetMonitoringDetails: updatePayload=$updatePayload');
         
         final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
         final sessionCookie = authProvider.cookie;
         
         // Update via service - use updateCultivationDetails endpoint
-        print('SetMonitoringDetails: calling service.updateCultivationDetails()');
+        AppLogger.d('SetMonitoringDetails: calling service.updateCultivationDetails()');
         await _service.updateCultivationDetails(
           widget.moldCase.id,
           updatePayload,
           sessionCookie: sessionCookie,
         );
         
-        print('SetMonitoringDetails: case updated successfully');
+        AppLogger.d('SetMonitoringDetails: case updated successfully');
         
         if (!mounted) return;
         setState(() => _isLoading = false);
@@ -118,7 +120,7 @@ class _SetMonitoringDetailsScreenState
         if (!mounted) return;
         setState(() => _isLoading = false);
         
-        print('Error updating mold case: $e');
+        AppLogger.e('Error updating mold case', error: e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update: $e')),
         );
@@ -293,7 +295,7 @@ class _SetMonitoringDetailsScreenState
                     maxNumber: 60,
                     onChanged: (value) {
                       final (num, unit) = value;
-                      print('Selected: Every $num $unit');
+                      AppLogger.d('Selected: Every $num $unit');
                     },
                   ),
 

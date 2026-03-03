@@ -1,9 +1,9 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
 import '../models/report_model.dart';
 
 class UserReportService {
+  final ApiService _apiService = ApiService(baseUrl: ApiUrl.userReport);
 
   Future<UserReport> createReport({
     required UserReport report,
@@ -14,20 +14,14 @@ class UserReportService {
     }
 
     try {
-      final response = await http.post(
-        Uri.parse(ApiUrl.userReport),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cookie': 'session=${sessionCookie.trim()}',
-        },
-        body: json.encode(report.toJson()),
+      final response = await _apiService.post(
+        '',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: report.toJson(),
+        sessionCookie: sessionCookie.trim(),
       );
 
-      print('Report response code: ${response.statusCode}');
-      print('Report response body: ${response.body}');
-
-      final decoded = json.decode(response.body);
+      final decoded = response.data as Map<String, dynamic>;
 
       if (response.statusCode == 200 && decoded['success'] == true) {
         return UserReport.fromJson(decoded['data']);

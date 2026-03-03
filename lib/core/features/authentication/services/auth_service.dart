@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
 
@@ -17,18 +15,16 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
-    final String? setCookie = response.headers['set-cookie'];
+    final setCookies = response.headers['set-cookie'];
 
     String? sessionCookie;
-    if (setCookie != null) {
-      final cookies = setCookie.split(',');
-      for (final cookie in cookies) {
+    if (setCookies != null) {
+      for (final cookie in setCookies) {
         if (cookie.trim().startsWith('session=')) {
-          // Only take the cookie value up to the first semicolon
           sessionCookie = cookie.trim().split(';').first;
           break;
         }
@@ -44,9 +40,8 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> loginOAuth(String token) async {
-    final endpoint = '/login/oauth?device=mobile';
-    print('🔵 loginOAuth: Making request to $endpoint');
-    
+    const endpoint = '/login/oauth?device=mobile';
+
     try {
       final response = await _apiService.post(
         endpoint,
@@ -56,27 +51,16 @@ class AuthService {
         },
       );
 
-      print('🔵 loginOAuth: Response URL = ${response.request?.url}');
-      print('🔵 loginOAuth: Response status = ${response.statusCode}');
-      print('🔵 loginOAuth: Response body = ${response.body}');
-
-      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
       final bool success = jsonResponse['success'] ?? false;
       final dynamic data = jsonResponse['data'];
       final dynamic error = jsonResponse['error'];
-      final String? setCookie = response.headers['set-cookie'];
-
-      print('success: $success');
-      print('data: $data');
-      print('error: $error');
-      print('setCookie: $setCookie');
+      final setCookies = response.headers['set-cookie'];
 
       String? sessionCookie;
-      if (setCookie != null) {
-        final cookies = setCookie.split(',');
-        for (final cookie in cookies) {
+      if (setCookies != null) {
+        for (final cookie in setCookies) {
           if (cookie.trim().startsWith('session=')) {
-            // Extract just the JWT value (after 'session='), removing any semicolons
             sessionCookie = cookie.trim().split(';').first.split('=').last;
             break;
           }
@@ -90,7 +74,6 @@ class AuthService {
         'sessionValue': sessionCookie,
       };
     } catch (e) {
-      print('❌ loginOAuth: Exception occurred: $e');
       return {
         'success': false,
         'data': null,
@@ -115,7 +98,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -137,7 +120,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -158,7 +141,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -179,7 +162,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -200,7 +183,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -222,7 +205,7 @@ class AuthService {
       },
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
     final bool success = jsonResponse['success'] ?? false;
     final dynamic data = jsonResponse['data'];
     final dynamic error = jsonResponse['error'];
@@ -248,7 +231,7 @@ class AuthService {
       sessionCookie: sessionCookie,
     );
 
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
 
     return {
       'success': jsonResponse['success'] ?? false,

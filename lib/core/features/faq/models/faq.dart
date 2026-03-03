@@ -1,3 +1,5 @@
+import 'package:moldify/core/utils/logger.dart';
+
 class FAQ {
   final String id;
   final String question;
@@ -12,7 +14,7 @@ class FAQ {
   });
 
   factory FAQ.fromJson(Map<String, dynamic> json) {
-    print('FAQ.fromJson: parsing json=$json');
+    AppLogger.d('FAQ.fromJson: parsing json=$json');
 
     // Parse metadata if it exists
     FAQMetadata? metadata;

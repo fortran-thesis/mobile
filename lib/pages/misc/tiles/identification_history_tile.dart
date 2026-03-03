@@ -1,7 +1,6 @@
+// ignore_for_file: library_private_types_in_public_api
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../buttons/popmenu_button.dart';
 import '../colors.dart';
 
 class IdentificationHistoryTile extends StatefulWidget {

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 import '../services/auth_service.dart';
 
@@ -29,7 +30,7 @@ class AuthBloc {
   }
 
   Future<Map<String, dynamic>> loginOAuth(String token) async {
-    print(token);
+    AppLogger.d(token);
     final result = await authService.loginOAuth(token);
     if (!result['success']) {
       return {
@@ -49,9 +50,9 @@ class AuthBloc {
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      print('GoogleSignIn email: ${googleUser?.email}');
+      AppLogger.d('GoogleSignIn email: ${googleUser?.email}');
       if (googleUser == null) {
-        print('loginWithGoogle: Google sign-in cancelled by user');
+        AppLogger.d('loginWithGoogle: Google sign-in cancelled by user');
         return {
           'success': false,
           'error': 'Google sign-in cancelled by user',
@@ -65,9 +66,9 @@ class AuthBloc {
       );
       final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
       final token = await userCredential.user?.getIdToken(true);
-      print('loginWithGoogle: Google token = $token');
+      AppLogger.d('loginWithGoogle: Google token = $token');
       if (token == null) {
-        print('loginWithGoogle: Failed to get Google token');
+        AppLogger.d('loginWithGoogle: Failed to get Google token');
         return {
           'success': false,
           'error': 'Failed to get Google token',
@@ -75,10 +76,10 @@ class AuthBloc {
         };
       }
       final result = await loginOAuth(token);
-      print('loginWithGoogle: loginOAuth result = $result');
+      AppLogger.d('loginWithGoogle: loginOAuth result = $result');
       return result;
     } catch (e) {
-      print('loginWithGoogle: Exception = $e');
+      AppLogger.e('loginWithGoogle: Exception', error: e);
       return {
         'success': false,
         'error': 'Google sign-in failed: $e',

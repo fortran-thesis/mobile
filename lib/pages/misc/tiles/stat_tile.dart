@@ -33,7 +33,7 @@ class StatisticTile extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: MoldifyColors.MoldifyBlack.withOpacity(0.02),
+              color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -45,7 +45,7 @@ class StatisticTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(

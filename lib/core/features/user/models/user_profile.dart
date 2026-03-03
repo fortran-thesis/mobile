@@ -1,3 +1,5 @@
+import 'package:moldify/core/utils/logger.dart';
+
 class UserProfile {
   final String id;
   final String username;
@@ -27,7 +29,7 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final data = json['data'];
-    print('Raw JSON: $json');
+    AppLogger.d('Raw JSON: $json');
     final user = data['user'];
     final details = data['details'];
     // Defensive parsing: some backends may return null or different types

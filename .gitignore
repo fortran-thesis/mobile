@@ -52,3 +52,4 @@ app.*.map.json
 # Environment files — copy env.example.json to env.dev.json / env.prod.json locally
 env.dev.json
 env.prod.json
+env.json

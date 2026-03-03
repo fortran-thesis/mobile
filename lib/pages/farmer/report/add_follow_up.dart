@@ -100,7 +100,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didpop) async {
+      onPopInvokedWithResult: (bool didpop, dynamic result) async {
         if (didpop) {
           return;
         }
@@ -126,6 +126,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
             },
           );
 
+          if (!context.mounted) return;
           //If the user confirmed, pop the current route
           if (shouldPop != null && shouldPop) {
             Navigator.of(context).pop(true);

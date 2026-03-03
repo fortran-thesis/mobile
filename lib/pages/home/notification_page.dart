@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// This screen displays a list of notifications for the user.
 /// It includes a header and a list of notifications that can be marked as read.
@@ -101,7 +102,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     /// BuildNotificationTile is a custom widget that displays the notification tile
                     child: BuildNotificationTile(
                       onViewDetails: () {
-                        print ('View details of notification');
+                        AppLogger.d('View details of notification');
                       },
                       onMarkAsRead: () {
                         _markAsRead(index);

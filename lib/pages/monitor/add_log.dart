@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +9,6 @@ import 'package:moldify/providers/auth_provider.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
-import '../misc/images/cover_image.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 
 class AddLogScreen extends StatefulWidget {

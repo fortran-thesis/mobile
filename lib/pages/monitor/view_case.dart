@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
@@ -19,6 +19,7 @@ import '../../../core/features/mold_case/repository/mold_case_repository.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../providers/auth_provider.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class ViewCaseScreen extends StatefulWidget {
 
@@ -39,8 +40,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? _error;
   MoldCase? _case;
   String? _reportId; // Store the report ID for status updates
-  bool _isMarkingResolved = false;
-  
+
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
   String dateFirstObserved = 'October 30, 2025';
@@ -96,10 +96,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     ) ?? false;
 
     if (!confirmed) return;
+    if (!mounted) return;
 
     try {
-      setState(() => _isMarkingResolved = true);
-
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
       final reportService = MoldReportService();
@@ -113,7 +112,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       if (!mounted) return;
       setState(() {
-        _isMarkingResolved = false;
         caseStatus = 'Resolved';
       });
 
@@ -122,7 +120,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isMarkingResolved = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to mark case as resolved: $e')),
       );
@@ -131,7 +128,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
   Future<void> _loadCaseFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
-    print('ViewCase: args = $args');
+    AppLogger.d('ViewCase: args = $args');
     String? reportId;
     if (args is Map<String, dynamic>) {
       reportId = args['id']?.toString();
@@ -139,7 +136,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       reportId = args;
     }
 
-    print('ViewCase: extracted reportId = $reportId');
+    AppLogger.d('ViewCase: extracted reportId = $reportId');
 
     if (reportId == null || reportId.isEmpty) {
       setState(() {
@@ -152,14 +149,14 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      print('ViewCase: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
+      AppLogger.d('ViewCase: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
 
       // Create a local repository
       final repo = MoldCaseRepository(pageSize: 10);
 
-      print('ViewCase: calling getCasesByReportId($reportId)');
+      AppLogger.d('ViewCase: calling getCasesByReportId($reportId)');
       final List<MoldCase> moldCases = await repo.getCasesByReportId(reportId, sessionCookie: sessionCookie);
-      print('ViewCase: getCasesByReportId returned ${moldCases.length} cases');
+      AppLogger.d('ViewCase: getCasesByReportId returned ${moldCases.length} cases');
 
       if (moldCases.isEmpty) {
         setState(() {
@@ -172,10 +169,10 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       // Use the first case (or you could let user select if multiple)
       final MoldCase moldCase = moldCases.first;
 
-      print('ViewCase: case.mycologistId = ${moldCase.mycologistId}');
-      print('ViewCase: case.name = ${moldCase.name}');
-      print('ViewCase: case.priority = ${moldCase.priority}');
-      print('ViewCase: case.moldReportId = ${moldCase.moldReportId}');
+      AppLogger.d('ViewCase: case.mycologistId = ${moldCase.mycologistId}');
+      AppLogger.d('ViewCase: case.name = ${moldCase.name}');
+      AppLogger.d('ViewCase: case.priority = ${moldCase.priority}');
+      AppLogger.d('ViewCase: case.moldReportId = ${moldCase.moldReportId}');
 
       // Fetch farmer details from the mold report
       String localFarmerName = 'Juan Dela Cruz';
@@ -188,39 +185,47 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       if (moldCase.moldReportId.isNotEmpty) {
         try {
-          print('ViewCase: fetching report ${moldCase.moldReportId} for farmer details');
+          AppLogger.d('ViewCase: fetching report ${moldCase.moldReportId} for farmer details');
           final reportService = MoldReportService();
           final reportData = await reportService.getMoldReportById(
             moldCase.moldReportId,
             sessionCookie: sessionCookie,
           );
-          print('ViewCase: report data = $reportData');
+          AppLogger.d('ViewCase: report data = $reportData');
 
           // Extract farmer details from report data
           final reportPayload = reportData['data'] is Map<String, dynamic> 
               ? reportData['data'] as Map<String, dynamic>
               : reportData;
-          cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';          print('Report crop_name: ${reportPayload['crop_name']}');
+            AppLogger.d('ViewCase: reportPayload.location = ${reportPayload['location']}');
+          cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';          AppLogger.d('Report crop_name: ${reportPayload['crop_name']}');
           // Extract status from report
           final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
           localReportStatus = statusRaw[0].toUpperCase() + statusRaw.substring(1);
 
           // Extract reporter details from the report
           final reporter = reportPayload['reporter'] as Map<String, dynamic>?;
-          if (reporter != null) {
+            if (reporter != null) {
+              AppLogger.d('ViewCase: reporter found = $reporter');
             final user = reporter['user'] as Map<String, dynamic>?;
             final details = reporter['details'] as Map<String, dynamic>?;
+              AppLogger.d('ViewCase: reporter.details = $details');
             
             if (user != null) {
               localFarmerName = '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'.trim();
             }
+            AppLogger.d('ViewCase: resolved localLocation = $localLocation');
             if (details != null) {
               localEmailAddress = details['email']?.toString() ?? localEmailAddress;
               localContactNumber = details['phone_number']?.toString() ?? localContactNumber;
-              // Extract location from reporter details, fallback to address
-              localLocation = details['location']?.toString() ?? 
-                              details['address']?.toString() ?? 
+              // Prefer reporter details.location, then top-level report location, then address
+              localLocation = details['location']?.toString() ??
+                              reportPayload['location']?.toString() ??
+                              details['address']?.toString() ??
                               'Unknown Location';
+            } else {
+              // If no reporter details, fall back to top-level report location
+              localLocation = reportPayload['location']?.toString() ?? localLocation;
             }
           }
           
@@ -232,12 +237,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
           // Extract case_details from report and build caseEntries
           final caseDetails = reportPayload['case_details'] as List<dynamic>?;
-          print('ViewCase: case_details = $caseDetails');
+          AppLogger.d('ViewCase: case_details = $caseDetails');
           if (caseDetails != null && caseDetails.isNotEmpty) {
-            print('ViewCase: processing ${caseDetails.length} case detail entries');
+            AppLogger.d('ViewCase: processing ${caseDetails.length} case detail entries');
             for (var i = 0; i < caseDetails.length; i++) {
               final detail = caseDetails[i];
-              print('ViewCase: detail[$i] = $detail');
+              AppLogger.d('ViewCase: detail[$i] = $detail');
               if (detail is Map<String, dynamic>) {
                 final description = detail['description']?.toString() ?? '';
                 final metadata = detail['metadata'] as Map<String, dynamic>?;
@@ -256,7 +261,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                     ? coverPhotos.whereType<String>().toList()
                     : <String>[];
                 
-                print('ViewCase: adding entry with date=$entryDate, notes=$description, images=${images.length}');
+                AppLogger.d('ViewCase: adding entry with date=$entryDate, notes=$description, images=${images.length}');
                 localCaseEntries.add({
                   'date': entryDate,
                   'notes': description,
@@ -266,11 +271,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             }
           }
 
-          print('ViewCase: extracted farmer details - name=$localFarmerName, email=$localEmailAddress');
-          print('ViewCase: extracted ${localCaseEntries.length} case entries from report');
+          AppLogger.d('ViewCase: extracted farmer details - name=$localFarmerName, email=$localEmailAddress');
+          AppLogger.d('ViewCase: extracted ${localCaseEntries.length} case entries from report');
 
         } catch (e) {
-          print('ViewCase: WARNING - failed to fetch report for farmer details: $e');
+          AppLogger.e('ViewCase: WARNING - failed to fetch report for farmer details', error: e);
           // Continue with fallback data
         }
       }
@@ -355,8 +360,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       });
     } catch (e, stackTrace) {
-      print('ViewCase: ERROR - $e');
-      print('ViewCase: stackTrace - $stackTrace');
+      AppLogger.e('ViewCase: ERROR', error: e);
+      AppLogger.e('ViewCase: stackTrace', error: stackTrace);
       setState(() {
         _error = 'Failed to load case: $e';
         _isLoading = false;
@@ -380,7 +385,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     
     // Use API data if available, otherwise use fallback defaults
     String priorityLevel = _case?.priority != null 
-        ? _case!.priority[0].toUpperCase() + _case!.priority.substring(1) + ' Priority'
+        ? '${_case!.priority[0].toUpperCase()}${_case!.priority.substring(1)} Priority'
         : 'Low Priority';
     
     String endDate = _case?.endDate != null
@@ -399,7 +404,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     final List<IconData> popupMenuIcons = [
       if (!isCaseClosed) FontAwesomeIcons.circleInfo,
-      if (!isCaseClosed) FontAwesomeIcons.checkCircle,
+      if (!isCaseClosed) FontAwesomeIcons.circleCheck,
       FontAwesomeIcons.clockRotateLeft,
       FontAwesomeIcons.sprayCan,
       FontAwesomeIcons.solidFilePdf,
@@ -448,7 +453,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            FontAwesomeIcons.exclamationTriangle,
+                            FontAwesomeIcons.triangleExclamation,
                             size: 48,
                             color: MoldifyColors.accentColor,
                           ),

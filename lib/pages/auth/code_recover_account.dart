@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/utils/route_utils.dart';
-import 'package:moldify/pages/auth/set_new_password.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../misc/appbar/secondary_appbar.dart';
@@ -131,6 +130,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
     });
     // Reset navigation stack to login
     Future.delayed(Duration(milliseconds: 2000), () {
+      if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/login',
         (Route<dynamic> route) => false,
@@ -168,6 +168,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
         errorMessage = null;
         successMessage = 'Code verified! You can now set a new password.';
       });
+      if (!mounted) return;
       navigateTo(context, RouteNames.setNewPassword, arguments: {
         'token': result['data'],
       });

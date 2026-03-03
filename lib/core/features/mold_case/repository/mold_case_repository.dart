@@ -1,5 +1,6 @@
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class MoldCaseRepository {
   final MoldCaseService _service = MoldCaseService();
@@ -9,13 +10,13 @@ class MoldCaseRepository {
 
   /// Fetch a page from API. Uses cursor-based pagination with [pageToken].
   Future<List<MoldCase>> fetchPage({String? pageToken, String? sessionCookie}) async {
-    print('MoldCaseRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
+    AppLogger.d('MoldCaseRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
     final result = await _service.fetchAssignedMycologists(
       sessionCookie: sessionCookie,
       limit: pageSize,
       pageToken: pageToken,
     );
-    print('MoldCaseRepository: raw API response: $result');
+    AppLogger.d('MoldCaseRepository: raw API response: $result');
 
     // Normalize the returned data shape. Backend may return:
     // - { success: true, data: { snapshot: [...], nextPageToken: ... } }
@@ -41,14 +42,14 @@ class MoldCaseRepository {
       rawDataList = <dynamic>[];
     }
 
-    print('MoldCaseRepository: normalized rawDataList (${rawDataList.length} items)');
+    AppLogger.d('MoldCaseRepository: normalized rawDataList (${rawDataList.length} items)');
 
     final List<MoldCase> cases = rawDataList
         .map((e) => MoldCase.fromJson(e as Map<String, dynamic>))
         .where((c) => c.mycologistId.isNotEmpty) // ignore invalid/empty placeholder objects
         .toList();
 
-    print('MoldCaseRepository: parsed ${cases.length} valid cases (filtered empty ids)');
+    AppLogger.d('MoldCaseRepository: parsed ${cases.length} valid cases (filtered empty ids)');
     return cases;
   }
 

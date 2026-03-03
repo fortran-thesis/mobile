@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// Converts ISO 8601 date string to formatted string "MMMM dd, yyyy"
 /// Example: "2025-11-03T16:00:00.000Z" -> "November 03, 2025"
@@ -11,7 +12,7 @@ String formatIsoDateToDisplay(String? isoDateString) {
     final DateTime dateTime = DateTime.parse(isoDateString);
     return DateFormat('MMMM dd, yyyy').format(dateTime);
   } catch (e) {
-    print('DateUtils: Failed to parse date "$isoDateString": $e');
+    AppLogger.e('DateUtils: Failed to parse date "$isoDateString"', error: e);
     return 'Invalid Date';
   }
 }
@@ -25,7 +26,7 @@ String formatDateTimeToDisplay(DateTime? dateTime) {
   try {
     return DateFormat('MMMM dd, yyyy').format(dateTime);
   } catch (e) {
-    print('DateUtils: Failed to format DateTime: $e');
+    AppLogger.e('DateUtils: Failed to format DateTime', error: e);
     return 'Invalid Date';
   }
 }
@@ -44,7 +45,7 @@ String formatFirestoreTimestampToDisplay(Map<String, dynamic>? timestamp) {
     }
     return 'Invalid Date';
   } catch (e) {
-    print('DateUtils: Failed to parse Firestore timestamp: $e');
+    AppLogger.e('DateUtils: Failed to parse Firestore timestamp', error: e);
     return 'Invalid Date';
   }
 }

@@ -59,13 +59,11 @@ class _BuildDropdownState extends State<BuildDropdown> {
           items: widget.items.map((item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Container(
-                child: Text(
-                  item,
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 14,
-                  ),
+              child: Text(
+                item,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 14,
                 ),
               ),
             );

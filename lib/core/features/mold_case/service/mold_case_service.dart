@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
+import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
 
@@ -24,12 +25,11 @@ class MoldCaseService {
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
       queryParams: queryParams.isEmpty ? null : queryParams,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> decoded =
-          json.decode(response.body) as Map<String, dynamic>;
-      return decoded;
+      return response.data as Map<String, dynamic>;
     } else {
       throw Exception('Failed to fetch assigned mycologists: ${response.statusCode}');
     }
@@ -44,10 +44,11 @@ class MoldCaseService {
       '/$id',
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     }
     throw Exception('Failed to fetch mold case $id: ${response.statusCode}');
   }
@@ -62,10 +63,11 @@ class MoldCaseService {
       '/by-report/$reportId',
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     }
     throw Exception('Failed to fetch mold cases for report $reportId: ${response.statusCode}');
   }
@@ -76,8 +78,6 @@ class MoldCaseService {
     Map<String, dynamic> update, {
     String? sessionCookie,
   }) async {
-    print('MoldCaseService.updateMoldCase: id=$id');
-    print('MoldCaseService.updateMoldCase: update=$update');
     final response = await _apiService.patch(
       '/$id',
       headers: {'Content-Type': 'application/json'},
@@ -87,7 +87,7 @@ class MoldCaseService {
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception(
-        'Failed to update mold case $id: ${response.statusCode} ${response.body}',
+        'Failed to update mold case $id: ${response.statusCode} ${response.data}',
       );
     }
   }
@@ -104,7 +104,7 @@ class MoldCaseService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to delete mold case $id: ${response.statusCode} ${response.body}',
+        'Failed to delete mold case $id: ${response.statusCode} ${response.data}',
       );
     }
   }
@@ -125,12 +125,11 @@ class MoldCaseService {
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
       queryParams: queryParams.isEmpty ? null : queryParams,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> decoded =
-          json.decode(response.body) as Map<String, dynamic>;
-      return decoded;
+      return response.data as Map<String, dynamic>;
     } else {
       throw Exception('Failed to fetch archived cases: ${response.statusCode}');
     }
@@ -149,12 +148,11 @@ class MoldCaseService {
       '/counts/priorities',
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> decoded =
-          json.decode(response.body) as Map<String, dynamic>;
-      return decoded;
+      return response.data as Map<String, dynamic>;
     } else {
       throw Exception('Failed to fetch priority breakdown: ${response.statusCode}');
     }
@@ -164,25 +162,19 @@ class MoldCaseService {
   /// Reduces to max 1200px width/height and 80% quality
   Future<String> _compressImage(String imagePath) async {
     try {
-      print('🖼️ Starting image compression for: $imagePath');
       final File imageFile = File(imagePath);
-      
+
       if (!imageFile.existsSync()) {
-        print('❌ Image file does not exist: $imagePath');
         return imagePath;
       }
 
       final bytes = await imageFile.readAsBytes();
-      print('📊 Original image size: ${(bytes.length / 1024 / 1024).toStringAsFixed(2)} MB');
-      
+
       img.Image? image = img.decodeImage(bytes);
 
       if (image == null) {
-        print('❌ Failed to decode image, using original');
         return imagePath;
       }
-
-      print('📐 Original dimensions: ${image.width}x${image.height}');
 
       // Resize if needed (max 1200px)
       if (image.width > 1200 || image.height > 1200) {
@@ -192,24 +184,19 @@ class MoldCaseService {
           height: image.height > image.width ? 1200 : null,
           interpolation: img.Interpolation.average,
         );
-        print('📐 Resized dimensions: ${image.width}x${image.height}');
       }
 
       // Encode as JPEG with 80% quality
       final compressedBytes = img.encodeJpg(image, quality: 80);
-      print('📊 Compressed image size: ${(compressedBytes.length / 1024).toStringAsFixed(2)} KB');
-      
+
       // Save to app cache directory
       final cacheDir = await getTemporaryDirectory();
       final compressedFile = File('${cacheDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      
+
       await compressedFile.writeAsBytes(compressedBytes);
-      print('✅ Compressed image saved to: ${compressedFile.path}');
-      
+
       return compressedFile.path;
-    } catch (e, stackTrace) {
-      print('❌ Image compression failed: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       return imagePath; // Fallback to original if compression fails
     }
   }
@@ -224,31 +211,20 @@ class MoldCaseService {
     String? sessionCookie,
   }) async {
     try {
-      print('🌾 addCultivationLog: Starting for caseId=$caseId');
-      print('🌾 addCultivationLog: logData=$logData');
-      print('🌾 addCultivationLog: imagePath=$imagePath');
-
       // Prepare form fields
       final fields = <String, String>{
         'type': logData['type'] ?? 'vitro',
         'characteristics': jsonEncode(logData['characteristics'] ?? {}),
         'additional_info': logData['additional_info'] ?? '',
       };
-      
-      print('🌾 Form fields: $fields');
 
       // Compress image if provided
       String? compressedImagePath = imagePath;
       if (imagePath != null && imagePath.isNotEmpty) {
-        print('🌾 Compressing image before upload: $imagePath');
         compressedImagePath = await _compressImage(imagePath);
-        print('🌾 Compressed image path: $compressedImagePath');
-      } else {
-        print('⚠️ No image path provided');
       }
 
       // Use multipart request with image
-      print('🌾 Sending multipart request to /$caseId/logs');
       final response = await _apiService.postMultipart(
         '/$caseId/logs',
         fields: fields,
@@ -257,16 +233,11 @@ class MoldCaseService {
         sessionCookie: sessionCookie,
       );
 
-      print('🌾 Response status: ${response.statusCode}');
-      print('🌾 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to add cultivation log: ${response.statusCode} ${response.body}');
-    } catch (e, stackTrace) {
-      print('❌ addCultivationLog error: $e');
-      print('Stack trace: $stackTrace');
+      throw Exception('Failed to add cultivation log: ${response.statusCode} ${response.data}');
+    } catch (e) {
       throw Exception('Failed to add cultivation log: $e');
     }
   }
@@ -286,7 +257,7 @@ class MoldCaseService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     }
     throw Exception('Failed to update cultivation details: ${response.statusCode}');
   }
@@ -309,7 +280,7 @@ class MoldCaseService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as Map<String, dynamic>;
+      return response.data as Map<String, dynamic>;
     }
     throw Exception('Failed to analyze cultivation image: ${response.statusCode}');
   }
@@ -334,11 +305,12 @@ class MoldCaseService {
       '/search?${Uri(queryParameters: queryParams).query}',
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.volatileData,
     );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to search mold cases: ${response.statusCode}');
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return response.data as Map<String, dynamic>;
   }
 }

@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
 
 class SystemRequestResponse {
@@ -23,6 +22,8 @@ class SystemRequestResponse {
 }
 
 class SystemRequestService {
+  final ApiService _apiService = ApiService(baseUrl: ApiUrl.sysReq);
+
   Future<SystemRequestResponse> submitRequest({
     required String sessionCookie,
     required String type,
@@ -30,40 +31,31 @@ class SystemRequestService {
     required String userId,
   }) async {
     try {
-
-      final response = await http.post(
-        Uri.parse(ApiUrl.sysReq),
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': 'session=$sessionCookie',
-        },
-        body: jsonEncode({
+      final response = await _apiService.post(
+        '',
+        body: {
           'type': type,
           'message': message,
           'user_id': userId,
-        }),
+        },
+        sessionCookie: sessionCookie,
       );
 
+      final responseData = response.data;
 
-      if (response.body.trim().startsWith('<!DOCTYPE') ||
-          response.body.trim().startsWith('<html')) {
-        print('Received HTML instead of JSON - wrong endpoint!');
+      // Check if server returned HTML instead of JSON
+      if (responseData is String &&
+          (responseData.trim().startsWith('<!DOCTYPE') ||
+              responseData.trim().startsWith('<html'))) {
         return SystemRequestResponse(
           success: false,
           error: 'Invalid endpoint - received HTML instead of JSON. Check API URL.',
         );
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return SystemRequestResponse.fromJson(data);
-      } else {
-        return SystemRequestResponse.fromJson(data);
-      }
-    } catch (e, stackTrace) {
-      print('SystemRequestService error: $e');
-      print('Stack trace: $stackTrace');
+      final data = responseData as Map<String, dynamic>;
+      return SystemRequestResponse.fromJson(data);
+    } catch (e) {
       return SystemRequestResponse(
         success: false,
         error: 'Network error: ${e.toString()}',

@@ -11,6 +11,7 @@ import 'package:moldify/pages/settings/case_history.dart';
 import 'package:moldify/pages/settings/change_password.dart';
 import 'package:moldify/pages/settings/edit_profile.dart';
 import 'package:provider/provider.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 import '../misc/colors.dart';
 import '../misc/tiles/account_settings_tiles.dart';
@@ -40,7 +41,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      print('MainAccountSettingsScreen: Dispatching FetchUserProfile with sessionCookie: $sessionCookie');
+      AppLogger.d('MainAccountSettingsScreen: Dispatching FetchUserProfile with sessionCookie: $sessionCookie');
       _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
     });
   }
@@ -186,7 +187,8 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                             );
 
                             // If profile was updated, refresh this page
-                            if (result == true && mounted) {
+                            if (!context.mounted) return;
+                            if (result == true) {
                               final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                               final sessionCookie = authProvider.cookie;
                               _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));

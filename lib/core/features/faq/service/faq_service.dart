@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
 
@@ -25,21 +25,18 @@ class FAQService {
         '/api/v1/faq',
         queryParams: queryParams,
         sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
       );
 
-      print('FAQService.getAllFAQ: status=${response.statusCode}');
-      print('FAQService.getAllFAQ: body=${response.body}');
-
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          return json['data'] as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return data['data'] as Map<String, dynamic>;
         }
-        throw Exception('Failed to fetch FAQs: ${json['error']}');
+        throw Exception('Failed to fetch FAQs: ${data['error']}');
       }
       throw Exception('Failed to fetch FAQs: ${response.statusCode}');
     } catch (e) {
-      print('FAQService.getAllFAQ: error=$e');
       rethrow;
     }
   }
@@ -65,22 +62,18 @@ class FAQService {
         '/api/v1/faq',
         queryParams: queryParams,
         sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
       );
 
-      print('FAQService.searchFAQ: status=${response.statusCode}');
-      print('FAQService.searchFAQ: search=$search');
-      print('FAQService.searchFAQ: body=${response.body}');
-
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          return json['data'] as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return data['data'] as Map<String, dynamic>;
         }
-        throw Exception('Failed to search FAQs: ${json['error']}');
+        throw Exception('Failed to search FAQs: ${data['error']}');
       }
       throw Exception('Failed to search FAQs: ${response.statusCode}');
     } catch (e) {
-      print('FAQService.searchFAQ: error=$e');
       rethrow;
     }
   }
@@ -96,21 +89,18 @@ class FAQService {
       final response = await _apiService.get(
         '/api/v1/faq/$id',
         sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
       );
 
-      print('FAQService.getFAQById: id=$id, status=${response.statusCode}');
-      print('FAQService.getFAQById: body=${response.body}');
-
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          return json['data'] as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return data['data'] as Map<String, dynamic>;
         }
-        throw Exception('Failed to fetch FAQ: ${json['error']}');
+        throw Exception('Failed to fetch FAQ: ${data['error']}');
       }
       throw Exception('FAQ not found: ${response.statusCode}');
     } catch (e) {
-      print('FAQService.getFAQById: error=$e');
       rethrow;
     }
   }
@@ -136,19 +126,15 @@ class FAQService {
         sessionCookie: sessionCookie,
       );
 
-      print('FAQService.createFAQ: status=${response.statusCode}');
-      print('FAQService.createFAQ: body=${response.body}');
-
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          return json['data'] as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return data['data'] as Map<String, dynamic>;
         }
-        throw Exception('Failed to create FAQ: ${json['error']}');
+        throw Exception('Failed to create FAQ: ${data['error']}');
       }
       throw Exception('Failed to create FAQ: ${response.statusCode}');
     } catch (e) {
-      print('FAQService.createFAQ: error=$e');
       rethrow;
     }
   }
@@ -179,19 +165,15 @@ class FAQService {
         sessionCookie: sessionCookie,
       );
 
-      print('FAQService.updateFAQ: id=$id, status=${response.statusCode}');
-      print('FAQService.updateFAQ: body=${response.body}');
-
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        if (json['success'] == true) {
-          return json['data'] as Map<String, dynamic>;
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true) {
+          return data['data'] as Map<String, dynamic>;
         }
-        throw Exception('Failed to update FAQ: ${json['error']}');
+        throw Exception('Failed to update FAQ: ${data['error']}');
       }
       throw Exception('Failed to update FAQ: ${response.statusCode}');
     } catch (e) {
-      print('FAQService.updateFAQ: error=$e');
       rethrow;
     }
   }
@@ -210,14 +192,11 @@ class FAQService {
         sessionCookie: sessionCookie,
       );
 
-      print('FAQService.softDeleteFAQ: id=$id, status=${response.statusCode}');
-
       if (response.statusCode != 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        throw Exception('Failed to delete FAQ: ${json['error']}');
+        final data = response.data as Map<String, dynamic>;
+        throw Exception('Failed to delete FAQ: ${data['error']}');
       }
     } catch (e) {
-      print('FAQService.softDeleteFAQ: error=$e');
       rethrow;
     }
   }
@@ -236,14 +215,11 @@ class FAQService {
         sessionCookie: sessionCookie,
       );
 
-      print('FAQService.deleteFAQ: id=$id, status=${response.statusCode}');
-
       if (response.statusCode != 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        throw Exception('Failed to permanently delete FAQ: ${json['error']}');
+        final data = response.data as Map<String, dynamic>;
+        throw Exception('Failed to permanently delete FAQ: ${data['error']}');
       }
     } catch (e) {
-      print('FAQService.deleteFAQ: error=$e');
       rethrow;
     }
   }

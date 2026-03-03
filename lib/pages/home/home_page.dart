@@ -7,9 +7,7 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
 import 'package:moldify/pages/misc/tiles/stat_tile.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:async';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:moldify/pages/misc/tiles/home_banner.dart';
@@ -24,6 +22,7 @@ import '../misc/tiles/wikimold_tiles.dart';
 import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +32,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int _unReadNotifications = 0;
   String fullName = 'Guest User';
   String role = '';
 
@@ -43,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, String> _caseStatusMap = {};
   List<WikiArticle> _moldipediaArticles = [];
   bool _isLoadingDashboard = true;
-  String? _dashboardError;
 
   @override
   void initState() {
@@ -57,10 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadDashboardData(String? sessionCookie, String userRole) async {
-    print('_loadDashboardData called with role: $userRole');
+    AppLogger.d('_loadDashboardData called with role: $userRole');
 
     if (sessionCookie == null) {
-      print('Session cookie is null, returning early');
+      AppLogger.d('Session cookie is null, returning early');
       return;
     }
 
@@ -97,10 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
     } catch (e) {
-      print('Dashboard load error: $e');
-      if (mounted) {
-        setState(() => _dashboardError = 'Failed to load dashboard');
-      }
+      AppLogger.e('Dashboard load error', error: e);
     } finally {
       if (mounted) setState(() => _isLoadingDashboard = false);
     }
@@ -123,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'rejected': data['rejected'] ?? data['closed'] ?? 0,
       };
     } catch (e) {
-      print('Failed to fetch report counts: $e');
+      AppLogger.e('Failed to fetch report counts', error: e);
       return {
         'total': 0,
         'pending': 0,
@@ -167,13 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
               final status = reportResponse['data']?['status'] as String? ?? 'unknown';
               statusMap[case_.id] = status;
             } catch (e) {
-              print('Failed to fetch report for case ${case_.id}: $e');
+              AppLogger.e('Failed to fetch report for case ${case_.id}', error: e);
               statusMap[case_.id] = 'unknown';
             }
           }
         }
       } catch (e) {
-        print('Failed to fetch assigned cases: $e');
+        AppLogger.e('Failed to fetch assigned cases', error: e);
       }
     }
 
@@ -187,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final result = await wikiService.fetchMoldipedia(sessionCookie: sessionCookie);
       return result['articles'] as List<WikiArticle>? ?? [];
     } catch (e) {
-      print('Failed to fetch WikiMold articles: $e');
+      AppLogger.e('Failed to fetch WikiMold articles', error: e);
       return [];
     }
   }
@@ -212,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'In Progress',
         ),
         StatisticTile(
-          icon: FontAwesomeIcons.checkCircle,
+          icon: FontAwesomeIcons.circleCheck,
           statusColor: MoldifyColors.primaryColor, 
           value: _statusCount('resolved', padTwoDigits: true),
           label: 'Resolved',

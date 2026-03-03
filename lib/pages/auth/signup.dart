@@ -8,9 +8,7 @@ import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
-import 'package:provider/provider.dart';
 import '../../core/constants/route_names.dart';
-import '../../providers/auth_provider.dart';
 
 /// This is the Sign Up screen for the Moldify app.
 /// It allows users to create a new account by providing their username, email, password, and confirming the password.
@@ -41,7 +39,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final phoneNumController = TextEditingController();
 
   String? _passwordErrorText;
-  String? _confirmPasswordErrorText;
 
   @override
   void dispose() {
@@ -89,26 +86,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => isLoading = true);
-    final result = await _loginBloc.loginWithGoogle();
-    setState(() => isLoading = false);
-
-    if (result['success']) {
-      if (!context.mounted) return;
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      if (result['sessionValue'] != null) {
-        await authProvider.saveCookie(result['sessionValue']);
-      }
-      Navigator.of(context).pushReplacementNamed(RouteNames.main);
-    } else {
-      final error = result['error'];
-      if (error != null) {
-        _showErrorSnackBar(error.toString());
-      }
-    }
-  }
-
   /// Validates password meets all requirements
   String? _validatePassword(String password) {
     if (password.length < 8) {
@@ -132,7 +109,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _handleUserSignUp() async {
     setState(() {
       _passwordErrorText = null;
-      _confirmPasswordErrorText = null;
     });
 
     // Check terms & conditions FIRST before any other validation
@@ -188,10 +164,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => isLoading = false);
 
     if (result['success']) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       _showSuccessSnackBar('Account created successfully!');
       // Wait for a moment before navigating to give user time to see the message
       await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(RouteNames.login);
     } else {
       final error = result['error'];
@@ -207,14 +184,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           _handleUserSignUp();
         }
       }
-
-      // Wrapper function for Google Sign-In
-      void _onGoogleSignInPressed() {
-        if (!isLoading) {
-          _handleGoogleSignIn();
-        }
-      }
-
 
       @override
       Widget build(BuildContext context) {

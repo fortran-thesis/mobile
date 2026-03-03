@@ -117,7 +117,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didpop) async {
+      onPopInvokedWithResult: (bool didpop, dynamic result) async {
         if (didpop) {
           return;
         }
@@ -145,6 +145,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
             },
           );
 
+          if (!context.mounted) return;
           //If the user confirmed, pop the current route
           if (shouldPop != null && shouldPop) {
             Navigator.of(context).pop(true);
@@ -426,6 +427,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       );
 
                       if (shouldSubmit != true) return;
+                      if (!context.mounted) return;
 
                       setState(() {
                         _isSubmitting = true;
@@ -520,6 +522,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         }
 
                         // On success, show a confirmation snackbar and pop
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
@@ -535,9 +538,11 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                         // Close the submit screen after a short delay so the user can see the dialog
                         await Future.delayed(const Duration(milliseconds: 300));
+                        if (!context.mounted) return;
                         Navigator.of(context).pop();
                       } catch (e) {
                         // Show error
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(

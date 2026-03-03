@@ -5,6 +5,7 @@ import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class MainCameraScreen extends StatefulWidget {
   // 1. Add a boolean to control AppBar visibility, defaulting to false.
@@ -37,15 +38,15 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
       if (!mounted) return;
 
       if (imageFile != null) {
-        print('Image selected from gallery: ${imageFile.path}');
+        AppLogger.d('Image selected from gallery: ${imageFile.path}');
         // Use named route for navigation
         await Navigator.pushNamed(context, RouteNames.imagePreview,
             arguments: {'imagePath': imageFile.path, 'source': 'main_camera'});
       } else {
-        print('No image selected.');
+        AppLogger.d('No image selected.');
       }
     } catch (e) {
-      print('Error picking image or navigating: $e');
+      AppLogger.e('Error picking image or navigating', error: e);
     } finally {
       if (mounted) {
         setState(() {

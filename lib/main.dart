@@ -12,7 +12,6 @@ import 'package:moldify/pages/home/home_page.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:moldify/pages/farmer/report/main_report.dart';
-import 'dart:async';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
 
@@ -47,8 +46,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AppAuthProvider>(context);
-    final bool isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
     return MaterialApp(
       title: 'Moldify',
       debugShowCheckedModeBanner: false,
@@ -69,9 +66,6 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int selectedPosition = 0;
 
-  // Bloc to fetch user profile and decide role-based layout
-  late UserBloc _userBloc;
-  StreamSubscription? _userSub;
   bool _isExpert = true; // mycologist/curator => true; farmer/user => false
 
   /// List of pages to be displayed in the main page. This is updated
@@ -84,46 +78,11 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    _userBloc = UserBloc(userService: UserService());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+      context.read<UserBloc>().add(FetchUserProfile(sessionCookie: sessionCookie));
     });
-
-    _userSub = _userBloc.stream.listen((state) {
-      print('🔵 UserBloc state: $state');
-      if (state is UserProfileLoaded) {
-        final role = state.profile.role.toLowerCase();
-        final isExpert = !(role == 'farmer' || role == 'user');
-        print('🔵 User role from profile: ${state.profile.role} (lowercase: $role)');
-        print('🔵 Is expert: $isExpert, Current _isExpert: $_isExpert');
-        if (isExpert != _isExpert) {
-          setState(() {
-            _isExpert = isExpert;
-            if (_isExpert) {
-              _pages = [const HomeScreen(), const MainMonitorScreen()];
-              print('🔵 Pages set to EXPERT mode (Home + Monitor)');
-            } else {
-              _pages = [const HomeScreen(), const MainReportScreen()];
-              print('🔵 Pages set to FARMER mode (Home + Report)');
-            }
-            if (selectedPosition >= _pages.length) selectedPosition = 0;
-          });
-        } else {
-          print('🔵 isExpert did not change, no setState called');
-        }
-      } else {
-        print('🔵 UserBloc state is not UserProfileLoaded: ${state.runtimeType}');
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _userSub?.cancel();
-    _userBloc.close();
-    super.dispose();
   }
 
   @override

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -14,7 +13,6 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/images/profile_image.dart';
 import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
 import 'package:moldify/pages/misc/tiles/bottom_sheet.dart';
-import 'package:provider/provider.dart';
 import '../../core/features/user/logic/user_bloc.dart';
 import '../../core/features/user/models/user_profile.dart';
 import '../../core/features/user/services/user_services.dart';
@@ -22,6 +20,7 @@ import '../../providers/auth_provider.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../misc/tiles/bottom_sheet_contents/photo_options_content.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// This screen allows users to edit their profile information such as username and email.
 /// It includes a profile image section where users can upload or remove their profile photo.
@@ -147,11 +146,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Auto-generate displayName from firstName + lastName
       final displayName = '$firstName $lastName'.trim();
 
-      print('🔵 Saving profile:');
-      print('   Username: $username');
-      print('   First Name: $firstName');
-      print('   Last Name: $lastName');
-      print('   Display Name: $displayName');
+      AppLogger.d('🔵 Saving profile:');
+      AppLogger.d('   Username: $username');
+      AppLogger.d('   First Name: $firstName');
+      AppLogger.d('   Last Name: $lastName');
+      AppLogger.d('   Display Name: $displayName');
 
       final result = await UserService().editProfile(
         sessionCookie: sessionCookie,
@@ -168,7 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         photoFile: _selectedPhoto,
       );
 
-      print('🔵 Got result: $result');
+      AppLogger.d('🔵 Got result: $result');
 
       if (!mounted) return;
 
@@ -177,6 +176,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         await Future.delayed(const Duration(milliseconds: 500));
         // Refresh profile
+        if (!mounted) return;
         context.read<UserBloc>().add(
           FetchUserProfile(sessionCookie: sessionCookie),
         );
@@ -184,12 +184,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) Navigator.pop(context, true);
       } else {
-        print('❌ Failed: ${result['error']}');
+        AppLogger.e('❌ Failed: ${result['error']}');
         _showSnackBar(result['error'] ?? 'Failed to update profile');
       }
     } catch (e, stackTrace) {
-      print('💥 Exception: $e');
-      print('📚 Stack trace: $stackTrace');
+      AppLogger.e('💥 Exception', error: e);
+      AppLogger.e('📚 Stack trace', error: stackTrace);
       _showSnackBar('Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -301,12 +301,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     return BuildBottomSheet(
                                       child: PhotoOptionsBottomSheetContent(
                                         onUploadPhoto: () {
-                                          print(
+                                          AppLogger.d(
                                               'Upload Photo Tapped in EditProfileScreen');
                                           Navigator.of(context).pop('upload');
                                         },
                                         onRemovePhoto: () {
-                                          print(
+                                          AppLogger.d(
                                               'Remove Photo Tapped in EditProfileScreen');
                                           Navigator.of(context).pop('remove');
                                         },

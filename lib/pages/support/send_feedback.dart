@@ -1,3 +1,4 @@
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -12,11 +13,12 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/textboxes/textboxes.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// This screen allows users to send feedback about the app.
 
 class SendFeedbackScreen extends StatefulWidget {
-  const SendFeedbackScreen({Key? key}) : super(key: key);
+  const SendFeedbackScreen({super.key});
 
   @override
   _SendFeedbackScreenState createState() => _SendFeedbackScreenState();
@@ -93,7 +95,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
           Navigator.pop(context);
         }
       } else {
-        print('Failed. Error: ${response.error}');
+        AppLogger.e('Failed. Error: ${response.error}');
         // Show the actual error from the API
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -106,8 +108,8 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
       }
     } catch (e, stackTrace) {
       // This catches actual exceptions (network errors, parsing errors, etc.)
-      print('Exception caught: $e');
-      print('Stack trace: $stackTrace');
+      AppLogger.e('Exception caught', error: e);
+      AppLogger.e('Stack trace', error: stackTrace);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

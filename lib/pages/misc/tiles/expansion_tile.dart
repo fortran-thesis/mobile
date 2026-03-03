@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import '../colors.dart';
 
 class CustomExpansionTile extends StatefulWidget {
-  String title;
-  String content;
+  final String title;
+  final String content;
 
-   CustomExpansionTile({
+  const CustomExpansionTile({
     required this.title,
     required this.content,
-    super.key
+    super.key,
   });
 
   @override

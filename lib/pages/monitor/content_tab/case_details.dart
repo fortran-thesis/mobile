@@ -4,6 +4,7 @@ import 'package:timeline_tile/timeline_tile.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
 import '../../misc/functions/empty_state.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// This is the "Case Details" tab content in the "Monitoring" page for mycologists
 /// It displays a timeline of case updates with dates, notes, and images.
@@ -27,9 +28,9 @@ class CaseDetailsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     /// Entries are displayed in reverse chronological order (most recent first)
-    print('CaseDetailsTab.build(): entries.length = ${entries.length}');
+    AppLogger.d('CaseDetailsTab.build(): entries.length = ${entries.length}');
     for (var i = 0; i < entries.length; i++) {
-      print('  entry[$i]: ${entries[i]}');
+      AppLogger.d('  entry[$i]: ${entries[i]}');
     }
     
     return SingleChildScrollView(
@@ -179,9 +180,9 @@ class CaseDetailsTab extends StatelessWidget {
             ...List.generate(
               entries.length,
               (index) {
-                print('CaseDetailsTab: generating tile for index=$index, entries.length=${entries.length}');
+                AppLogger.d('CaseDetailsTab: generating tile for index=$index, entries.length=${entries.length}');
                 final reversedIndex = entries.length - 1 - index;
-                print('CaseDetailsTab: reversedIndex=$reversedIndex, entry=${entries[reversedIndex]}');
+                AppLogger.d('CaseDetailsTab: reversedIndex=$reversedIndex, entry=${entries[reversedIndex]}');
                 return _CaseTimelineTile(
                   dateTime: entries[reversedIndex]["date"],
                   notes: entries[reversedIndex]["notes"],
@@ -214,7 +215,7 @@ class _CaseTimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('_CaseTimelineTile.build(): dateTime=$dateTime, notes=$notes, imageUrls=$imageUrls, isLast=$isLast');
+    AppLogger.d('_CaseTimelineTile.build(): dateTime=$dateTime, notes=$notes, imageUrls=$imageUrls, isLast=$isLast');
     return TimelineTile(
       alignment: TimelineAlign.start,
       lineXY: 0.1,
@@ -292,7 +293,7 @@ class _CaseTimelineTile extends StatelessWidget {
                                   shape: const RoundedRectangleBorder(
                                       borderRadius: BorderRadius.zero),
                                   backgroundColor:
-                                  Colors.black.withOpacity(0.9),
+                                  Colors.black.withValues(alpha: 0.9),
                                   insetPadding: EdgeInsets.zero,
                                   child: Stack(
                                     alignment: Alignment.center,

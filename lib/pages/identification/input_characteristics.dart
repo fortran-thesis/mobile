@@ -10,6 +10,7 @@ import 'characteristics_tab_content/reproductive_structure.dart';
 import 'characteristics_tab_content/conidiophore_features.dart';
 import 'characteristics_tab_content/spore_characteristics.dart';
 import 'characteristics_tab_content/additional_characteristics.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 
 class InputCharacteristicsScreen extends StatefulWidget {
@@ -100,7 +101,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
     if (args == null) {
-      print("Error: No arguments received from previous screen.");
+      AppLogger.e("Error: No arguments received from previous screen.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error: Missing image data.')),
       );
@@ -110,7 +111,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
     final croppedImagePath = args['croppedImagePath'];
     final modelResult = args['modelResult'];
 
-    print("Collected formData: $formData");
+    AppLogger.d("Collected formData: $formData");
 
     // Navigate directly to Mold Result screen (same behavior as ImagePreviewScreen)
     Navigator.pushNamed(

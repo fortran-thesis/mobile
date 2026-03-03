@@ -3,7 +3,6 @@ import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/code_recover_account.dart';
 import 'package:moldify/pages/auth/intro.dart';
-import 'package:moldify/pages/farmer/report/main_report.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';

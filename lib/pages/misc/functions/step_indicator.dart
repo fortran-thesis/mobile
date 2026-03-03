@@ -12,10 +12,10 @@ class StepIndicator extends StatelessWidget {
   final int currentStep;
 
   const StepIndicator({
-    Key? key,
+    super.key,
     required this.totalSteps,
     required this.currentStep,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

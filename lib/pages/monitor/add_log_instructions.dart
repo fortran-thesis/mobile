@@ -5,6 +5,7 @@ import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/colors.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class AddLogInstructionsScreen extends StatefulWidget {
   // 1. Add sourceTab as a constructor argument
@@ -38,7 +39,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
       if (!mounted) return;
 
       if (imageFile != null) {
-        print('Image selected from gallery: ${imageFile.path}');
+        AppLogger.d('Image selected from gallery: ${imageFile.path}');
         // 2. Pass both 'source' and the new 'sourceTab' argument
         await Navigator.pushNamed(
           context,
@@ -51,10 +52,10 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
           },
         );
       } else {
-        print('No image selected.');
+        AppLogger.d('No image selected.');
       }
     } catch (e) {
-      print('Error picking image or navigating: $e');
+      AppLogger.e('Error picking image or navigating', error: e);
     } finally {
       if (mounted) {
         setState(() {
@@ -220,7 +221,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
           if (_isProcessingImage)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 child: const Center(
                   child: CircularProgressIndicator(),
                 ),

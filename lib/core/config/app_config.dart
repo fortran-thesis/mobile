@@ -38,7 +38,7 @@ class AppConfig {
   static const String firebaseProjectId = 'thesis-2e701';
 
   // ── Convenience getters ───────────────────────────────────────────────────
-  /// Full API prefix used by every endpoint, e.g. "<base>/api/v1".
+  /// Full API prefix used by every endpoint, e.g. `<base>/api/v1`.
   static String get apiV1 => '$apiBaseUrl/api/v1';
 
   static void logConfig() {

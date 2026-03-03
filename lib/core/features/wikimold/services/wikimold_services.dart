@@ -1,9 +1,10 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:moldify/core/config/cache_config.dart';
+import 'package:moldify/services/api_service.dart';
 import '../../../constants/api_url.dart';
 import '../models/wikimold.dart';
 
 class WikiService {
+  final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldipedia);
   /// Fetch all moldipedia articles with optional pagination
   /// 
   /// [limit] - defaults to 10
@@ -20,20 +21,15 @@ class WikiService {
         if (pageToken != null) 'pageToken': pageToken,
       };
 
-      final uri = Uri.parse(ApiUrl.moldipedia).replace(queryParameters: queryParams);
-
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          if (sessionCookie != null) 'Cookie': 'session=$sessionCookie',
-        },
+      final response = await _apiService.get(
+        '',
+        queryParams: queryParams,
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
       );
-      print('Moldipedia response code: ${response.statusCode}');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedData = json.decode(response.body);
+        final Map<String, dynamic> decodedData = response.data as Map<String, dynamic>;
 
         final List snapshot = decodedData['data']['snapshot'];
         final List<WikiArticle> articles =
@@ -69,21 +65,15 @@ class WikiService {
       queryParams['limit'] = limit.toString();
       if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
 
-      final uri = Uri.parse(ApiUrl.moldipedia).replace(queryParameters: queryParams);
-
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          if (sessionCookie != null) 'Cookie': 'session=$sessionCookie',
-        },
+      final response = await _apiService.get(
+        '',
+        queryParams: queryParams,
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
       );
-      print('WikiService.searchMoldipedia: status=${response.statusCode}');
-      print('WikiService.searchMoldipedia: search=$search');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedData = json.decode(response.body);
+        final Map<String, dynamic> decodedData = response.data as Map<String, dynamic>;
 
         final List snapshot = decodedData['data']['snapshot'];
         final List<WikiArticle> articles =
@@ -105,33 +95,26 @@ class WikiService {
     required String articleId,
     String? sessionCookie,
   }) async {
-    // 1️⃣ Ensure articleId is not empty
     if (articleId.isEmpty) {
       throw Exception('Invalid article ID');
     }
 
-    final url = '${ApiUrl.moldipedia}/$articleId';
-    print('Fetching article with URL: $url');
-
-    // 2️⃣ Ensure the cookie is valid
     if (sessionCookie == null || sessionCookie.isEmpty) {
       throw Exception('Unauthorized: session cookie is missing');
     }
 
     try {
-      final response = await http.get(
-        Uri.parse(url),
+      final response = await _apiService.get(
+        '/$articleId',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json', // make sure server expects JSON
-          'Cookie': 'session=${sessionCookie.trim()}', // ✅ send correctly
+          'Accept': 'application/json',
         },
+        sessionCookie: sessionCookie.trim(),
+        cacheOptions: CacheConfig.staticData,
       );
 
-      print('Response code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      final decoded = json.decode(response.body);
+      final decoded = response.data as Map<String, dynamic>;
 
       if (response.statusCode == 200) {
         return WikiArticle.fromJson(decoded['data']);

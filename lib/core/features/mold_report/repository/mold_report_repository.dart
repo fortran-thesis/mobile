@@ -1,5 +1,6 @@
 import 'package:moldify/core/features/mold_report/models/mold_report.dart';
 import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class MoldReportRepository {
   final MoldReportService _service = MoldReportService();
@@ -9,9 +10,9 @@ class MoldReportRepository {
 
   /// Fetch a page from API. Uses cursor-based pagination with [pageToken].
   Future<List<MoldReport>> fetchPage({String? pageToken, String? sessionCookie}) async {
-    print('MoldReportRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
+    AppLogger.d('MoldReportRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
     final result = await _service.fetchMoldReports(sessionCookie: sessionCookie, limit: pageSize, pageToken: pageToken, path: '/user');
-    print('MoldReportRepository: raw API response: $result');
+    AppLogger.d('MoldReportRepository: raw API response: $result');
 
     // Normalize the returned data shape. Backend may return:
     // - { success: true, data: { snapshot: [...], nextPageToken: ... } }
@@ -40,14 +41,14 @@ class MoldReportRepository {
       rawDataList = <dynamic>[];
     }
 
-    print('MoldReportRepository: normalized rawDataList (${rawDataList.length} items): $rawDataList');
+    AppLogger.d('MoldReportRepository: normalized rawDataList (${rawDataList.length} items): $rawDataList');
 
     final List<MoldReport> reports = rawDataList
         .map((e) => MoldReport.fromJson(e as Map<String, dynamic>))
         .where((r) => r.id.isNotEmpty) // ignore invalid/empty placeholder objects
         .toList();
 
-    print('MoldReportRepository: parsed ${reports.length} valid reports (filtered empty ids)');
+    AppLogger.d('MoldReportRepository: parsed ${reports.length} valid reports (filtered empty ids)');
     return reports;
   }
 
@@ -76,7 +77,7 @@ class MoldReportRepository {
     String? pageToken,
     String? sessionCookie,
   }) async {
-    print('MoldReportRepository: searching with query="$search", status="$status", pageToken="$pageToken"');
+    AppLogger.d('MoldReportRepository: searching with query="$search", status="$status", pageToken="$pageToken"');
     final result = await _service.searchMoldReports(
       search: search,
       status: status,
@@ -85,7 +86,7 @@ class MoldReportRepository {
       sessionCookie: sessionCookie,
     );
 
-    print('MoldReportRepository: search API response: $result');
+    AppLogger.d('MoldReportRepository: search API response: $result');
 
     // Normalize the returned data shape
     dynamic raw = result;
@@ -106,14 +107,14 @@ class MoldReportRepository {
       rawDataList = <dynamic>[];
     }
 
-    print('MoldReportRepository: normalized search results (${rawDataList.length} items)');
+    AppLogger.d('MoldReportRepository: normalized search results (${rawDataList.length} items)');
 
     final List<MoldReport> reports = rawDataList
         .map((e) => MoldReport.fromJson(e as Map<String, dynamic>))
         .where((r) => r.id.isNotEmpty)
         .toList();
 
-    print('MoldReportRepository: parsed ${reports.length} valid search results');
+    AppLogger.d('MoldReportRepository: parsed ${reports.length} valid search results');
     return reports;
   }
 }

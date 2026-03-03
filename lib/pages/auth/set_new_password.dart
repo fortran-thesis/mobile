@@ -77,6 +77,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       return;
     }
     final result = await _authBloc.verifiedForgotPassword(widget.token, newPassword);
+    if (!mounted) return;
     if (!result['success']) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['error'] ?? 'Failed to reset password'), backgroundColor: Colors.red,)

@@ -1,8 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:moldify/core/constants/route_names.dart';
 import '../misc/colors.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class CameraScreen extends StatefulWidget {
   final String? source;
@@ -33,7 +33,8 @@ class _CameraScreenState extends State<CameraScreen> {
     _setUpCameraController();
   }
 
-  /// Disposes the camera controller to release resources when the widget is removed.  @override
+  /// Disposes the camera controller to release resources when the widget is removed.
+  @override
   void dispose() {
     if (cameraController != null && cameraController!.value.isInitialized) {
       cameraController!.setFlashMode(FlashMode.off);
@@ -59,7 +60,7 @@ class _CameraScreenState extends State<CameraScreen> {
         });
       }
     } on CameraException catch (e) {
-      print('Error setting flash mode: $e');
+      AppLogger.e('Error setting flash mode', error: e);
     }
   }
 
@@ -67,7 +68,7 @@ class _CameraScreenState extends State<CameraScreen> {
   void _onCaptureButtonPressed() async {
     // Check if the camera is initialized and ready to use
     if (cameraController == null || !cameraController!.value.isInitialized) {
-      print('Error: Camera controller is not initialized.');
+      AppLogger.e('Error: Camera controller is not initialized.');
       return;
     }
     // Prevents taking multiple pictures at the same time
@@ -87,12 +88,12 @@ class _CameraScreenState extends State<CameraScreen> {
       final XFile imageFile = await cameraController!.takePicture();
 
       if (mounted) {
-        print('Picture saved to: ${imageFile.path}');
+        AppLogger.d('Picture saved to: ${imageFile.path}');
 
         // If the flash is on (either tracked manually or set by the controller), turn it off before navigating
         if (_isFlashOn || cameraController!.value.flashMode == FlashMode.torch) {
           await cameraController!.setFlashMode(FlashMode.off);
-          print('Flash explicitly turned off before navigating.');
+          AppLogger.d('Flash explicitly turned off before navigating.');
           // Update the internal flash state to reflect that it's now off
           if (mounted) {
             setState(() {
@@ -102,6 +103,7 @@ class _CameraScreenState extends State<CameraScreen> {
         }
 
         // Navigate to the image preview screen and pass relevant data (like image path and source info)
+        if (!mounted) return;
         await Navigator.pushNamed(
           context,
           '/image_preview',
@@ -114,7 +116,7 @@ class _CameraScreenState extends State<CameraScreen> {
         );
       }
     } on CameraException catch (e) {
-      print('Error taking picture: $e');
+      AppLogger.e('Error taking picture', error: e);
     } finally {
       // Reset the `_isTakingPicture` flag to allow new pictures to be taken
       if (mounted) {
@@ -160,7 +162,7 @@ class _CameraScreenState extends State<CameraScreen> {
       setState(() {
         _error = e;
       });
-      print('Camera Error: $e');
+      AppLogger.e('Camera Error', error: e);
     }
   }
 

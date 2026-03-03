@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import '../misc/buttons/primary_button.dart';
 
 class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
@@ -53,7 +52,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontFamily: 'Bricolage-Grotesque-Regular',
-                        color: MoldifyColors.MoldifyBlack.withOpacity(0.5),
+                        color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: 30),

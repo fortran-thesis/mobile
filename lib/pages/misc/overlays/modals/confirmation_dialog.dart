@@ -12,14 +12,14 @@ class BuildConfirmationDialog extends StatelessWidget {
   final String confirmText;
 
   const BuildConfirmationDialog({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.onConfirm,
     required this.onCancel,
     required this.cancelText,
     required this.confirmText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/user/models/user_profile.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:equatable/equatable.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 // Events
 abstract class UserEvent extends Equatable {
@@ -45,14 +46,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   }
 
   Future<void> _onFetchUserProfile(FetchUserProfile event, Emitter<UserState> emit) async {
-    print('UserBloc: FetchUserProfile with sessionCookie: \\${event.sessionCookie}');
+    AppLogger.d('UserBloc: FetchUserProfile with sessionCookie: ${event.sessionCookie}');
     emit(UserProfileLoading());
     try {
       final response = await userService.getUserProfile(event.sessionCookie);
-      print('UserBloc: getUserProfile response: \\${response.toString()}');
+      AppLogger.d('UserBloc: getUserProfile response: ${response.toString()}');
       if (response['success'] == true && response['data'] != null) {
         final profile = UserProfile.fromJson({'data': response['data']});
-        print('UserBloc: UserProfile.fromJson: \\${profile.toString()}');
+        AppLogger.d('UserBloc: UserProfile.fromJson: ${profile.toString()}');
         emit(UserProfileLoaded(profile));
       } else {
         emit(UserProfileError(response['error']?.toString() ?? 'Unknown error'));

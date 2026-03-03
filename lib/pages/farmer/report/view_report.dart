@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/report/content_tab/prevention_tactics_content.dart';
@@ -11,6 +10,7 @@ import '../../../core/features/mold_report/models/mold_report.dart';
 import '../../../core/features/mold_report/repository/mold_report_repository.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../providers/auth_provider.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 // route names not used here
 import '../../misc/appbar/primary_app_bar.dart';
@@ -112,7 +112,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
   Future<void> _loadReportFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
-    print('ViewReport: args = $args');
+    AppLogger.d('ViewReport: args = $args');
     String? id;
     if (args is Map<String, dynamic>) {
       id = args['id']?.toString();
@@ -120,7 +120,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       id = args;
     }
 
-    print('ViewReport: extracted id = $id');
+    AppLogger.d('ViewReport: extracted id = $id');
 
     if (id == null || id.isEmpty) {
       setState(() {
@@ -133,23 +133,23 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      print('ViewReport: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
+      AppLogger.d('ViewReport: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
 
       // Prefer existing repository from a surrounding MoldReportBloc if available
       MoldReportRepository repo;
       try {
         final bloc = Provider.of<MoldReportBloc>(context, listen: false);
         repo = bloc.repository;
-        print('ViewReport: using repository from MoldReportBloc');
+        AppLogger.d('ViewReport: using repository from MoldReportBloc');
       } catch (_) {
         // no bloc in context, create a local repository
         repo = MoldReportRepository(pageSize: 10);
-        print('ViewReport: created new repository');
+        AppLogger.d('ViewReport: created new repository');
       }
 
-      print('ViewReport: calling getReportById($id)');
+      AppLogger.d('ViewReport: calling getReportById($id)');
       final MoldReport? report = await repo.getReportById(id, sessionCookie: sessionCookie);
-      print('ViewReport: getReportById returned: $report');
+      AppLogger.d('ViewReport: getReportById returned: $report');
       
       if (report == null) {
         setState(() {
@@ -159,11 +159,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         return;
       }
 
-      print('ViewReport: report.id = ${report.id}');
-      print('ViewReport: report.caseName = ${report.caseName}');
-      print('ViewReport: report.host = ${report.host}');
-      print('ViewReport: report.status = ${report.status}');
-      print('ViewReport: report.caseDetails.length = ${report.caseDetails.length}');
+      AppLogger.d('ViewReport: report.id = ${report.id}');
+      AppLogger.d('ViewReport: report.caseName = ${report.caseName}');
+      AppLogger.d('ViewReport: report.host = ${report.host}');
+      AppLogger.d('ViewReport: report.status = ${report.status}');
+      AppLogger.d('ViewReport: report.caseDetails.length = ${report.caseDetails.length}');
 
       setState(() {
         _report = report;
@@ -176,12 +176,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         caseImageUrl = report.caseDetails.isNotEmpty && report.caseDetails.first.coverPhoto.isNotEmpty
             ? report.caseDetails.first.coverPhoto.first
             : null;
-        print('ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl');
+        AppLogger.d('ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl');
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      print('ViewReport: ERROR - $e');
-      print('ViewReport: stackTrace - $stackTrace');
+      AppLogger.e('ViewReport: ERROR', error: e, stackTrace: stackTrace);
       setState(() {
         _error = 'Failed to load report: $e';
         _isLoading = false;

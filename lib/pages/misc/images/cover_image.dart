@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../misc/colors.dart';
 
 class BuildCoverImage extends StatelessWidget {
   final String? imageUrl;

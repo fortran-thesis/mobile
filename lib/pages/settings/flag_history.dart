@@ -7,7 +7,7 @@ import '../misc/textboxes/textboxes.dart';
 import '../misc/tiles/flag_history_tile.dart';
 
 class FlagHistoryScreen extends StatefulWidget {
-  const FlagHistoryScreen({Key? key}) : super(key: key);
+  const FlagHistoryScreen({super.key});
 
   @override
   State<FlagHistoryScreen> createState() => _FlagHistoryScreenState();

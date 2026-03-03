@@ -160,7 +160,7 @@ class _MoldInfoSectionState extends State<MoldInfoSection> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

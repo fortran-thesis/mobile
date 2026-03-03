@@ -18,9 +18,9 @@ import '../../providers/auth_provider.dart';
 /// as well as a continue with Google option.
 
 class LoginScreen extends StatefulWidget {
-  String? userRole;
+  final String? userRole;
 
-  LoginScreen({super.key, this.userRole});
+  const LoginScreen({super.key, this.userRole});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -60,26 +60,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => isLoading = true);
-    final result = await _loginBloc.loginWithGoogle();
-    setState(() => isLoading = false);
-
-    if (result['success']) {
-      if (!context.mounted) return;
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      if (result['sessionValue'] != null) {
-        await authProvider.saveCookie(result['sessionValue']);
-      }
-      Navigator.of(context).pushReplacementNamed(RouteNames.main);
-    } else {
-      final error = result['error'];
-      if (error != null) {
-        _showErrorSnackBar(error.toString());
-      }
-    }
-  }
-
   Future<void> _handleUsernamePasswordSignIn() async {
     if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
       _showErrorSnackBar('Please enter your username and password.');
@@ -106,11 +86,12 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
     final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
     if (result['sessionValue'] != null) {
       await authProvider.saveCookie(result['sessionValue']);
     }
+    if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(
         RouteNames.main, (route) => false);
   }
@@ -121,14 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _handleUsernamePasswordSignIn();
     }
   }
-
-  // Wrapper function for Google Sign-In
-  void _onGoogleSignInPressed() {
-    if (!isLoading) {
-      _handleGoogleSignIn();
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {

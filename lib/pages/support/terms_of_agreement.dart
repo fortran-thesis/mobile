@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import '../misc/buttons/primary_button.dart';
 
 class TermsOfAgreementScreen extends StatefulWidget {
   const TermsOfAgreementScreen({super.key});
@@ -54,7 +53,7 @@ class _TermsOfAgreementScreenState extends State<TermsOfAgreementScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontFamily: 'Bricolage-Grotesque-Regular',
-                        color: MoldifyColors.MoldifyBlack.withOpacity(0.5),
+                        color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: 30),

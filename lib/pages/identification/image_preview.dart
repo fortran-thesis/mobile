@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import '../misc/colors.dart';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
@@ -36,13 +37,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   @override
   void initState() {
     super.initState();
-    print('🚀🚀🚀 ImagePreview: initState called - CODE VERSION WITH DEBUG LOGS LOADED 🚀🚀🚀');
-    print('ImagePreview: source = ${widget.source}, sourceTab = ${widget.sourceTab}');
+    AppLogger.d('🚀🚀🚀 ImagePreview: initState called - CODE VERSION WITH DEBUG LOGS LOADED 🚀🚀🚀');
+    AppLogger.d('ImagePreview: source = ${widget.source}, sourceTab = ${widget.sourceTab}');
   }
 
   /// Captures the current UI preview, crops it based on a defined box, and navigates to the appropriate screen.
   Future<void> _captureAndCropImage() async {
-    print('🎬 ImagePreview: _captureAndCropImage called - starting capture process');
+    AppLogger.d('🎬 ImagePreview: _captureAndCropImage called - starting capture process');
     if (_isProcessing) return;
 
     // Set the processing flag to true to indicate a task is in progress
@@ -56,7 +57,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
     // If either render object is null, show error and exit
     if (boundary == null || dottedBoxRenderBox == null) {
-      print("Error: Could not get render objects for cropping.");
+      AppLogger.e("Error: Could not get render objects for cropping.");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error preparing image. Please try again.')),
@@ -99,7 +100,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       // Check if the crop area is within the captured image bounds
       if (cropRectPhysical.left < 0 || cropRectPhysical.top < 0 ||
           cropRectPhysical.right > capturedImage.width || cropRectPhysical.bottom > capturedImage.height) {
-        print("Error: Crop area is outside the captured image bounds.");
+        AppLogger.e("Error: Crop area is outside the captured image bounds.");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Crop area is outside the image. Adjust and try again.')),
@@ -133,7 +134,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       final ByteData? byteData = await croppedUiImage.toByteData(format: ui.ImageByteFormat.png);
       // Check if byte data was successfully obtained
       if (byteData == null) {
-        print("Error: Could not get byte data from cropped image.");
+        AppLogger.e("Error: Could not get byte data from cropped image.");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Error processing cropped image.')),
@@ -151,7 +152,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       final String fileName = 'cropped_preview_${DateTime.now().millisecondsSinceEpoch}.png';
       final File file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(pngBytes);
-      print('Cropped image saved to: ${file.path}');
+      AppLogger.d('Cropped image saved to: ${file.path}');
 
       if (!mounted) return;
       
@@ -169,12 +170,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         );
       } else {
         // For main_camera source, show modal to let user choose
-        print('🔷 ImagePreview: Showing confirmation dialog');
+        AppLogger.d('🔷 ImagePreview: Showing confirmation dialog');
         showDialog(
             context: context,
             barrierDismissible: false, // User must choose an option
             builder: (BuildContext dialogContext) {
-              print('🔷 ImagePreview: Dialog builder called');
+              AppLogger.d('🔷 ImagePreview: Dialog builder called');
               return BuildConfirmationDialog(
                 title: 'Improve Prediction',
                 subtitle: 'Do you want to input additional characteristics for a more accurate result?',
@@ -182,7 +183,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 cancelText: 'No, See Result',
                 onConfirm: () {
                   // YES action: Navigate to Input Characteristics (no API call yet)
-                  print('🟠 ImagePreview: User selected "Yes, Add Details"');
+                  AppLogger.d('🟠 ImagePreview: User selected "Yes, Add Details"');
                   Navigator.of(dialogContext).pop(); // Dismiss dialog
                   Navigator.pushNamed(
                     context,
@@ -196,7 +197,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                 },
                 onCancel: () {
                   // NO action: Call identifyImage API, then fetch mold details
-                  print('🔵 ImagePreview: BUTTON CLICKED - No, See Result');
+                  AppLogger.d('🔵 ImagePreview: BUTTON CLICKED - No, See Result');
                   Navigator.of(dialogContext).pop();
                   
                   // Call async function to handle the API calls
@@ -208,7 +209,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       }
 
     } catch (e, s) {
-      print('Error during cropping or navigation: $e\n$s');
+      AppLogger.e('Error during cropping or navigation', error: e, stackTrace: s);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: ${e.toString()}')),
@@ -350,7 +351,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
   /// Helper method to handle "No, See Result" button action
   Future<void> _handleNoSeeResult(BuildContext context, String imagePath, Uint8List imageBytes, String fileName) async {
-    print('🟢 ImagePreview: _handleNoSeeResult called');
+    AppLogger.d('🟢 ImagePreview: _handleNoSeeResult called');
     
     // Show loading indicator
     if (mounted) {
@@ -365,44 +366,41 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     
     try {
       // Step 1: Call identifyImage to get the mold prediction
-      print('🟡 ImagePreview: Step 1 - Calling identifyImage API');
+      AppLogger.d('🟡 ImagePreview: Step 1 - Calling identifyImage API');
       final cameraService = CameraService();
       final modelResult = await cameraService.identifyImage(
         imageBytes: imageBytes,
         filename: fileName,
       );
-      print('📊 ImagePreview: identifyImage result: $modelResult');
+      AppLogger.d('📊 ImagePreview: identifyImage result: $modelResult');
       
       // Step 2: Extract genus from predicted_class
       final predictedClass = modelResult['predicted_class']?.toString() ?? '';
       final genus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
       
-      print('🟡 ImagePreview: Step 2 - Predicted class: $predictedClass');
-      print('🟡 ImagePreview: Extracted genus: $genus');
+      AppLogger.d('🟡 ImagePreview: Step 2 - Predicted class: $predictedClass');
+      AppLogger.d('🟡 ImagePreview: Extracted genus: $genus');
       
       // Step 3: Fetch detailed mold information
-      print('🟡 ImagePreview: Step 3 - Calling getMoldDetails(genus: $genus)');
+      AppLogger.d('🟡 ImagePreview: Step 3 - Calling getMoldDetails(genus: $genus)');
       final moldDetails = await cameraService.getMoldDetails(genus: genus);
       
-      print('✅ ImagePreview: getMoldDetails completed');
-      print('✅ ImagePreview: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
+      AppLogger.d('✅ ImagePreview: getMoldDetails completed');
+      AppLogger.d('✅ ImagePreview: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
       
       if (moldDetails.containsKey('error')) {
-        print('❌ ImagePreview: ERROR in moldDetails response: ${moldDetails['error']}');
+        AppLogger.e('❌ ImagePreview: ERROR in moldDetails response: ${moldDetails['error']}');
       } else {
-        print('✅ ImagePreview: moldDetails keys: ${moldDetails.keys.toList()}');
+        AppLogger.d('✅ ImagePreview: moldDetails keys: ${moldDetails.keys.toList()}');
       }
       
       // Dismiss loading
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      if (!context.mounted) return;
       
-      if (!mounted) return;
-      
-      print('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
-      Navigator.pushNamed(
-        context,
+      AppLogger.d('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
+      Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': imagePath,
@@ -411,33 +409,27 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         },
       );
     } catch (e, stackTrace) {
-      print('❌ ImagePreview: EXCEPTION in _handleNoSeeResult: $e');
-      print('❌ ImagePreview: Stack trace: $stackTrace');
+      AppLogger.e('❌ ImagePreview: EXCEPTION in _handleNoSeeResult', error: e, stackTrace: stackTrace);
       
       // Dismiss loading
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+      if (!context.mounted) return;
       
       // Show error message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to process image: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to process image: $e')),
+      );
       
       // Navigate anyway with error data
-      if (mounted) {
-        Navigator.pushNamed(
-          context,
-          '/mold_result',
-          arguments: {
-            'croppedImagePath': imagePath,
-            'modelResult': {'error': e.toString()},
-            'moldDetails': {'error': e.toString()},
-          },
-        );
-      }
+      Navigator.of(context).pushNamed(
+        '/mold_result',
+        arguments: {
+          'croppedImagePath': imagePath,
+          'modelResult': {'error': e.toString()},
+          'moldDetails': {'error': e.toString()},
+        },
+      );
     }
   }
 }

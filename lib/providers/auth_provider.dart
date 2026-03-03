@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:moldify/core/config/cache_config.dart';
 
 class AppAuthProvider extends ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -36,6 +37,7 @@ class AppAuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await CacheConfig.clearAll();
     await clearCookie();
   }
 }

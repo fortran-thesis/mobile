@@ -1,7 +1,7 @@
 import 'package:moldify/core/config/app_config.dart';
 
 /// All endpoint constants derive from [AppConfig], which is populated
-/// at build time via --dart-define-from-file=env.<environment>.json.
+/// at build time via `--dart-define-from-file=env.<environment>.json`.
 class ApiUrl {
   // Read from AppConfig — never hardcode here.
   static String get baseUrl => AppConfig.apiBaseUrl;

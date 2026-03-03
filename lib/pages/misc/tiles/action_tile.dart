@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moldify/pages/misc/colors.dart';
 
 class ActionTile extends StatefulWidget {
   final IconData icon;
@@ -75,7 +74,7 @@ Widget build(BuildContext context) {
                   fontFamily: 'Bricolage-Grotesque-Regular',
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: widget.iconColor.withOpacity(0.9),
+                  color: widget.iconColor.withValues(alpha: 0.9),
                 ),
               ),
             ],

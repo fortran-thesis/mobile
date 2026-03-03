@@ -9,6 +9,7 @@ import '../../core/features/userReport/models/report_model.dart';
 import '../../core/features/userReport/services/report_services.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class ReportACuratorScreen extends StatefulWidget {
 
@@ -29,28 +30,28 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
       selectedRadio = index;
     });
     if (selectedRadio == 0) {
-      print('You selected 1st option');
+      AppLogger.d('You selected 1st option');
     }
     else if (selectedRadio == 1) {
-      print('You selected 2nd option');
+      AppLogger.d('You selected 2nd option');
     }
     else if (selectedRadio == 2) {
-      print('You selected 3rd option');
+      AppLogger.d('You selected 3rd option');
     }
     else if (selectedRadio == 3) {
-      print('You selected 4th option');
+      AppLogger.d('You selected 4th option');
     }
     else if (selectedRadio == 4) {
-      print('You selected 5th option');
+      AppLogger.d('You selected 5th option');
     }
     else if (selectedRadio == 5) {
-      print('You selected 6th option');
+      AppLogger.d('You selected 6th option');
     }
     else if (selectedRadio == 6) {
-      print('You selected 7th option');
+      AppLogger.d('You selected 7th option');
     }
     else {
-      print('Please choose among the options!');
+      AppLogger.d('Please choose among the options!');
     }
   }
 
@@ -62,7 +63,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (bool didpop) async {
+      onPopInvokedWithResult: (bool didpop, dynamic result) async {
         if (didpop) {
           return;
         }
@@ -88,6 +89,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
             },
           );
 
+          if (!context.mounted) return;
           //If the user confirmed, pop the current route
           if (shouldPop != null && shouldPop) {
             Navigator.of(context).pop(true);
@@ -256,12 +258,12 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (BuildContext context) {
+                        builder: (BuildContext dialogCtx) {
                           return BuildConfirmationDialog(
                             title: 'Are you sure you want to submit this report?',
                             subtitle: 'This will alert our team to review the curator\'s content.',
                             onConfirm:  () async {
-                              Navigator.of(context).pop(); // Close confirmation dialog
+                              Navigator.of(dialogCtx).pop(); // Close confirmation dialog
 
                               try {
                                 // Assume you have current user ID and reported curator ID
@@ -293,6 +295,8 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                 );
 
                                 // Show success message
+                                if (!mounted) return;
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Report submitted successfully.'),
@@ -300,10 +304,13 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                   ),
                                 );
 
+                                // ignore: use_build_context_synchronously
                                 Navigator.of(context).pop(); // Go back after submission
 
                               } catch (e) {
                                 // Show error message
+                                if (!mounted) return;
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Failed to submit report: $e'),
@@ -313,7 +320,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                               }
                             },
                             onCancel: (){
-                              Navigator.of(context).pop();
+                              Navigator.of(dialogCtx).pop();
                             },
                             cancelText: 'No',
                             confirmText: 'Yes',
