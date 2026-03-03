@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/images/circle_avatar.dart';
@@ -117,14 +118,40 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
-                _article!.body,
-                style: const TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.justify,
+              Html(
+                data: _article!.body,
+                style: {
+                  'body': Style(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: FontSize(16),
+                    lineHeight: LineHeight(1.5),
+                    color: MoldifyColors.MoldifyBlack,
+                    margin: Margins.zero,
+                    padding: HtmlPaddings.zero,
+                  ),
+                  'h2': Style(
+                    fontFamily: 'Montserrat-Black',
+                    fontSize: FontSize(20),
+                    color: MoldifyColors.primaryColor,
+                    margin: Margins.only(top: 20, bottom: 8),
+                  ),
+                  'h3': Style(
+                    fontFamily: 'Montserrat-Black',
+                    fontSize: FontSize(17),
+                    color: MoldifyColors.accentColor,
+                    margin: Margins.only(top: 16, bottom: 6),
+                  ),
+                  'p': Style(
+                    margin: Margins.only(bottom: 12),
+                    textAlign: TextAlign.justify,
+                  ),
+                  'li': Style(
+                    margin: Margins.only(bottom: 6),
+                  ),
+                  'strong': Style(
+                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                  ),
+                },
               ),
             ],
           ),
