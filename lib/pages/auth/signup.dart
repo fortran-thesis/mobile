@@ -577,48 +577,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ),
 
-                          // Divider with 'or'
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 30.0),
-                            child: Row(
-                              children: [
-                                Expanded(child: Divider(
-                                    color: MoldifyColors.MoldifyBlack)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10.0),
-                                  child: Text(
-                                    'or continue with',
-                                    style: TextStyle(
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      fontSize: 14,
-                                      color: MoldifyColors.MoldifyBlack,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(child: Divider(
-                                    color: MoldifyColors.MoldifyBlack)),
-                              ],
-                            ),
-                          ),
+                          // // Divider with 'or'
+                          // Padding(
+                          //   padding: const EdgeInsets.symmetric(vertical: 30.0),
+                          //   child: Row(
+                          //     children: [
+                          //       Expanded(child: Divider(
+                          //           color: MoldifyColors.MoldifyBlack)),
+                          //       Padding(
+                          //         padding: const EdgeInsets.symmetric(
+                          //             horizontal: 10.0),
+                          //         child: Text(
+                          //           'or continue with',
+                          //           style: TextStyle(
+                          //             fontFamily: 'Bricolage-Grotesque-Regular',
+                          //             fontSize: 14,
+                          //             color: MoldifyColors.MoldifyBlack,
+                          //           ),
+                          //         ),
+                          //       ),
+                          //       Expanded(child: Divider(
+                          //           color: MoldifyColors.MoldifyBlack)),
+                          //     ],
+                          //   ),
+                          // ),
 
-                          // Google Sign-In Button
-                          BuildButton(
-                            onPressed: _onGoogleSignInPressed,
-                            buttonText: 'Sign Up with Google',
-                            backgroundColor: MoldifyColors.backgroundColor,
-                            textColor: isLoading
-                                ? MoldifyColors.MoldifyGrey
-                                : MoldifyColors.primaryColor,
-                            buttonHeight: 45,
-                            buttonWidth: MediaQuery
-                                .of(context)
-                                .size
-                                .width,
-                            buttonRadius: 10,
-                            svg: 'assets/icons/google-icon.svg',
-                            borderColor: MoldifyColors.primaryColor,
-                          ),
+                          // // Google Sign-In Button
+                          // BuildButton(
+                          //   onPressed: _onGoogleSignInPressed,
+                          //   buttonText: 'Sign Up with Google',
+                          //   backgroundColor: MoldifyColors.backgroundColor,
+                          //   textColor: isLoading
+                          //       ? MoldifyColors.MoldifyGrey
+                          //       : MoldifyColors.primaryColor,
+                          //   buttonHeight: 45,
+                          //   buttonWidth: MediaQuery
+                          //       .of(context)
+                          //       .size
+                          //       .width,
+                          //   buttonRadius: 10,
+                          //   svg: 'assets/icons/google-icon.svg',
+                          //   borderColor: MoldifyColors.primaryColor,
+                          // ),
 
                           /// Terms and Policy Agreement
                           Padding(

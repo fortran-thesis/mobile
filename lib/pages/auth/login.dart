@@ -354,64 +354,64 @@ class _LoginScreenState extends State<LoginScreen> {
                             )
                         ),
 
-                        /// Divider with "or continue with" text
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    color: MoldifyColors.MoldifyBlack,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                                child: AutoSizeText(
-                                  'or continue with',
-                                  style: TextStyle(
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      fontSize: 12,
-                                      color: MoldifyColors.MoldifyBlack
-                                  ),
-                                  maxLines: 1,
-                                  minFontSize: 10,
-                                ),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  height: 2,
-                                  decoration: BoxDecoration(
-                                    color: MoldifyColors.MoldifyBlack,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // /// Divider with "or continue with" text
+                        // Padding(
+                        //   padding: const EdgeInsets.only(top: 30.0),
+                        //   child: Row(
+                        //     mainAxisAlignment: MainAxisAlignment.center,
+                        //     children: [
+                        //       Expanded(
+                        //         child: Container(
+                        //           height: 2,
+                        //           decoration: BoxDecoration(
+                        //             color: MoldifyColors.MoldifyBlack,
+                        //             borderRadius: BorderRadius.circular(2),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //       const Padding(
+                        //         padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        //         child: AutoSizeText(
+                        //           'or continue with',
+                        //           style: TextStyle(
+                        //               fontFamily: 'Bricolage-Grotesque-Regular',
+                        //               fontSize: 12,
+                        //               color: MoldifyColors.MoldifyBlack
+                        //           ),
+                        //           maxLines: 1,
+                        //           minFontSize: 10,
+                        //         ),
+                        //       ),
+                        //       Expanded(
+                        //         child: Container(
+                        //           height: 2,
+                        //           decoration: BoxDecoration(
+                        //             color: MoldifyColors.MoldifyBlack,
+                        //             borderRadius: BorderRadius.circular(2),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
 
-                        /// Google Login Button
-                        Padding(
-                          padding: const EdgeInsets.only(top: 30.0),
-                          child: BuildButton(
-                            buttonText: 'Google',
-                            onPressed: _onGoogleSignInPressed,
-                            backgroundColor: Colors.transparent,
-                            textColor: MoldifyColors.primaryColor,
-                            buttonHeight: 45,
-                            buttonWidth: MediaQuery.of(context).size.width,
-                            buttonRadius: 10,
-                            borderColor: MoldifyColors.primaryColor,
-                            svg: 'assets/icons/google-icon.svg',
-                            svgHeight: 20,
-                          ),
-                        ),
-                        /// End of Google Login Button
+                        // /// Google Login Button
+                        // Padding(
+                        //   padding: const EdgeInsets.only(top: 30.0),
+                        //   child: BuildButton(
+                        //     buttonText: 'Google',
+                        //     onPressed: _onGoogleSignInPressed,
+                        //     backgroundColor: Colors.transparent,
+                        //     textColor: MoldifyColors.primaryColor,
+                        //     buttonHeight: 45,
+                        //     buttonWidth: MediaQuery.of(context).size.width,
+                        //     buttonRadius: 10,
+                        //     borderColor: MoldifyColors.primaryColor,
+                        //     svg: 'assets/icons/google-icon.svg',
+                        //     svgHeight: 20,
+                        //   ),
+                        // ),
+                        // /// End of Google Login Button
 
                       ],
 
