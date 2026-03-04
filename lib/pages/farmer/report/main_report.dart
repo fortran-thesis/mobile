@@ -212,11 +212,16 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           children: [
                             /// Submit Mold Report Button
                             TextButton(
-                              onPressed: () {
-                                Navigator.pushNamed(
+                              onPressed: () async {
+                                final result = await Navigator.pushNamed(
                                   context,
                                   '/submit-report',
                                 );
+                                if (!mounted) return;
+                                if (result == true) {
+                                  final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                                }
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -326,12 +331,17 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                         dateLabel: 'Date Submitted',
                                         caseStatus: caseStatus,
                                         imageUrl: _resolveReportCoverPhoto(report),
-                                        onTap: () {
-                                          Navigator.pushNamed(
+                                        onTap: () async {
+                                          final result = await Navigator.pushNamed(
                                             context,
                                             '/view-report',
                                             arguments: {'id': report.id},
                                           );
+                                          if (!mounted) return;
+                                          if (result == true) {
+                                            final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                            _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                                          }
                                         },
                                         showPopupMenu: true,
                                         popupMenuItems: ['Treatment History', 'Export PDF'],

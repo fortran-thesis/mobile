@@ -334,23 +334,31 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                           priorityLevel: '${moldCase.priority[0].toUpperCase()}${moldCase.priority.substring(1)} Priority',
                                           caseStatus: 'In Progress',
                                           imageUrl: _resolveTileImageUrl(moldCase),
-                                          onTap: () {
-                                            Navigator.pushNamed(
+                                          onTap: () async {
+                                            final result = await Navigator.pushNamed(
                                               context,
                                               '/view-case',
                                               arguments: {'id': moldCase.moldReportId},
                                             );
+                                            if (result == true && mounted) {
+                                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                              _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
+                                            }
                                           },
                                           showPopupMenu: true,
                                           popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History', 'Export PDF'],
                                           popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
-                                          onPopupMenuItemSelected: (menuIndex) {
+                                          onPopupMenuItemSelected: (menuIndex) async {
                                             if (menuIndex == 0) {
-                                              Navigator.pushNamed(
+                                              final result = await Navigator.pushNamed(
                                                 context,
                                                 '/set-monitoring-details',
                                                 arguments: {'moldCase': moldCase},
                                               );
+                                              if (result == true && mounted) {
+                                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                                _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
+                                              }
                                             } else if (menuIndex == 1) {
                                               Navigator.pushNamed(
                                                 context,

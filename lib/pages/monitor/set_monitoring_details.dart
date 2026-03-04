@@ -115,7 +115,7 @@ class _SetMonitoringDetailsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Monitoring details updated successfully')),
         );
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);

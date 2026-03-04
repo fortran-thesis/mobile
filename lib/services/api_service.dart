@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:moldify/core/config/app_config.dart';
 import 'package:moldify/core/config/cache_config.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 /// Centralised HTTP client built on [Dio].
 ///
@@ -12,9 +15,18 @@ import 'package:moldify/core/config/cache_config.dart';
 ///  - `validateStatus: (_) => true` so callers can still inspect status codes
 ///    themselves (non-breaking for existing service code)
 ///  - Multipart upload helper using Dio's [FormData]
+///  - Auth error detection (401/403) via response interceptor
 class ApiService {
   final String baseUrl;
   late final Dio _dio;
+
+  // Stream controller for auth errors
+  static final StreamController<int> _authErrorController = StreamController<int>.broadcast();
+  static Stream<int> get authErrorStream => _authErrorController.stream;
+
+  // Callback for auth errors
+  static Function(int statusCode)? _onAuthError;
+  static set onAuthError(Function(int statusCode) callback) => _onAuthError = callback;
 
   ApiService({required this.baseUrl}) {
     _dio = Dio(
@@ -43,6 +55,23 @@ class ApiService {
     // ── Response caching ─────────────────────────────────────────────────
     _dio.interceptors.add(
       DioCacheInterceptor(options: CacheConfig.defaultOptions),
+    );
+
+    // ── Auth error interceptor ───────────────────────────────────────────
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          // Check for 401 (Unauthorized) or 403 (Forbidden) status codes
+          if (response.statusCode == 401 || response.statusCode == 403) {
+            AppLogger.e('ApiService: Auth error detected - Status: ${response.statusCode}');
+            // Emit the auth error
+            _authErrorController.add(response.statusCode ?? 0);
+            // Call the callback if set
+            _onAuthError?.call(response.statusCode ?? 0);
+          }
+          return handler.next(response);
+        },
+      ),
     );
   }
 
@@ -215,4 +244,9 @@ class ApiService {
   /// Expose the underlying [Dio] instance for advanced use cases
   /// (e.g. custom interceptors, download, streaming).
   Dio get dio => _dio;
+
+  /// Dispose resources (call when app is shutting down)
+  static void dispose() {
+    _authErrorController.close();
+  }
 }

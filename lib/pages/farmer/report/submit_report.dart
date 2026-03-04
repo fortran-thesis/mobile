@@ -539,7 +539,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         // Close the submit screen after a short delay so the user can see the dialog
                         await Future.delayed(const Duration(milliseconds: 300));
                         if (!context.mounted) return;
-                        Navigator.of(context).pop();
+                        Navigator.of(context).pop(true); // Signal success so caller can refresh
                       } catch (e) {
                         // Show error
                         if (!context.mounted) return;
