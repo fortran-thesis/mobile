@@ -195,7 +195,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     if (_isLoading && _report == null && _error == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadReportFromArgs());
     }
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(true);
+      },
+      child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
             title: 'View Report',
@@ -511,6 +516,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             ],
           ),
         )
+      ),
     );
   }
 }

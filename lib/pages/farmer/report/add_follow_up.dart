@@ -84,9 +84,10 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
         const SnackBar(content: Text('Follow-up submitted successfully!')),
       );
 
-      // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen
+      // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
+      // Pass `true` on the second pop so main_report can detect success and refresh.
       Navigator.of(context).pop();
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
