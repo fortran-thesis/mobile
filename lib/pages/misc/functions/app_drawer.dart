@@ -328,12 +328,20 @@ class _AppDrawerState extends State<AppDrawer> {
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  onTap: () {
-                    Navigator.of(context).push(
+                  onTap: () async {
+                    await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const MainAccountSettingsScreen(),
                       ),
                     );
+                    // Re-fetch profile so role-based menu items reflect any changes.
+                    if (mounted) {
+                      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                      final sessionCookie = authProvider.cookie;
+                      if (sessionCookie != null) {
+                        _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+                      }
+                    }
                   },
                 ),
                 Padding(
