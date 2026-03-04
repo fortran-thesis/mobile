@@ -104,6 +104,21 @@ class MoldReportService {
     );
   }
 
+  /// Fetch closed mold reports (includes rejected) for authenticated user with cursor-based pagination.
+  /// Endpoint: GET /user/closed
+  Future<Map<String, dynamic>> fetchClosedMoldReports({
+    String? sessionCookie,
+    int? limit,
+    String? pageToken,
+  }) async {
+    return fetchMoldReports(
+      sessionCookie: sessionCookie,
+      limit: limit,
+      pageToken: pageToken,
+      path: '/user/closed',
+    );
+  }
+
   /// Get a single mold report by id.
   Future<Map<String, dynamic>> getMoldReportById(
     String id, {

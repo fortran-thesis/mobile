@@ -133,7 +133,10 @@ class _MainReportScreenState extends State<MainReportScreen> {
       setState(() {
         _detailedReportById[reportId] = detailed;
       });
-    } catch (_) {}
+    } catch (e) {
+      // Log the error for debugging
+      // AppLogger.e('Failed to fetch detailed report $reportId', error: e);
+    }
   }
 
   void _prefetchDetailedReports(List<MoldReport> reports) {
@@ -309,9 +312,10 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                     if (caseStatus.isNotEmpty) {
                                       caseStatus = caseStatus[0].toUpperCase() + caseStatus.substring(1);
                                     }
-                  final DateTime? createdDate = displayReport.createdAt;
-                  final String dateSubmitted = createdDate != null
-                    ? DateFormat('MMMM d, yyyy').format(createdDate.toLocal())
+                  // Use createdAt if available, fallback to dateObserved, then fallback to '-'
+                  final DateTime? reportDate = displayReport.createdAt ?? displayReport.dateObserved;
+                  final String dateSubmitted = reportDate != null
+                    ? DateFormat('MMMM d, yyyy').format(reportDate.toLocal())
                     : '-';
 
                                     return Padding(
@@ -319,6 +323,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                       child: MainCaseTile(
                                         caseName: caseName,
                                         dateSubmitted: dateSubmitted,
+                                        dateLabel: 'Date Submitted',
                                         caseStatus: caseStatus,
                                         imageUrl: _resolveReportCoverPhoto(report),
                                         onTap: () {

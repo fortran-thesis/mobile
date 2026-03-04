@@ -209,7 +209,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   padding: const EdgeInsets.only(bottom: 15.0),
                   child: WikiMoldTile(
                     title: article.title,
-                    authorName: 'Author: ${article.author}',
+                    authorName: '${article.author}',
                     imageUrl: article.coverPhoto,
                       onTap: () {
                         if(article.id.isNotEmpty) {

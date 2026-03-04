@@ -13,7 +13,6 @@ class MainCaseTile extends StatefulWidget {
   final double? imageWidth, imageHeight;
   final String? dateLabel;
 
-  // PopupMenu properties
   final bool showPopupMenu;
   final List<String>? popupMenuItems;
   final List<IconData>? popupMenuIcons;
@@ -43,82 +42,74 @@ class MainCaseTile extends StatefulWidget {
 }
 
 class _MainCaseTileState extends State<MainCaseTile> {
-  late Color _containerColor;
+  Color _containerColor = MoldifyColors.taupe;
 
   @override
-  void initState() {
-    super.initState();
-    _containerColor = MoldifyColors.taupe;
-  }
+  Widget build(BuildContext context) {
+    const String defaultImageUrl = 'assets/images/Branding2.png';
+    final String caseImageUrl = widget.imageUrl ?? '';
+    final bool isNetworkImage = caseImageUrl.startsWith('http');
+    final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
 
- @override
-Widget build(BuildContext context) {
-  final String defaultImageUrl = 'assets/images/Branding2.png';
-  final String caseImageUrl = widget.imageUrl ?? '';
-  
-  final bool isNetworkImage = caseImageUrl.startsWith('http');
-  final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
+    final String priorityDisplay = (widget.priorityLevel == null || widget.priorityLevel!.isEmpty)
+        ? "Not Available"
+        : widget.priorityLevel!;
 
-  final String priorityDisplay = (widget.priorityLevel == null || widget.priorityLevel!.isEmpty)
-      ? "Not Available"
-      : widget.priorityLevel!;
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8)),
+      onTapUp: (_) {
+        setState(() => _containerColor = MoldifyColors.taupe);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _containerColor = MoldifyColors.taupe),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: _containerColor,
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        child: Stack(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.0),
+                  child: isNetworkImage
+                      ? Image.network(
+                          caseImageUrl,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.asset(defaultImageUrl, width: 90, height: 90, fit: BoxFit.cover),
+                        )
+                      : Image.asset(
+                          hasValidPath ? caseImageUrl : defaultImageUrl,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.asset(defaultImageUrl, width: 90, height: 90, fit: BoxFit.cover),
+                        ),
+                ),
+                const SizedBox(width: 12),
 
-  return GestureDetector(
-    onTapDown: (_) => setState(() => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8)),
-    onTapUp: (_) {
-      setState(() => _containerColor = MoldifyColors.taupe);
-      widget.onTap();
-    },
-    onTapCancel: () => setState(() => _containerColor = MoldifyColors.taupe),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: _containerColor,
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      child: Stack( // Using Stack to keep PopupMenu from affecting text layout
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10.0),
-                child: isNetworkImage
-                    ? Image.network(
-                        caseImageUrl,
-                        width: 95,
-                        height: 95,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Image.asset(defaultImageUrl, width: 95, height: 95, fit: BoxFit.cover),
-                      )
-                    : Image.asset(
-                        hasValidPath ? caseImageUrl : defaultImageUrl,
-                        width: 95,
-                        height: 95,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Image.asset(defaultImageUrl, width: 95, height: 95, fit: BoxFit.cover),
-                      ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // 2. Content
-              Expanded(
-                child: SizedBox(
-                  height: 95, // Matches image height
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Text Group (Pinned to top)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min, // Takes only required space
-                        children: [
-                          Text(
+                // 2. Content Column
+                Expanded(
+                  child: SizedBox(
+                    height: 90, 
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center, // Centers the entire group
+                      children: [
+                        // Text Group
+                        Padding(
+                          padding: const EdgeInsets.only(right: 28.0),
+                          child: Text(
                             widget.caseName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -126,59 +117,64 @@ Widget build(BuildContext context) {
                               fontSize: 16,
                               fontFamily: 'Montserrat-Black',
                               color: MoldifyColors.primaryColor,
-                              height: 1.0, // Removes extra vertical padding from font
                             ),
                           ),
-                          // Minimal spacing here
-                          const SizedBox(height: 2), 
-                          Text(
-                            "${widget.dateLabel ?? 'Date'}: ${widget.dateSubmitted}",
+                        ),
+                        
+                        // Bold Label with Regular Variable
+                        Text.rich(
+                          TextSpan(
                             style: const TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               color: MoldifyColors.MoldifyBlack,
                               fontFamily: 'Bricolage-Grotesque-Regular',
-                              height: 1.0,
                             ),
+                            children: [
+                              TextSpan(
+                                text: "${widget.dateLabel ?? 'Date'}: ",
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(
+                                text: widget.dateSubmitted,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        
+                        const SizedBox(height: 12), // This creates the "Lift" for the tiles
 
-                      const Spacer(), // Pushes the status tiles to the bottom
-
-                      // 3. Status Tiles
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatusBox(status: priorityDisplay),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: StatusBox(status: widget.caseStatus),
-                          ),
-                        ],
-                      ),
-                    ],
+                        // 3. Status Tiles (Now sitting higher)
+                        Row(
+                          children: [
+                            Expanded(child: StatusBox(status: priorityDisplay)),
+                            const SizedBox(width: 6),
+                            Expanded(child: StatusBox(status: widget.caseStatus)),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 4), // Small buffer at the very bottom
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          // 4. Popup Menu (Positioned so it doesn't push text)
-          if (widget.showPopupMenu)
-            Positioned(
-              top: -10,
-              right: -5,
-              child: PopupMenu(
-                popMenuIcon: widget.popupMenuIcon,
-                items: widget.popupMenuItems!,
-                icons: widget.popupMenuIcons,
-                onItemSelected: widget.onPopupMenuItemSelected!,
-              ),
+              ],
             ),
-        ],
+
+            // 4. Popup Menu - Adjusted position to prevent cutting
+            if (widget.showPopupMenu)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: PopupMenu(
+                  popMenuIcon: widget.popupMenuIcon,
+                  items: widget.popupMenuItems!,
+                  icons: widget.popupMenuIcons,
+                  onItemSelected: widget.onPopupMenuItemSelected!,
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

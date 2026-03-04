@@ -269,9 +269,18 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Align(
-                            alignment: Alignment.centerRight,
-                            child: StatusBox(status: caseStatus, fontSize: 12)
+                        /// Status and Priority Boxes
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            StatusBox(status: caseStatus, fontSize: 11),
+                            const SizedBox(width: 8),
+                            StatusBox(
+                              status: 'Unassigned',
+                              fontSize: 11,
+                            ),
+                          ],
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 15.0),
