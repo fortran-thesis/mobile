@@ -40,6 +40,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? _error;
   MoldCase? _case;
   String? _reportId; // Store the report ID for status updates
+  bool _mutationOccurred = false; // Signal list refresh to caller on pop
 
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
@@ -113,10 +114,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       if (!mounted) return;
       setState(() {
         caseStatus = 'Resolved';
+        _mutationOccurred = true;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Case marked as resolved!')),
+
       );
     } catch (e) {
       if (!mounted) return;
@@ -411,23 +414,32 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     ];
 
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(_mutationOccurred);
+      },
+      child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
             title: 'View Case',
             showPopupMenu: true,
             popupMenuItems: popupMenuItems,
             popupMenuIcons: popupMenuIcons,
-            onPopupMenuItemSelected: (index) {
+            onPopupMenuItemSelected: (index) async {
               // The selected item is now correctly determined from the same list used by the menu.
               final selectedItem = popupMenuItems[index];
 
               if (selectedItem == 'Set Monitoring Details') {
-                Navigator.pushNamed(
-                  context, 
+                final result = await Navigator.pushNamed(
+                  context,
                   '/set-monitoring-details',
                   arguments: {'moldCase': _case},
                 );
+                if (result == true && mounted) {
+                  setState(() => _mutationOccurred = true);
+                  _loadCaseFromArgs();
+                }
               }
               else if (selectedItem == 'Mark as Resolved') {
                 _markCaseAsResolved();
@@ -719,6 +731,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             ],
           ),
         )
-                );
+      ),
+    );
   }
 }
