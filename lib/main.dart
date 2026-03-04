@@ -50,9 +50,43 @@ void main() async {
 
 final tabs = ['Home', 'Monitor'];
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth errors/state changes and redirect to login if needed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      authProvider.addListener(_onAuthStateChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    authProvider.removeListener(_onAuthStateChanged);
+    super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
+
+    // If user becomes unauthenticated (cookie cleared due to 401/403), redirect to login
+    if (!isAuthenticated) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        RouteNames.login,
+        (route) => false,
+      );
+    }
+  }
 
   // This widget is the root of your application.
   @override
@@ -63,6 +97,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(),
       initialRoute: RouteNames.splash,
       onGenerateRoute: AppRoutes.generateRoute,
+      navigatorKey: GlobalKey<NavigatorState>(),
     );
   }
 }
