@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/colors.dart';
 
@@ -14,6 +15,17 @@ class ContactUsScreen extends StatefulWidget {
 }
 
 class _ContactUsScreenState extends State<ContactUsScreen> {
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open link')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,7 +65,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       ),
                     ),
                     Text(
-                        'Have mycology concerns? Contact their organization using details below.',
+                        'Reach out to us for any inquiries regarding agricultural mold detection. We\'re here to help you cultivate a healthier future for agriculture.',
                         style: TextStyle(
                           fontSize: 14,
                           fontFamily: 'Bricolage-Grotesque-Regular',
@@ -73,14 +85,18 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           ),
                           SizedBox(width: 30.0),
                           Flexible(
-                            child: Text(
-                              '+63 919 003 0344',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.MoldifyBlack,
+                            child: InkWell(
+                              onTap: () => _launchUrl('tel:282489130'),
+                              child: Text(
+                                '282489130',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.MoldifyBlack,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                softWrap: true,
                               ),
-                              softWrap: true,
                             ),
                           ),
                         ],
@@ -98,14 +114,18 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           ),
                           const SizedBox(width: 30.0),
                           Flexible(
-                            child: Text(
-                              'mycologicalsoc.ph@gmail.com',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.MoldifyBlack,
+                            child: InkWell(
+                              onTap: () => _launchUrl('mailto:info@buplant.da.gov.ph'),
+                              child: Text(
+                                'info@buplant.da.gov.ph',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.MoldifyBlack,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                softWrap: true,
                               ),
-                              softWrap: true,
                             ),
                           ),
                         ],
@@ -120,14 +140,18 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                           ),
                           SizedBox(width: 30.0),
                           Flexible(
-                            child: Text(
-                              'Mycological Society of the Philippines',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.MoldifyBlack,
+                            child: InkWell(
+                              onTap: () => _launchUrl('https://web.facebook.com/BureauOfPlantIndustry'),
+                              child: Text(
+                                'Bureau of Plant Industry',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.MoldifyBlack,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                softWrap: true,
                               ),
-                              softWrap: true,
                             ),
                           ),
                         ],
@@ -137,24 +161,30 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       padding: const EdgeInsets.only(top: 20.0),
                       child: Row(
                         children: [
-                          SvgPicture.asset(
-                            'assets/icons/instagram-icon.svg',
+                          Icon(
+                            FontAwesomeIcons.locationDot,
+                            color: MoldifyColors.accentColor,
+                            size: 24,
                           ),
                           SizedBox(width: 30.0),
                           Flexible(
-                            child: Text(
-                              'amagngpinas',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.MoldifyBlack,
+                            child: InkWell(
+                              onTap: () => _launchUrl('https://maps.google.com/?q=692+San+Andres+St,+Malate,+Manila'),
+                              child: Text(
+                                '692 San Andres St, Malate, Manila.',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.MoldifyBlack,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                softWrap: true,
                               ),
-                              softWrap: true,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                    ),               
                   ]
               ),
             ),

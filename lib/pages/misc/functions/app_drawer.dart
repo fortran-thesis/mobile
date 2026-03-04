@@ -130,42 +130,6 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                 ),
 
-                /// FAQ (only for non-experts)
-                if (!_isExpert)
-                  ListTile(
-                    leading: const Icon(
-                      FontAwesomeIcons.solidCircleQuestion,
-                      color: MoldifyColors.accentColor,
-                      size: 24,
-                    ),
-                    title: const AutoSizeText(
-                      'FAQ',
-                      style: TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Bold',
-                          color: MoldifyColors.primaryColor,
-                          fontSize: 14),
-                      maxLines: 2,
-                      minFontSize: 10,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const MainFAQSCreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                if (!_isExpert)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                    child: Container(
-                      height: 1,
-                      color: MoldifyColors.MoldifySoftGrey,
-                    ),
-                  ),
-
                 /// Terms of Use
                 ListTile(
                   leading: const Icon(

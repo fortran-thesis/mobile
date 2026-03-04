@@ -76,10 +76,12 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
             String username = '';
             String email = '';
             String? photoUrl;
+            bool isMycologist = false;
             if (state is UserProfileLoaded) {
               username = state.profile.username;
               email = state.profile.email;
               photoUrl = state.profile.photoUrl;
+              isMycologist = state.profile.role.toLowerCase() == 'mycologist';
             }
             return SingleChildScrollView(
               child: Column(
@@ -235,22 +237,23 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           },
                         ),
 
-                        /// Flagged Tile
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: BuildAccountSettingsTiles(
-                            leftIcon: FontAwesomeIcons.solidFlag,
-                            rightIcon: FontAwesomeIcons.angleRight,
-                            title: 'Flagged History',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const FlagHistoryScreen(),
-                                ),
-                              );
-                            },
+                        /// Flagged Tile (Mycologist only)
+                        if (isMycologist)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: BuildAccountSettingsTiles(
+                              leftIcon: FontAwesomeIcons.solidFlag,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              title: 'Flag History',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const FlagHistoryScreen(),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
