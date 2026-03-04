@@ -100,7 +100,8 @@ class AppRoutes {
               if (args.containsKey('croppedImagePath') && args['croppedImagePath'] is String) {
                 final String croppedImagePath = args['croppedImagePath'] as String;
                 final Map<String, dynamic>? modelResult = args['modelResult'] as Map<String, dynamic>?;
-                return MoldResultScreen(croppedImagePath: croppedImagePath, modelResult: modelResult);
+                final Map<String, dynamic>? moldDetails = args['moldDetails'] as Map<String, dynamic>?;
+                return MoldResultScreen(croppedImagePath: croppedImagePath, modelResult: modelResult, moldDetails: moldDetails);
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('croppedImagePath missing')));
               }

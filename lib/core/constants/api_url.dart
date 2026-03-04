@@ -5,6 +5,10 @@ import 'package:moldify/core/config/app_config.dart';
 class ApiUrl {
   // Read from AppConfig — never hardcode here.
   static String get baseUrl => AppConfig.apiBaseUrl;
+
+  /// @deprecated The mobile app now routes model calls through the API proxy
+  /// ([model]). MODEL_BASE_URL / modelUrl is no longer needed.
+  @Deprecated('Use ApiUrl.model instead')
   static String get modelUrl => AppConfig.modelBaseUrl;
 
   /// @deprecated Use AppConfig.logConfig() instead.
@@ -22,4 +26,5 @@ class ApiUrl {
   static String get userReport => '$_v1/reports';
   static String get sysReq => '$_v1/system-request';
   static String get notification => '$_v1/notification';
+  static String get model => '$_v1/model';
 }

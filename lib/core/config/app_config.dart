@@ -23,6 +23,10 @@ class AppConfig {
   );
 
   // ── ML model base URL ─────────────────────────────────────────────────────
+  /// @deprecated The mobile app now calls the API proxy endpoint at
+  /// [apiV1]/model/predict instead of hitting the model server directly.
+  /// MODEL_BASE_URL / modelBaseUrl is kept only for legacy env files.
+  @Deprecated('Model calls now go through the API proxy (apiV1/model/predict)')
   static const String modelBaseUrl = String.fromEnvironment(
     'MODEL_BASE_URL',
     defaultValue: 'http://localhost:5000',
@@ -43,6 +47,6 @@ class AppConfig {
 
   static void logConfig() {
     // ignore: avoid_print
-    print('🔧 [AppConfig] ENV=$env | apiBaseUrl=$apiBaseUrl | modelBaseUrl=$modelBaseUrl | debugMode=$debugMode');
+    print('🔧 [AppConfig] ENV=$env | apiBaseUrl=$apiBaseUrl | debugMode=$debugMode');
   }
 }
