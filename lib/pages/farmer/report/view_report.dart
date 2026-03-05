@@ -11,6 +11,7 @@ import '../../../core/features/mold_report/repository/mold_report_repository.dar
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
+import '../../../core/features/mold_report/service/mold_report_services.dart';
 
 // route names not used here
 import '../../misc/appbar/primary_app_bar.dart';
@@ -387,9 +388,27 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                               return BuildConfirmationDialog(
                                                 title: 'Are you sure you want to close this report?',
                                                 subtitle: 'Once closed, you will not be able to add follow-ups.',
-                                                onConfirm: () {
+                                                onConfirm: () async {
                                                   Navigator.of(context).pop();
-                                                  Navigator.of(context).pop();
+                                                  try {
+                                                    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                                    final sessionCookie = authProvider.cookie;
+                                                    final service = MoldReportService();
+                                                    await service.deleteMoldReportSoft(
+                                                      _report!.id,
+                                                      sessionCookie: sessionCookie,
+                                                    );
+                                                    if (!mounted) return;
+                                                    Navigator.of(context).pop();
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Report closed')),
+                                                    );
+                                                  } catch (e) {
+                                                    if (!mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Failed to close report: $e')),
+                                                    );
+                                                  }
                                                 },
                                                 onCancel: (){
                                                   Navigator.of(context).pop();
