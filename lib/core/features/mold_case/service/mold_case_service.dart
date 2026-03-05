@@ -7,50 +7,115 @@ import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
 
 class MoldCaseService {
-  final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldCase);
+  // Use moldReport base URL for assigned endpoint per API documentation
+  // Endpoint: GET /api/v1/mold-report/assigned
+  final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldReport);
 
-  /// Fetch all assigned mycologists. Returns a list of mold cases.
+  /// Fetch all assigned mold cases for the authenticated curator.
   /// Endpoint: GET /assigned
+  /// 
+  /// [limit] - page size (defaults to 10)
+  /// [pageToken] - cursor token for pagination
+  /// [sessionCookie] - required for authentication
   Future<Map<String, dynamic>> fetchAssignedMycologists({
     String? sessionCookie,
     int? limit,
     String? pageToken,
   }) async {
-    final queryParams = <String, dynamic>{};
-    if (limit != null) queryParams['limit'] = limit;
-    if (pageToken != null) queryParams['pageToken'] = pageToken;
+    try {
+      final queryParams = <String, String>{
+        if (limit != null) 'limit': limit.toString(),
+        if (pageToken != null && pageToken.trim().isNotEmpty) 
+          'pageToken': pageToken.trim(),
+      };
 
-    final response = await _apiService.get(
-      '/assigned',
-      headers: {'Content-Type': 'application/json'},
-      sessionCookie: sessionCookie,
-      queryParams: queryParams.isEmpty ? null : queryParams,
-      cacheOptions: CacheConfig.volatileData,
-    );
+      final response = await _apiService.get(
+        '/assigned',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        queryParams: queryParams.isEmpty ? null : queryParams,
+        cacheOptions: CacheConfig.refresh,
+      );
 
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
-    } else {
-      throw Exception('Failed to fetch assigned mycologists: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        // 200 = fresh response, 304 = Not Modified (use cache)
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        // Handle response structure: { data: { snapshot, nextPageToken } }
+        // According to API docs, assigned reports return directly with data wrapper
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        // Extract the data object
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+
+        return data;
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized: Not a curator or session expired');
+      } else if (response.statusCode == 404) {
+        throw Exception('Failed to retrieve assigned mold reports');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Server error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch assigned cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow; // Preserve error chain
     }
   }
 
   /// Get a single mold case by id.
+  /// Endpoint: GET /:id
   Future<Map<String, dynamic>> getMoldCaseById(
     String id, {
     String? sessionCookie,
   }) async {
-    final response = await _apiService.get(
-      '/$id',
-      headers: {'Content-Type': 'application/json'},
-      sessionCookie: sessionCookie,
-      cacheOptions: CacheConfig.volatileData,
-    );
+    try {
+      final response = await _apiService.get(
+        '/$id',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
 
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+        
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+        
+        // Check application-level success flag
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to fetch mold case';
+          throw Exception(error);
+        }
+        
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+        
+        return data;
+      } else if (response.statusCode == 404) {
+        throw Exception('Mold case not found: $id');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch mold case: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
-    throw Exception('Failed to fetch mold case $id: ${response.statusCode}');
   }
 
   /// Get mold cases by report ID.
@@ -59,17 +124,46 @@ class MoldCaseService {
     String reportId, {
     String? sessionCookie,
   }) async {
-    final response = await _apiService.get(
-      '/by-report/$reportId',
-      headers: {'Content-Type': 'application/json'},
-      sessionCookie: sessionCookie,
-      cacheOptions: CacheConfig.volatileData,
-    );
+    try {
+      final response = await _apiService.get(
+        '/by-report/$reportId',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
 
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+        
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+        
+        // Check application-level success flag
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to fetch mold cases';
+          throw Exception(error);
+        }
+        
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+        
+        return data;
+      } else if (response.statusCode == 404) {
+        throw Exception('No mold cases found for report: $reportId');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch mold cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
-    throw Exception('Failed to fetch mold cases for report $reportId: ${response.statusCode}');
   }
 
   /// Update a mold case by id.
@@ -111,27 +205,61 @@ class MoldCaseService {
 
   /// Get all archived (closed) mold cases for the user.
   /// Endpoint: GET /archive
+  /// 
+  /// [limit] - page size
+  /// [pageToken] - cursor token for pagination
+  /// [sessionCookie] - required for authentication
   Future<Map<String, dynamic>> getArchivedCases({
     String? sessionCookie,
     int? limit,
     String? pageToken,
   }) async {
-    final queryParams = <String, dynamic>{};
-    if (limit != null) queryParams['limit'] = limit;
-    if (pageToken != null) queryParams['pageToken'] = pageToken;
+    try {
+      final queryParams = <String, String>{
+        if (limit != null) 'limit': limit.toString(),
+        if (pageToken != null && pageToken.trim().isNotEmpty) 
+          'pageToken': pageToken.trim(),
+      };
 
-    final response = await _apiService.get(
-      '/archive',
-      headers: {'Content-Type': 'application/json'},
-      sessionCookie: sessionCookie,
-      queryParams: queryParams.isEmpty ? null : queryParams,
-      cacheOptions: CacheConfig.volatileData,
-    );
+      final response = await _apiService.get(
+        '/archive',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        queryParams: queryParams.isEmpty ? null : queryParams,
+        cacheOptions: CacheConfig.volatileData,
+      );
 
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
-    } else {
-      throw Exception('Failed to fetch archived cases: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+        
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+        
+        // Check application-level success flag
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to fetch archived cases';
+          throw Exception(error);
+        }
+        
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+        
+        return data;
+      } else if (response.statusCode == 404) {
+        throw Exception('No archived cases found');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch archived cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -287,7 +415,12 @@ class MoldCaseService {
 
   /// Search assigned mold cases for the mycologist
   /// Endpoint: GET /search
-  /// Query parameters: search, priority, limit, pageToken
+  /// 
+  /// [search] - search query for case name
+  /// [priority] - filter by priority (low, medium, high)
+  /// [limit] - page size
+  /// [pageToken] - cursor token for pagination
+  /// [sessionCookie] - required for authentication
   Future<Map<String, dynamic>> searchMoldCases({
     String? search,
     String? priority,
@@ -295,22 +428,53 @@ class MoldCaseService {
     String? pageToken,
     String? sessionCookie,
   }) async {
-    final queryParams = <String, String>{};
-    if (search != null && search.isNotEmpty) queryParams['search'] = search;
-    if (priority != null && priority.isNotEmpty) queryParams['priority'] = priority;
-    if (limit != null) queryParams['limit'] = limit.toString();
-    if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
+    try {
+      final queryParams = <String, String>{
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (priority != null && priority.trim().isNotEmpty) 'priority': priority.trim(),
+        if (limit != null) 'limit': limit.toString(),
+        if (pageToken != null && pageToken.trim().isNotEmpty) 'pageToken': pageToken.trim(),
+      };
 
-    final response = await _apiService.get(
-      '/search?${Uri(queryParameters: queryParams).query}',
-      headers: {'Content-Type': 'application/json'},
-      sessionCookie: sessionCookie,
-      cacheOptions: CacheConfig.volatileData,
-    );
+      final response = await _apiService.get(
+        '/search',
+        headers: {'Content-Type': 'application/json'},
+        queryParams: queryParams.isEmpty ? null : queryParams,
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to search mold cases: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+        
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+        
+        // Check application-level success flag
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to search mold cases';
+          throw Exception(error);
+        }
+        
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+        
+        return data;
+      } else if (response.statusCode == 404) {
+        throw Exception('No cases found matching search criteria');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to search mold cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
-    return response.data as Map<String, dynamic>;
   }
 }

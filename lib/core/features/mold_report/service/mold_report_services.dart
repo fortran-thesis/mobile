@@ -232,17 +232,31 @@ class MoldReportService {
 
   /// Dashboard: Get assigned reports count for mycologist
   /// Endpoint: GET /assigned/count
-  /// Returns: {count: int}
-  Future<Map<String, dynamic>> getAssignedReportsCount({String? sessionCookie}) async {
+  /// Query params: id (mycologist user id)
+  /// Returns: { data: { total: int } }
+  Future<Map<String, dynamic>> getAssignedReportsCount({
+    required String mycologistId,
+    String? sessionCookie,
+  }) async {
     final response = await _apiService.get(
       '/assigned/count',
       headers: {'Content-Type': 'application/json'},
+      queryParams: {
+        'id': mycologistId,
+      },
       sessionCookie: sessionCookie,
-      cacheOptions: CacheConfig.volatileData,
+      cacheOptions: CacheConfig.refresh,
     );
 
-    if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+    if (response.statusCode == 200 || response.statusCode == 304) {
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      return <String, dynamic>{};
+    }
+    if (response.statusCode == 400) {
+      throw Exception('Missing mycologist id');
     }
     throw Exception('Failed to fetch assigned reports count: ${response.statusCode}');
   }

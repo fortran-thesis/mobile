@@ -132,6 +132,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Normalize mold report from API to MoldCase model
+  Map<String, dynamic> _normalizeMoldReport(Map<String, dynamic> report) {
+    return {
+      'id': report['id']?.toString() ?? '',
+      'mycologist_id': report['assigned_mycologist_id']?.toString() ?? report['mycologist_id']?.toString() ?? '',
+      'name': report['case_name']?.toString() ?? report['name']?.toString() ?? '',
+      'mold_report_id': report['id']?.toString() ?? '',
+      'photo_url': report['cover_photo'] ?? report['photo_url'],
+      'priority': report['priority']?.toString() ?? 'low',
+      'start_date': report['date_observed'] ?? report['created_at'] ?? DateTime.now().toIso8601String(),
+      'end_date': report['end_date'],
+      'is_archived': report['is_archived'] ?? false,
+    };
+  }
+
   /// Fetch role-specific data (assigned cases for mycologists)
   Future<Map<String, dynamic>> _fetchRoleSpecificData(
     MoldCaseService caseService,
@@ -149,9 +164,13 @@ class _HomeScreenState extends State<HomeScreen> {
           limit: 3,
         );
 
-        if (casesResponse['data'] is List) {
-          cases = (casesResponse['data'] as List)
-              .map((c) => MoldCase.fromJson(c as Map<String, dynamic>))
+        // Extract snapshot from response { snapshot: [...], nextPageToken: ... }
+        final snapshot = casesResponse['snapshot'];
+        if (snapshot is List) {
+          cases = snapshot
+              .whereType<Map>()
+              .map((c) => _normalizeMoldReport(Map<String, dynamic>.from(c)))
+              .map((normalized) => MoldCase.fromJson(normalized))
               .toList();
 
           // Fetch report statuses for each case

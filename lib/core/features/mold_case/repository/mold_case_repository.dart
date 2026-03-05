@@ -9,7 +9,11 @@ class MoldCaseRepository {
   MoldCaseRepository({this.pageSize = 10});
 
   /// Fetch a page from API. Uses cursor-based pagination with [pageToken].
-  Future<List<MoldCase>> fetchPage({String? pageToken, String? sessionCookie}) async {
+  /// Returns both the cases list and the nextPageToken for pagination.
+  Future<Map<String, dynamic>> fetchPageWithToken({
+    String? pageToken, 
+    String? sessionCookie,
+  }) async {
     AppLogger.d('MoldCaseRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
     final result = await _service.fetchAssignedMycologists(
       sessionCookie: sessionCookie,
@@ -18,39 +22,61 @@ class MoldCaseRepository {
     );
     AppLogger.d('MoldCaseRepository: raw API response: $result');
 
-    // Normalize the returned data shape. Backend may return:
-    // - { success: true, data: { snapshot: [...], nextPageToken: ... } }
-    // - { data: [ ... ], nextPageToken: '...' }
-    // - [ ... ] (raw list)
-    dynamic raw = result;
-    if (result.containsKey('data')) raw = result['data'];
+    // Extract snapshot and nextPageToken
+    final snapshot = result['snapshot'];
+    final nextPageTokenValue = result['nextPageToken'];
 
     List<dynamic> rawDataList = <dynamic>[];
-    if (raw is List) {
-      rawDataList = raw;
-    } else if (raw is Map) {
-      // Check for 'snapshot' field first (backend format)
-      if (raw['snapshot'] is List) {
-        rawDataList = raw['snapshot'] as List<dynamic>;
-      } else if (raw['data'] is List) {
-        rawDataList = raw['data'] as List<dynamic>;
-      } else {
-        // treat single object as a one-element list
-        rawDataList = [raw];
-      }
+    if (snapshot is List) {
+      rawDataList = snapshot;
+    } else if (snapshot is Map) {
+      rawDataList = [snapshot];
     } else {
       rawDataList = <dynamic>[];
     }
 
     AppLogger.d('MoldCaseRepository: normalized rawDataList (${rawDataList.length} items)');
 
+    // Normalize API response fields to match MoldCase model expectations
+    // API returns: case_name, assigned_mycologist_id, id
+    // Model expects: name, mycologist_id, mold_report_id
     final List<MoldCase> cases = rawDataList
-        .map((e) => MoldCase.fromJson(e as Map<String, dynamic>))
-        .where((c) => c.mycologistId.isNotEmpty) // ignore invalid/empty placeholder objects
+        .map((e) => _normalizeMoldReportFields(e as Map<String, dynamic>))
+        .map((e) => MoldCase.fromJson(e))
+        .where((c) => c.mycologistId.isNotEmpty)
         .toList();
 
-    AppLogger.d('MoldCaseRepository: parsed ${cases.length} valid cases (filtered empty ids)');
-    return cases;
+    final String? nextToken = 
+        (nextPageTokenValue != null && nextPageTokenValue.toString().trim().isNotEmpty)
+            ? nextPageTokenValue.toString().trim()
+            : null;
+
+    AppLogger.d('MoldCaseRepository: parsed ${cases.length} valid cases, nextToken: "$nextToken"');
+    
+    return {
+      'cases': cases,
+      'nextPageToken': nextToken,
+    };
+  }
+
+  /// Fetch a page from API. Uses cursor-based pagination with [pageToken].
+  /// Legacy method - returns only the cases list for backward compatibility.
+  Future<List<MoldCase>> fetchPage({String? pageToken, String? sessionCookie}) async {
+    final result = await fetchPageWithToken(pageToken: pageToken, sessionCookie: sessionCookie);
+    return result['cases'] as List<MoldCase>;
+  }
+
+  /// Normalize field names from /api/v1/mold-report/assigned response
+  /// to match MoldCase model expectations.
+  Map<String, dynamic> _normalizeMoldReportFields(Map<String, dynamic> json) {
+    return {
+      ...json,
+      // Map API field names to model field names
+      if (json.containsKey('case_name')) 'name': json['case_name'],
+      if (json.containsKey('assigned_mycologist_id')) 'mycologist_id': json['assigned_mycologist_id'],
+      // The 'id' from assigned endpoint is the report ID
+      if (json.containsKey('id') && !json.containsKey('mold_report_id')) 'mold_report_id': json['id'],
+    };
   }
 
   /// Fetch a case by ID from API.
@@ -96,8 +122,9 @@ class MoldCaseRepository {
     await _service.updateMoldCase(id, update, sessionCookie: sessionCookie);
   }
 
-  /// Search assigned mold cases by mycologist with optional filters
-  Future<List<MoldCase>> searchCases({
+  /// Search assigned mold cases by mycologist with optional filters.
+  /// Returns both the cases list and the nextPageToken for pagination.
+  Future<Map<String, dynamic>> searchCasesWithToken({
     String? search,
     String? priority,
     String? pageToken,
@@ -111,23 +138,46 @@ class MoldCaseRepository {
       sessionCookie: sessionCookie,
     );
 
-    dynamic raw = result;
-    if (result.containsKey('data')) raw = result['data'];
+    final snapshot = result['snapshot'];
+    final nextPageTokenValue = result['nextPageToken'];
 
     List<dynamic> rawDataList = <dynamic>[];
-    if (raw is List) {
-      rawDataList = raw;
-    } else if (raw is Map) {
-      if (raw['snapshot'] is List) {
-        rawDataList = raw['snapshot'] as List<dynamic>;
-      } else if (raw['data'] is List) {
-        rawDataList = raw['data'] as List<dynamic>;
-      }
+    if (snapshot is List) {
+      rawDataList = snapshot;
+    } else if (snapshot is Map) {
+      rawDataList = [snapshot];
     }
 
-    return rawDataList
+    final List<MoldCase> cases = rawDataList
         .map((e) => MoldCase.fromJson(e as Map<String, dynamic>))
         .where((c) => c.id.isNotEmpty)
         .toList();
+
+    final String? nextToken = 
+        (nextPageTokenValue != null && nextPageTokenValue.toString().trim().isNotEmpty)
+            ? nextPageTokenValue.toString().trim()
+            : null;
+
+    return {
+      'cases': cases,
+      'nextPageToken': nextToken,
+    };
+  }
+
+  /// Search assigned mold cases by mycologist with optional filters.
+  /// Legacy method - returns only the cases list for backward compatibility.
+  Future<List<MoldCase>> searchCases({
+    String? search,
+    String? priority,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    final result = await searchCasesWithToken(
+      search: search,
+      priority: priority,
+      pageToken: pageToken,
+      sessionCookie: sessionCookie,
+    );
+    return result['cases'] as List<MoldCase>;
   }
 }

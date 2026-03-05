@@ -41,7 +41,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       case 'Pending':
         message = 'Your report has been sent in and is now waiting to be checked.';
         break;
-      case 'In Progress':
+      case 'In progress':
         message = 'We\'re checking your report now. You\'ll see the results when it\'s ready.';
         break;
       case 'Rejected':
@@ -237,7 +237,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
               if (_isLoading)
                 SizedBox(
                   height: 220,
-                  child: const Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: MoldifyColors.primaryColor,
+                    ),
+                  ),
                 )
               else if (_error != null)
                 SizedBox(

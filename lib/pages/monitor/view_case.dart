@@ -154,28 +154,69 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       final sessionCookie = authProvider.cookie;
       AppLogger.d('ViewCase: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
 
-      // Create a local repository
-      final repo = MoldCaseRepository(pageSize: 10);
+      final reportService = MoldReportService();
+      AppLogger.d('ViewCase: calling getMoldReportById($reportId)');
+      final reportData = await reportService.getMoldReportById(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+      AppLogger.d('ViewCase: report data = $reportData');
 
-      AppLogger.d('ViewCase: calling getCasesByReportId($reportId)');
-      final List<MoldCase> moldCases = await repo.getCasesByReportId(reportId, sessionCookie: sessionCookie);
-      AppLogger.d('ViewCase: getCasesByReportId returned ${moldCases.length} cases');
+      final reportPayload = reportData['data'] is Map<String, dynamic>
+          ? reportData['data'] as Map<String, dynamic>
+          : reportData;
 
-      if (moldCases.isEmpty) {
-        setState(() {
-          _error = 'No cases found for this report';
-          _isLoading = false;
-        });
-        return;
+      String capitalizeStatus(String raw) {
+        final normalized = raw.trim();
+        if (normalized.isEmpty) return 'Unknown';
+        return normalized[0].toUpperCase() + normalized.substring(1);
       }
 
-      // Use the first case (or you could let user select if multiple)
-      final MoldCase moldCase = moldCases.first;
+      final resolvedReportId = reportPayload['id']?.toString().trim().isNotEmpty == true
+          ? reportPayload['id'].toString().trim()
+          : reportId;
 
-      AppLogger.d('ViewCase: case.mycologistId = ${moldCase.mycologistId}');
-      AppLogger.d('ViewCase: case.name = ${moldCase.name}');
-      AppLogger.d('ViewCase: case.priority = ${moldCase.priority}');
-      AppLogger.d('ViewCase: case.moldReportId = ${moldCase.moldReportId}');
+      final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
+      final localReportStatus = capitalizeStatus(statusRaw);
+      final localCaseName = reportPayload['case_name']?.toString() ??
+          reportPayload['name']?.toString() ??
+          'Unknown Case';
+      final localMycologistId = reportPayload['assigned_mycologist_id']?.toString() ??
+          reportPayload['mycologist_id']?.toString() ??
+          '';
+
+      final dateObservedRaw = reportPayload['date_observed']?.toString();
+      final startDate = (dateObservedRaw != null && dateObservedRaw.isNotEmpty)
+          ? (DateTime.tryParse(dateObservedRaw)?.toUtc() ?? DateTime.now().toUtc())
+          : DateTime.now().toUtc();
+
+      // Build a fallback case from report payload so view page always works.
+      MoldCase moldCase = MoldCase(
+        id: resolvedReportId,
+        mycologistId: localMycologistId,
+        name: localCaseName,
+        moldReportId: resolvedReportId,
+        priority: 'low',
+        startDate: startDate,
+        endDate: null,
+        cultivationDetails: null,
+        cultivationLogs: null,
+        isArchived: false,
+      );
+
+      // Try to enrich with mold-case data (priority, cultivation details/logs).
+      try {
+        final repo = MoldCaseRepository(pageSize: 10);
+        final moldCases = await repo.getCasesByReportId(
+          resolvedReportId,
+          sessionCookie: sessionCookie,
+        );
+        if (moldCases.isNotEmpty) {
+          moldCase = moldCases.first;
+        }
+      } catch (e) {
+        AppLogger.w('ViewCase: no mold-case enrichment found, using report payload only');
+      }
 
       // Fetch farmer details from the mold report
       String localFarmerName = 'Juan Dela Cruz';
@@ -184,102 +225,73 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localContactNumber = '+63 917 123 4567';
       String localLocation = 'Unknown Location';
       final List<Map<String, dynamic>> localCaseEntries = [];
-      String localReportStatus = 'Unknown';
 
-      if (moldCase.moldReportId.isNotEmpty) {
-        try {
-          AppLogger.d('ViewCase: fetching report ${moldCase.moldReportId} for farmer details');
-          final reportService = MoldReportService();
-          final reportData = await reportService.getMoldReportById(
-            moldCase.moldReportId,
-            sessionCookie: sessionCookie,
-          );
-          AppLogger.d('ViewCase: report data = $reportData');
+      cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';
 
-          // Extract farmer details from report data
-          final reportPayload = reportData['data'] is Map<String, dynamic> 
-              ? reportData['data'] as Map<String, dynamic>
-              : reportData;
-            AppLogger.d('ViewCase: reportPayload.location = ${reportPayload['location']}');
-          cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';          AppLogger.d('Report crop_name: ${reportPayload['crop_name']}');
-          // Extract status from report
-          final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
-          localReportStatus = statusRaw[0].toUpperCase() + statusRaw.substring(1);
+      // Extract reporter details from the report
+      final reporter = reportPayload['reporter'] as Map<String, dynamic>?;
+      if (reporter != null) {
+        final user = reporter['user'] as Map<String, dynamic>?;
+        final details = reporter['details'] as Map<String, dynamic>?;
 
-          // Extract reporter details from the report
-          final reporter = reportPayload['reporter'] as Map<String, dynamic>?;
-            if (reporter != null) {
-              AppLogger.d('ViewCase: reporter found = $reporter');
-            final user = reporter['user'] as Map<String, dynamic>?;
-            final details = reporter['details'] as Map<String, dynamic>?;
-              AppLogger.d('ViewCase: reporter.details = $details');
-            
-            if (user != null) {
-              localFarmerName = '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'.trim();
-            }
-            AppLogger.d('ViewCase: resolved localLocation = $localLocation');
-            if (details != null) {
-              localEmailAddress = details['email']?.toString() ?? localEmailAddress;
-              localContactNumber = details['phone_number']?.toString() ?? localContactNumber;
-              // Prefer reporter details.location, then top-level report location, then address
-              localLocation = details['location']?.toString() ??
-                              reportPayload['location']?.toString() ??
-                              details['address']?.toString() ??
-                              'Unknown Location';
-            } else {
-              // If no reporter details, fall back to top-level report location
-              localLocation = reportPayload['location']?.toString() ?? localLocation;
-            }
-          }
-          
-          // Extract date observed from report, format it
-          final dateObserved = reportPayload['date_observed']?.toString();
-          if (dateObserved != null) {
-            localDateFirstObserved = formatIsoDateToDisplay(dateObserved);
-          }
+        if (user != null) {
+          localFarmerName =
+              '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'
+                  .trim();
+        }
+        if (details != null) {
+          localEmailAddress = details['email']?.toString() ?? localEmailAddress;
+          localContactNumber = details['phone_number']?.toString() ?? localContactNumber;
+          localLocation = details['location']?.toString() ??
+              reportPayload['location']?.toString() ??
+              details['address']?.toString() ??
+              'Unknown Location';
+        } else {
+          localLocation = reportPayload['location']?.toString() ?? localLocation;
+        }
+      } else {
+        localLocation = reportPayload['location']?.toString() ?? localLocation;
+      }
 
-          // Extract case_details from report and build caseEntries
-          final caseDetails = reportPayload['case_details'] as List<dynamic>?;
-          AppLogger.d('ViewCase: case_details = $caseDetails');
-          if (caseDetails != null && caseDetails.isNotEmpty) {
-            AppLogger.d('ViewCase: processing ${caseDetails.length} case detail entries');
-            for (var i = 0; i < caseDetails.length; i++) {
-              final detail = caseDetails[i];
-              AppLogger.d('ViewCase: detail[$i] = $detail');
-              if (detail is Map<String, dynamic>) {
-                final description = detail['description']?.toString() ?? '';
-                final metadata = detail['metadata'] as Map<String, dynamic>?;
-                
-                // Extract created_at from metadata
-                String entryDate = localDateFirstObserved;
-                if (metadata != null && metadata['created_at'] != null) {
-                  entryDate = formatFirestoreTimestampToDisplay(
-                    metadata['created_at'] as Map<String, dynamic>?,
-                  );
-                }
-                
-                // Extract cover_photo images
-                final coverPhotos = detail['cover_photo'] as List<dynamic>?;
-                final images = coverPhotos is List 
-                    ? coverPhotos.whereType<String>().toList()
-                    : <String>[];
-                
-                AppLogger.d('ViewCase: adding entry with date=$entryDate, notes=$description, images=${images.length}');
-                localCaseEntries.add({
-                  'date': entryDate,
-                  'notes': description,
-                  'images': images,
-                });
-              }
+      // Extract date observed from report, format it
+      final dateObserved = reportPayload['date_observed']?.toString();
+      if (dateObserved != null && dateObserved.isNotEmpty) {
+        localDateFirstObserved = formatIsoDateToDisplay(dateObserved);
+      }
+
+      // Extract case_details from report and build caseEntries
+      final caseDetails = reportPayload['case_details'] as List<dynamic>?;
+      if (caseDetails != null && caseDetails.isNotEmpty) {
+        for (final detail in caseDetails) {
+          if (detail is! Map<String, dynamic>) continue;
+
+          final description = detail['description']?.toString() ?? '';
+          String entryDate = localDateFirstObserved;
+
+          // Primary source per API docs
+          final timestamp = detail['timestamp']?.toString();
+          if (timestamp != null && timestamp.isNotEmpty) {
+            entryDate = formatIsoDateToDisplay(timestamp);
+          } else {
+            // Backward compatibility for legacy payloads
+            final metadata = detail['metadata'] as Map<String, dynamic>?;
+            if (metadata != null && metadata['created_at'] != null) {
+              entryDate = formatFirestoreTimestampToDisplay(
+                metadata['created_at'] as Map<String, dynamic>?,
+              );
             }
           }
 
-          AppLogger.d('ViewCase: extracted farmer details - name=$localFarmerName, email=$localEmailAddress');
-          AppLogger.d('ViewCase: extracted ${localCaseEntries.length} case entries from report');
+          final coverPhotos = detail['cover_photo'] as List<dynamic>?;
+          final images = coverPhotos is List
+              ? coverPhotos.whereType<String>().toList()
+              : <String>[];
 
-        } catch (e) {
-          AppLogger.e('ViewCase: WARNING - failed to fetch report for farmer details', error: e);
-          // Continue with fallback data
+          localCaseEntries.add({
+            'date': entryDate,
+            'notes': description,
+            'images': images,
+          });
         }
       }
 
@@ -341,8 +353,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       setState(() {
         _case = moldCase;
-        _reportId = reportId; // Store report ID for status updates
-        caseStatus = _case!.priority[0].toUpperCase() + _case!.priority.substring(1);
+        _reportId = resolvedReportId; // Store report ID for status updates
+        caseStatus = localReportStatus;
         reportStatus = localReportStatus;
         caseImageUrl = _case!.photoUrl ?? caseImageUrl;
         farmerName = localFarmerName;

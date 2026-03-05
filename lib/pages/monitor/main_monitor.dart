@@ -14,7 +14,6 @@ import '../misc/tiles/main_case_tile.dart';
 import '../../core/features/mold_case/logic/mold_case_bloc.dart';
 import '../../core/features/mold_case/models/mold_case.dart';
 import '../../core/features/mold_case/repository/mold_case_repository.dart';
-import '../../core/features/mold_report/service/mold_report_services.dart';
 import '../../providers/auth_provider.dart';
 
 class MainMonitorScreen extends StatefulWidget {
@@ -24,18 +23,24 @@ class MainMonitorScreen extends StatefulWidget {
   State<MainMonitorScreen> createState() => _MainMonitorScreenState();
 }
 
+/// Main Monitor Screen - displays assigned mold cases for mycologists
+/// 
+/// FILTERING APPROACH:
+/// - All search and filter operations are CLIENT-SIDE for instant results
+/// - Cases are fetched from server with pagination
+/// - Search and priority filters are applied locally using _applyClientFilters()
+/// - No server calls are made when searching or filtering
+/// - Pagination is disabled when filters are active
 class _MainMonitorScreenState extends State<MainMonitorScreen> {
   final TextEditingController searchController = TextEditingController();
   late final MoldCaseRepository _repository;
   late final MoldCaseBloc _bloc;
   final ScrollController _scrollController = ScrollController();
   bool _isFetchingMore = false;
-  final MoldReportService _reportService = MoldReportService();
+  
+  // Client-side filter state
   String? _activePriorityFilter;
   Timer? _searchDebounce;
-  final Map<String, String> _coverPhotoByReportId = {};
-  bool _isLoadingUserReportPhotos = false;
-  bool _hasLoadedUserReportPhotos = false;
 
   @override
   void initState() {
@@ -46,8 +51,13 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
+      print('🔍 MainMonitor: Session cookie = ${sessionCookie == null ? "NULL" : "${sessionCookie.substring(0, 20)}..."}');
+      if (sessionCookie == null || sessionCookie.isEmpty) {
+        print('⚠️ MainMonitor: No session cookie found - user may need to log in');
+      }
       _bloc.add(FetchMoldCases(sessionCookie: sessionCookie));
-      _loadUserReportCoverPhotos(sessionCookie);
+      // Don't load cover photos - mycologists don't have access to /user endpoint
+      // _loadUserReportCoverPhotos(sessionCookie);
     });
 
     _scrollController.addListener(() {
@@ -81,16 +91,37 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     return value
         .toLowerCase()
         .replaceAll('priority', '')
+        .replaceAll(' ', '')
         .trim();
   }
 
+  /// Client-side filtering: applies search and priority filter locally
+  /// without making additional API calls
   List<MoldCase> _applyClientFilters(List<MoldCase> cases) {
+    if (cases.isEmpty) return cases;
+    
     final searchText = searchController.text.trim().toLowerCase();
+    final hasSearch = searchText.isNotEmpty;
+    final hasFilter = _activePriorityFilter != null;
+    
+    // If no filters active, return all cases
+    if (!hasSearch && !hasFilter) return cases;
+    
     return cases.where((moldCase) {
-      final matchesSearch = searchText.isEmpty || moldCase.name.toLowerCase().contains(searchText);
-      final casePriority = _normalizePriority(moldCase.priority);
-      final activePriority = _activePriorityFilter == null ? null : _normalizePriority(_activePriorityFilter!);
-      final matchesPriority = activePriority == null || casePriority == activePriority;
+      // Apply search filter: match case name
+      bool matchesSearch = true;
+      if (hasSearch) {
+        matchesSearch = moldCase.name.toLowerCase().contains(searchText);
+      }
+      
+      // Apply priority filter
+      bool matchesPriority = true;
+      if (hasFilter) {
+        final casePriority = _normalizePriority(moldCase.priority);
+        final activePriority = _normalizePriority(_activePriorityFilter!);
+        matchesPriority = casePriority == activePriority;
+      }
+      
       return matchesSearch && matchesPriority;
     }).toList();
   }
@@ -135,74 +166,45 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     return null;
   }
 
-  Future<void> _loadUserReportCoverPhotos(String? sessionCookie) async {
-    if (_isLoadingUserReportPhotos || _hasLoadedUserReportPhotos) return;
-
-    _isLoadingUserReportPhotos = true;
-    try {
-      String? pageToken;
-      final localMap = <String, String>{};
-
-      for (var page = 0; page < 10; page++) {
-        final response = await _reportService.fetchMoldReports(
-          sessionCookie: sessionCookie,
-          limit: 50,
-          pageToken: pageToken,
-          path: '/user',
-        );
-
-        final data = response['data'];
-        if (data is! Map<String, dynamic>) break;
-
-        final snapshot = data['snapshot'];
-        if (snapshot is! List) break;
-
-        for (final item in snapshot) {
-          if (item is! Map<String, dynamic>) continue;
-          final reportId = item['id']?.toString().trim() ?? '';
-          if (reportId.isEmpty) continue;
-
-          final coverPhotoUrl = _extractCoverPhotoFromReport(item);
-          if (coverPhotoUrl != null && coverPhotoUrl.isNotEmpty) {
-            localMap[reportId] = coverPhotoUrl;
-          }
-        }
-
-        final nextToken = data['nextPageToken']?.toString();
-        if (nextToken == null || nextToken.isEmpty) {
-          pageToken = null;
-          break;
-        }
-
-        pageToken = nextToken;
-      }
-
-      if (!mounted) return;
-
-      setState(() {
-        _coverPhotoByReportId.addAll(localMap);
-      });
-      _hasLoadedUserReportPhotos = true;
-    } catch (_) {}
-    finally {
-      _isLoadingUserReportPhotos = false;
-    }
-  }
-
   String? _resolveTileImageUrl(MoldCase moldCase) {
-    final directPhoto = _extractPhotoUrl(moldCase.photoUrl);
-    if (directPhoto != null) return directPhoto;
-    return _coverPhotoByReportId[moldCase.moldReportId.trim()];
+    // Return the case's photo URL directly
+    return _extractPhotoUrl(moldCase.photoUrl);
   }
 
+  /// Trigger UI update for client-side filtering (search/filter changes)
   void _dispatchSearchOrFilter() {
     if (!mounted) return;
+    // Simply trigger a rebuild - filters are applied in _applyClientFilters
     setState(() {});
   }
 
   void _onSearchChanged() {
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), _dispatchSearchOrFilter);
+    _searchDebounce = Timer(const Duration(milliseconds: 300), _dispatchSearchOrFilter);
+  }
+
+  void _onPriorityFilterChanged(int index) {
+    String? selectedPriority;
+    
+    // Map menu index to priority value
+    switch (index) {
+      case 0: // "All"
+        selectedPriority = null;
+        break;
+      case 1: // "Low"
+        selectedPriority = 'low';
+        break;
+      case 2: // "Medium"
+        selectedPriority = 'medium';
+        break;
+      case 3: // "High"
+        selectedPriority = 'high';
+        break;
+    }
+    
+    setState(() {
+      _activePriorityFilter = selectedPriority;
+    });
   }
 
   @override
@@ -257,25 +259,13 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: PopupMenu(
-                            popMenuIcon: Icon (
+                            popMenuIcon: Icon(
                               FontAwesomeIcons.filter,
                               color: MoldifyColors.accentColor,
-                              size: 20.0
+                              size: 20.0,
                             ),
                             items: ['All', 'Low', 'Medium', 'High'],
-                            onItemSelected: (index) {
-                              String? selectedPriority;
-                              if (index == 1) {
-                                selectedPriority = 'low';
-                              } else if (index == 2) {
-                                selectedPriority = 'medium';
-                              } else if (index == 3) {
-                                selectedPriority = 'high';
-                              }
-
-                              setState(() => _activePriorityFilter = selectedPriority);
-                              _dispatchSearchOrFilter();
-                            },
+                            onItemSelected: _onPriorityFilterChanged,
                           ),
                         ),
                       ),
@@ -303,23 +293,54 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                               ),
                             );
                           } else if (state is MoldCaseError) {
+                            // Check if it's an auth error
+                            final isAuthError = state.message.toLowerCase().contains('authentication') ||
+                                state.message.toLowerCase().contains('unauthorized') ||
+                                state.message.toLowerCase().contains('session');
+                            
                             return EmptyState(
-                              message: state.message,
+                              message: isAuthError 
+                                  ? 'Session expired. Please log out and log in again.'
+                                  : state.message,
                               height: MediaQuery.of(context).size.height - 300,
                             );
                           } else if (state is MoldCaseLoaded) {
                             final filteredCases = _applyClientFilters(state.cases);
 
                             if (filteredCases.isEmpty) {
+                              // Show different message based on whether we have filters active
+                              final hasFilters = _hasActiveSearchOrFilter;
+                              final message = hasFilters
+                                  ? 'No cases match your search or filter criteria.'
+                                  : 'No cases assigned yet.';
+                              
                               return EmptyState(
-                                message: 'No cases match your current search/filter.',
+                                message: message,
                                 height: MediaQuery.of(context).size.height - 300,
                               );
                             }
 
+                            // Show filtered count if filters are active
+                            final hasFilters = _hasActiveSearchOrFilter;
+                            final totalCount = state.cases.length;
+                            final filteredCount = filteredCases.length;
+
                             // Convert cases to display format with statuses
                             return Column(
                               children: [
+                                // Show filter results count
+                                if (hasFilters && filteredCount < totalCount)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10.0),
+                                    child: Text(
+                                      'Showing $filteredCount of $totalCount cases',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'Bricolage-Grotesque-Regular',
+                                        color: MoldifyColors.accentColor,
+                                      ),
+                                    ),
+                                  ),
                                 ListView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
@@ -335,10 +356,13 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                           caseStatus: 'In Progress',
                                           imageUrl: _resolveTileImageUrl(moldCase),
                                           onTap: () async {
+                                            final reportId = moldCase.moldReportId.trim().isNotEmpty
+                                                ? moldCase.moldReportId
+                                                : moldCase.id;
                                             final result = await Navigator.pushNamed(
                                               context,
                                               '/view-case',
-                                              arguments: {'id': moldCase.moldReportId},
+                                              arguments: {'id': reportId},
                                             );
                                             if (result == true && mounted) {
                                               final authProvider = Provider.of<AppAuthProvider>(context, listen: false);

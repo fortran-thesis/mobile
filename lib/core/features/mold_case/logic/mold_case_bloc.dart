@@ -86,7 +86,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
         _nextPageToken = null;
       }
 
-      final pageCases = await repository.fetchPage(pageToken: event.pageToken, sessionCookie: event.sessionCookie);
+      final result = await repository.fetchPageWithToken(
+        pageToken: event.pageToken, 
+        sessionCookie: event.sessionCookie,
+      );
+      
+      final pageCases = result['cases'] as List<MoldCase>;
+      final nextToken = result['nextPageToken'] as String?;
       
       // Deduplicate: only add cases with IDs we haven't seen yet
       final existingIds = _allCases.map((c) => c.id).toSet();
@@ -95,10 +101,10 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       AppLogger.d('MoldCaseBloc: fetched ${pageCases.length} cases, adding ${newCases.length} new unique cases (filtered ${pageCases.length - newCases.length} duplicates)');
       
       _allCases.addAll(newCases);
-      // If we got fewer items than pageSize, there's no more data
-      // hasMore is determined by: did we get a full page? If so, assume there could be more
-      final hasMore = pageCases.length >= pageSize;
-      _nextPageToken = hasMore ? (pageCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+      _nextPageToken = nextToken;
+      
+      // hasMore is true if we have a nextPageToken from the server
+      final hasMore = nextToken != null && nextToken.isNotEmpty;
       
       emit(MoldCaseLoaded(cases: List.from(_allCases), nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
@@ -112,12 +118,18 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       _allCases.clear();
       _nextPageToken = null;
       
-      final pageCases = await repository.fetchPage(pageToken: null, sessionCookie: event.sessionCookie);
-      _allCases.addAll(pageCases);
+      final result = await repository.fetchPageWithToken(
+        pageToken: null, 
+        sessionCookie: event.sessionCookie,
+      );
       
-      // If we got fewer items than pageSize, there's no more data
-      final hasMore = pageCases.length >= pageSize;
-      _nextPageToken = hasMore ? (pageCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+      final pageCases = result['cases'] as List<MoldCase>;
+      final nextToken = result['nextPageToken'] as String?;
+      
+      _allCases.addAll(pageCases);
+      _nextPageToken = nextToken;
+      
+      final hasMore = nextToken != null && nextToken.isNotEmpty;
       
       emit(MoldCaseLoaded(cases: _allCases, nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
@@ -131,15 +143,19 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       _allCases.clear();
       _nextPageToken = null;
 
-      final searchCases = await repository.searchCases(
+      final result = await repository.searchCasesWithToken(
         search: event.searchQuery,
         priority: event.priorityFilter,
         sessionCookie: event.sessionCookie,
       );
 
+      final searchCases = result['cases'] as List<MoldCase>;
+      final nextToken = result['nextPageToken'] as String?;
+      
       _allCases.addAll(searchCases);
-      final hasMore = searchCases.length >= pageSize;
-      _nextPageToken = hasMore ? (searchCases.isNotEmpty ? 'next_token_placeholder' : null) : null;
+      _nextPageToken = nextToken;
+      
+      final hasMore = nextToken != null && nextToken.isNotEmpty;
 
       emit(MoldCaseLoaded(cases: List.from(_allCases), nextPageToken: _nextPageToken, hasMore: hasMore));
     } catch (e) {
