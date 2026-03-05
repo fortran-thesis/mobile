@@ -4,17 +4,25 @@ import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/radio_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:provider/provider.dart';
 
-import '../../core/features/userReport/models/report_model.dart';
-import '../../core/features/userReport/services/report_services.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import 'package:moldify/core/utils/logger.dart';
 
+import '../../core/features/flag_report/services/flag_report_service.dart';
+import '../../../providers/auth_provider.dart';
+// no bloc imports required here
+
 class ReportACuratorScreen extends StatefulWidget {
+  /// Optional content identifiers to associate the flag with specific content.
+  final String? contentId;
+  final String? contentType;
 
   const ReportACuratorScreen({
     super.key,
+    this.contentId,
+    this.contentType,
   });
 
   @override
@@ -266,11 +274,6 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                               Navigator.of(dialogCtx).pop(); // Close confirmation dialog
 
                               try {
-                                // Assume you have current user ID and reported curator ID
-                                final reporterId = 'CURRENT_USER_ID';
-                                final reportedUserId = 'CURATOR_USER_ID';
-
-                                // Map selectedRadio to reason string
                                 const reasonMap = [
                                   'Misleading or Unverified Information',
                                   'Offensive or Inappropriate Language',
@@ -281,22 +284,25 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                   'Something Else',
                                 ];
 
-                                final report = UserReport(
-                                  reporterId: reporterId,
-                                  reportedUserId: reportedUserId,
-                                  reason: reasonMap[selectedRadio],
-                                  details: detailsController.text,
-                                );
+                                // Build payload for flag-report endpoint
+                                final payload = {
+                                  'content_id': widget.contentId ?? 'unknown',
+                                  'content_type': widget.contentType ?? 'curator',
+                                  'reason': reasonMap[selectedRadio],
+                                  'details': detailsController.text,
+                                };
 
-                                final service = UserReportService();
-                                await service.createReport(
-                                  report: report,
-                                  sessionCookie: 'YOUR_SESSION_COOKIE_HERE',
+                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                                final sessionCookie = authProvider.cookie;
+
+                                final service = FlagReportService();
+                                await service.createFlagReport(
+                                  payload: payload,
+                                  sessionCookie: sessionCookie,
                                 );
 
                                 // Show success message
                                 if (!mounted) return;
-                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Report submitted successfully.'),
@@ -304,9 +310,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                   ),
                                 );
 
-                                // ignore: use_build_context_synchronously
                                 Navigator.of(context).pop(); // Go back after submission
-
                               } catch (e) {
                                 // Show error message
                                 if (!mounted) return;

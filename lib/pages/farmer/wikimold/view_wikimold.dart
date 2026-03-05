@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
+import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:provider/provider.dart';
 import '../../../core/features/wikimold/models/wikimold.dart';
 import '../../../core/features/wikimold/services/wikimold_services.dart';
@@ -84,7 +85,21 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(title: _article!.title),
+      appBar: PrimaryAppBar(
+        title: _article!.title,
+        rightIcon: const Icon(Icons.flag),
+        rightIconColor: MoldifyColors.MoldifyRed,
+        onRightIconPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ReportACuratorScreen(
+                contentId: _article!.id,
+                contentType: 'wiki-article',
+              ),
+            ),
+          );
+        },
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
