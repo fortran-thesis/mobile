@@ -310,7 +310,9 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 16.0),
                       child: Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          color: MoldifyColors.primaryColor,
+                        ),
                       ),
                     ),
 

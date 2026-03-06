@@ -182,7 +182,11 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
           // List of articles
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: MoldifyColors.primaryColor,
+                    ),
+                  )
                 : _filteredArticles.isEmpty
                 ? EmptyState(
               message: 'No articles match your search.',
@@ -198,7 +202,9 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   return const Padding(
                     padding: EdgeInsets.all(20.0),
                     child: Center(
-                      child: CircularProgressIndicator(),
+                      child: CircularProgressIndicator(
+                        color: MoldifyColors.primaryColor,
+                      ),
                     ),
                   );
                 }

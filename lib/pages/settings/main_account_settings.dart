@@ -130,7 +130,9 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                         Align(
                           alignment: Alignment.center,
                           child: state is UserProfileLoading
-                              ? CircularProgressIndicator()
+                              ? CircularProgressIndicator(
+                                  color: MoldifyColors.primaryColor,
+                                )
                               : Text(
                             username,
                             style: TextStyle(

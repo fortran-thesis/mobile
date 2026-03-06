@@ -468,7 +468,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             }
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: MoldifyColors.primaryColor,
+                ),
+              )
             : _error != null
                 ? Center(
                     child: Padding(

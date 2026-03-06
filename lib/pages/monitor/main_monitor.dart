@@ -289,7 +289,9 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                             return Center(
                               child: Padding(
                                 padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.3),
-                                child: const CircularProgressIndicator(),
+                                child: const CircularProgressIndicator(
+                                  color: MoldifyColors.primaryColor,
+                                ),
                               ),
                             );
                           } else if (state is MoldCaseError) {

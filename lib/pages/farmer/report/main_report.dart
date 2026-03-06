@@ -280,7 +280,11 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           child: BlocBuilder<MoldReportBloc, MoldReportState>(
                             builder: (context, state) {
                               if (state is MoldReportLoading) {
-                                return const Center(child: CircularProgressIndicator());
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                );
                               }
                               if (state is MoldReportError) {
                                 return EmptyState(message: state.message, height: MediaQuery.of(context).size.height - 300);
@@ -306,7 +310,11 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                     if (index >= filteredReports.length) {
                                       return const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12.0),
-                                        child: Center(child: CircularProgressIndicator()),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color: MoldifyColors.primaryColor,
+                                          ),
+                                        ),
                                       );
                                     }
 

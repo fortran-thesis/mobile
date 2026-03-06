@@ -186,7 +186,11 @@ class _CameraScreenState extends State<CameraScreen> {
     if (cameraController == null || !cameraController!.value.isInitialized) {
       return const Scaffold(
           backgroundColor: MoldifyColors.backgroundColor,
-          body: Center(child: CircularProgressIndicator())
+          body: Center(
+            child: CircularProgressIndicator(
+              color: MoldifyColors.primaryColor,
+            ),
+          )
       );
     }
 

@@ -217,7 +217,11 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
 
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: MoldifyColors.primaryColor,
+                      )
+                    )
                   : _error != null
                       ? EmptyState(
                           message: _error!,
@@ -235,7 +239,11 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                                 if (index == _filteredReports.length) {
                                   return const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 20.0),
-                                    child: Center(child: CircularProgressIndicator()),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: MoldifyColors.primaryColor,
+                                      ),
+                                    ),
                                   );
                                 }
 

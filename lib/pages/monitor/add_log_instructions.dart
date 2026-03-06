@@ -223,7 +223,9 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
               child: Container(
                 color: Colors.black.withValues(alpha: 0.5),
                 child: const Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    color: MoldifyColors.primaryColor,
+                  ),
                 ),
               ),
             ),
