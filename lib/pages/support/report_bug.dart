@@ -33,7 +33,6 @@ class _ReportBugScreenState extends State<ReportBugScreen> {
     if (_isLoading) {
       return;
     }
-
     if (reportBugController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please describe the bug')),

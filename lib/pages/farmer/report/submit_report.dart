@@ -16,6 +16,7 @@ import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
+import '../../misc/overlays/modals/chip_selection_modal.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/photo_uploader.dart';
 
@@ -33,6 +34,35 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       TextEditingController();
   final TextEditingController _probDescController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+
+  /// Predefined crop options for the chip selection modal
+  final List<String> _cropOptions = [
+    'Tomato',
+    'Potato',
+    'Garlic',
+    'Onion',
+    'Cabbage',
+    'Carrot',
+    'Lettuce',
+    'Eggplant',
+    'Bell Pepper',
+    'Cucumber',
+  ];
+
+  /// Predefined mold problem descriptions for the chip selection modal
+  /// Using farmer-friendly, non-scientific terms
+  final List<String> _problemDescriptionOptions = [
+    'May white cotton-like na tumutubo sa dahon',
+    'May itim na mantsa sa bunga',
+    'May kulay abo/gray na bubog sa dahon o bunga',
+    'Nangingitim at nangingisay ang dahon',
+    'May kulay brown/kayumanggi na mantsa sa dahon',
+    'Nabulok ang bunga at may mabahong amoy',
+    'May white powder na parang talcum sa dahon',
+    'May orange o yellow na mantsa sa dahon',
+    'Tumutuyo at nanlalanta ang halaman',
+    'May kulay brown na guhit sa tangkay',
+  ];
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -220,11 +250,31 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   ),
                 ),
 
-                /// Crop Name Textbox.
+                /// Crop Name Textbox - Opens chip selection modal on tap
                 BuildTextBox(
                   hintText: 'Enter crop name',
                   controller: _cropNameController,
                   showPassword: false,
+                  readOnly: true,
+                  onTap: () async {
+                    // Show chip selection modal for crop name
+                    final selectedCrop = await showChipSelectionModal(
+                      context: context,
+                      title: 'Select Crop Name',
+                      options: _cropOptions,
+                      currentSelection: _cropNameController.text,
+                      customInputHint: 'Type the crop name here',
+                      othersLabel: 'Others/Iba pa',
+                      isMultiLine: false,
+                    );
+
+                    // Update the text field if a selection was made
+                    if (selectedCrop != null && selectedCrop.isNotEmpty) {
+                      setState(() {
+                        _cropNameController.text = selectedCrop;
+                      });
+                    }
+                  },
                 ),
 
                 /// Location Label
@@ -311,12 +361,32 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   ),
                 ),
 
-                /// Problem Description Textbox.
+                /// Problem Description Textbox - Opens chip selection modal on tap
                 BuildTextBox(
                   hintText: 'Enter problem description',
                   controller: _probDescController,
                   showPassword: false,
                   isMultiline: true,
+                  readOnly: true,
+                  onTap: () async {
+                    // Show chip selection modal for problem description
+                    final selectedProblem = await showChipSelectionModal(
+                      context: context,
+                      title: 'Select Problem Description',
+                      options: _problemDescriptionOptions,
+                      currentSelection: _probDescController.text,
+                      customInputHint: 'Ilarawan ang problema dito',
+                      othersLabel: 'Others/Iba pa',
+                      isMultiLine: true,
+                    );
+
+                    // Update the text field if a selection was made
+                    if (selectedProblem != null && selectedProblem.isNotEmpty) {
+                      setState(() {
+                        _probDescController.text = selectedProblem;
+                      });
+                    }
+                  },
                 ),
 
                 /// Submit Report Button
