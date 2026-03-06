@@ -148,7 +148,7 @@ class _MainPageState extends State<MainPage> {
 
   static const Duration _backExitWindow = Duration(seconds: 2);
 
-  bool _isExpert = true; // mycologist/curator => true; farmer/user => false
+  bool _isExpert = false; // mycologist/curator => true; farmer/user => false
 
   @override
   void initState() {
