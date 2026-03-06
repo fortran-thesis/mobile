@@ -29,11 +29,14 @@ class WikiMoldTile extends StatefulWidget {
 
 class _WikiMoldTileState extends State<WikiMoldTile> {
   Color _containerColor = MoldifyColors.taupe;
-  final String defaultImageUrl =
-      'assets/images/Branding2.png';
+  final String defaultImageUrl = 'assets/images/Branding2.png';
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = widget.imageUrl?.trim();
+    final hasValidNetworkImage =
+        imageUrl != null && imageUrl.isNotEmpty && imageUrl != 'no_image';
+
     return GestureDetector(
       onTapDown: (_) {
         setState(() {
@@ -62,10 +65,7 @@ class _WikiMoldTileState extends State<WikiMoldTile> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: (widget.imageUrl != null &&
-                    widget.imageUrl != "no_image")
-                    ? null
-                    : Colors.transparent,
+                color: hasValidNetworkImage ? null : Colors.transparent,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(15.0),
                   topRight: Radius.circular(15.0),
@@ -78,32 +78,36 @@ class _WikiMoldTileState extends State<WikiMoldTile> {
                   topLeft: Radius.circular(12.0),
                   topRight: Radius.circular(12.0),
                 ),
-                child: (widget.imageUrl != null && widget.imageUrl != "no_image")
+                child: hasValidNetworkImage
                     ? Image.network(
-                  widget.imageUrl!,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      defaultImageUrl,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                    );
-                  },
-                )
+                        imageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            defaultImageUrl,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      )
                     : Image.asset(
-                  defaultImageUrl,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                        defaultImageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
             Padding(
-              padding:
-              const EdgeInsets.only(top: 8.0, bottom: 15.0, left: 15, right: 15),
+              padding: const EdgeInsets.only(
+                top: 8.0,
+                bottom: 15.0,
+                left: 15,
+                right: 15,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

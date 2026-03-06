@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/features/user/logic/user_bloc.dart';
@@ -145,6 +146,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didpop, dynamic result) async {
@@ -159,8 +161,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
             barrierDismissible: false,
             builder: (BuildContext context) {
               return BuildConfirmationDialog(
-                title: 'Are you sure you want to go back?',
-                subtitle: 'Going back now will lose all your progress.',
+                title: l10n.goBackTitle,
+                subtitle: l10n.goBackSubtitle,
                 onConfirm: () {
                   Navigator.of(context).pop(true); //Return true to allow pop
                 },
@@ -169,8 +171,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     context,
                   ).pop(false); //Return false to prevent pop
                 },
-                cancelText: 'No',
-                confirmText: 'Yes',
+                cancelText: l10n.no,
+                confirmText: l10n.yes,
               );
             },
           );
@@ -187,7 +189,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       },
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
-        appBar: PrimaryAppBar(title: 'Submit Report'),
+        appBar: PrimaryAppBar(title: l10n.submitReport),
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -198,8 +200,12 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 /// ----------- Submit Report Header -----------
+                Builder(builder: (_) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
-                  'Submit Report',
+                  l10n.submitReport,
                   style: TextStyle(
                     fontSize: 36,
                     fontFamily: 'Montserrat-Black',
@@ -207,7 +213,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   ),
                 ),
                 Text(
-                  'Fill out the details below to submit your mold report.',
+                  l10n.submitReportSubtitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-Regular',
@@ -220,8 +226,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 /// Case Name Label
                 Padding(
                   padding: const EdgeInsets.only(top: 30.0, bottom: 8.0),
-                  child: const Text(
-                    'Case Name',
+                  child: Text(
+                    l10n.caseName,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -232,7 +238,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                 /// Case Name Textbox
                 BuildTextBox(
-                  hintText: 'Enter case name',
+                  hintText: l10n.enterCaseName,
                   controller: _caseNameController,
                   showPassword: false,
                 ),
@@ -240,8 +246,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 /// Crop Name Label
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                  child: const Text(
-                    'Crop Name',
+                  child: Text(
+                    l10n.cropName,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -252,23 +258,21 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                 /// Crop Name Textbox - Opens chip selection modal on tap
                 BuildTextBox(
-                  hintText: 'Enter crop name',
+                  hintText: l10n.enterCropName,
                   controller: _cropNameController,
                   showPassword: false,
                   readOnly: true,
                   onTap: () async {
-                    // Show chip selection modal for crop name
                     final selectedCrop = await showChipSelectionModal(
                       context: context,
-                      title: 'Select Crop Name',
+                      title: l10n.selectCropName,
                       options: _cropOptions,
                       currentSelection: _cropNameController.text,
-                      customInputHint: 'Type the crop name here',
-                      othersLabel: 'Others/Iba pa',
+                      customInputHint: l10n.customCropInputHint,
+                      othersLabel: l10n.othersLabel,
                       isMultiLine: false,
                     );
 
-                    // Update the text field if a selection was made
                     if (selectedCrop != null && selectedCrop.isNotEmpty) {
                       setState(() {
                         _cropNameController.text = selectedCrop;
@@ -281,7 +285,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: AutoSizeText(
-                    'Location(City/Province)',
+                    l10n.location,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -296,7 +300,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: BuildTextBox(
-                    hintText: 'Enter location',
+                    hintText: l10n.enterLocation,
                     controller: _addressController,
                     showPassword: false,
                   ),
@@ -305,8 +309,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 /// Date First Observed Label
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                  child: const Text(
-                    'Date First Observed',
+                  child: Text(
+                    l10n.dateFirstObserved,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -317,12 +321,11 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                 /// Date First Observed Textbox
                 BuildTextBox(
-                  hintText: 'Enter date first observed',
+                  hintText: l10n.enterDateFirstObserved,
                   controller: _dateFirstObservedController,
                   showPassword: false,
                   rightIcon: FontAwesomeIcons.solidCalendar,
                   rightIconColor: MoldifyColors.accentColor,
-                  // 2. Make the text box read-only and trigger the date picker on tap
                   readOnly: true,
                   onTap: () {
                     _selectDate(context);
@@ -332,8 +335,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 /// Upload Photo Label
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                  child: const Text(
-                    'Upload Photo (Up to 5 photos)',
+                  child: Text(
+                    l10n.uploadPhoto,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -344,15 +347,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                 /// Upload Photo Widget
                 PhotoUploader(
-                  photoOptionLabel: "Use Camera",
+                  photoOptionLabel: l10n.useCamera,
                   onPhotosChanged: _handlePhotoChange,
                 ),
 
                 /// Problem Description Label
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                  child: const Text(
-                    'Problem Description',
+                  child: Text(
+                    l10n.problemDescription,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -363,24 +366,22 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                 /// Problem Description Textbox - Opens chip selection modal on tap
                 BuildTextBox(
-                  hintText: 'Enter problem description',
+                  hintText: l10n.enterProblemDescription,
                   controller: _probDescController,
                   showPassword: false,
                   isMultiline: true,
                   readOnly: true,
                   onTap: () async {
-                    // Show chip selection modal for problem description
                     final selectedProblem = await showChipSelectionModal(
                       context: context,
-                      title: 'Select Problem Description',
+                      title: l10n.selectProblemDescription,
                       options: _problemDescriptionOptions,
                       currentSelection: _probDescController.text,
-                      customInputHint: 'Ilarawan ang problema dito',
-                      othersLabel: 'Others/Iba pa',
+                      customInputHint: l10n.customProblemInputHint,
+                      othersLabel: l10n.othersLabel,
                       isMultiLine: true,
                     );
 
-                    // Update the text field if a selection was made
                     if (selectedProblem != null && selectedProblem.isNotEmpty) {
                       setState(() {
                         _probDescController.text = selectedProblem;
@@ -388,6 +389,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     }
                   },
                 ),
+                    ],
+                  );
+                }),
 
                 /// Submit Report Button
                 Padding(
@@ -399,9 +403,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       // Validate required fields
                       if (_caseNameController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Case name is required',
+                              l10n.caseNameRequired,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 color: MoldifyColors.backgroundColor,
@@ -415,9 +419,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                       if (_cropNameController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Crop name is required',
+                              l10n.cropNameRequired,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 color: MoldifyColors.backgroundColor,
@@ -431,9 +435,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                       if (_addressController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Location is required',
+                              l10n.locationRequired,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 color: MoldifyColors.backgroundColor,
@@ -447,9 +451,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                       if (_dateFirstObservedController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Date first observed is required',
+                              l10n.dateFirstObservedRequired,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 color: MoldifyColors.backgroundColor,
@@ -463,9 +467,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                       if (_probDescController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Problem description is required',
+                              l10n.problemDescriptionRequired,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 color: MoldifyColors.backgroundColor,
@@ -482,16 +486,16 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         barrierDismissible: false,
                         builder: (BuildContext context) {
                           return BuildConfirmationDialog(
-                            title: 'Are you sure you want to submit this report?',
-                            subtitle: 'Once submitted, you will not be able to edit the report details.',
+                            title: l10n.submitReportConfirmTitle,
+                            subtitle: l10n.submitReportConfirmSubtitle,
                             onConfirm: () {
                               Navigator.of(context).pop(true);
                             },
                             onCancel: () {
                               Navigator.of(context).pop(false);
                             },
-                            cancelText: 'No',
-                            confirmText: 'Yes',
+                            cancelText: l10n.no,
+                            confirmText: l10n.yes,
                           );
                         },
                       );
@@ -633,7 +637,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         }
                       }
                     },
-                    buttonText: 'Submit Report',
+                    buttonText: l10n.submitReport,
                     backgroundColor: MoldifyColors.primaryColor,
                     textColor: MoldifyColors.backgroundColor,
                     buttonHeight: 45,

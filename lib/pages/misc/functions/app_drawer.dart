@@ -15,6 +15,7 @@ import '../../../core/constants/route_names.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
+import 'package:moldify/core/utils/auth_navigation.dart';
 
 /// AppDrawer is a custom side bar widget that provides navigation options
 /// for the Moldify application.
@@ -71,9 +72,7 @@ class _AppDrawerState extends State<AppDrawer> {
       child: SizedBox(
         width: 270,
         child: Drawer(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero,
-          ),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           backgroundColor: MoldifyColors.backgroundColor,
           child: SafeArea(
             bottom: true,
@@ -140,9 +139,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Terms of Agreement',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -166,9 +166,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Privacy Policy',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -200,9 +201,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Send Feedback',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -226,9 +228,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Report A Bug',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -252,9 +255,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Contact Us',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -285,9 +289,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Account Settings',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
@@ -300,10 +305,15 @@ class _AppDrawerState extends State<AppDrawer> {
                     );
                     // Re-fetch profile so role-based menu items reflect any changes.
                     if (mounted) {
-                      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                      final authProvider = Provider.of<AppAuthProvider>(
+                        context,
+                        listen: false,
+                      );
                       final sessionCookie = authProvider.cookie;
                       if (sessionCookie != null) {
-                        _userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+                        _userBloc.add(
+                          FetchUserProfile(sessionCookie: sessionCookie),
+                        );
                       }
                     }
                   },
@@ -326,26 +336,26 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: const AutoSizeText(
                     'Log Out',
                     style: TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-Bold',
-                        color: MoldifyColors.primaryColor,
-                        fontSize: 14),
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      color: MoldifyColors.primaryColor,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () async {
-                    final authProvider =
-                    Provider.of<AppAuthProvider>(context, listen: false);
+                    final authProvider = Provider.of<AppAuthProvider>(
+                      context,
+                      listen: false,
+                    );
                     await authProvider.logout();
                     if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                          RouteNames.login, (route) => false);
+                      AuthNavigation.resetToLoginFromContext(context);
                     }
                   },
                 ),
-                const SizedBox(
-                  height: 20,
-                )
+                const SizedBox(height: 20),
               ],
             ),
           ),

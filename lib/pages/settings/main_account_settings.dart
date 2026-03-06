@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/features/user/logic/user_bloc.dart';
@@ -10,6 +11,7 @@ import 'package:moldify/pages/misc/images/profile_image.dart';
 import 'package:moldify/pages/settings/case_history.dart';
 import 'package:moldify/pages/settings/change_password.dart';
 import 'package:moldify/pages/settings/edit_profile.dart';
+import 'package:moldify/pages/settings/language_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 
@@ -54,6 +56,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.of(context).size.width;
     final double profileImageWidth = screenWidth * 0.50; // 50% of screen width
     final double profileImageHeight = profileImageWidth * (180.0 / 170.0);
@@ -67,7 +70,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
         backgroundColor: MoldifyColors.backgroundColor,
         extendBodyBehindAppBar: true,
         appBar: SecondaryAppBar(
-          title: 'Account Settings',
+          title: l10n.accountSettings,
           color: MoldifyColors.backgroundColor,
           themeColor: MoldifyColors.backgroundColor,
         ),
@@ -179,7 +182,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                         BuildAccountSettingsTiles(
                           leftIcon: FontAwesomeIcons.userPen,
                           rightIcon: FontAwesomeIcons.angleRight,
-                          title: 'Edit Profile',
+                          title: l10n.editProfile,
                           onTap: () async {
                             // CHANGE: Wait for result and refresh if updated
                             final result = await Navigator.of(context).push(
@@ -204,7 +207,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           child: BuildAccountSettingsTiles(
                             leftIcon: FontAwesomeIcons.lock,
                             rightIcon: FontAwesomeIcons.angleRight,
-                            title: 'Change Password',
+                            title: l10n.changePassword,
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -227,7 +230,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                         BuildAccountSettingsTiles(
                           leftIcon: FontAwesomeIcons.clipboardCheck,
                           rightIcon: FontAwesomeIcons.angleRight,
-                          title: 'Case History',
+                          title: l10n.caseHistory,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -237,6 +240,25 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           },
                         ),
 
+                        /// Language Tile (Farmer only)
+                        if (!isMycologist)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: BuildAccountSettingsTiles(
+                              leftIcon: FontAwesomeIcons.globe,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              title: l10n.language,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const LanguageSettingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
                         /// Flagged Tile (Mycologist only)
                         if (isMycologist)
                           Padding(
@@ -244,7 +266,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                             child: BuildAccountSettingsTiles(
                               leftIcon: FontAwesomeIcons.solidFlag,
                               rightIcon: FontAwesomeIcons.angleRight,
-                              title: 'Flag History',
+                              title: l10n.flagHistory,
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(

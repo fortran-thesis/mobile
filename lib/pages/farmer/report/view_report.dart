@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/report/content_tab/prevention_tactics_content.dart';
 import 'package:provider/provider.dart';
@@ -37,16 +38,17 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
   /// Builds a centered text widget to display messages for non-resolved statuses.
   Widget _buildStatusMessageWidget(String status) {
+    final l10n = AppLocalizations.of(context)!;
     String message;
     switch (status) {
       case 'Pending':
-        message = 'Your report has been sent in and is now waiting to be checked.';
+        message = l10n.statusPending;
         break;
       case 'In progress':
-        message = 'We\'re checking your report now. You\'ll see the results when it\'s ready.';
+        message = l10n.statusInProgress;
         break;
       case 'Rejected':
-        message = 'Sorry, your report was rejected and can\'t be processed.';
+        message = l10n.statusRejected;
         break;
       default:
       // Return an empty widget if the status is not one of the above.

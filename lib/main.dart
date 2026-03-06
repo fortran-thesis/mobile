@@ -2,12 +2,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/utils/auth_navigation.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
+import 'package:moldify/providers/language_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'routes/app_routes.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/home/home_page.dart';
@@ -32,10 +36,14 @@ void main() async {
   // Initialise FCM (request permission, get token, register with backend)
   await FCMService.instance.initialise(sessionCookie: authProvider.cookie);
 
+  final prefs = await SharedPreferences.getInstance();
+  final languageProvider = LanguageProvider(prefs);
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider.value(value: languageProvider),
         BlocProvider(create: (_) => UserBloc(userService: UserService())),
         BlocProvider(
           create: (_) => NotificationBloc(repository: NotificationRepository()),
@@ -99,13 +107,28 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Moldify',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(),
-      initialRoute: RouteNames.splash,
-      onGenerateRoute: AppRoutes.generateRoute,
-      navigatorKey: _rootNavigatorKey,
+    return Consumer<LanguageProvider>(
+      builder: (context, langProvider, _) {
+        return MaterialApp(
+          title: 'Moldify',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(),
+          locale: langProvider.effectiveLocale,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('fil'),
+          ],
+          initialRoute: RouteNames.splash,
+          onGenerateRoute: AppRoutes.generateRoute,
+          navigatorKey: _rootNavigatorKey,
+        );
+      },
     );
   }
 }
@@ -146,6 +169,9 @@ class _MainPageState extends State<MainPage> {
         if (state is UserProfileLoaded) {
           final role = state.profile.role.toLowerCase();
           final isExpert = !(role == 'farmer' || role == 'user');
+
+          // Notify LanguageProvider so it can gate Filipino locale to farmers only.
+          context.read<LanguageProvider>().setRole(isFarmer: !isExpert);
 
           if (isExpert != _isExpert) {
             setState(() {

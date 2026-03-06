@@ -30,12 +30,22 @@ class _BuildDropdownState extends State<BuildDropdown> {
   }
 
   @override
+  void didUpdateWidget(covariant BuildDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue) {
+      setState(() {
+        selectedValue = widget.initialValue;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: MoldifyColors.taupe,
+        color: selectedValue != null ? MoldifyColors.MoldifyBlack : MoldifyColors.taupe,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -49,6 +59,12 @@ class _BuildDropdownState extends State<BuildDropdown> {
               color: MoldifyColors.MoldifyGrey,
             ),
           ),
+          style: TextStyle(
+            fontFamily: 'Bricolage-Grotesque-SemiBold',
+            fontSize: 14,
+            color: selectedValue != null ? MoldifyColors.backgroundColor : MoldifyColors.MoldifyBlack,
+            fontWeight: selectedValue != null ? FontWeight.w700 : FontWeight.w400,
+          ),
           icon: const Icon(
               FontAwesomeIcons.chevronDown,
               color: MoldifyColors.accentColor,
@@ -57,13 +73,20 @@ class _BuildDropdownState extends State<BuildDropdown> {
           isExpanded: true,
           borderRadius: BorderRadius.circular(12),
           items: widget.items.map((item) {
+            final isSelected = item == selectedValue;
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(
-                item,
-                style: const TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  fontSize: 14,
+              child: Container(
+                color: isSelected ? MoldifyColors.MoldifyBlack : Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    fontFamily: isSelected ? 'Bricolage-Grotesque-SemiBold' : 'Bricolage-Grotesque-Regular',
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected ? MoldifyColors.backgroundColor : MoldifyColors.MoldifyBlack,
+                  ),
                 ),
               ),
             );

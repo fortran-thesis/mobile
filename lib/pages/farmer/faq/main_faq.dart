@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:provider/provider.dart';
@@ -100,9 +101,10 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: const PrimaryAppBar(title: 'FAQ'),
+      appBar: PrimaryAppBar(title: l10n.faq),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -112,16 +114,16 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     /// FAQ Header
-                    const Text(
-                      'FAQ',
+                    Text(
+                      l10n.faq,
                       style: TextStyle(
                         fontSize: 36,
                         fontFamily: 'Montserrat-Black',
                         color: MoldifyColors.primaryColor,
                       ),
                     ),
-                    const Text(
-                      'Got a question? Find quick answers here.',
+                    Text(
+                      l10n.faqSubtitle,
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-Regular',
@@ -134,7 +136,7 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
                       child: BuildTextBox(
-                        hintText: 'Search FAQ',
+                        hintText: l10n.searchFaq,
                         controller: searchController,
                         showPassword: false,
                         rightIcon: FontAwesomeIcons.magnifyingGlass,

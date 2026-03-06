@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -172,7 +173,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
   @override
   Widget build(BuildContext context) {
     // Reports will be loaded from the backend using MoldReportBloc
-
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Stack(
         children: [
@@ -190,7 +191,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                     children: [
                       /// ----------- Mold Scanner Header -----------
                       Text(
-                          'Mold Report',
+                          l10n.moldReport,
                           style: TextStyle(
                             fontSize: 36,
                             fontFamily: 'Montserrat-Black',
@@ -198,7 +199,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           )
                       ),
                       Text(
-                          'This is the collection of your submitted mold report',
+                          l10n.moldReportSubtitle,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-Regular',
@@ -233,7 +234,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                   ),
                                   SizedBox(width: 10.0,),
                                   Text(
-                                    'Submit Mold Report',
+                                    l10n.submitMoldReport,
                                     style: TextStyle(
                                       fontFamily: 'Bricolage-Grotesque-SemiBold',
                                       fontSize: 14,
