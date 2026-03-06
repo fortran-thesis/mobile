@@ -3,6 +3,7 @@ import 'package:moldify/pages/misc/buttons/radio_button_grp.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
 
 class GeneralStructureTab extends StatelessWidget {
   final VoidCallback onNext;
@@ -73,14 +74,11 @@ class GeneralStructureTab extends StatelessWidget {
 
         _buildDropdownSection(
           label: 'Hyphae Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onPresenceChanged != null) onPresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select hyphae presence',
+            items: MorphologySchema.getValidValues('Hyphae_Presence') ?? [],
+            onChanged: (value) {
+              if (onPresenceChanged != null && value != null) onPresenceChanged!(value);
             },
           ),
         ),
@@ -89,7 +87,7 @@ class GeneralStructureTab extends StatelessWidget {
           label: 'Hyphae Septation',
           child: BuildDropdown(
             hintText: 'Select hyphae septation',
-            items: ['Septate', 'Aseptate', 'Coenocytic', 'Aseptate/Coenocytic'],
+            items: MorphologySchema.getValidValues('Hyphae_Septation') ?? [],
             onChanged: onSeptationChanged,
           ),
         ),
@@ -98,7 +96,7 @@ class GeneralStructureTab extends StatelessWidget {
           label: 'Hyphae Branching',
           child: BuildDropdown(
             hintText: 'Select hyphae branching',
-            items: ['Right-angle', 'Irregular', 'Acute-angle', 'Variable'],
+            items: MorphologySchema.getValidValues('Hyphae_Branching') ?? [],
             onChanged: onBranchingChanged,
           ),
         ),
@@ -107,15 +105,7 @@ class GeneralStructureTab extends StatelessWidget {
           label: 'Hyphae Width',
           child: BuildDropdown(
             hintText: 'Select hyphae width',
-            items: [
-              'Thin',
-              'Narrow',
-              'Broad',
-              'Medium',
-              'Narrow to Medium',
-              'Thin to Medium',
-              'Medium to Broad',
-            ],
+            items: MorphologySchema.getValidValues('Hyphae_Width') ?? [],
             onChanged: onWidthChanged,
           ),
         ),
@@ -124,12 +114,7 @@ class GeneralStructureTab extends StatelessWidget {
           label: 'Hyphae Pigmentation',
           child: BuildDropdown(
             hintText: 'Select hyphae pigmentation',
-            items: [
-              'Hyaline',
-              'Dematiaceous',
-              'Hyaline to Light Brown',
-              'Hyaline to Pale Brown',
-            ],
+            items: MorphologySchema.getValidValues('Hyphae_Pigmentation') ?? [],
             onChanged: onPigmentationChanged,
           ),
         ),

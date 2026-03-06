@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
 
 class SporeCharacteristicsTab extends StatelessWidget {
   final VoidCallback onNext;
@@ -114,16 +115,8 @@ class SporeCharacteristicsTab extends StatelessWidget {
         _buildDropdownSection(
           label: 'Spore Type',
           child: BuildDropdown(
-            hintText: 'Select hyphae pigmentation',
-            items: [
-              'Sporangiospores',
-              'Conidia',
-              'Macroconidia',
-              'Sclerotium',
-              'Chlamydospores',
-              'Arthroconidia / Chlamydospores',
-              'Conidia and Sclerotium'
-            ],
+            hintText: 'Select spore type',
+            items: MorphologySchema.getValidValues('Spore_Type') ?? [],
             onChanged: onSporeTypeChanged,
           ),
         ),
@@ -132,18 +125,8 @@ class SporeCharacteristicsTab extends StatelessWidget {
         _buildDropdownSection(
           label: 'Spore Shape',
           child: BuildDropdown(
-            hintText: 'Select hyphae pigmentation',
-            items: [
-              'Spherical',
-              'Oval',
-              'Club-shaped',
-              'Banana-shaped',
-              'Muriform',
-              'Elongated',
-              'Fusiform',
-              'Sickle-shaped',
-              'Cannot assess clearly'
-            ],
+            hintText: 'Select spore shape',
+            items: MorphologySchema.getValidValues('Spore_Shape') ?? [],
             onChanged: onSporeShapeChanged,
           ),
         ),
@@ -152,19 +135,8 @@ class SporeCharacteristicsTab extends StatelessWidget {
         _buildDropdownSection(
           label: 'Spore Color',
           child: BuildDropdown(
-            hintText: 'Select hyphae pigmentation',
-            items: [
-              "Hyaline",
-              "Hyaline to Pale",
-              "Hyaline to Light Brown",
-              "Light Brown",
-              "Brown / Dark Brown",
-              "Brown / Black",
-              "Dark Brown / Black",
-              "Dark Brown to Black",
-              "Blue-green / Green",
-              "Cannot Assess Clearly",
-            ],
+            hintText: 'Select spore color',
+            items: MorphologySchema.getValidValues('Spore_Color') ?? [],
             onChanged: onSporeColorChanged,
           ),
         ),
@@ -174,14 +146,7 @@ class SporeCharacteristicsTab extends StatelessWidget {
           label: 'Spore Surface',
           child: BuildDropdown(
             hintText: 'Select spore surface',
-            items: [
-              "Smooth",
-              "Smooth to Slightly Rough",
-              "Rough / Warty",
-              "Rough (likely)",
-              "Rough / Verrucose",
-              "Cannot Assess Clearly",
-            ],
+            items: MorphologySchema.getValidValues('Spore_Surface') ?? [],
             onChanged: onSporeSurfaceChanged,
           ),
         ),
@@ -191,17 +156,7 @@ class SporeCharacteristicsTab extends StatelessWidget {
           label: 'Spore Arrangement',
           child: BuildDropdown(
             hintText: 'Select spore arrangement',
-            items: [
-              "Radiate",
-              "Radiate / Chains from Vesicle",
-              "Radiate / Scattered",
-              "Chains / Fragmented",
-              "Clustered / Massed",
-              "Scattered / Loose",
-              "In Sporangium",
-              "Absent",
-              "Cannot Assess Clearly",
-            ],
+            items: MorphologySchema.getValidValues('Spore_Arrangement') ?? [],
             onChanged: onSporeArrangementChanged,
           ),
         ),

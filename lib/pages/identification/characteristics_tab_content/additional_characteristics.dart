@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
 
 class AdditionalCharacteristicsTab extends StatelessWidget {
   final VoidCallback onSubmit;
@@ -93,16 +94,7 @@ class AdditionalCharacteristicsTab extends StatelessWidget {
           label: 'Phialide Arrangement',
           child: BuildDropdown(
             hintText: 'Select phialide arrangement',
-            items: const [
-              "Biseriate (Phialides on Metulae)",
-              "Metulae and Phialides (Penicillate Structure)",
-              "Brush-like",
-              "Radial",
-              "Terminal",
-              "Present (Not Brush-like)",
-              "Absent",
-              "Cannot Assess Clearly / N/A",
-            ],
+            items: MorphologySchema.getValidValues('Phialide_Arrangement') ?? [],
             onChanged: onPhialideArrangementChanged,
           ),
         ),
@@ -112,12 +104,7 @@ class AdditionalCharacteristicsTab extends StatelessWidget {
           label: 'Sterigmata Arrangement',
           child: BuildDropdown(
             hintText: 'Select sterigmata arrangement',
-            items: const [
-              "Radiate/Covering entire vesicle",
-              "Verticillate/Penicillate",
-              "Absent",
-              "Cannot Assess Clearly",
-            ],
+            items: MorphologySchema.getValidValues('Sterigmata_Arrangement') ?? [],
             onChanged: onSterigmataArrangementChanged,
           ),
         ),

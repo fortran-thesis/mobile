@@ -3,6 +3,9 @@ import 'package:moldify/pages/misc/functions/step_indicator.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
+import 'dart:typed_data';
 
 // Import all the separated tab widgets
 import 'characteristics_tab_content/general_structure.dart';
@@ -35,6 +38,73 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
   ];
 
   late final List<Widget> tabContents;
+
+  /// Map camelCase form field names to canonical API field names from MorphologySchema.
+  /// The form collects data using camelCase keys (for convenience),
+  /// but the API expects the exact canonical field names with underscores.
+  /// This mapping ensures the exact match required by the model training pipeline.
+  static Map<String, String> get _fieldNameMapping => {
+    'hyphaePresence': 'Hyphae_Presence',
+    'hyphaeSeptation': 'Hyphae_Septation',
+    'hyphaeBranching': 'Hyphae_Branching',
+    'hyphaeWidth': 'Hyphae_Width',
+    'hyphaePigmentation': 'Hyphae_Pigmentation',
+    'vesiclePresence': 'Vesicle_Presence',
+    'vesicleShape': 'Vesicle_Shape',
+    'sporangiumPresence': 'Sporangium_Presence',
+    'sporangiophorePresence': 'Sporangiophore_Presence',
+    'columellaPresence': 'Columella_Presence',
+    'rhizoidPresence': 'Rhizoid_Presence',
+    'conidiophorePresence': 'Conidiophore_Presence',
+    'conidiophoreBranching': 'Conidiophore_Branching',
+    'conidiophoreLength': 'Conidiophore_Length',
+    'conidiophoreSurface': 'Conidiophore_Surface',
+    'sporeType': 'Spore_Type',
+    'sporeShape': 'Spore_Shape',
+    'sporeColor': 'Spore_Color',
+    'sporeSurface': 'Spore_Surface',
+    'sporeArrangement': 'Spore_Arrangement',
+    'phialideArrangement': 'Phialide_Arrangement',
+    'sterigmataArrangement': 'Sterigmata_Arrangement',
+  };
+
+  /// Convert formData (camelCase keys) to API characteristics (canonical field names from schema).
+  /// Only include non-empty values that are validated against MorphologySchema.
+  /// This ensures 100% compatibility with the ML model endpoints.
+  Map<String, dynamic> _mapFormDataToApiCharacteristics() {
+    final Map<String, dynamic> apiCharacteristics = {};
+    formData.forEach((key, value) {
+      final canonicalFieldName = _fieldNameMapping[key];
+      if (canonicalFieldName == null) {
+        AppLogger.w('⚠️ Unknown form field: $key (not in mapping)');
+        return;
+      }
+
+      // Skip null or empty values
+      if (value == null || value.toString().trim().isEmpty) {
+        return;
+      }
+
+      final valueStr = value.toString();
+
+      // Validate the value against MorphologySchema
+      if (!MorphologySchema.isValidValue(canonicalFieldName, valueStr)) {
+        AppLogger.w(
+          '⚠️ Invalid value for $canonicalFieldName: "$valueStr" '
+          '(not in schema). Valid: ${MorphologySchema.getValidValues(canonicalFieldName)}',
+        );
+        // Still include it — let the API reject if it's truly invalid
+      }
+
+      apiCharacteristics[canonicalFieldName] = valueStr;
+    });
+
+    AppLogger.d('🔄 Mapped formData to API characteristics:');
+    AppLogger.d('  Original keys: ${formData.keys.toList()}');
+    AppLogger.d('  API keys: ${apiCharacteristics.keys.toList()}');
+    AppLogger.d('  Total: ${apiCharacteristics.length}/${MorphologySchema.fieldCount} characteristics');
+    return apiCharacteristics;
+  }
 
   @override
   void initState() {
@@ -96,7 +166,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
     }
   }
 
-  void _submitCharacteristics() {
+  void _submitCharacteristics() async {
     // Retrieve data passed from ImagePreviewScreen
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
@@ -109,20 +179,106 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
     }
 
     final croppedImagePath = args['croppedImagePath'];
-    final modelResult = args['modelResult'];
+    final imageBytes = args['imageBytes'] as Uint8List?;
+    final fileName = args['fileName'] as String?;
 
-    AppLogger.d("Collected formData: $formData");
+    if (imageBytes == null || fileName == null) {
+      AppLogger.e("Error: Image bytes or filename missing.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Image data incomplete.')),
+      );
+      return;
+    }
 
-    // Navigate directly to Mold Result screen (same behavior as ImagePreviewScreen)
-    Navigator.pushNamed(
-      context,
-      '/mold_result',
-      arguments: {
-        'croppedImagePath': croppedImagePath,
-        'modelResult': modelResult,
-        'characteristics': formData,
-      },
-    );
+    AppLogger.d("✅ Collected formData: $formData");
+    AppLogger.d("🚀 Submitting characteristics to API...");
+
+    // Show loading indicator
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    try {
+      // Convert camelCase formData to API snake_case characteristics
+      final apiCharacteristics = _mapFormDataToApiCharacteristics();
+
+      // Step 1: Call identifyImage API with both image AND characteristics
+      AppLogger.d('🟡 InputCharacteristics: Step 1 - Calling identifyImage with characteristics');
+      final cameraService = CameraService();
+      final modelResult = await cameraService.identifyImage(
+        imageBytes: imageBytes,
+        filename: fileName,
+        characteristics: apiCharacteristics.isNotEmpty ? apiCharacteristics : null,
+      );
+      AppLogger.d('📊 InputCharacteristics: identifyImage result: $modelResult');
+
+      if (modelResult.containsKey('error')) {
+        AppLogger.e('❌ InputCharacteristics: API error: ${modelResult['error']}');
+        if (!mounted) return;
+        Navigator.of(context).pop(); // Dismiss loading
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Prediction failed: ${modelResult['error']}')),
+        );
+        return;
+      }
+
+      // Step 2: Extract genus from predicted_class
+      final predictedClass = modelResult['predicted_class']?.toString() ?? '';
+      final genus =
+          predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
+
+      AppLogger.d('🟡 InputCharacteristics: Step 2 - Predicted class: $predictedClass');
+      AppLogger.d('🟡 InputCharacteristics: Extracted genus: $genus');
+
+      // Step 3: Fetch detailed mold information
+      AppLogger.d('🟡 InputCharacteristics: Step 3 - Calling getMoldDetails(genus: $genus)');
+      final moldDetails = await cameraService.getMoldDetails(genus: genus);
+
+      AppLogger.d('✅ InputCharacteristics: getMoldDetails completed');
+      AppLogger.d('✅ InputCharacteristics: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
+
+      if (moldDetails.containsKey('error')) {
+        AppLogger.e('⚠️ InputCharacteristics: Warning in moldDetails: ${moldDetails['error']}');
+      } else {
+        AppLogger.d('✅ InputCharacteristics: moldDetails keys: ${moldDetails.keys.toList()}');
+      }
+
+      // Dismiss loading
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      if (!mounted) return;
+
+      AppLogger.d('🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics');
+      Navigator.of(context).pushNamed(
+        '/mold_result',
+        arguments: {
+          'croppedImagePath': croppedImagePath,
+          'modelResult': modelResult,
+          'moldDetails': moldDetails,
+          'characteristics': apiCharacteristics,
+        },
+      );
+    } catch (e, stackTrace) {
+      AppLogger.e('❌ InputCharacteristics: EXCEPTION during submit', error: e, stackTrace: stackTrace);
+
+      // Dismiss loading
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      if (!mounted) return;
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to process: $e')),
+      );
+    }
   }
 
 

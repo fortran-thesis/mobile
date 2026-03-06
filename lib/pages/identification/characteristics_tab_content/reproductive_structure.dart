@@ -3,6 +3,7 @@ import 'package:moldify/pages/misc/buttons/radio_button_grp.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
 
 class ReproductiveStructureTab extends StatelessWidget {
   final VoidCallback onNext;
@@ -115,14 +116,11 @@ class ReproductiveStructureTab extends StatelessWidget {
         /// Vesicle Presence
         _buildDropdownSection(
           label: 'Vesicle Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onVesiclePresenceChanged != null) onVesiclePresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select vesicle presence',
+            items: MorphologySchema.getValidValues('Vesicle_Presence') ?? [],
+            onChanged: (value) {
+              if (onVesiclePresenceChanged != null && value != null) onVesiclePresenceChanged!(value);
             },
           ),
         ),
@@ -132,14 +130,7 @@ class ReproductiveStructureTab extends StatelessWidget {
           label: 'Vesicle Shape',
           child: BuildDropdown(
             hintText: 'Select vesicle shape',
-            items: [
-              'Spherical',
-              'Globose to Subglobose',
-              'Globose',
-              'Subglobose',
-              'Absent',
-              'Cannot assess clearly',
-            ],
+            items: MorphologySchema.getValidValues('Vesicle_Shape') ?? [],
             onChanged: onVesicleShapeChanged,
           ),
         ),
@@ -147,14 +138,11 @@ class ReproductiveStructureTab extends StatelessWidget {
         /// Sporangium Presence
         _buildDropdownSection(
           label: 'Sporangium Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onSporangiumPresenceChanged != null) onSporangiumPresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select sporangium presence',
+            items: MorphologySchema.getValidValues('Sporangium_Presence') ?? [],
+            onChanged: (value) {
+              if (onSporangiumPresenceChanged != null && value != null) onSporangiumPresenceChanged!(value);
             },
           ),
         ),
@@ -162,15 +150,12 @@ class ReproductiveStructureTab extends StatelessWidget {
         /// Sporangiophore Presence
         _buildDropdownSection(
           label: 'Sporangiophore Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onSporangiophorePresenceChanged != null) {
-                onSporangiophorePresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select sporangiophore presence',
+            items: MorphologySchema.getValidValues('Sporangiophore_Presence') ?? [],
+            onChanged: (value) {
+              if (onSporangiophorePresenceChanged != null && value != null) {
+                onSporangiophorePresenceChanged!(value);
               }
             },
           ),
@@ -179,14 +164,11 @@ class ReproductiveStructureTab extends StatelessWidget {
         /// Columella Presence
         _buildDropdownSection(
           label: 'Columella Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onColumellaPresenceChanged != null) onColumellaPresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select columella presence',
+            items: MorphologySchema.getValidValues('Columella_Presence') ?? [],
+            onChanged: (value) {
+              if (onColumellaPresenceChanged != null && value != null) onColumellaPresenceChanged!(value);
             },
           ),
         ),
@@ -194,14 +176,11 @@ class ReproductiveStructureTab extends StatelessWidget {
         /// Rhizoid Presence
         _buildDropdownSection(
           label: 'Rhizoid Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onRhizoidPresenceChanged != null) onRhizoidPresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select rhizoid presence',
+            items: MorphologySchema.getValidValues('Rhizoid_Presence') ?? [],
+            onChanged: (value) {
+              if (onRhizoidPresenceChanged != null && value != null) onRhizoidPresenceChanged!(value);
             },
           ),
         ),
