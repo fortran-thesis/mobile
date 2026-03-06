@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
+import '../../core/utils/auth_navigation.dart';
 import '../../core/utils/route_utils.dart';
 import '../../providers/auth_provider.dart';
 
@@ -48,7 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,
+        content: Text(
+          message,
           style: const TextStyle(
             fontFamily: 'Bricolage-Grotesque-Regular',
             fontSize: 14,
@@ -92,8 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.saveCookie(result['sessionValue']);
     }
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-        RouteNames.main, (route) => false);
+    AuthNavigation.resetToMainFromContext(context);
   }
 
   // Wrapper function to handle button press and loading state
@@ -157,15 +158,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             minFontSize: 10,
                             overflow: TextOverflow.visible,
                             softWrap: true,
-                          )
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                /// ----------- E N D  H E A D E R ------------
 
-                Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0),
+                /// ----------- E N D  H E A D E R ------------
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 15.0,
+                    right: 15.0,
+                    bottom: 30.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -197,12 +203,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: InkWell(
-                          onTap: () => navigateTo(context, RouteNames.emailRecoverAccount, arguments: {'pageTitle': 'Forgot Username'}),
+                          onTap: () => navigateTo(
+                            context,
+                            RouteNames.emailRecoverAccount,
+                            arguments: {'pageTitle': 'Forgot Username'},
+                          ),
                           borderRadius: BorderRadius.circular(8),
-                          splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
-                          highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                          splashColor: MoldifyColors.primaryColor.withValues(
+                            alpha: 0.2,
+                          ),
+                          highlightColor: MoldifyColors.primaryColor.withValues(
+                            alpha: 0.2,
+                          ),
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                            padding: EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 6,
+                            ),
                             child: AutoSizeText(
                               'Forgot Username?',
                               style: TextStyle(
@@ -245,13 +262,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: InkWell(
-                          onTap: () => navigateTo(context, RouteNames.emailRecoverAccount, arguments: {'pageTitle': 'Forgot Password'}),
+                          onTap: () => navigateTo(
+                            context,
+                            RouteNames.emailRecoverAccount,
+                            arguments: {'pageTitle': 'Forgot Password'},
+                          ),
                           borderRadius: BorderRadius.circular(8),
-                          splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
-                          highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                          splashColor: MoldifyColors.primaryColor.withValues(
+                            alpha: 0.2,
+                          ),
+                          highlightColor: MoldifyColors.primaryColor.withValues(
+                            alpha: 0.2,
+                          ),
                           child: const Padding(
                             padding: EdgeInsets.symmetric(
-                                vertical: 4, horizontal: 6),
+                              vertical: 4,
+                              horizontal: 6,
+                            ),
                             child: AutoSizeText(
                               'Forgot Password?',
                               style: TextStyle(
@@ -270,61 +297,66 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                         child: BuildButton(
-                            buttonText: 'Log In',
-                            onPressed: _onLoginPressed,
-                            backgroundColor: MoldifyColors.primaryColor,
-                            textColor: MoldifyColors.backgroundColor,
-                            buttonHeight: 45,
-                            buttonWidth: MediaQuery.of(context).size.width,
-                            buttonRadius: 10
+                          buttonText: 'Log In',
+                          onPressed: _onLoginPressed,
+                          backgroundColor: MoldifyColors.primaryColor,
+                          textColor: MoldifyColors.backgroundColor,
+                          buttonHeight: 45,
+                          buttonWidth: MediaQuery.of(context).size.width,
+                          buttonRadius: 10,
                         ),
                       ),
 
-                      if(!isMycologist) ... [
-
+                      if (!isMycologist) ...[
                         /// Sign Up Message
                         Align(
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const AutoSizeText (
-                                  'Don\'t have an account?',
-                                  style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                    fontSize: 14,
-                                    color: MoldifyColors.MoldifyBlack,
-                                  ),
-                                  maxLines: 1,
-                                  minFontSize: 12,
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const AutoSizeText(
+                                'Don\'t have an account?',
+                                style: TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  fontSize: 14,
+                                  color: MoldifyColors.MoldifyBlack,
                                 ),
+                                maxLines: 1,
+                                minFontSize: 12,
+                              ),
 
-                                /// Sign Up Button
-                                InkWell(
-                                  onTap: () => navigateTo(context, RouteNames.signup),
-                                  borderRadius: BorderRadius.circular(8),
-                                  splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                                  highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 4, horizontal: 6),
-                                    child: AutoSizeText(
-                                      'Sign Up',
-                                      style: TextStyle(
-                                        fontFamily: 'Bricolage-Grotesque-Bold',
-                                        fontSize: 14,
-                                        color: MoldifyColors.primaryColor,
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: MoldifyColors.primaryColor,
-                                        decorationThickness: 2,
-                                      ),
-                                      maxLines: 1,
-                                      minFontSize: 12,
+                              /// Sign Up Button
+                              InkWell(
+                                onTap: () =>
+                                    navigateTo(context, RouteNames.signup),
+                                borderRadius: BorderRadius.circular(8),
+                                splashColor: MoldifyColors.accentColor
+                                    .withValues(alpha: 0.2),
+                                highlightColor: MoldifyColors.accentColor
+                                    .withValues(alpha: 0.2),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 4,
+                                    horizontal: 6,
+                                  ),
+                                  child: AutoSizeText(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      fontFamily: 'Bricolage-Grotesque-Bold',
+                                      fontSize: 14,
+                                      color: MoldifyColors.primaryColor,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor:
+                                          MoldifyColors.primaryColor,
+                                      decorationThickness: 2,
                                     ),
+                                    maxLines: 1,
+                                    minFontSize: 12,
                                   ),
                                 ),
-                              ],
-                            )
+                              ),
+                            ],
+                          ),
                         ),
 
                         // /// Divider with "or continue with" text
@@ -385,9 +417,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         //   ),
                         // ),
                         // /// End of Google Login Button
-
                       ],
-
 
                       /// Terms and Policy Agreement
                       /// This section provides a link to the Terms of Agreement and Privacy Policy.
@@ -395,9 +425,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.center,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 30.0),
-                          child:
-                          Text.rich(
+                          padding: const EdgeInsets.only(
+                            left: 8.0,
+                            right: 8.0,
+                            top: 30.0,
+                          ),
+                          child: Text.rich(
                             TextSpan(
                               style: const TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
@@ -406,7 +439,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               children: [
                                 const TextSpan(
-                                  text: 'By proceeding you acknowledge that you have read, understood and agree to our ',
+                                  text:
+                                      'By proceeding you acknowledge that you have read, understood and agree to our ',
                                 ),
                                 TextSpan(
                                   text: 'Terms of Agreement',
@@ -417,9 +451,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     decorationThickness: 2,
                                     decorationColor: MoldifyColors.primaryColor,
                                   ),
-                                  recognizer: TapGestureRecognizer()..onTap = () {
-                                    navigateTo(context, RouteNames.terms);
-                                  },
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      navigateTo(context, RouteNames.terms);
+                                    },
                                 ),
                                 const TextSpan(text: ' and '),
                                 TextSpan(
@@ -431,30 +466,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                     decorationThickness: 2,
                                     decorationColor: MoldifyColors.primaryColor,
                                   ),
-                                  recognizer: TapGestureRecognizer()..onTap = () {
-                                    navigateTo(context, RouteNames.privacy);
-                                  },
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      navigateTo(context, RouteNames.privacy);
+                                    },
                                 ),
                                 const TextSpan(text: '.'),
                               ],
                             ),
                             textAlign: TextAlign.center,
-                          )
+                          ),
                         ),
-                      )
+                      ),
+
                       /// End of Terms and Policy Agreement
                     ],
-                  )
+                  ),
                 ),
               ],
-            )
+            ),
           ),
           if (isLoading)
             Container(
               color: Colors.black.withValues(alpha: 0.5),
               child: const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(MoldifyColors.backgroundColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    MoldifyColors.backgroundColor,
+                  ),
                 ),
               ),
             ),
