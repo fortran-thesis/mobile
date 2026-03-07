@@ -106,7 +106,11 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(title: l10n.faq),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: MoldifyColors.primaryColor,
+              ),
+            )
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),

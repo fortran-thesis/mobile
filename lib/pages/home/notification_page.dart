@@ -41,7 +41,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                color: MoldifyColors.primaryColor,
+              ),
+            );
           }
 
           if (state is NotificationError) {

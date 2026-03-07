@@ -507,6 +507,43 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         _isSubmitting = true;
                       });
 
+                      // Show loading dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return PopScope(
+                            canPop: false,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(20.0),
+                                decoration: BoxDecoration(
+                                  color: MoldifyColors.backgroundColor,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    CircularProgressIndicator(
+                                      color: MoldifyColors.primaryColor,
+                                    ),
+                                    SizedBox(height: 20),
+                                    Text(
+                                      'Submitting your report...',
+                                      style: TextStyle(
+                                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                        fontSize: 16,
+                                        color: MoldifyColors.primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+
                       try {
                         final authProvider = Provider.of<AppAuthProvider>(
                           context,
@@ -595,6 +632,10 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           );
                         }
 
+                        // Close loading dialog
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop(); // Close loading dialog
+
                         // On success, show a confirmation snackbar and pop
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -610,11 +651,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           ),
                         );
 
-                        // Close the submit screen after a short delay so the user can see the dialog
+                        // Close the submit screen after a short delay so the user can see the message
                         await Future.delayed(const Duration(milliseconds: 300));
                         if (!context.mounted) return;
                         Navigator.of(context).pop(true); // Signal success so caller can refresh
                       } catch (e) {
+                        // Close loading dialog
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop(); // Close loading dialog
+
                         // Show error
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(

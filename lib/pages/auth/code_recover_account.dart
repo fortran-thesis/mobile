@@ -327,7 +327,11 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                   if (isLoading)
                     Padding(
                       padding: const EdgeInsets.only(top: 16.0),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: MoldifyColors.primaryColor,
+                        ),
+                      ),
                     ),
 
                   /// Error Message

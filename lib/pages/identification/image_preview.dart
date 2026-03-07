@@ -359,7 +359,9 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: MoldifyColors.primaryColor,
+          ),
         ),
       );
     }
