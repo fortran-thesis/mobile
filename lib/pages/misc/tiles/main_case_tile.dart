@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
 import 'status_tile.dart';
@@ -52,7 +53,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
     final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
 
     final String priorityDisplay = (widget.priorityLevel == null || widget.priorityLevel!.isEmpty)
-        ? "Not Available"
+        ? AppLocalizations.of(context)!.notAvailable
         : widget.priorityLevel!;
 
     return GestureDetector(
@@ -131,7 +132,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
                             ),
                             children: [
                               TextSpan(
-                                text: "${widget.dateLabel ?? 'Date'}: ",
+                                text: "${widget.dateLabel ?? AppLocalizations.of(context)!.dateLabel}: ",
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               TextSpan(

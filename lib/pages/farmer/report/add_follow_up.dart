@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../misc/appbar/primary_app_bar.dart';
@@ -36,6 +37,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
   }
 
   Future<void> _submitFollowUp() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       setState(() => _isSubmitting = true);
 
@@ -81,7 +83,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
       setState(() => _isSubmitting = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Follow-up submitted successfully!')),
+        SnackBar(content: Text(l10n.followUpSubmitted)),
       );
 
       // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
@@ -92,13 +94,14 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit follow-up: $e')),
+        SnackBar(content: Text(l10n.failedToSubmitFollowUp(e.toString()))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didpop, dynamic result) async {
@@ -113,16 +116,16 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
             barrierDismissible: false,
             builder: (BuildContext context) {
               return BuildConfirmationDialog(
-                title: 'Are you sure you want to go back?',
-                subtitle: 'Going back now will lose all your progress.',
+                title: l10n.goBackTitle,
+                subtitle: l10n.goBackSubtitle,
                 onConfirm: () {
                   Navigator.of(context).pop(true); //Return true to allow pop
                 },
                 onCancel: () {
                   Navigator.of(context).pop(false); //Return false to prevent pop
                 },
-                cancelText: 'No',
-                confirmText: 'Yes',
+                cancelText: l10n.no,
+                confirmText: l10n.yes,
               );
             },
           );
@@ -140,7 +143,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
       child: Scaffold(
           backgroundColor: MoldifyColors.backgroundColor,
           appBar: PrimaryAppBar(
-            title: 'Add Follow Up',
+            title: l10n.addFollowUpTitle,
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -149,13 +152,13 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// ----------- Add Follow Up Header -----------
-                  Text('Add Follow Up',
+                  Text(l10n.addFollowUpTitle,
                       style: TextStyle(
                         fontSize: 36,
                         fontFamily: 'Montserrat-Black',
                         color: MoldifyColors.primaryColor,
                       )),
-                  Text('Provide additional details to help us assist you better.',
+                  Text(l10n.addFollowUpSubtitle,
                       style: TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-Regular',
@@ -167,9 +170,9 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                   /// Upload Photo Label
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'Upload Photo (Up to 5 photos)',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.uploadPhotoLimit,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
@@ -178,16 +181,16 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                   ),
                   /// Upload Photo Widget
                   PhotoUploader(
-                    photoOptionLabel: "Use Camera",
+                    photoOptionLabel: l10n.useCamera,
                     onPhotosChanged: _handlePhotoChange,
                   ),
 
                   /// Problem Description Label
                   Padding(
                     padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                    child: const Text(
-                      'What’s Still Happening?',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.whatsStillHappening,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
@@ -196,7 +199,7 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                   ),
                   /// Problem Description Textbox.
                   BuildTextBox(
-                    hintText: 'Enter description of the current problem...',
+                    hintText: l10n.enterFollowUpDescription,
                     controller: _descController,
                     showPassword: false,
                     isMultiline: true,
@@ -212,8 +215,8 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                             barrierDismissible: false,
                             builder: (BuildContext context) {
                               return BuildConfirmationDialog(
-                                title: 'Are you sure you want to submit this follow up?',
-                                subtitle: 'Once submitted, you will not be able to edit it.',
+                                title: l10n.confirmSubmitFollowUpTitle,
+                                subtitle: l10n.confirmSubmitFollowUpSubtitle,
                                 onConfirm: () {
                                   Navigator.of(context).pop();
                                   _submitFollowUp();
@@ -221,13 +224,13 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                                 onCancel: (){
                                   Navigator.of(context).pop();
                                 },
-                                cancelText: 'No',
-                                confirmText: 'Yes',
+                                cancelText: l10n.no,
+                                confirmText: l10n.yes,
                               );
                             },
                           );
                         },
-                        buttonText: _isSubmitting ? 'Submitting...' : 'Submit Follow Up',
+                        buttonText: _isSubmitting ? l10n.submitting : l10n.submitFollowUp,
                         backgroundColor: MoldifyColors.primaryColor,
                         textColor: MoldifyColors.backgroundColor,
                         buttonHeight: 45,

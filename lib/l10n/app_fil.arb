@@ -60,5 +60,140 @@
 
   "statusPending": "Ang iyong ulat ay naipadala na at naghihintay ng pagsusuri.",
   "statusInProgress": "Sinusuri na namin ang iyong ulat. Makikita mo ang resulta kapag handa na.",
-  "statusRejected": "Paumanhin, ang iyong ulat ay tinanggihan at hindi mapoproseso."
+  "statusRejected": "Paumanhin, ang iyong ulat ay tinanggihan at hindi mapoproseso.",
+
+  "guestUser": "Panauhing User",
+  "latestNews": "Pinakabagong Balita",
+  "quickActions": "Mabilisang Aksyon",
+  "unrecognizedRole": "Hindi Kilalang Papel",
+  "statusLabelPending": "Naghihintay",
+  "statusLabelInProgress": "Kasalukuyang Ginagawa",
+  "statusLabelResolved": "Nalutas Na",
+  "statusLabelRejected": "Tinanggihan",
+  "statusLabelClosed": "Sarado Na",
+  "statusLabelLowPriority": "Mababang Priyoridad",
+  "statusLabelMediumPriority": "Katamtamang Priyoridad",
+  "statusLabelHighPriority": "Mataas na Priyoridad",
+
+  "drawerTitle": "Kilalanin ang Amag Gamit ang Moldify",
+  "termsOfAgreement": "Kasunduan sa Paggamit",
+  "privacyPolicy": "Patakaran sa Pagkapribado",
+  "sendFeedback": "Magpadala ng Feedback",
+  "reportABug": "Mag-ulat ng Bug",
+  "contactUs": "Makipag-ugnayan sa Amin",
+  "logOut": "Mag-log Out",
+
+  "caseStatusBreakdown": "Breakdown ng Katayuan ng Kaso",
+  "totalCasesReported": "Kabuuang Bilang ng mga Inulat na Kaso",
+  "boldAgainstMold": "Laban sa Amag",
+  "protectYourCrops": "Kumilos, at protektahan ang iyong mga pananim.",
+  "noArticlesAvailable": "Walang available na artikulo",
+
+  "viewReportTitle": "Tingnan ang Ulat",
+  "treatmentHistory": "Kasaysayan ng Paggamot",
+  "exportPdf": "I-export ang PDF",
+  "unassigned": "Walang Nakatalaga",
+  "caseDetailsLabel": "Mga Detalye ng Kaso",
+  "viewDetailsDescription": "Tingnan ang mga detalyeng iniulat ng magsasaka tungkol sa problema sa amag.",
+  "submittedBy": "Isumite Ni:",
+  "dateFirstObservedLabel": "Petsa ng Unang Napansin:",
+  "contactNumberLabel": "Numero ng Telepono:",
+  "noInformationAvailable": "Walang available na impormasyon.",
+  "additionalNotes": "Karagdagang mga Tala:",
+  "notes": "Mga Tala",
+  "unknownCrop": "Hindi kilalang pananim",
+  "unknownLocation": "Hindi kilalang lokasyon",
+  "closeCase": "Isara ang Kaso",
+  "addFollowUp": "Magdagdag ng Follow-up",
+  "confirmCloseTitle": "Sigurado ka bang gusto mong isara ang ulat na ito?",
+  "confirmCloseSubtitle": "Kapag naisara na, hindi ka na makakapagdagdag ng mga follow-up.",
+  "reportClosed": "Naisara na ang ulat",
+  "failedToCloseReport": "Nabigong isara ang ulat: {error}",
+  "@failedToCloseReport": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addFollowUpTitle": "Magdagdag ng Follow Up",
+  "addFollowUpSubtitle": "Magbigay ng karagdagdagang detalye para mas matulungan ka namin.",
+  "uploadPhotoLimit": "Mag-upload ng Larawan (Hanggang 5 larawan)",
+  "whatsStillHappening": "Ano pa ang Nangyayari?",
+  "enterFollowUpDescription": "Ilagay ang paglalarawan ng kasalukuyang problema...",
+  "confirmSubmitFollowUpTitle": "Sigurado ka bang gusto mong i-submit ang follow up na ito?",
+  "confirmSubmitFollowUpSubtitle": "Kapag na-submit na, hindi mo na ito maaaring i-edit.",
+  "submitFollowUp": "I-submit ang Follow Up",
+  "submitting": "Nagsu-submit...",
+  "followUpSubmitted": "Matagumpay na na-submit ang follow-up!",
+  "failedToSubmitFollowUp": "Nabigong i-submit ang follow-up: {error}",
+  "@failedToSubmitFollowUp": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "editProfileTitle": "I-edit ang Profile",
+  "editProfileSubtitle": "I-edit ang mga field para ma-update ang iyong impormasyon.",
+  "username": "Username",
+  "enterUsername": "Ilagay ang Username",
+  "firstName": "Pangalan",
+  "enterFirstName": "Ilagay ang Pangalan",
+  "lastName": "Apelyido",
+  "enterLastName": "Ilagay ang apelyido",
+  "phoneNumber": "Numero ng Telepono",
+  "enterPhoneNumber": "Ilagay ang numero ng telepono",
+  "locationLabel": "Lokasyon(Lungsod/Lalawigan)",
+  "enterLocation": "Ilagay ang lokasyon",
+  "saveChanges": "I-save ang mga Pagbabago",
+  "noChangesDetected": "Walang nakitang mga pagbabago.",
+  "confirmProfileUpdateTitle": "Sigurado ka bang gusto mong i-update ang iyong profile?",
+  "confirmProfileUpdateSubtitle": "Sigurado ka bang gusto mong baguhin ang iyong {fields}?",
+  "@confirmProfileUpdateSubtitle": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "profileUpdated": "Matagumpay na na-update ang profile!",
+  "failedToUpdateProfile": "Nabigong i-update ang profile: {error}",
+  "@failedToUpdateProfile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorPleaseLogin": "Hindi naka-authenticate ang user. Mangyaring mag-log in muli.",
+  "somethingWentWrong": "May mali. Mangyaring subukan muli.",
+  "changePasswordTitle": "Palitan ang Password",
+  "changePasswordSubtitle": "Mag-type ng bagong password para ma-update ang iyong account.",
+  "oldPassword": "Lumang Password",
+  "enterOldPassword": "Ilagay ang Lumang Password",
+  "newPassword": "Bagong Password",
+  "enterNewPassword": "Ilagay ang Bagong Password",
+  "confirmNewPassword": "I-kumpirma ang Bagong Password",
+  "enterConfirmNewPassword": "Ilagay ang Pagkumpirma ng Bagong Password",
+  "pleaseFillAllFields": "Mangyaring punan ang lahat ng field",
+  "passwordsDoNotMatch": "Hindi tumutugma ang mga bagong password",
+  "passwordTooShort": "Ang password ay dapat na hindi bababa sa 8 character ang haba",
+  "passwordLowercaseRequired": "Dapat maglaman ang password ng hindi bababa sa isang maliit na titik",
+  "passwordUppercaseRequired": "Dapat maglaman ang password ng hindi bababa sa isang malaking titik",
+  "passwordNumberRequired": "Dapat maglaman ang password ng hindi bababa sa isang numero",
+  "passwordSpecialCharRequired": "Dapat maglaman ang password ng hindi bababa sa isang espesyal na character",
+  "passwordChangedSuccessfully": "Matagumpay na napalitan ang password",
+  "forgotPassword": "Nakalimutan ang Password?",
+  "saving": "Inisave...",
+  "dateLabel": "Petsa",
+  "notAvailable": "Hindi Available",
+  "failedToChangePassword": "Nabigong palitan ang password: {error}",
+  "@failedToChangePassword": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

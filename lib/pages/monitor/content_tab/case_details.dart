@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
 import '../../misc/functions/empty_state.dart';
@@ -40,7 +41,7 @@ class CaseDetailsTab extends StatelessWidget {
         children: [
           /// Case Details Header
           Text(
-            'Case Details',
+            AppLocalizations.of(context)!.caseDetailsLabel,
             style: TextStyle(
               fontFamily: 'Montserrat-Black',
               fontSize: 20,
@@ -48,7 +49,7 @@ class CaseDetailsTab extends StatelessWidget {
             ),
           ),
           Text(
-            'View details reported by the farmer about the mold problem.',
+            AppLocalizations.of(context)!.viewDetailsDescription,
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-Regular',
               fontSize: 12,
@@ -66,8 +67,8 @@ class CaseDetailsTab extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   /// Submitted By Label
-                  const Text(
-                    "Submitted By:",
+                  Text(
+                    AppLocalizations.of(context)!.submittedBy,
                     style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Regular',
                       fontSize: 12,
@@ -93,8 +94,8 @@ class CaseDetailsTab extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   /// Date First Observed Label
-                  const Text(
-                    "Date First Observed:",
+                  Text(
+                    AppLocalizations.of(context)!.dateFirstObservedLabel,
                     style: TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Regular',
                       fontSize: 12,
@@ -145,7 +146,7 @@ class CaseDetailsTab extends StatelessWidget {
 
             /// Contact Number Label
             child: Text(
-              "Contact Number:",
+              AppLocalizations.of(context)!.contactNumberLabel,
               style: TextStyle(
                 fontFamily: 'Bricolage-Grotesque-Regular',
                 fontSize: 12,
@@ -172,7 +173,7 @@ class CaseDetailsTab extends StatelessWidget {
           /// This is the list of case timeline entries provided by the farmers
           if (entries.isEmpty)
             EmptyState(
-              message: 'No information available.',
+              message: AppLocalizations.of(context)!.noInformationAvailable,
               icon: FontAwesomeIcons.circleInfo,
               height: MediaQuery.of(context).size.height - 500,
             )
@@ -247,8 +248,8 @@ class _CaseTimelineTile extends StatelessWidget {
             const SizedBox(height: 6),
 
             /// --- ADDITIONAL NOTES ---
-            const Text(
-              "Additional Notes:",
+            Text(
+              AppLocalizations.of(context)!.additionalNotes,
               style: TextStyle(
                 fontFamily: 'Bricolage-Grotesque-Bold',
                 fontSize: 14,

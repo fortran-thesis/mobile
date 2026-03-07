@@ -415,6 +415,576 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sorry, your report was rejected and can\'t be processed.'**
   String get statusRejected;
+
+  /// No description provided for @guestUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest User'**
+  String get guestUser;
+
+  /// No description provided for @latestNews.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest News'**
+  String get latestNews;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @unrecognizedRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrecognized Role'**
+  String get unrecognizedRole;
+
+  /// No description provided for @statusLabelPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusLabelPending;
+
+  /// No description provided for @statusLabelInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get statusLabelInProgress;
+
+  /// No description provided for @statusLabelResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get statusLabelResolved;
+
+  /// No description provided for @statusLabelRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get statusLabelRejected;
+
+  /// No description provided for @statusLabelClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get statusLabelClosed;
+
+  /// No description provided for @statusLabelLowPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Priority'**
+  String get statusLabelLowPriority;
+
+  /// No description provided for @statusLabelMediumPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium Priority'**
+  String get statusLabelMediumPriority;
+
+  /// No description provided for @statusLabelHighPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'High Priority'**
+  String get statusLabelHighPriority;
+
+  /// No description provided for @drawerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Identify Mold With Moldify'**
+  String get drawerTitle;
+
+  /// No description provided for @termsOfAgreement.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Agreement'**
+  String get termsOfAgreement;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @reportABug.
+  ///
+  /// In en, this message translates to:
+  /// **'Report A Bug'**
+  String get reportABug;
+
+  /// No description provided for @contactUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get contactUs;
+
+  /// No description provided for @logOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get logOut;
+
+  /// No description provided for @caseStatusBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Case Status Breakdown'**
+  String get caseStatusBreakdown;
+
+  /// No description provided for @totalCasesReported.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Cases Reported'**
+  String get totalCasesReported;
+
+  /// No description provided for @boldAgainstMold.
+  ///
+  /// In en, this message translates to:
+  /// **'Bold Against Mold'**
+  String get boldAgainstMold;
+
+  /// No description provided for @protectYourCrops.
+  ///
+  /// In en, this message translates to:
+  /// **'Take action, and protect your growing crops.'**
+  String get protectYourCrops;
+
+  /// No description provided for @noArticlesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles available'**
+  String get noArticlesAvailable;
+
+  /// No description provided for @viewReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'View Report'**
+  String get viewReportTitle;
+
+  /// No description provided for @treatmentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment History'**
+  String get treatmentHistory;
+
+  /// No description provided for @exportPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Export PDF'**
+  String get exportPdf;
+
+  /// No description provided for @unassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get unassigned;
+
+  /// No description provided for @caseDetailsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Case Details'**
+  String get caseDetailsLabel;
+
+  /// No description provided for @viewDetailsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'View details reported by the farmer about the mold problem.'**
+  String get viewDetailsDescription;
+
+  /// No description provided for @submittedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted By:'**
+  String get submittedBy;
+
+  /// No description provided for @dateFirstObservedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date First Observed:'**
+  String get dateFirstObservedLabel;
+
+  /// No description provided for @contactNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Number:'**
+  String get contactNumberLabel;
+
+  /// No description provided for @noInformationAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No information available.'**
+  String get noInformationAvailable;
+
+  /// No description provided for @additionalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Notes:'**
+  String get additionalNotes;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @unknownCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown crop'**
+  String get unknownCrop;
+
+  /// No description provided for @unknownLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown location'**
+  String get unknownLocation;
+
+  /// No description provided for @closeCase.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Case'**
+  String get closeCase;
+
+  /// No description provided for @addFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Follow-up'**
+  String get addFollowUp;
+
+  /// No description provided for @confirmCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to close this report?'**
+  String get confirmCloseTitle;
+
+  /// No description provided for @confirmCloseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Once closed, you will not be able to add follow-ups.'**
+  String get confirmCloseSubtitle;
+
+  /// No description provided for @reportClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Report closed'**
+  String get reportClosed;
+
+  /// No description provided for @failedToCloseReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to close report: {error}'**
+  String failedToCloseReport(String error);
+
+  /// No description provided for @addFollowUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Follow Up'**
+  String get addFollowUpTitle;
+
+  /// No description provided for @addFollowUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Provide additional details to help us assist you better.'**
+  String get addFollowUpSubtitle;
+
+  /// No description provided for @uploadPhotoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Photo (Up to 5 photos)'**
+  String get uploadPhotoLimit;
+
+  /// No description provided for @whatsStillHappening.
+  ///
+  /// In en, this message translates to:
+  /// **'What’s Still Happening?'**
+  String get whatsStillHappening;
+
+  /// No description provided for @enterFollowUpDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter description of the current problem...'**
+  String get enterFollowUpDescription;
+
+  /// No description provided for @confirmSubmitFollowUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to submit this follow up?'**
+  String get confirmSubmitFollowUpTitle;
+
+  /// No description provided for @confirmSubmitFollowUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Once submitted, you will not be able to edit it.'**
+  String get confirmSubmitFollowUpSubtitle;
+
+  /// No description provided for @submitFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Follow Up'**
+  String get submitFollowUp;
+
+  /// No description provided for @submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get submitting;
+
+  /// No description provided for @followUpSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up submitted successfully!'**
+  String get followUpSubmitted;
+
+  /// No description provided for @failedToSubmitFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit follow-up: {error}'**
+  String failedToSubmitFollowUp(String error);
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @editProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the fields to update your information.'**
+  String get editProfileSubtitle;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @enterUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Username'**
+  String get enterUsername;
+
+  /// No description provided for @firstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get firstName;
+
+  /// No description provided for @enterFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter First Name'**
+  String get enterFirstName;
+
+  /// No description provided for @lastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get lastName;
+
+  /// No description provided for @enterLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter last name'**
+  String get enterLastName;
+
+  /// No description provided for @phoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumber;
+
+  /// No description provided for @enterPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter phone number'**
+  String get enterPhoneNumber;
+
+  /// No description provided for @locationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location(City/Province)'**
+  String get locationLabel;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @noChangesDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes detected.'**
+  String get noChangesDetected;
+
+  /// No description provided for @confirmProfileUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to update your profile?'**
+  String get confirmProfileUpdateTitle;
+
+  /// No description provided for @confirmProfileUpdateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change your {fields}?'**
+  String confirmProfileUpdateSubtitle(String fields);
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully!'**
+  String get profileUpdated;
+
+  /// No description provided for @failedToUpdateProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update profile: {error}'**
+  String failedToUpdateProfile(String error);
+
+  /// No description provided for @authErrorPleaseLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'User not authenticated. Please log in again.'**
+  String get authErrorPleaseLogin;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get somethingWentWrong;
+
+  /// No description provided for @changePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePasswordTitle;
+
+  /// No description provided for @changePasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a new password to update your account.'**
+  String get changePasswordSubtitle;
+
+  /// No description provided for @oldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Old Password'**
+  String get oldPassword;
+
+  /// No description provided for @enterOldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Old Password'**
+  String get enterOldPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @enterNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter New Password'**
+  String get enterNewPassword;
+
+  /// No description provided for @confirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmNewPassword;
+
+  /// No description provided for @enterConfirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Confirm New Password'**
+  String get enterConfirmNewPassword;
+
+  /// No description provided for @pleaseFillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in all fields'**
+  String get pleaseFillAllFields;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'New passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters long'**
+  String get passwordTooShort;
+
+  /// No description provided for @passwordLowercaseRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain at least one lowercase letter'**
+  String get passwordLowercaseRequired;
+
+  /// No description provided for @passwordUppercaseRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain at least one uppercase letter'**
+  String get passwordUppercaseRequired;
+
+  /// No description provided for @passwordNumberRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain at least one number'**
+  String get passwordNumberRequired;
+
+  /// No description provided for @passwordSpecialCharRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain at least one special character'**
+  String get passwordSpecialCharRequired;
+
+  /// No description provided for @passwordChangedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed successfully'**
+  String get passwordChangedSuccessfully;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPassword;
+
+  /// No description provided for @saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get saving;
+
+  /// No description provided for @dateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get dateLabel;
+
+  /// No description provided for @notAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Available'**
+  String get notAvailable;
+
+  /// No description provided for @failedToChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to change password: {error}'**
+  String failedToChangePassword(String error);
 }
 
 class _AppLocalizationsDelegate

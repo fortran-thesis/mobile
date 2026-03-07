@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/core/utils/image_utils.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
@@ -125,13 +126,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_isSaving) return;
 
     setState(() => _isSaving = true);
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final authProvider = context.read<AppAuthProvider>();
       final sessionCookie = authProvider.cookie;
 
       if (sessionCookie == null || sessionCookie.isEmpty) {
-        _showSnackBar('User not authenticated. Please log in again.');
+        _showSnackBar(l10n.authErrorPleaseLogin);
         setState(() => _isSaving = false);
         return;
       }
@@ -172,7 +174,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
-        _showSnackBar('Profile updated successfully!');
+        _showSnackBar(l10n.profileUpdated);
 
         await Future.delayed(const Duration(milliseconds: 500));
         // Refresh profile
@@ -185,12 +187,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (mounted) Navigator.pop(context, true);
       } else {
         AppLogger.e('❌ Failed: ${result['error']}');
-        _showSnackBar(result['error'] ?? 'Failed to update profile');
+        _showSnackBar(result['error'] != null ? l10n.failedToUpdateProfile(result['error']) : l10n.somethingWentWrong);
       }
     } catch (e, stackTrace) {
       AppLogger.e('💥 Exception', error: e);
       AppLogger.e('📚 Stack trace', error: stackTrace);
-      _showSnackBar('Something went wrong. Please try again.');
+      _showSnackBar(l10n.somethingWentWrong);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -217,18 +219,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
   List<String> _getChangedFields() {
     if (_initialProfile == null) return [];
+    final l10n = AppLocalizations.of(context)!;
     List<String> changes = [];
 
-    if (usernameController.text.trim() != _initialProfile!.username) changes.add("Username");
-    if (fnameController.text.trim() != _initialProfile!.firstName) changes.add("First Name");
-    if (lnameController.text.trim() != _initialProfile!.lastName) changes.add("Last Name");
+    if (usernameController.text.trim() != _initialProfile!.username) changes.add(l10n.username);
+    if (fnameController.text.trim() != _initialProfile!.firstName) changes.add(l10n.firstName);
+    if (lnameController.text.trim() != _initialProfile!.lastName) changes.add(l10n.lastName);
 
     if (!_isExpert) {
-      if (phoneNumController.text.trim() != _initialProfile!.phoneNumber) changes.add("Phone Number");
-      if (addressController.text.trim() != _initialProfile!.address) changes.add("Location");
+      if (phoneNumController.text.trim() != _initialProfile!.phoneNumber) changes.add(l10n.phoneNumber);
+      if (addressController.text.trim() != _initialProfile!.address) changes.add(l10n.locationLabel);
     }
 
-    if (_selectedPhoto != null) changes.add("Profile Picture");
+    if (_selectedPhoto != null) changes.add(l10n.uploadPhoto);
 
     return changes;
   }
@@ -244,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
-        title: 'Edit Profile',
+        title: AppLocalizations.of(context)!.editProfileTitle,
       ),
       body: Stack(
         children: [ _isLoading
@@ -257,17 +260,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
 
                   /// ----------- Edit Profile Header -----------
-                  const Text(
-                      'Edit Profile',
-                      style: TextStyle(
+                  Text(
+                      AppLocalizations.of(context)!.editProfileTitle,
+                      style: const TextStyle(
                         fontSize: 36,
                         fontFamily: 'Montserrat-Black',
                         color: MoldifyColors.primaryColor,
                       )
                   ),
-                  const Text(
-                      'Edit the fields to update your information.',
-                      style: TextStyle(
+                  Text(
+                      AppLocalizations.of(context)!.editProfileSubtitle,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-Regular',
                         color: MoldifyColors.MoldifyBlack,
@@ -336,9 +339,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
 
                   /// Username Label
-                  const Text(
-                    'Username',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.username,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
                       color: MoldifyColors.primaryColor,
@@ -349,18 +352,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: BuildTextBox(
-                      hintText: 'Enter Username',
+                      hintText: AppLocalizations.of(context)!.enterUsername,
                       controller: usernameController,
                       showPassword: false,
                     ),
                   ),
 
                   /// First Name Label
-                  const Padding(
-                    padding: EdgeInsets.only(top: 20.0),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
                     child: Text(
-                      'First Name',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.firstName,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
@@ -372,18 +375,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: BuildTextBox(
-                      hintText: 'Enter First Name',
+                      hintText: AppLocalizations.of(context)!.enterFirstName,
                       controller: fnameController,
                       showPassword: false,
                     ),
                   ),
 
                   /// LastName Label
-                  const Padding(
-                    padding: EdgeInsets.only(top: 20.0),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
                     child: AutoSizeText(
-                      'Last Name',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.lastName,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                         color: MoldifyColors.primaryColor,
@@ -397,7 +400,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: BuildTextBox(
-                      hintText: 'Enter last name',
+                      hintText: AppLocalizations.of(context)!.enterLastName,
                       controller: lnameController,
                       showPassword: false,
                     ),
@@ -432,11 +435,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Show these fields only if the user is a Farmer
                   if (!_isExpert) ...[
                     /// Phone Number Label
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20.0),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
                       child: AutoSizeText(
-                        'Phone Number',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.phoneNumber,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontFamily: 'Bricolage-Grotesque-SemiBold',
                           color: MoldifyColors.primaryColor,
@@ -450,7 +453,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: BuildTextBox(
-                        hintText: 'Enter phone number',
+                        hintText: AppLocalizations.of(context)!.enterPhoneNumber,
                         controller: phoneNumController,
                         showPassword: false,
                         keyboardType: TextInputType.phone,
@@ -459,11 +462,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
 
                     /// Location Label
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20.0),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
                       child: AutoSizeText(
-                        'Location(City/Province)',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.locationLabel,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontFamily: 'Bricolage-Grotesque-SemiBold',
                           color: MoldifyColors.primaryColor,
@@ -477,7 +480,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: BuildTextBox(
-                        hintText: 'Enter location',
+                        hintText: AppLocalizations.of(context)!.enterLocation,
                         controller: addressController,
                         showPassword: false,
                       ),
@@ -488,24 +491,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
-                        buttonText: 'Save Changes',
+                        buttonText: AppLocalizations.of(context)!.saveChanges,
                         onPressed: () {
                           final changedFields = _getChangedFields();
 
                           if (changedFields.isEmpty) {
-                            _showSnackBar('No changes detected.');
+                            _showSnackBar(AppLocalizations.of(context)!.noChangesDetected);
                             return;
                           }
 
-                          String subtitle = "Are you sure you want to change your ${changedFields.join(', ')}?";
+                          String subtitle = AppLocalizations.of(context)!.confirmProfileUpdateSubtitle(changedFields.join(', '));
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return BuildConfirmationDialog(
-                                title: 'Save Changes?',
+                                title: AppLocalizations.of(context)!.confirmProfileUpdateTitle,
                                 subtitle: subtitle,
-                                confirmText: 'Save',
-                                cancelText: 'Cancel',
+                                confirmText: AppLocalizations.of(context)!.yes,
+                                cancelText: AppLocalizations.of(context)!.no,
                                 onCancel: () => Navigator.of(context).pop(),
                                 onConfirm: () {
                                   Navigator.of(context).pop();

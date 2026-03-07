@@ -60,5 +60,140 @@
 
   "statusPending": "Your report has been sent in and is now waiting to be checked.",
   "statusInProgress": "We're checking your report now. You'll see the results when it's ready.",
-  "statusRejected": "Sorry, your report was rejected and can't be processed."
+  "statusRejected": "Sorry, your report was rejected and can't be processed.",
+
+  "guestUser": "Guest User",
+  "latestNews": "Latest News",
+  "quickActions": "Quick Actions",
+  "unrecognizedRole": "Unrecognized Role",
+  "statusLabelPending": "Pending",
+  "statusLabelInProgress": "In Progress",
+  "statusLabelResolved": "Resolved",
+  "statusLabelRejected": "Rejected",
+  "statusLabelClosed": "Closed",
+  "statusLabelLowPriority": "Low Priority",
+  "statusLabelMediumPriority": "Medium Priority",
+  "statusLabelHighPriority": "High Priority",
+
+  "drawerTitle": "Identify Mold With Moldify",
+  "termsOfAgreement": "Terms of Agreement",
+  "privacyPolicy": "Privacy Policy",
+  "sendFeedback": "Send Feedback",
+  "reportABug": "Report A Bug",
+  "contactUs": "Contact Us",
+  "logOut": "Log Out",
+
+  "caseStatusBreakdown": "Case Status Breakdown",
+  "totalCasesReported": "Total Cases Reported",
+  "boldAgainstMold": "Bold Against Mold",
+  "protectYourCrops": "Take action, and protect your growing crops.",
+  "noArticlesAvailable": "No articles available",
+
+  "viewReportTitle": "View Report",
+  "treatmentHistory": "Treatment History",
+  "exportPdf": "Export PDF",
+  "unassigned": "Unassigned",
+  "caseDetailsLabel": "Case Details",
+  "viewDetailsDescription": "View details reported by the farmer about the mold problem.",
+  "submittedBy": "Submitted By:",
+  "dateFirstObservedLabel": "Date First Observed:",
+  "contactNumberLabel": "Contact Number:",
+  "noInformationAvailable": "No information available.",
+  "additionalNotes": "Additional Notes:",
+  "notes": "Notes",
+  "unknownCrop": "Unknown crop",
+  "unknownLocation": "Unknown location",
+  "closeCase": "Close Case",
+  "addFollowUp": "Add Follow-up",
+  "confirmCloseTitle": "Are you sure you want to close this report?",
+  "confirmCloseSubtitle": "Once closed, you will not be able to add follow-ups.",
+  "reportClosed": "Report closed",
+  "failedToCloseReport": "Failed to close report: {error}",
+  "@failedToCloseReport": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addFollowUpTitle": "Add Follow Up",
+  "addFollowUpSubtitle": "Provide additional details to help us assist you better.",
+  "uploadPhotoLimit": "Upload Photo (Up to 5 photos)",
+  "whatsStillHappening": "What’s Still Happening?",
+  "enterFollowUpDescription": "Enter description of the current problem...",
+  "confirmSubmitFollowUpTitle": "Are you sure you want to submit this follow up?",
+  "confirmSubmitFollowUpSubtitle": "Once submitted, you will not be able to edit it.",
+  "submitFollowUp": "Submit Follow Up",
+  "submitting": "Submitting...",
+  "followUpSubmitted": "Follow-up submitted successfully!",
+  "failedToSubmitFollowUp": "Failed to submit follow-up: {error}",
+  "@failedToSubmitFollowUp": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "editProfileTitle": "Edit Profile",
+  "editProfileSubtitle": "Edit the fields to update your information.",
+  "username": "Username",
+  "enterUsername": "Enter Username",
+  "firstName": "First Name",
+  "enterFirstName": "Enter First Name",
+  "lastName": "Last Name",
+  "enterLastName": "Enter last name",
+  "phoneNumber": "Phone Number",
+  "enterPhoneNumber": "Enter phone number",
+  "locationLabel": "Location(City/Province)",
+  "enterLocation": "Enter location",
+  "saveChanges": "Save Changes",
+  "noChangesDetected": "No changes detected.",
+  "confirmProfileUpdateTitle": "Are you sure you want to update your profile?",
+  "confirmProfileUpdateSubtitle": "Are you sure you want to change your {fields}?",
+  "@confirmProfileUpdateSubtitle": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "profileUpdated": "Profile updated successfully!",
+  "failedToUpdateProfile": "Failed to update profile: {error}",
+  "@failedToUpdateProfile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorPleaseLogin": "User not authenticated. Please log in again.",
+  "somethingWentWrong": "Something went wrong. Please try again.",
+  "changePasswordTitle": "Change Password",
+  "changePasswordSubtitle": "Type a new password to update your account.",
+  "oldPassword": "Old Password",
+  "enterOldPassword": "Enter Old Password",
+  "newPassword": "New Password",
+  "enterNewPassword": "Enter New Password",
+  "confirmNewPassword": "Confirm New Password",
+  "enterConfirmNewPassword": "Enter Confirm New Password",
+  "pleaseFillAllFields": "Please fill in all fields",
+  "passwordsDoNotMatch": "New passwords do not match",
+  "passwordTooShort": "Password must be at least 8 characters long",
+  "passwordLowercaseRequired": "Password must contain at least one lowercase letter",
+  "passwordUppercaseRequired": "Password must contain at least one uppercase letter",
+  "passwordNumberRequired": "Password must contain at least one number",
+  "passwordSpecialCharRequired": "Password must contain at least one special character",
+  "passwordChangedSuccessfully": "Password changed successfully",
+  "forgotPassword": "Forgot Password?",
+  "saving": "Saving...",
+  "dateLabel": "Date",
+  "notAvailable": "Not Available",
+  "failedToChangePassword": "Failed to change password: {error}",
+  "@failedToChangePassword": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

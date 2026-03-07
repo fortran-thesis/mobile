@@ -16,6 +16,7 @@ import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:moldify/core/utils/auth_navigation.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 
 /// AppDrawer is a custom side bar widget that provides navigation options
 /// for the Moldify application.
@@ -68,6 +69,7 @@ class _AppDrawerState extends State<AppDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: SizedBox(
         width: 270,
@@ -97,20 +99,20 @@ class _AppDrawerState extends State<AppDrawer> {
                           width: 70,
                         ),
                         const SizedBox(width: 20),
-                        const Expanded(
+                        Expanded(
                           child: AutoSizeText.rich(
                             TextSpan(
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Montserrat-Black',
                                 fontSize: 24,
                                 color: MoldifyColors.backgroundColor,
                                 height: 1.5,
                               ),
                               children: [
-                                TextSpan(text: 'MOLDIFY\n'),
+                                const TextSpan(text: 'MOLDIFY\n'),
                                 TextSpan(
-                                  text: 'Identify Mold With Moldify',
-                                  style: TextStyle(
+                                  text: l10n.drawerTitle,
+                                  style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 12,
                                     color: MoldifyColors.backgroundColor,
@@ -136,9 +138,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const AutoSizeText(
-                    'Terms of Agreement',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.termsOfAgreement,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -163,9 +165,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const AutoSizeText(
-                    'Privacy Policy',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.privacyPolicy,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -198,9 +200,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const AutoSizeText(
-                    'Send Feedback',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.sendFeedback,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -225,9 +227,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const AutoSizeText(
-                    'Report A Bug',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.reportABug,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -252,9 +254,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 20,
                   ),
-                  title: const AutoSizeText(
-                    'Contact Us',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.contactUs,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -286,9 +288,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 22,
                   ),
-                  title: const AutoSizeText(
-                    'Account Settings',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.accountSettings,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
@@ -333,9 +335,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     color: MoldifyColors.accentColor,
                     size: 24,
                   ),
-                  title: const AutoSizeText(
-                    'Log Out',
-                    style: TextStyle(
+                  title: AutoSizeText(
+                    l10n.logOut,
+                    style: const TextStyle(
                       fontFamily: 'Bricolage-Grotesque-Bold',
                       color: MoldifyColors.primaryColor,
                       fontSize: 14,
