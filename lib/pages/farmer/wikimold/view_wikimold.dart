@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
+import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
+import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:provider/provider.dart';
 import '../../../core/features/wikimold/models/wikimold.dart';
 import '../../../core/features/wikimold/services/wikimold_services.dart';
 import '../../../providers/auth_provider.dart';
 import '../../misc/colors.dart';
-import '../../misc/images/cover_image.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 
@@ -24,9 +24,29 @@ class ViewWikiMoldScreen extends StatefulWidget {
 
 class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   final WikiService _wikiService = WikiService();
+  
+  // Parsing delimiters for structured data
+  static const String _stageDelimiter = '|';
+  static const String _fieldDelimiter = '::';
+  static const String _stagePrefix = 'STAGE_';
+  
+  // UI dimension constants
+  static const double _heroImageHeight = 330.0;
+  static const double _contentTopOffset = -40.0;
+  static const double _contentBorderRadius = 40.0;
+  
+  // Toggle to use dummy data when backend content is unavailable
+  // Set to false when backend provides structured findings/treatments data
+  static const bool _forceDummySectionContent = true;
+
   WikiArticle? _article;
   bool _isLoading = true;
   String? _error;
+  int _selectedStageIndex = 0;
+  
+  // Cached parsed data to avoid re-parsing on every build
+  List<Map<String, String>> _cachedFindingStages = [];
+  List<Widget> _cachedTreatmentTiles = [];
 
   @override
   void initState() {
@@ -35,7 +55,9 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   }
 
   Future<void> _loadArticle() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     try {
       final authProvider =
       Provider.of<AppAuthProvider>(context, listen: false);
@@ -59,7 +81,11 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
       if (!mounted) return;
       setState(() {
         _article = article;
+        _error = null;
         _isLoading = false;
+        
+        // Parse and cache data once when article is loaded
+        _updateCachedData(article);
       });
     } catch (e) {
       AppLogger.e('Error loading article', error: e);
@@ -73,10 +99,6 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String publishedDate = _article?.createdAt != null
-        ? DateFormat('MMMM d, yyyy').format(_article!.createdAt!.toLocal())
-        : 'Unknown date';
-
     if (_isLoading) {
       return const Scaffold(
         body: Center(
@@ -89,158 +111,354 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
     if (_error != null) {
       return Scaffold(
-        body: Center(child: Text(_error!)),
+        appBar: PrimaryAppBar(
+          title: 'View WikiMold',
+          
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _loadArticle,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
+
+    final article = _article;
+    if (article == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Article data is unavailable.'),
+        ),
+      );
+    }
+
+    final String publishedDate = article.createdAt != null
+        ? DateFormat('MMMM d, yyyy').format(article.createdAt!.toLocal())
+        : 'Unknown date';
+
+    // Use cached parsed data instead of parsing on every build
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
-        title: 'View Wikimold',
+        title: 'View WikiMold',
         rightIcon: const Icon(Icons.report),
-        rightIconColor: MoldifyColors.MoldifyRed,
+        rightIconColor: MoldifyColors.primaryColor,
         onRightIconPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => ReportACuratorScreen(
-                contentId: _article!.id,
-                contentType: 'wiki-article',
+                contentId: article.id,
+                contentType: 'wikimold_article',
               ),
             ),
           );
         },
       ),
       body: SingleChildScrollView(
-  child: Stack(
-    children: [
-      // Header cover image section
-      if (_article!.coverPhoto != null)
-        BuildCoverImage(
-          imageUrl: _article!.coverPhoto!,
-          borderRadiusContainer: 0, // Set to 0 to fill top edges like the screenshot
-          borderRadiusImage: 0,
-          isHeader: true,
-        )
-      else
-        Container(
-          height: 220,
-          color: MoldifyColors.MoldifySoftGrey,
-        ),
-
-      // Main content section with overlapping rounded top corners
-      Padding(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).size.height * 0.23,
-        ),
-        child: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: MoldifyColors.backgroundColor,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30.0), // Increased for the screenshot look
-              topRight: Radius.circular(30.0),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20.0, 25.0, 20.0, 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // --- 1. HERO SECTION (UNTOUCHED LAYOUT) ---
+            Stack(
               children: [
-                // Author Profile Section
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: MoldifyColors.MoldifySoftGrey,
-                      child: Icon(Icons.person, color: MoldifyColors.primaryColor), 
-                      // Replace Icon with BackgroundImage: NetworkImage(_article!.authorPfp) if available
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _article!.author,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            fontFamily: 'Bricolage-Grotesque-SemiBold',
-                            color: MoldifyColors.MoldifyBlack,
-                          ),
-                        ),
-                        Text(
-                          publishedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: MoldifyColors.MoldifySoftGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                SizedBox(
+                  height: _heroImageHeight,
+                  width: double.infinity,
+                  child: article.coverPhoto != null && article.coverPhoto!.isNotEmpty
+                      ? Image.network(article.coverPhoto!, fit: BoxFit.cover)
+                      : Container(color: MoldifyColors.taupe),
                 ),
-                const SizedBox(height: 25),
-                
-                // Article Title
-                Text(
-                  _article!.title,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat-Black',
-                    fontSize: 24, // Increased for emphasis
-                    fontWeight: FontWeight.bold,
-                    color: MoldifyColors.primaryColor,
+                Container(
+                  height: _heroImageHeight,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+                      stops: const [0.4, 1.0],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                // Body Content with Drop Cap and HTML rendering
-                Html(
-                  data: _article!.body,
-                  style: {
-                    'body': Style(
-                      fontFamily: 'Bricolage-Grotesque-Regular',
-                      fontSize: FontSize(16),
-                      lineHeight: LineHeight(1.6),
-                      color: MoldifyColors.MoldifyBlack,
-                      margin: Margins.zero,
-                      padding: HtmlPaddings.zero,
-                    ),
-                    // Drop Cap logic: targets the first paragraph's first-letter
-                    'p:first-child::first-letter': Style(
-                      fontSize: FontSize(45),
-                      fontWeight: FontWeight.bold,
-                      margin: Margins.only(right: 8, top: 4),
+                  padding: const EdgeInsets.fromLTRB(25, 0, 25, 70),
+                  alignment: Alignment.bottomLeft,
+                  child: Text(
+                    article.title.toUpperCase(),
+                    style: const TextStyle(
                       fontFamily: 'Montserrat-Black',
+                      fontSize: 32,
+                      height: 0.9,
+                      color: Colors.white,
                     ),
-                    'h2': Style(
-                      fontFamily: 'Montserrat-Black',
-                      fontSize: FontSize(20),
-                      color: MoldifyColors.primaryColor,
-                      margin: Margins.only(top: 20, bottom: 8),
-                    ),
-                    'h3': Style(
-                      fontFamily: 'Montserrat-Black',
-                      fontSize: FontSize(17),
-                      color: MoldifyColors.accentColor,
-                      margin: Margins.only(top: 16, bottom: 6),
-                    ),
-                    'p': Style(
-                      margin: Margins.only(bottom: 12),
-                      textAlign: TextAlign.justify,
-                    ),
-                    'strong': Style(
-                      fontFamily: 'Bricolage-Grotesque-SemiBold',
-                    ),
-                  },
+                  ),
                 ),
               ],
             ),
-          ),
+
+            // --- 2. MAIN CONTENT BODY ---
+            Transform.translate(
+              offset: const Offset(0, _contentTopOffset),
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: MoldifyColors.backgroundColor,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(_contentBorderRadius)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 35),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAuthorRow(author: article.author, publishedDate: publishedDate),
+                      const SizedBox(height: 35),
+
+                      // DESCRIPTION
+                      _buildSectionHeader('Description'),
+                      Html(
+                        data: article.body,
+                        style: {
+                          'body': Style(
+                            fontFamily: 'Bricolage-Grotesque-Regular',
+                            fontSize: FontSize(16),
+                            lineHeight: LineHeight(1.6),
+                            color: MoldifyColors.MoldifyBlack,
+                          ),
+                        },
+                      ),
+                      const SizedBox(height: 30),
+
+                      // --- 3. TREATMENT SECTION WITH CONTROL MANAGEMENT TILES ---
+                      _buildSectionHeader('Treatment Recommendations'),
+                      ..._cachedTreatmentTiles,
+                      const SizedBox(height: 30),
+
+                      // --- 4. FINDINGS TABS ---
+                      _buildSectionHeader('Findings'),
+                      Text(
+                        article.title,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat-Black',
+                          fontSize: 24,
+                          fontStyle: FontStyle.italic,
+                          color: MoldifyColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      ScrollableTabBar(
+                        tabs: _cachedFindingStages.map((s) => s['label']!).toList(),
+                        currentIndex: _selectedStageIndex,
+                        onTabSelected: (index) => setState(() => _selectedStageIndex = index),
+                      ),
+                      
+                      const SizedBox(height: 30),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        child: Container(
+                          key: ValueKey(_selectedStageIndex),
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '0${_selectedStageIndex + 1}',
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat-Black',
+                                  fontSize: 60,
+                                  color: MoldifyColors.primaryColor.withOpacity(0.05),
+                                  height: 0.5,
+                                ),
+                              ),
+                              Text(
+                                _cachedFindingStages[_selectedStageIndex]['title']!.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat-Black',
+                                  fontSize: 18,
+                                  letterSpacing: -0.5,
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _cachedFindingStages[_selectedStageIndex]['content']!,
+                                style: const TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  fontSize: 16,
+                                  height: 1.6,
+                                  color: MoldifyColors.MoldifyBlack,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 100), // Bottom padding
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-)
     );
   }
+
+  // --- Helpers ---
+  
+  /// Updates cached parsed data when article changes
+  /// This prevents re-parsing on every build, improving performance
+  void _updateCachedData(WikiArticle article) {
+    final String findingsContent = article.findings.trim().isNotEmpty
+        ? article.findings
+        : (_forceDummySectionContent ? _dummyFindingsHtml : '');
+
+    final String treatmentsContent = article.treatments.trim().isNotEmpty
+        ? article.treatments
+        : (_forceDummySectionContent ? _dummyTreatmentsHtml : '');
+
+    _cachedFindingStages = _parseFindings(findingsContent);
+    _cachedTreatmentTiles = _buildTreatmentTiles(treatmentsContent);
+  }
+
+  List<Map<String, String>> _parseFindings(String content) {
+    if (!content.contains(_stagePrefix)) {
+      return [{'label': 'Info', 'title': 'Findings', 'content': content}];
+    }
+    
+    return content.split(_stageDelimiter).map((s) {
+      final parts = s.split(_fieldDelimiter);
+      return {
+        'label': parts[0].replaceAll(_stagePrefix, 'Stage '),
+        'title': parts.length > 1 ? parts[1] : 'Analysis',
+        'content': parts.length > 2 ? parts[2] : '',
+      };
+    }).toList();
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: 'Montserrat-Black',
+          fontSize: 12,
+          letterSpacing: 4,
+          color: MoldifyColors.accentColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthorRow({required String author, required String publishedDate}) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 20,
+          backgroundColor: MoldifyColors.taupe,
+          child: Text(author.isNotEmpty ? author[0] : '?', style: const TextStyle(color: MoldifyColors.accentColor, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'By $author',
+              style: const TextStyle(fontFamily: 'Bricolage-Grotesque-Extrabold', color: MoldifyColors.primaryColor, fontSize: 14),
+            ),
+            Text(
+              publishedDate,
+              style: const TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                fontSize: 12,
+                color: MoldifyColors.MoldifyGrey,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Icon mapping for different treatment types
+  IconData _getIconForTreatmentType(String type) {
+    const iconMap = {
+      'MECHANICAL': Icons.settings_suggest_outlined,
+      'BIOLOGICAL': Icons.biotech_outlined,
+      'CHEMICAL': Icons.science_outlined,
+      'PHYSICAL': Icons.build_outlined,
+      'CULTURAL': Icons.agriculture_outlined,
+    };
+    return iconMap[type.toUpperCase()] ?? Icons.medical_services_outlined;
+  }
+
+  List<Widget> _buildTreatmentTiles(String content) {
+    if (content.isEmpty) return [];
+    
+    // Parse structured treatment format: TYPE::Title::Description|TYPE::...
+    if (content.contains(_fieldDelimiter)) {
+      final treatments = content
+          .split(_stageDelimiter)
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
+      
+      final widgets = <Widget>[];
+      for (final treatment in treatments) {
+        final parts = treatment.split(_fieldDelimiter);
+        if (parts.length >= 3) {
+          final type = parts[0].toUpperCase();
+          final title = parts[1];
+          final desc = parts[2];
+          final icon = _getIconForTreatmentType(type);
+          
+          widgets.add(
+            ControlManagementTile(
+              title: title,
+              icon: icon,
+              description: desc,
+            ),
+          );
+        }
+      }
+      return widgets;
+    }
+    
+    // Fallback: render plain text as generic treatment card
+    return [
+      ControlManagementTile(
+        title: 'Treatment Recommendations',
+        icon: Icons.medical_services_outlined,
+        description: content.replaceAll(RegExp(r'<[^>]*>'), ''),
+      ),
+    ];
+  }
+  
+  // Dummy data for development/testing
+  static const String _dummyFindingsHtml =
+      'STAGE_1::Early Detection::White cotton-like patches appear on damp surfaces. Musty odor detectable in enclosed spaces.|'
+      'STAGE_2::Colony Expansion::Dark speckles form around edges after 48-72 hours. Rapid spread in poorly ventilated areas.|'
+      'STAGE_3::Advanced Growth::Thick mold layers forming. Structural damage may occur if untreated.';
+
+  static const String _dummyTreatmentsHtml =
+      'MECHANICAL::Physical Removal::Remove visible mold using brushes and HEPA vacuum. Dispose contaminated materials in sealed bags. Wear protective gear during cleanup.|'
+      'BIOLOGICAL::Natural Solutions::Apply beneficial microorganisms that compete with mold. Use vinegar or tea tree oil solutions for surface treatment.|'
+      'CHEMICAL::Antimicrobial Treatment::Use EPA-approved fungicides for severe cases. Ensure proper ventilation during application. Follow manufacturer instructions carefully.';
 }

@@ -2,6 +2,8 @@ class WikiArticle {
   final String id;
   final String title;
   final String body;
+  final String findings;
+  final String treatments;
   final String author;
   final String? coverPhoto;
   final List<String> tags;
@@ -14,6 +16,8 @@ class WikiArticle {
     required this.id,
     required this.title,
     required this.body,
+    required this.findings,
+    required this.treatments,
     required this.author,
     this.coverPhoto,
     required this.tags,
@@ -32,7 +36,37 @@ class WikiArticle {
     return WikiArticle(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Untitled',
-      body: json['body']?.toString() ?? '',
+      body: _extractContent(
+        json,
+        const [
+          'body',
+          'description',
+          'content',
+        ],
+      ),
+      findings: _extractContent(
+        json,
+        const [
+          'findings',
+          'finding',
+          'stage1_content',
+          'stage1Content',
+          'mechanical_content',
+          'mechanicalContent',
+        ],
+      ),
+      treatments: _extractContent(
+        json,
+        const [
+          'treatments',
+          'treatment',
+          'stage2_content',
+          'stage2Content',
+          'chemical_content',
+          'chemicalContent',
+          'recommendations',
+        ],
+      ),
       author: json['author']?.toString() ?? 'Unknown',
       coverPhoto: json['cover_photo']?.toString(),
       tags: _parseTags(json['tags']),
@@ -70,5 +104,40 @@ class WikiArticle {
       }
     }
     return null;
+  }
+
+  static String _extractContent(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final raw = json[key];
+      final parsed = _normalizeContent(raw);
+      if (parsed.isNotEmpty) return parsed;
+    }
+    return '';
+  }
+
+  static String _normalizeContent(dynamic raw) {
+    if (raw == null) return '';
+
+    if (raw is String) {
+      return raw.trim();
+    }
+
+    if (raw is List) {
+      final values = raw
+          .map((item) => _normalizeContent(item))
+          .where((item) => item.isNotEmpty)
+          .toList();
+      return values.join('<br/>').trim();
+    }
+
+    if (raw is Map) {
+      final values = raw.values
+          .map((item) => _normalizeContent(item))
+          .where((item) => item.isNotEmpty)
+          .toList();
+      return values.join('<br/>').trim();
+    }
+
+    return raw.toString().trim();
   }
 }
