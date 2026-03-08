@@ -6,6 +6,8 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/constants/morphology_schema.dart';
 import 'dart:typed_data';
+import 'package:provider/provider.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 // Import all the separated tab widgets
 import 'characteristics_tab_content/general_structure.dart';
@@ -211,9 +213,11 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       // Step 1: Call identifyImage API with both image AND characteristics
       AppLogger.d('🟡 InputCharacteristics: Step 1 - Calling identifyImage with characteristics');
       final cameraService = CameraService();
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final modelResult = await cameraService.identifyImage(
         imageBytes: imageBytes,
         filename: fileName,
+        sessionCookie: authProvider.cookie,
         characteristics: apiCharacteristics.isNotEmpty ? apiCharacteristics : null,
       );
       AppLogger.d('📊 InputCharacteristics: identifyImage result: $modelResult');

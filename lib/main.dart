@@ -184,7 +184,7 @@ class _MainPageState extends State<MainPage> {
           }
         }
       },
-      child: PopScope(
+        child: PopScope(
         // Keep pop handling centralized so tab-back and app-exit behavior is predictable.
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -193,7 +193,7 @@ class _MainPageState extends State<MainPage> {
         },
         child: Scaffold(
           resizeToAvoidBottomInset: false,
-          extendBody: true,
+            extendBody: false,
           drawer: selectedPosition == 0 ? const AppDrawer() : null,
           body: IndexedStack(
             index: selectedPosition,
