@@ -518,17 +518,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
                                         child: PreventionTacticsContent(
-                                          recommendedFungicides: [
-                                            'Mancozeb',
-                                            'Chlorothalonil',
-                                            'Copper-based fungicides',
-                                            'Azoxystrobin'
-                                          ],
-                                          additionalInformation: 'To prevent future outbreaks, ensure proper '
-                                              'plant spacing for good air circulation, water at the base of plants '
-                                              'to keep foliage dry, and promptly remove and destroy any infected plant'
-                                              ' debris. Rotate crops annually and consider using resistant varieties if available.'
-                                          ,
+                                          treatmentsContent: 
+                                              'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags.|'
+                                              'BIOLOGICAL::Biological Control::Apply beneficial microorganisms like Bacillus subtilis. Use organic fungicides such as neem oil or garlic extract. Encourage natural predators in the environment.|'
+                                              'CHEMICAL::Chemical Control::Recommended fungicides: Mancozeb, Chlorothalonil, Copper-based fungicides, Azoxystrobin. Apply according to manufacturer instructions and observe safety protocols.|'
+                                              'PHYSICAL::Physical Control::Ensure proper plant spacing for good air circulation. Water at the base of plants to keep foliage dry. Maintain optimal temperature and humidity levels.|'
+                                              'CULTURAL::Cultural Control::Rotate crops annually to prevent soil-borne diseases. Use resistant plant varieties if available. Practice proper sanitation and field hygiene.',
                                         ),
                                       ),
                                     ],

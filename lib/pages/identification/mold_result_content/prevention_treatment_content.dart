@@ -1,21 +1,18 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../misc/colors.dart';
-import '../../misc/tiles/content_tile.dart';
+import '../../misc/tiles/control_management_tile.dart';
 
 class PreventionTreatmentContent extends StatefulWidget {
-  final List<String> recommendedFungicides;
-  final String resistanceContent;
-  final String alternativeMethodsContent;
-  final String additionalInfoTreatmentContent;
+  final String treatmentsContent;
+  
+  // Parsing delimiters for structured data (same as WikiMold)
+  static const String _stageDelimiter = '|';
+  static const String _fieldDelimiter = '::';
 
   const PreventionTreatmentContent({
     super.key,
-    required this.recommendedFungicides,
-    required this.resistanceContent,
-    required this.alternativeMethodsContent,
-    required this.additionalInfoTreatmentContent,
+    required this.treatmentsContent,
   });
 
   @override
@@ -25,93 +22,87 @@ class PreventionTreatmentContent extends StatefulWidget {
 
 class _PreventionTreatmentContentState
     extends State<PreventionTreatmentContent> {
+  
+  /// Icon mapping for different treatment types
+  IconData _getIconForTreatmentType(String type) {
+    const iconMap = {
+      'MECHANICAL': Icons.settings_suggest_outlined,
+      'BIOLOGICAL': Icons.biotech_outlined,
+      'CHEMICAL': Icons.science_outlined,
+      'PHYSICAL': Icons.build_outlined,
+      'CULTURAL': Icons.agriculture_outlined,
+    };
+    return iconMap[type.toUpperCase()] ?? Icons.medical_services_outlined;
+  }
+
+  /// Parse structured treatment format: TYPE::Title::Description|TYPE::...
+  List<Widget> _buildTreatmentTiles(String content) {
+    if (content.isEmpty) return [];
+    
+    if (content.contains(PreventionTreatmentContent._fieldDelimiter)) {
+      final treatments = content
+          .split(PreventionTreatmentContent._stageDelimiter)
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
+      
+      final widgets = <Widget>[];
+      for (final treatment in treatments) {
+        final parts = treatment.split(PreventionTreatmentContent._fieldDelimiter);
+        if (parts.length >= 3) {
+          final type = parts[0].toUpperCase();
+          final title = parts[1];
+          final desc = parts[2];
+          final icon = _getIconForTreatmentType(type);
+          
+          widgets.add(
+            ControlManagementTile(
+              title: title,
+              icon: icon,
+              description: desc,
+            ),
+          );
+        }
+      }
+      return widgets;
+    }
+    
+    // Fallback: render plain text as generic treatment card
+    return [
+      ControlManagementTile(
+        title: 'Treatment Recommendations',
+        icon: Icons.medical_services_outlined,
+        description: content.replaceAll(RegExp(r'<[^>]*>'), ''),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final controlMethods = _buildTreatmentTiles(widget.treatmentsContent);
+
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(8.0), // Add some breathing room
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// Recommended Fungicides Section
-            if (widget.recommendedFungicides.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: const AutoSizeText(
-                  'Recommended Fungicides:',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-SemiBold',
-                    fontSize: 16,
-                    color: MoldifyColors.primaryColor,
-                  ),
-                  minFontSize: 10,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: widget.recommendedFungicides.map((fungicide) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 15, right:15, bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '• ',
-                          style: TextStyle(fontSize: 15, height: 1.4),
-                        ),
-                        Expanded(
-                          child: AutoSizeText(
-                            fungicide,
-                            style: const TextStyle(
-                              height: 1.4,
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              fontSize: 16,
-                              color: MoldifyColors.MoldifyBlack,
-                            ),
-                            minFontSize: 10,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+            if (controlMethods.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: AutoSizeText(
+                    'No prevention tactics available',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      fontSize: 14,
+                      color: MoldifyColors.MoldifyGrey,
                     ),
-                  );
-                }).toList(),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                child: Divider(
-                  color: MoldifyColors.MoldifySoftGrey,
-                  height: 20,
+                    minFontSize: 10,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: ContentTile(
-                  icon: Icons.health_and_safety,
-                  title: "Resistance/Risk Notes",
-                  content: widget.resistanceContent,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-                child: ContentTile(
-                  icon: FontAwesomeIcons.plantWilt,
-                  title: "Alternative/Biological Methods",
-                  content: widget.alternativeMethodsContent,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: ContentTile(
-                  icon: FontAwesomeIcons.circleInfo,
-                  title: "Additional Information",
-                  content: widget.additionalInfoTreatmentContent,
-                ),
-              ),
-            ],
+              )
+            else
+              ...controlMethods,
           ],
         ),
       ),

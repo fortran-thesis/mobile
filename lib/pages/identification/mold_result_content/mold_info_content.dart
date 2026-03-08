@@ -99,7 +99,7 @@ class _MoldInfoSectionState extends State<MoldInfoSection> {
                   color: MoldifyColors.primaryColor,
                   width: 1.2,
                 ),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(15.0),

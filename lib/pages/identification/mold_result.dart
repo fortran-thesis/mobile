@@ -63,33 +63,13 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "Genus": "Aspergillus",
   };
 
-  final List<String> recommendedFungicides = [
-    "Chlorothalonil",
-    "Mancozeb",
-    "Copper-based fungicides",
-  ];
-
-  final String resistanceContent = "To minimize the risk of mold developing "
-      "resistance to fungicides, rotate products that contain different active "
-      "ingredients or modes of action. Avoid repeated use of the same fungicide "
-      "type across multiple treatments. Always follow label recommendations for dosage "
-      "and application frequency. Overuse or incorrect application can reduce fungicide "
-      "effectiveness and contribute to resistance in future mold outbreaks.";
-
-  final String alternativeMethodsContent = "Implement non-chemical control methods alongside "
-      "fungicide use for best results. Improve ventilation in affected areas to reduce "
-      "moisture buildup, and use a dehumidifier where possible. Clean and dry surfaces "
-      "thoroughly, and remove contaminated materials to prevent further spread. UV light "
-      "treatment and natural antifungal agents like vinegar or hydrogen peroxide can help "
-      "control surface mold growth.";
-
-  final String additionalInfoTreatmentContent = "Always wear protective gloves and a mask "
-      "when handling mold or applying treatments. Dispose of contaminated "
-      "materials properly to prevent recontamination. For large or recurring "
-      "infestations, contact a certified mold remediation specialist. "
-      "Local regulations may require professional cleanup for certain mold species or "
-      "in public spaces. Keep records of treatments and observations to help monitor "
-      "mold recurrence and treatment effectiveness.";
+  // Prevention tactics using structured format (pipe-delimited)
+  final String treatmentsContent = 
+      'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags. Clean and dry surfaces thoroughly to prevent mold spread.|'
+      'BIOLOGICAL::Biological Control::Apply beneficial microorganisms that compete with mold growth. Use natural antifungal agents like vinegar, hydrogen peroxide, or neem oil for surface treatment. UV light treatment can also help control surface mold.|'
+      'CHEMICAL::Chemical Control::Recommended fungicides: Chlorothalonil, Mancozeb, and Copper-based fungicides. Rotate products with different active ingredients to prevent resistance. Always follow label recommendations for dosage and application frequency.|'
+      'PHYSICAL::Physical Control::Improve ventilation in affected areas to reduce moisture buildup. Use dehumidifiers to maintain optimal humidity levels. Ensure proper air circulation and maintain appropriate temperature control.|'
+      'CULTURAL::Cultural Control::Implement proper sanitation practices and field hygiene. Rotate crops annually to prevent soil-borne diseases. Remove and destroy contaminated materials to prevent recontamination. Monitor and record treatments for effectiveness.';
 
 
   @override
@@ -227,12 +207,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 decoration: BoxDecoration(
                   color: MoldifyColors.backgroundColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.0),
-                    topRight: Radius.circular(20.0),
+                    topLeft: Radius.circular(40.0),
+                    topRight: Radius.circular(40.0),
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -338,10 +318,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 15.0),
                                 child: PreventionTreatmentContent(
-                                  recommendedFungicides: recommendedFungicides,
-                                  resistanceContent: resistanceContent,
-                                  alternativeMethodsContent: alternativeMethodsContent,
-                                  additionalInfoTreatmentContent: additionalInfoContent,
+                                  treatmentsContent: treatmentsContent,
                                 ),
                               ),
                             ]
