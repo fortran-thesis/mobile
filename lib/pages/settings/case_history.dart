@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/features/user/logic/user_bloc.dart';
 
 import '../../../core/features/mold_report/models/closed_mold_report.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
@@ -257,10 +260,29 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                                       caseStatus: _toTitleCase(report.status),
                                       dateLabel: 'Date Observed',
                                       onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/view-case',
-                                        );
+                                        try {
+                                          final userState = context.read<UserBloc>().state;
+                                          String role = '';
+                                          if (userState is UserProfileLoaded) {
+                                            role = userState.profile.role.toLowerCase();
+                                          }
+
+                                          final bool isMycologist = !(role == 'farmer' || role == 'user');
+                                          final routeName = isMycologist ? '/view-case' : '/view-report';
+
+                                          Navigator.pushNamed(
+                                            context,
+                                            routeName,
+                                            arguments: {'id': report.id},
+                                          );
+                                        } catch (e) {
+                                          // If UserBloc is not available or any error occurs, fall back to report view
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-report',
+                                            arguments: {'id': report.id},
+                                          );
+                                        }
                                       },
                                       showPopupMenu: true,
                                       popupMenuItems: ['Identification History', 'Treatment History', 'Export PDF'],
