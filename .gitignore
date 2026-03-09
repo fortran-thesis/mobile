@@ -44,3 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+/android/app/src/main/res/xml
+/android/app/google-services.json
+/android/app/keystore.properties
+/android/app/moldify_prod.keystore
+
+# Environment files — copy env.example.json to env.dev.json / env.prod.json locally
+env.dev.json
+env.prod.json
+env.json
