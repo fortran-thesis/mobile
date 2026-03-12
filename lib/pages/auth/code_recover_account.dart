@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/utils/auth_navigation.dart';
 import 'package:moldify/core/utils/route_utils.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
@@ -20,19 +21,27 @@ class CodeRecoverAccountScreen extends StatefulWidget {
   const CodeRecoverAccountScreen({
     super.key,
     required this.email,
-    required this.pageTitle
+    required this.pageTitle,
   });
 
   @override
-  State<CodeRecoverAccountScreen> createState() => _CodeRecoverAccountScreenState();
+  State<CodeRecoverAccountScreen> createState() =>
+      _CodeRecoverAccountScreenState();
 }
+
 class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
-  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    4,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+
   /// currentStep keeps track of the current step in the recovery process.
   int currentStep = 1;
+
   /// totalSteps is the total number of steps in the recovery process.
   late final int totalSteps;
+
   /// title is the app bar title of the page, which is set based on the pageTitle passed to the widget.
   /// It can be 'Forgot Username', 'Forgot Password'.
   late final String title;
@@ -48,10 +57,10 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
   @override
   void initState() {
     super.initState();
-    if(widget.pageTitle == 'Forgot Username'){
+    if (widget.pageTitle == 'Forgot Username') {
       title = 'Forgot Username';
       totalSteps = 2;
-    } else if(widget.pageTitle == 'Forgot Password'){
+    } else if (widget.pageTitle == 'Forgot Password') {
       title = 'Forgot Password';
       totalSteps = 3;
     } else {
@@ -114,7 +123,9 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
   }
 
   Future<void> _handleForgotUsername(String token) async {
-    Map<String, dynamic> username = await _authBloc.verifiedForgotUsername(token: token);
+    Map<String, dynamic> username = await _authBloc.verifiedForgotUsername(
+      token: token,
+    );
     if (username['success'] != true) {
       setState(() {
         isLoading = false;
@@ -126,15 +137,13 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
     setState(() {
       isLoading = false;
       errorMessage = null;
-      successMessage = 'Code verified! You may check your email again to see your username!';
+      successMessage =
+          'Code verified! You may check your email again to see your username!';
     });
     // Reset navigation stack to login
     Future.delayed(Duration(milliseconds: 2000), () {
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/login',
-        (Route<dynamic> route) => false,
-      );
+      AuthNavigation.resetToLoginFromContext(context);
     });
   }
 
@@ -169,29 +178,28 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
         successMessage = 'Code verified! You can now set a new password.';
       });
       if (!mounted) return;
-      navigateTo(context, RouteNames.setNewPassword, arguments: {
-        'token': result['data'],
-      });
+      navigateTo(
+        context,
+        RouteNames.setNewPassword,
+        arguments: {'token': result['data']},
+      );
       return;
     } else if (title == 'Forgot Username') {
       setState(() {
         isLoading = false;
         errorMessage = null;
-        successMessage = 'Code verified! You may check your email to see your username!';
+        successMessage =
+            'Code verified! You may check your email to see your username!';
       });
       await _handleForgotUsername(result['data']);
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: SecondaryAppBar(
-        title: title,
-        color: MoldifyColors.primaryColor,
-      ),
+      appBar: SecondaryAppBar(title: title, color: MoldifyColors.primaryColor),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -204,13 +212,19 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                 fit: BoxFit.cover,
               ),
             ),
-            /// -------- Input Code Header Image --------
 
-            Padding(padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 30.0),
+            /// -------- Input Code Header Image --------
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 15.0,
+                right: 15.0,
+                bottom: 30.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 20.0),
+
                   /// Step Indicator
                   /// This widget displays the current step in the recovery process
                   /// and the total number of steps.
@@ -224,84 +238,88 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 10.0),
                     child: Text(
-                        'GET YOUR CODE',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontFamily: 'Montserrat-Black',
-                          color: MoldifyColors.primaryColor,
-                        )
+                      'GET YOUR CODE',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontFamily: 'Montserrat-Black',
+                        color: MoldifyColors.primaryColor,
+                      ),
                     ),
                   ),
                   Text(
-                      'Please enter the 4-digit code sent to your email.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: 'Bricolage-Grotesque-Regular',
-                        color: MoldifyColors.MoldifyBlack,
-                      )
+                    'Please enter the 4-digit code sent to your email.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      color: MoldifyColors.MoldifyBlack,
+                    ),
                   ),
+
                   /// -------- End Get Code Address Header --------
 
                   /// -------- OTP Input Boxes --------
                   Padding(
                     padding: const EdgeInsets.only(top: 40.0, bottom: 10.0),
-                    child: Row(
-                      children: List.generate(4, _buildOtpBox),
-                    ),
+                    child: Row(children: List.generate(4, _buildOtpBox)),
                   ),
+
                   /// -------- End of OTP Input Boxes --------
 
                   /// Resend Message
                   Align(
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text (
-                            'If you did not receive the code,',
-                            style: TextStyle(
-                              fontFamily: 'Bricolage-Grotesque-SemiBold',
-                              fontSize: 14,
-                              color: MoldifyColors.MoldifyBlack,
-                            ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'If you did not receive the code,',
+                          style: TextStyle(
+                            fontFamily: 'Bricolage-Grotesque-SemiBold',
+                            fontSize: 14,
+                            color: MoldifyColors.MoldifyBlack,
                           ),
+                        ),
 
-                          /// Resend Button
-                          InkWell(
-                            onTap: () {
-
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            splashColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                            highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.2),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 4, horizontal: 6),
-                              child: Text(
-                                'Resend',
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-ExtraBold',
-                                  fontSize: 14,
-                                  color: MoldifyColors.primaryColor,
-                                ),
+                        /// Resend Button
+                        InkWell(
+                          onTap: () {},
+                          borderRadius: BorderRadius.circular(8),
+                          splashColor: MoldifyColors.accentColor.withValues(
+                            alpha: 0.2,
+                          ),
+                          highlightColor: MoldifyColors.accentColor.withValues(
+                            alpha: 0.2,
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 6,
+                            ),
+                            child: Text(
+                              'Resend',
+                              style: TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-ExtraBold',
+                                fontSize: 14,
+                                color: MoldifyColors.primaryColor,
                               ),
                             ),
                           ),
-                        ],
-                      )
+                        ),
+                      ],
+                    ),
                   ),
 
                   /// Verify Code Button
                   Padding(
                     padding: const EdgeInsets.only(top: 50.0),
                     child: BuildButton(
-                        onPressed: _handleVerifyCode,
-                        buttonText: 'Verify Code',
-                        backgroundColor: MoldifyColors.primaryColor,
-                        textColor: MoldifyColors.backgroundColor,
-                        buttonHeight: 45,
-                        buttonWidth: MediaQuery.of(context).size.width,
-                        buttonRadius: 10
+                      onPressed: _handleVerifyCode,
+                      buttonText: 'Verify Code',
+                      backgroundColor: MoldifyColors.primaryColor,
+                      textColor: MoldifyColors.backgroundColor,
+                      buttonHeight: 45,
+                      buttonWidth: MediaQuery.of(context).size.width,
+                      buttonRadius: 10,
                     ),
                   ),
 
@@ -316,31 +334,31 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
                       ),
                     ),
 
-                    /// Error Message
-                    if (errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Text(
-                          errorMessage!,
-                          style: TextStyle(color: Colors.red),
-                        ),
+                  /// Error Message
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(
+                        errorMessage!,
+                        style: TextStyle(color: Colors.red),
                       ),
-                    /// Success Message
-                    if (successMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Text(
-                          successMessage!,
-                          style: TextStyle(color: Colors.green),
-                        ),
-                      ),
+                    ),
 
+                  /// Success Message
+                  if (successMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(
+                        successMessage!,
+                        style: TextStyle(color: Colors.green),
+                      ),
+                    ),
                 ],
               ),
             ),
           ],
-        )
-      )
+        ),
+      ),
     );
   }
 }

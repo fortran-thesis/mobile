@@ -61,8 +61,10 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onResponse: (response, handler) {
-          // Check for 401 (Unauthorized) or 403 (Forbidden) status codes
-          if (response.statusCode == 401 || response.statusCode == 403) {
+          // Only treat 401 (Unauthorized) as an auth error that requires logout.
+          // 403 (Forbidden) means the session is valid but the user lacks the role/
+          // permission for that specific resource — it must NOT clear the session.
+          if (response.statusCode == 401) {
             AppLogger.e('ApiService: Auth error detected - Status: ${response.statusCode}');
             // Emit the auth error
             _authErrorController.add(response.statusCode ?? 0);

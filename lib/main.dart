@@ -1,11 +1,17 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/utils/auth_navigation.dart';
 import 'package:moldify/pages/misc/functions/app_drawer.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
+import 'package:moldify/providers/language_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'routes/app_routes.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/home/home_page.dart';
@@ -25,20 +31,20 @@ void main() async {
 
   // Create provider and WAIT for cookie to load
   final authProvider = AppAuthProvider();
-  await authProvider.loadCookie();  // <-- WAIT here!
+  await authProvider.loadCookie(); // <-- WAIT here!
 
   // Initialise FCM (request permission, get token, register with backend)
-  await FCMService.instance.initialise(
-    sessionCookie: authProvider.cookie,
-  );
+  await FCMService.instance.initialise(sessionCookie: authProvider.cookie);
+
+  final prefs = await SharedPreferences.getInstance();
+  final languageProvider = LanguageProvider(prefs);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
-        BlocProvider(
-          create: (_) => UserBloc(userService: UserService()),
-        ),
+        ChangeNotifierProvider.value(value: languageProvider),
+        BlocProvider(create: (_) => UserBloc(userService: UserService())),
         BlocProvider(
           create: (_) => NotificationBloc(repository: NotificationRepository()),
         ),
@@ -58,46 +64,71 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _rootNavigatorKey =
+      GlobalKey<NavigatorState>();
+  late final AppAuthProvider _authProvider;
+  bool _wasAuthenticated = false;
+
   @override
   void initState() {
     super.initState();
-    // Listen to auth errors/state changes and redirect to login if needed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      authProvider.addListener(_onAuthStateChanged);
-    });
+    // Listen to auth changes once and only redirect when session transitions
+    // from authenticated -> unauthenticated.
+    _authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    _wasAuthenticated =
+        _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
+    _authProvider.addListener(_onAuthStateChanged);
   }
 
   @override
   void dispose() {
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    authProvider.removeListener(_onAuthStateChanged);
+    _authProvider.removeListener(_onAuthStateChanged);
     super.dispose();
   }
 
   void _onAuthStateChanged() {
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
+    final isAuthenticated =
+        _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
 
-    // If user becomes unauthenticated (cookie cleared due to 401/403), redirect to login
-    if (!isAuthenticated) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        RouteNames.login,
-        (route) => false,
-      );
-    }
+    final shouldRedirectToLogin = _wasAuthenticated && !isAuthenticated;
+    _wasAuthenticated = isAuthenticated;
+
+    // Redirect only when a previously authenticated session is invalidated.
+    if (!shouldRedirectToLogin) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final navigator = _rootNavigatorKey.currentState;
+      if (navigator == null) return;
+      AuthNavigation.resetToLoginFromNavigator(navigator);
+    });
   }
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Moldify',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(),
-      initialRoute: RouteNames.splash,
-      onGenerateRoute: AppRoutes.generateRoute,
-      navigatorKey: GlobalKey<NavigatorState>(),
+    return Consumer<LanguageProvider>(
+      builder: (context, langProvider, _) {
+        return MaterialApp(
+          title: 'Moldify',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(),
+          locale: langProvider.effectiveLocale,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('fil'),
+          ],
+          initialRoute: RouteNames.splash,
+          onGenerateRoute: AppRoutes.generateRoute,
+          navigatorKey: _rootNavigatorKey,
+        );
+      },
     );
   }
 }
@@ -111,15 +142,13 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int selectedPosition = 0;
+  DateTime? _lastBackPressedAt;
+  GlobalKey<NavigatorState> _homeTabNavigatorKey = GlobalKey<NavigatorState>();
+  GlobalKey<NavigatorState> _workTabNavigatorKey = GlobalKey<NavigatorState>();
 
-  bool _isExpert = true; // mycologist/curator => true; farmer/user => false
+  static const Duration _backExitWindow = Duration(seconds: 2);
 
-  /// List of pages to be displayed in the main page. This is updated
-  /// depending on the user's role (expert vs farmer).
-  List<Widget> _pages = [
-    const HomeScreen(),
-    const MainMonitorScreen(),
-  ];
+  bool _isExpert = false; // mycologist/curator => true; farmer/user => false
 
   @override
   void initState() {
@@ -127,57 +156,96 @@ class _MainPageState extends State<MainPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      context.read<UserBloc>().add(FetchUserProfile(sessionCookie: sessionCookie));
+      context.read<UserBloc>().add(
+        FetchUserProfile(sessionCookie: sessionCookie),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<UserBloc, UserState>(
-        listener: (context, state) {
-          if (state is UserProfileLoaded) {
-            final role = state.profile.role.toLowerCase();
-            final isExpert = !(role == 'farmer' || role == 'user');
+      listener: (context, state) {
+        if (state is UserProfileLoaded) {
+          final role = state.profile.role.toLowerCase();
+          final isExpert = !(role == 'farmer' || role == 'user');
 
-            if (isExpert != _isExpert) {
-              setState(() {
-                _isExpert = isExpert;
-                _pages = isExpert
-                    ? [const HomeScreen(), const MainMonitorScreen()]
-                    : [const HomeScreen(), const MainReportScreen()];
-                selectedPosition = 0;
-              });
-            }
+          // Notify LanguageProvider so it can gate Filipino locale to farmers only.
+          context.read<LanguageProvider>().setRole(isFarmer: !isExpert);
+
+          if (isExpert != _isExpert) {
+            setState(() {
+              _isExpert = isExpert;
+              selectedPosition = 0;
+              // Reset tab stacks when role changes to avoid stale tab routes.
+              _homeTabNavigatorKey = GlobalKey<NavigatorState>();
+              _workTabNavigatorKey = GlobalKey<NavigatorState>();
+            });
           }
+        }
+      },
+        child: PopScope(
+        // Keep pop handling centralized so tab-back and app-exit behavior is predictable.
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          _handleNativeBack();
         },
         child: Scaffold(
-      resizeToAvoidBottomInset: false,
-      extendBody: true,
-      drawer: selectedPosition == 0 ? const AppDrawer() : null,
-      body: _pages[selectedPosition],
-      floatingActionButton: SizedBox(
-        height: 63.0,
-        width: 63.0,
-        child: FloatingActionButton(
-          onPressed: null,
-          backgroundColor: MoldifyColors.primaryColor,
-          shape: const CircleBorder(),
-          elevation: 0,
-          focusElevation: 0,
-          hoverElevation: 0,
-          highlightElevation: 0,
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Image.asset(
-              'assets/images/moldify-logo.png',
-              fit: BoxFit.contain,
+          resizeToAvoidBottomInset: false,
+            extendBody: false,
+          drawer: selectedPosition == 0 ? const AppDrawer() : null,
+          body: IndexedStack(
+            index: selectedPosition,
+            children: [
+              _buildTabNavigator(tabIndex: 0),
+              _buildTabNavigator(tabIndex: 1),
+            ],
+          ),
+          floatingActionButton: SizedBox(
+            height: 63.0,
+            width: 63.0,
+            child: FloatingActionButton(
+              onPressed: null,
+              backgroundColor: MoldifyColors.primaryColor,
+              shape: const CircleBorder(),
+              elevation: 0,
+              focusElevation: 0,
+              hoverElevation: 0,
+              highlightElevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Image.asset(
+                  'assets/images/moldify-logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          bottomNavigationBar: _buildBottomNavigationBar(),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    )
+    );
+  }
+
+  Widget _buildTabNavigator({required int tabIndex}) {
+    final rootPage = tabIndex == 0
+        ? const HomeScreen()
+        : (_isExpert ? const MainMonitorScreen() : const MainReportScreen());
+
+    return Navigator(
+      key: tabIndex == 0 ? _homeTabNavigatorKey : _workTabNavigatorKey,
+      onGenerateRoute: (settings) {
+        if (settings.name == Navigator.defaultRouteName) {
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (_) => rootPage,
+          );
+        }
+        return AppRoutes.generateRoute(settings);
+      },
     );
   }
 
@@ -253,5 +321,43 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleNativeBack() async {
+    // First try to pop inside the active tab stack.
+    final currentNavigator = selectedPosition == 0
+        ? _homeTabNavigatorKey.currentState
+        : _workTabNavigatorKey.currentState;
+    final didPopInTab =
+        await (currentNavigator?.maybePop() ?? Future.value(false));
+    if (didPopInTab) return;
+
+    // If active tab is at root and it is not Home, return to Home.
+    if (selectedPosition != 0) {
+      setState(() => selectedPosition = 0);
+      return;
+    }
+
+    final now = DateTime.now();
+    final shouldExit =
+        _lastBackPressedAt != null &&
+        now.difference(_lastBackPressedAt!) <= _backExitWindow;
+
+    if (shouldExit) {
+      SystemNavigator.pop();
+      return;
+    }
+
+    _lastBackPressedAt = now;
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Press back again to exit'),
+          duration: Duration(seconds: 2),
+        ),
+      );
   }
 }

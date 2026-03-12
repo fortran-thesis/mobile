@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:provider/provider.dart';
@@ -28,46 +29,47 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Future<void> _changePassword() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
+    final l10n = AppLocalizations.of(context)!;
 
     final oldPassword = oldPasswordController.text.trim();
     final newPassword = newPasswordController.text.trim();
     final confirmPassword = confirmNewPasswordController.text.trim();
 
     if (oldPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
-      _showSnackBar('Please fill in all fields');
+      _showSnackBar(l10n.pleaseFillAllFields);
       setState(() => _isLoading = false);
       return;
     }
 
     if (newPassword != confirmPassword) {
-      _showSnackBar('New passwords do not match');
+      _showSnackBar(l10n.passwordsDoNotMatch);
       setState(() => _isLoading = false);
       return;
     }
 
     // Validate password complexity (must match server PasswordSchema)
     if (newPassword.length < 8) {
-      _showSnackBar('Password must be at least 8 characters long');
+      _showSnackBar(l10n.passwordTooShort);
       setState(() => _isLoading = false);
       return;
     }
     if (!RegExp(r'[a-z]').hasMatch(newPassword)) {
-      _showSnackBar('Password must contain at least one lowercase letter');
+      _showSnackBar(l10n.passwordLowercaseRequired);
       setState(() => _isLoading = false);
       return;
     }
     if (!RegExp(r'[A-Z]').hasMatch(newPassword)) {
-      _showSnackBar('Password must contain at least one uppercase letter');
+      _showSnackBar(l10n.passwordUppercaseRequired);
       setState(() => _isLoading = false);
       return;
     }
     if (!RegExp(r'[0-9]').hasMatch(newPassword)) {
-      _showSnackBar('Password must contain at least one number');
+      _showSnackBar(l10n.passwordNumberRequired);
       setState(() => _isLoading = false);
       return;
     }
     if (!RegExp(r'[^a-zA-Z0-9]').hasMatch(newPassword)) {
-      _showSnackBar('Password must contain at least one special character');
+      _showSnackBar(l10n.passwordSpecialCharRequired);
       setState(() => _isLoading = false);
       return;
     }
@@ -77,7 +79,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       final sessionCookie = authProvider.cookie;
 
       if (sessionCookie == null || sessionCookie.isEmpty) {
-        _showSnackBar('User not authenticated. Please log in again.');
+        _showSnackBar(l10n.authErrorPleaseLogin);
         setState(() => _isLoading = false);
         return;
       }
@@ -91,13 +93,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
-        _showSnackBar(result['data'] ?? 'Password changed successfully');
+        _showSnackBar(result['data'] ?? l10n.passwordChangedSuccessfully);
         Navigator.pop(context);
       } else {
-        _showSnackBar(result['error'] ?? 'Failed to change password');
+        _showSnackBar(result['error'] != null ? l10n.failedToChangePassword(result['error']) : l10n.somethingWentWrong);
       }
     } catch (e) {
-      _showSnackBar('Something went wrong. Please try again.');
+      _showSnackBar(l10n.somethingWentWrong);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -123,7 +125,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
-          title: 'Change Password',
+          title: AppLocalizations.of(context)!.changePasswordTitle,
         ),
         body: Stack(
           children: [
@@ -134,16 +136,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     children: [
                       /// ----------- Edit Profile Header -----------
                       Text(
-                          'Change Password',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.changePasswordTitle,
+                          style: const TextStyle(
                             fontSize: 36,
                             fontFamily: 'Montserrat-Black',
                             color: MoldifyColors.primaryColor,
                           )
                       ),
                       Text(
-                          'Type a new password to update your account.',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.changePasswordSubtitle,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-Regular',
                             color: MoldifyColors.MoldifyBlack,
@@ -151,11 +153,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
                       /// ----------- End of Edit Profile Header -----------
 
-                      const Padding(
-                        padding: EdgeInsets.only(top: 40.0),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 40.0),
                         child: Text(
-                          'Old Password',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.oldPassword,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
                             color: MoldifyColors.primaryColor,
@@ -167,7 +169,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 3.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Old Password',
+                          hintText: AppLocalizations.of(context)!.enterOldPassword,
                           controller: oldPasswordController,
                           showPassword: true,
                         ),
@@ -180,7 +182,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const EmailRecoverAccountScreen(pageTitle: 'Forgot Password',),
+                                builder: (context) => EmailRecoverAccountScreen(pageTitle: AppLocalizations.of(context)!.forgotPassword,),
                               ),
                             );
                           },
@@ -188,12 +190,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           // FIX: Use .withOpacity() instead of .withValues()
                           splashColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
                           highlightColor: MoldifyColors.primaryColor.withValues(alpha: 0.2),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
                                 vertical: 4, horizontal: 6),
                             child: Text(
-                              'Forgot Password?',
-                              style: TextStyle(
+                              AppLocalizations.of(context)!.forgotPassword,
+                              style: const TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 12,
                                 color: MoldifyColors.MoldifyBlack,
@@ -204,11 +206,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       ),
 
                       /// New Password Label
-                      const Padding(
-                        padding: EdgeInsets.only(top: 10.0),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
                         child: Text(
-                          'New Password',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.newPassword,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
                             color: MoldifyColors.primaryColor,
@@ -220,18 +222,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: BuildTextBox(
-                          hintText: 'Enter New Password',
+                          hintText: AppLocalizations.of(context)!.enterNewPassword,
                           controller: newPasswordController,
                           showPassword: true,
                         ),
                       ),
 
                       /// Confirm New Password Label
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20.0),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20.0),
                         child: Text(
-                          'Confirm New Password',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.confirmNewPassword,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
                             color: MoldifyColors.primaryColor,
@@ -243,7 +245,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Confirm New Password',
+                          hintText: AppLocalizations.of(context)!.enterConfirmNewPassword,
                           controller: confirmNewPasswordController,
                           showPassword: true,
                         ),
@@ -254,7 +256,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         padding: const EdgeInsets.only(top: 160.0),
                         child: BuildButton(
                           // UX Improvement: Show loading text and disable button
-                            buttonText: _isLoading ? 'Saving...' : 'Save Changes',
+                            buttonText: _isLoading ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.saveChanges,
                             onPressed:  _changePassword,
                             backgroundColor: MoldifyColors.primaryColor,
                             textColor: MoldifyColors.backgroundColor,

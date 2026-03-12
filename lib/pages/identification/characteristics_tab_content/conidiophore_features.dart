@@ -3,6 +3,7 @@ import 'package:moldify/pages/misc/buttons/radio_button_grp.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/constants/morphology_schema.dart';
 
 class ConidiophoreFeaturesTab extends StatelessWidget {
   final VoidCallback onNext;
@@ -112,14 +113,11 @@ class ConidiophoreFeaturesTab extends StatelessWidget {
         /// Conidiophore Presence
         _buildDropdownSection(
           label: 'Conidiophore Presence',
-          child: RadioButtonGroup(
-            buttonLabels: ['Present', 'Absent'],
-            buttonColors: [MoldifyColors.primaryColor, MoldifyColors.primaryColor],
-            selectedTextColor: MoldifyColors.backgroundColor,
-            selectedBorderColor: MoldifyColors.primaryColor,
-            fontSize: 14,
-            onChange: (label, index) {
-              if (onConidiophorePresenceChanged != null) onConidiophorePresenceChanged!(label);
+          child: BuildDropdown(
+            hintText: 'Select conidiophore presence',
+            items: MorphologySchema.getValidValues('Conidiophore_Presence') ?? [],
+            onChanged: (value) {
+              if (onConidiophorePresenceChanged != null && value != null) onConidiophorePresenceChanged!(value);
             },
           ),
         ),
@@ -129,14 +127,7 @@ class ConidiophoreFeaturesTab extends StatelessWidget {
           label: 'Conidiophore Branching',
           child: BuildDropdown(
             hintText: 'Select conidiophore branching',
-            items: [
-              'Simple',
-              'Variable',
-              'Branched',
-              'Slightly Branched',
-              'Unbranched',
-              'Cannot assess clearly'
-            ],
+            items: MorphologySchema.getValidValues('Conidiophore_Branching') ?? [],
             onChanged: onConidiophoreBranchingChanged,
           ),
         ),
@@ -146,14 +137,7 @@ class ConidiophoreFeaturesTab extends StatelessWidget {
           label: 'Conidiophore Length',
           child: BuildDropdown(
             hintText: 'Select conidiophore length',
-            items: [
-              'Short',
-              'Medium',
-              'Long',
-              'Short-Medium',
-              'Medium-Long',
-              'Cannot assess clearly',
-            ],
+            items: MorphologySchema.getValidValues('Conidiophore_Length') ?? [],
             onChanged: onConidiophoreLengthChanged,
           ),
         ),
@@ -163,11 +147,7 @@ class ConidiophoreFeaturesTab extends StatelessWidget {
           label: 'Conidiophore Surface',
           child: BuildDropdown(
             hintText: 'Select conidiophore surface',
-            items: [
-              'Smooth',
-              'Rough',
-              'Smooth to Rough',
-            ],
+            items: MorphologySchema.getValidValues('Conidiophore_Surface') ?? [],
             onChanged: onConidiophoreSurfaceChanged,
           ),
         ),

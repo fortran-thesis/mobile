@@ -179,6 +179,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           nextPageToken: current.nextPageToken,
           hasMore: current.hasMore,
         ));
+      } else {
+        // Emit with current (possibly empty) notification list so the unread
+        // badge is visible even before the notification list has been fetched.
+        emit(NotificationLoaded(
+          notifications: List.unmodifiable(_allNotifications),
+          unreadCount: _unreadCount,
+          nextPageToken: _nextPageToken,
+          hasMore: false,
+        ));
       }
     } catch (e) {
       AppLogger.e('NotificationBloc._onFetchUnreadCount error: $e');

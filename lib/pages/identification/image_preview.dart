@@ -9,6 +9,8 @@ import '../misc/colors.dart';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
+import 'package:provider/provider.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 class ImagePreviewScreen extends StatefulWidget {
   final String imagePath;
@@ -370,9 +372,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       // Step 1: Call identifyImage to get the mold prediction
       AppLogger.d('🟡 ImagePreview: Step 1 - Calling identifyImage API');
       final cameraService = CameraService();
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final modelResult = await cameraService.identifyImage(
         imageBytes: imageBytes,
         filename: fileName,
+        sessionCookie: authProvider.cookie,
       );
       AppLogger.d('📊 ImagePreview: identifyImage result: $modelResult');
       

@@ -91,6 +91,76 @@ class CameraService {
 		}
 	}
 
+	/// Combines image identification + mold details lookup in a single API call.
+	/// Endpoint: POST /api/v1/model/predict-with-details
+	/// Returns prediction + matching mold information from CMS.
+	Future<Map<String, dynamic>> identifyImageWithMoldDetails({
+		required List<int> imageBytes,
+		required String filename,
+		String? sessionCookie,
+		Map<String, dynamic>? characteristics,
+	}) async {
+		// Convert image bytes to base64
+		final String imageBase64 = base64Encode(imageBytes);
+
+		// Build request body — Same as identifyImage but to the combined endpoint
+		final Map<String, dynamic> requestBody = {
+			'image_b64': imageBase64,
+			if (characteristics != null && characteristics.isNotEmpty)
+				'characteristics': characteristics,
+		};
+
+		try {
+			final response = await _modelApi.post(
+				'/predict-with-details',
+				headers: {'Content-Type': 'application/json'},
+				body: requestBody,
+				sessionCookie: sessionCookie,
+			);
+
+			if (response.statusCode == 200) {
+				final Map<String, dynamic> json = response.data as Map<String, dynamic>;
+
+				// Extract prediction result
+				final Map<String, dynamic>? fusionPred = json['fusion'] as Map<String, dynamic>?;
+				final Map<String, dynamic>? moldDetail = json['mold_detail'] as Map<String, dynamic>?;
+
+				// Parse prediction using existing parser
+				final Map<String, dynamic> predictionResult = fusionPred != null
+					? _parseSubResult(fusionPred, json)
+					: {
+						'predicted_class': null,
+						'probability': null,
+						'all_probabilities': null,
+						'error': 'No prediction in response',
+					};
+
+				// Return combined result with mold details attached
+				return {
+					...predictionResult,
+					'mold_detail': moldDetail,
+					'from_combined_endpoint': true,
+				};
+			} else {
+				return {
+					'predicted_class': null,
+					'probability': null,
+					'all_probabilities': null,
+					'mold_detail': null,
+					'error': 'API error: ${response.statusCode}',
+				};
+			}
+		} catch (e) {
+			return {
+				'predicted_class': null,
+				'probability': null,
+				'all_probabilities': null,
+				'mold_detail': null,
+				'error': 'Exception: $e',
+			};
+		}
+	}
+
 	// ── Response parsers ────────────────────────────────────────────────────
 
 	/// Parses a v3 fusion response.

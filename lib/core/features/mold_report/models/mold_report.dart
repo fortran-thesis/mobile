@@ -10,6 +10,7 @@ class MoldReport {
 	final DateTime? dateObserved;
 	final String status;
 	final bool isArchived;
+	final String? priority; // "low" | "medium" | "high" — populated by list endpoints
 
 	MoldReport({
 		required this.id,
@@ -23,6 +24,7 @@ class MoldReport {
 		this.dateObserved,
 		required this.status,
 		required this.isArchived,
+		this.priority,
 	});
 
 	factory MoldReport.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class MoldReport {
 				: (json['is_archived'] is bool
 					? json['is_archived'] as bool
 					: (json['is_archived'].toString() == '1' || json['is_archived'].toString().toLowerCase() == 'true')),
+			priority: json['priority']?.toString(),
 		);
 	}
 
@@ -112,6 +115,7 @@ class MoldReport {
 			'date_observed': dateObserved?.toUtc().toIso8601String(),
 			'status': status,
 			'is_archived': isArchived,
+			'priority': priority,
 		};
 	}
 }
@@ -119,8 +123,9 @@ class MoldReport {
 class MoldReportDetails {
 	final List<String> coverPhoto;
 	final String description;
+	final String? priority; // may come from 'priority' or nested 'mold_case.priority'
 
-	MoldReportDetails({required this.coverPhoto, required this.description});
+	MoldReportDetails({required this.coverPhoto, required this.description, this.priority});
 
 	factory MoldReportDetails.fromJson(Map<String, dynamic> json) {
 		final rawCovers = json['cover_photo'];
@@ -137,9 +142,21 @@ class MoldReportDetails {
 			}
 		}
 
+		// Extract priority from possible locations in the payload
+		String? parsedPriority;
+		if (json['priority'] != null) {
+			parsedPriority = json['priority']?.toString();
+		} else if (json['mold_case'] is Map<String, dynamic>) {
+			parsedPriority = (json['mold_case'] as Map<String, dynamic>)['priority']?.toString();
+		} else if (json['case'] is Map<String, dynamic>) {
+			// some backends might nest under 'case'
+			parsedPriority = (json['case'] as Map<String, dynamic>)['priority']?.toString();
+		}
+
 		return MoldReportDetails(
 			coverPhoto: covers,
 			description: json['description']?.toString() ?? '',
+			priority: parsedPriority == null || parsedPriority.isEmpty ? null : parsedPriority,
 		);
 	}
 
@@ -147,6 +164,7 @@ class MoldReportDetails {
 		return {
 			'cover_photo': coverPhoto,
 			'description': description,
+			'priority': priority,
 		};
 	}
 }

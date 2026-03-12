@@ -24,6 +24,7 @@ import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +34,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String fullName = 'Guest User';
+  String fullName = '';
   String role = '';
 
   // Dashboard data
@@ -219,20 +220,20 @@ class _HomeScreenState extends State<HomeScreen> {
         : parsedValue.toString();
   }
 
-  List<Widget> _buildStatusTiles() {
+  List<Widget> _buildStatusTiles(AppLocalizations l10n) {
     if (role.toLowerCase() == 'mycologist') {
       return [
         StatisticTile(
           icon: FontAwesomeIcons.hourglassHalf,
           statusColor: MoldifyColors.MoldifyBlue, 
           value: _statusCount('in_progress', padTwoDigits: true),
-          label: 'In Progress',
+          label: l10n.statusLabelInProgress,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.circleCheck,
           statusColor: MoldifyColors.primaryColor, 
           value: _statusCount('resolved', padTwoDigits: true),
-          label: 'Resolved',
+          label: l10n.statusLabelResolved,
         ),
       ];
     } else {
@@ -241,25 +242,25 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: FontAwesomeIcons.solidClock,
           statusColor: MoldifyColors.accentColor, 
           value: _statusCount('pending', padTwoDigits: true),
-          label: 'Pending',
+          label: l10n.statusLabelPending,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.hourglassHalf,
           statusColor: MoldifyColors.MoldifyBlue, 
           value: _statusCount('in_progress', padTwoDigits: true),
-          label: 'In Progress',
+          label: l10n.statusLabelInProgress,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.solidCircleCheck,
           statusColor: MoldifyColors.primaryColor, 
           value: _statusCount('resolved', padTwoDigits: true),
-          label: 'Resolved',
+          label: l10n.statusLabelResolved,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.solidCircleXmark,
           statusColor: MoldifyColors.MoldifyRed, 
           value: _statusCount('rejected', padTwoDigits: true),
-          label: 'Rejected',
+          label: l10n.statusLabelRejected,
         ),
       ];
     }
@@ -267,6 +268,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (fullName.isEmpty) {
+      fullName = l10n.guestUser;
+    }
+
     return BlocListener<UserBloc, UserState>(
       listener: (context, state) async {
         if (state is UserProfileLoaded) {
@@ -304,15 +310,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         _buildHeader(),
                         _buildUserInfo(),
-                        _buildBanner(),
+                        _buildBanner(l10n),
                         if (role.isEmpty)
                           _buildLoadingState()
                         else if (role.toLowerCase() == 'mycologist')
                           _buildMycologistUI()
                         else if (role.toLowerCase() == 'farmer')
-                          _buildFarmerUI()
+                          _buildFarmerUI(l10n)
                         else
-                          _buildUnrecognizedRoleState(),
+                          _buildUnrecognizedRoleState(l10n),
                         const SizedBox(height: 70.0)
                       ],
                     ),
@@ -387,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       child: Row(
         children: [
-          CircleAvatarImage(radius: 22.0),
+          const CircleAvatarImage(radius: 22.0),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,16 +425,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBanner() {
+  Widget _buildBanner(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 5.0),
       child: HomeBanner(
         title: role.toLowerCase() == 'mycologist'
             ? 'Let\'s start Identifying'
-            : 'Bold Against Mold',
+            : l10n.boldAgainstMold,
         subtitle: role.toLowerCase() == 'mycologist'
             ? 'Begin your mold journey now!'
-            : 'Take action, and protect your growing crops.',
+            : l10n.protectYourCrops,
         imagePath: role.toLowerCase() == 'mycologist' 
             ? 'assets/images/mold_home_banner.png' 
             : 'assets/images/farm_home_banner.png',
@@ -437,21 +443,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 20.0),
+    return const Padding(
+      padding: EdgeInsets.only(top: 20.0),
       child: Center(
         child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
       ),
     );
   }
 
-  Widget _buildUnrecognizedRoleState() {
+  Widget _buildUnrecognizedRoleState(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 20.0),
-      child: const Center(
+      child: Center(
         child: Text(
-          'Role not recognized.',
-          style: TextStyle(
+          l10n.unrecognizedRole,
+          style: const TextStyle(
             fontFamily: 'Bricolage-Grotesque-Regular',
             fontSize: 14,
             color: MoldifyColors.MoldifyBlack,
@@ -465,8 +471,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCaseStatusLabel(),
-        _buildCaseStatusBreakdown(),
+        _buildCaseStatusLabel(AppLocalizations.of(context)!),
+        _buildCaseStatusBreakdown(AppLocalizations.of(context)!),
         _buildRecentCasesLabel(),
         if (_assignedCases.isEmpty)
           EmptyState(
@@ -516,27 +522,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFarmerUI() {
+  Widget _buildFarmerUI(AppLocalizations l10n) {
     final screenWidth = MediaQuery.of(context).size.width;
     final tileWidth = (screenWidth - 60) * 0.95;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFarmerActionTiles(),
-        _buildCaseStatusLabel(),
-        _buildCaseStatusBreakdown(),
-        _buildWikiMoldLabel(),
-        _buildWikiMoldSection(tileWidth),
+        _buildFarmerActionTiles(l10n),
+        _buildCaseStatusLabel(l10n),
+        _buildCaseStatusBreakdown(l10n),
+        _buildWikiMoldLabel(l10n),
+        _buildWikiMoldSection(tileWidth, l10n),
       ],
     );
   }
 
-  Widget _buildCaseStatusLabel() {
+  Widget _buildCaseStatusLabel(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 15.0, bottom: 5.0),
       child: AutoSizeText(
-        'Case Status Breakdown',
+        l10n.caseStatusBreakdown,
         style: const TextStyle(
           fontFamily: 'Montserrat-Black',
           fontSize: 16,
@@ -548,7 +554,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCaseStatusBreakdown() {
+  Widget _buildCaseStatusBreakdown(AppLocalizations l10n) {
     return _isLoadingDashboard
         ? Center(child: CircularProgressIndicator(color: MoldifyColors.primaryColor))
         : Column(
@@ -558,7 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.seedling, 
                 statusColor: MoldifyColors.primaryColor,
                 value: _statusCount('total', padTwoDigits: true),
-                label: 'Total Cases Reported',
+                label: l10n.totalCasesReported,
               ),
               const SizedBox(height: 12),
               GridView.count(
@@ -569,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisSpacing: 6,
                 mainAxisSpacing: 12,
                 childAspectRatio: 2.1, 
-                children: _buildStatusTiles(),
+                children: _buildStatusTiles(l10n),
               ),
             ],
           );
@@ -591,7 +597,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFarmerActionTiles() {
+  Widget _buildFarmerActionTiles(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 15.0),
       child: IntrinsicHeight(
@@ -603,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.solidCircleQuestion,
                 iconColor: MoldifyColors.MoldifyBlue,
                 backgroundColor: const Color(0xFFE8F0F7),
-                label: 'FAQ',
+                label: l10n.faq,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const MainFAQSCreen()),
                 ),
@@ -615,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.solidPaperPlane,
                 iconColor: MoldifyColors.primaryColor,
                 backgroundColor: MoldifyColors.primaryColor.withValues(alpha: 0.1),
-                label: 'Submit Report',
+                label: l10n.submitReport,
                 onTap: () => Navigator.pushNamed(context, '/submit-report'),
               ),
             ),
@@ -625,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: FontAwesomeIcons.bookOpen,
                 iconColor: MoldifyColors.accentColor,
                 backgroundColor: MoldifyColors.accentColor.withValues(alpha: 0.1),
-                label: 'WikiMold',
+                label: l10n.wikiMold,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => MainWikiMoldScreen()),
@@ -638,11 +644,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWikiMoldLabel() {
+  Widget _buildWikiMoldLabel(AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.only(top: 15.0, bottom: 5.0),
       child: AutoSizeText(
-        'WikiMold',
+        l10n.wikiMold,
         style: const TextStyle(
           fontFamily: 'Montserrat-Black',
           fontSize: 16,
@@ -654,16 +660,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWikiMoldSection(double tileWidth) {
+  Widget _buildWikiMoldSection(double tileWidth, AppLocalizations l10n) {
     return SizedBox(
       height: 163.0,
       child: _isLoadingDashboard
           ? Center(child: CircularProgressIndicator(color: MoldifyColors.primaryColor))
           : _moldipediaArticles.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
-                    'No articles available',
-                    style: TextStyle(
+                    l10n.noArticlesAvailable,
+                    style: const TextStyle(
                       fontFamily: 'Montserrat-Regular',
                       fontSize: 14,
                       color: MoldifyColors.MoldifyGrey,

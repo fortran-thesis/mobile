@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/wikimold/view_wikimold.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
@@ -141,9 +142,10 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(title: 'WikiMold'),
+      appBar: PrimaryAppBar(title: l10n.wikiMold),
       body: Column(
         children: [
           // Header + Search Box
@@ -153,7 +155,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'WikiMold',
+                  l10n.wikiMold,
                   style: TextStyle(
                     fontSize: 36,
                     fontFamily: 'Montserrat-Black',
@@ -161,7 +163,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   ),
                 ),
                 Text(
-                  'Your go-to mold encyclopedia.',
+                  l10n.wikiMoldSubtitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontFamily: 'Bricolage-Grotesque-Regular',
@@ -170,7 +172,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                 ),
                 const SizedBox(height: 20),
                 BuildTextBox(
-                  hintText: 'Search WikiMold',
+                  hintText: l10n.searchWikiMold,
                   controller: searchController,
                   showPassword: false,
                   rightIcon: FontAwesomeIcons.magnifyingGlass,
@@ -189,7 +191,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   )
                 : _filteredArticles.isEmpty
                 ? EmptyState(
-              message: 'No articles match your search.',
+              message: l10n.noArticlesFound,
               height: MediaQuery.of(context).size.height - 300,
               icon: FontAwesomeIcons.bookOpen,
             )
@@ -215,7 +217,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   padding: const EdgeInsets.only(bottom: 15.0),
                   child: WikiMoldTile(
                     title: article.title,
-                    authorName: '${article.author}',
+                    authorName: article.author,
                     imageUrl: article.coverPhoto,
                       onTap: () {
                         if(article.id.isNotEmpty) {

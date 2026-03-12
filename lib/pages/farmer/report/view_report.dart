@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/report/content_tab/prevention_tactics_content.dart';
 import 'package:provider/provider.dart';
@@ -37,16 +38,17 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
   /// Builds a centered text widget to display messages for non-resolved statuses.
   Widget _buildStatusMessageWidget(String status) {
+    final l10n = AppLocalizations.of(context)!;
     String message;
     switch (status) {
       case 'Pending':
-        message = 'Your report has been sent in and is now waiting to be checked.';
+        message = l10n.statusPending;
         break;
       case 'In progress':
-        message = 'We\'re checking your report now. You\'ll see the results when it\'s ready.';
+        message = l10n.statusInProgress;
         break;
       case 'Rejected':
-        message = 'Sorry, your report was rejected and can\'t be processed.';
+        message = l10n.statusRejected;
         break;
       default:
       // Return an empty widget if the status is not one of the above.
@@ -204,9 +206,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
-            title: 'View Report',
+            title: AppLocalizations.of(context)!.viewReportTitle,
             showPopupMenu: true,
-            popupMenuItems: ['Treatment History', 'Export PDF'],
+            popupMenuItems: [
+              AppLocalizations.of(context)!.treatmentHistory,
+              AppLocalizations.of(context)!.exportPdf
+            ],
             popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
             onPopupMenuItemSelected: (index) {
               // Handle the selection based on the index
@@ -287,7 +292,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                             StatusBox(status: caseStatus, fontSize: 11),
                             const SizedBox(width: 8),
                             StatusBox(
-                              status: 'Unassigned',
+                              status: AppLocalizations.of(context)!.unassigned,
                               fontSize: 11,
                             ),
                           ],
@@ -295,7 +300,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 15.0),
                           child: Text(
-                            _report?.caseName ?? 'Case Details',
+                            _report?.caseName ?? AppLocalizations.of(context)!.caseDetailsLabel,
                             style: TextStyle(
                               fontFamily: 'Montserrat-Black',
                               fontSize: 24,
@@ -325,7 +330,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       ),
                                     ),
                                       TextSpan(
-                                        text: '\t\t\t${_report?.host ?? 'Unknown crop'}',
+                                        text: '\t\t\t${_report?.host ?? AppLocalizations.of(context)!.unknownCrop}',
                                         style: TextStyle(
                                           color: MoldifyColors.primaryColor,
                                           fontSize: 12,
@@ -353,7 +358,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       ),
                                     ),
                                       TextSpan(
-                                        text: '\t\t\t${_report?.location ?? "Unknown location"}',
+                                        text: '\t\t\t${_report?.location ?? AppLocalizations.of(context)!.unknownLocation}',
                                         style: TextStyle(
                                           color: MoldifyColors.primaryColor,
                                           fontSize: 12,
@@ -385,9 +390,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             context: context,
                                             barrierDismissible: false,
                                             builder: (BuildContext context) {
+                                              final l10n = AppLocalizations.of(context)!;
                                               return BuildConfirmationDialog(
-                                                title: 'Are you sure you want to close this report?',
-                                                subtitle: 'Once closed, you will not be able to add follow-ups.',
+                                                title: l10n.confirmCloseTitle,
+                                                subtitle: l10n.confirmCloseSubtitle,
                                                 onConfirm: () async {
                                                   Navigator.of(context).pop();
                                                   try {
@@ -401,25 +407,25 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                                     if (!mounted) return;
                                                     Navigator.of(context).pop();
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(content: Text('Report closed')),
+                                                      SnackBar(content: Text(l10n.reportClosed)),
                                                     );
                                                   } catch (e) {
                                                     if (!mounted) return;
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text('Failed to close report: $e')),
+                                                      SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
                                                     );
                                                   }
                                                 },
                                                 onCancel: (){
                                                   Navigator.of(context).pop();
                                                 },
-                                                cancelText: 'No',
-                                                confirmText: 'Yes',
+                                                cancelText: l10n.no,
+                                                confirmText: l10n.yes,
                                               );
                                             },
                                           );
                                         },
-                                        buttonText: 'Close Case',
+                                        buttonText: AppLocalizations.of(context)!.closeCase,
                                         fontSize: 12,
                                         backgroundColor: MoldifyColors.primaryColor,
                                         textColor: MoldifyColors.backgroundColor,
@@ -442,7 +448,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             arguments: {'id': _report?.id},
                                           );
                                         },
-                                        buttonText: 'Add Follow-up',
+                                        buttonText: AppLocalizations.of(context)!.addFollowUp,
                                         fontSize: 12,
                                         backgroundColor: MoldifyColors.accentColor,
                                         textColor: MoldifyColors.MoldifyBlack,
