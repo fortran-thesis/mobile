@@ -197,7 +197,6 @@ class _MoldInfoSectionState extends State<MoldInfoSection> {
               content: widget.additionalInfoContent,
             ),
           ),
-      
         ],
       ),
     );
