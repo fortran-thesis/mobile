@@ -76,7 +76,9 @@ class AppRoutes {
             final source = args?['source'] as String?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
-            return CameraScreen(source: source, sourceTab: sourceTab, caseId: caseId);
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            final returnResult = args?['returnResult'] as bool? ?? false;
+            return CameraScreen(source: source, sourceTab: sourceTab, caseId: caseId, includeSize: includeSize, returnResult: returnResult);
 
           case RouteNames.imagePreview:
             if (settings.arguments is Map<String, dynamic>) {
@@ -86,7 +88,9 @@ class AppRoutes {
                 final String? source = args['source'] as String?;
                 final String? sourceTab = args['sourceTab'] as String?;
                 final String? caseId = args['caseId'] as String?;
-                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab, caseId: caseId);
+                final bool includeSize = args['includeSize'] as bool? ?? true;
+                final bool returnResult = args['returnResult'] as bool? ?? false;
+                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab, caseId: caseId, includeSize: includeSize, returnResult: returnResult);
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('imagePath missing')));
               }
@@ -151,7 +155,16 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
-            return AddLogInstructionsScreen(sourceTab: sourceTab, caseId: caseId);
+            final pageTitle = args?['pageTitle'] as String?;
+            final pageSubtitle = args?['pageSubtitle'] as String?;
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            return AddLogInstructionsScreen(
+              sourceTab: sourceTab,
+              caseId: caseId,
+              pageTitle: pageTitle,
+              pageSubtitle: pageSubtitle,
+              includeSize: includeSize,
+            );
 
           case RouteNames.addLog:
             if (settings.arguments is Map<String, dynamic>) {
@@ -162,7 +175,8 @@ class AppRoutes {
                 final imagePath = args['imagePath'] as String;
                 final sourceTab = args['sourceTab'] as String;
                 final caseId = args['caseId'] as String;
-                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab, caseId: caseId);
+                final includeSize = args['includeSize'] as bool? ?? true;
+                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab, caseId: caseId, includeSize: includeSize);
               } else {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Argument Error')),
@@ -179,7 +193,8 @@ class AppRoutes {
           case RouteNames.mainCamera:
             final args = settings.arguments as Map<String, dynamic>?;
             final bool showAppBar = args?['showAppBar'] as bool? ?? false;
-            return MainCameraScreen(showAppBar: showAppBar);
+            final bool returnResult = args?['returnResult'] as bool? ?? false;
+            return MainCameraScreen(showAppBar: showAppBar, returnResult: returnResult);
             case RouteNames.submitReport:
               return SubmitReportScreen();
           case RouteNames.viewReport:

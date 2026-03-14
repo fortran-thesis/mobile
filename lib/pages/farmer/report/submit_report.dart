@@ -35,6 +35,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       TextEditingController();
   final TextEditingController _probDescController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final List<String> _selectedProblemDescriptions = [];
 
   /// Predefined crop options for the chip selection modal
   final List<String> _cropOptions = [
@@ -139,7 +140,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
     return _caseNameController.text.isNotEmpty ||
         _cropNameController.text.isNotEmpty ||
         _dateFirstObservedController.text.isNotEmpty ||
-        _probDescController.text.isNotEmpty ||
+      _selectedProblemDescriptions.isNotEmpty ||
+      _probDescController.text.isNotEmpty ||
         _addressController.text.isNotEmpty ||
         uploadedPhotos.isNotEmpty;
   }
@@ -372,19 +374,22 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   isMultiline: true,
                   readOnly: true,
                   onTap: () async {
-                    final selectedProblem = await showChipSelectionModal(
+                    final selectedProblems = await showMultiChipSelectionModal(
                       context: context,
                       title: l10n.selectProblemDescription,
                       options: _problemDescriptionOptions,
-                      currentSelection: _probDescController.text,
+                      currentSelections: _selectedProblemDescriptions,
                       customInputHint: l10n.customProblemInputHint,
                       othersLabel: l10n.othersLabel,
                       isMultiLine: true,
                     );
 
-                    if (selectedProblem != null && selectedProblem.isNotEmpty) {
+                    if (selectedProblems != null && selectedProblems.isNotEmpty) {
                       setState(() {
-                        _probDescController.text = selectedProblem;
+                        _selectedProblemDescriptions
+                          ..clear()
+                          ..addAll(selectedProblems);
+                        _probDescController.text = selectedProblems.join(', ');
                       });
                     }
                   },
@@ -465,7 +470,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         return;
                       }
 
-                      if (_probDescController.text.isEmpty) {
+                      if (_selectedProblemDescriptions.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -607,9 +612,11 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           'host': _cropNameController.text.trim(),
                           if (isoDateObserved != null) 'date_observed': isoDateObserved,
                           // include description as a top-level field (cover_photo is sent
-                          // separately as the multipart file). We no longer wrap details
-                          // under `case_details`.
+                          // separately as the multipart file). Keep the joined
+                          // text for backward compatibility while also sending
+                          // the array form requested for multi-select handling.
                           'description': _probDescController.text.trim(),
+                          'problem_descriptions': _selectedProblemDescriptions,
                           'location': _addressController.text.trim(),
                         };
 

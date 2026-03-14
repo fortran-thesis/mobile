@@ -8,12 +8,16 @@ class CameraScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final bool includeSize;
+  final bool returnResult;
 
   const CameraScreen({
     super.key,
     this.source,
     this.sourceTab,
     this.caseId,
+    this.includeSize = true,
+    this.returnResult = false,
   });
 
   @override
@@ -104,7 +108,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
         // Navigate to the image preview screen and pass relevant data (like image path and source info)
         if (!mounted) return;
-        await Navigator.pushNamed(
+        final result = await Navigator.pushNamed(
           context,
           '/image_preview',
           arguments: {
@@ -112,8 +116,17 @@ class _CameraScreenState extends State<CameraScreen> {
             'source': widget.source,
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'includeSize': widget.includeSize,
+            'returnResult': widget.returnResult,
           },
         );
+
+        // Bubble the result to the previous route when this camera flow is used for logs.
+        if (!mounted) return;
+        if (result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       }
     } on CameraException catch (e) {
       AppLogger.e('Error taking picture', error: e);

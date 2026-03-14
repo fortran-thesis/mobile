@@ -2,9 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
-import 'package:provider/provider.dart';
-import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
-import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
@@ -16,6 +13,7 @@ class AddLogScreen extends StatefulWidget {
   final String imagePath;
   final String sourceTab;
   final String caseId; // Add caseId for API call
+  final bool includeSize;
 
   // 2. Update the constructor to require them
   const AddLogScreen({
@@ -23,6 +21,7 @@ class AddLogScreen extends StatefulWidget {
     required this.imagePath,
     required this.sourceTab,
     required this.caseId,
+    this.includeSize = true,
   });
 
   @override
@@ -30,11 +29,56 @@ class AddLogScreen extends StatefulWidget {
 }
 
 class _AddLogScreenState extends State<AddLogScreen> {
+  final TextEditingController _sizeController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
+  final TextEditingController _textureController = TextEditingController();
   final TextEditingController _logNotesController = TextEditingController();
   bool _isSaving = false;
 
+  late final String _sizeLabel;
+  late final String _sizeHint;
+  late final String _colorLabel;
+  late final String _colorHint;
+  late final String _textureLabel;
+  late final String _textureHint;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Keep role-specific labels while making the values user-editable.
+    if (widget.sourceTab == 'in-vivo') {
+      _sizeLabel = 'Lesion Size (mm)';
+      _sizeHint = 'Enter lesion size in mm';
+      _colorLabel = 'Lesion Color';
+      _colorHint = 'Enter lesion color';
+      _textureLabel = 'Lesion Texture';
+      _textureHint = 'Enter lesion texture';
+
+      // Dummy defaults for now (no backend fetch).
+      _sizeController.text = '4';
+      _colorController.text = 'Brown';
+      _textureController.text = 'Rough';
+    } else {
+      _sizeLabel = 'Colony Diameter (mm)';
+      _sizeHint = 'Enter colony diameter in mm';
+      _colorLabel = 'Colony Color';
+      _colorHint = 'Enter colony color';
+      _textureLabel = 'Colony Texture';
+      _textureHint = 'Enter colony texture';
+
+      // Dummy defaults for now (no backend fetch).
+      _sizeController.text = '4';
+      _colorController.text = 'Black';
+      _textureController.text = 'Powdery';
+    }
+  }
+
   @override
   void dispose() {
+    _sizeController.dispose();
+    _colorController.dispose();
+    _textureController.dispose();
     _logNotesController.dispose();
     super.dispose();
   }
@@ -43,40 +87,28 @@ class _AddLogScreenState extends State<AddLogScreen> {
     try {
       setState(() => _isSaving = true);
 
-      final service = MoldCaseService();
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      final sessionCookie = authProvider.cookie;
-
-      // Build log data based on sourceTab
-      final logData = {
-        'type': widget.sourceTab == 'in-vivo' ? 'vivo' : 'vitro',
-        'characteristics': widget.sourceTab == 'in-vivo'
-            ? {'lesion_size': 0, 'lesion_color': 'Unknown'}
-            : {'colony_diameter': 0, 'colony_color': 'Unknown'},
-        'additional_info': _logNotesController.text,
-      };
-
-      // Call service to add cultivation log with image file
-      await service.addCultivationLog(
-        widget.caseId,
-        logData,
-        imagePath: widget.imagePath,
-        sessionCookie: sessionCookie,
-      );
-
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cultivation log saved successfully!')),
-      );
-      Navigator.of(context).pop();
+      // Local-only return payload (dummy-friendly, no backend write).
+      final result = <String, dynamic>{
+        'imagePath': widget.imagePath,
+        'sourceTab': widget.sourceTab,
+        'color': _colorController.text.trim(),
+        'texture': _textureController.text.trim(),
+        'additional': _logNotesController.text.trim(),
+      };
+      if (widget.includeSize) {
+        result['size'] = _sizeController.text.trim();
+      }
+
+      Navigator.of(context).pop(result);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save log: $e')),
+        SnackBar(content: Text('Failed to prepare log: $e')),
       );
     }
   }
@@ -84,20 +116,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
   @override
   Widget build(BuildContext context) {
     String dateTime = 'October 2, 2025 • 09:14 PM';
-    String size = '4mm';
-    String color = 'Black';
-    String labelSize;
-    String labelColor;
-
-    // 3. Set the labels based on the sourceTab from the widget
-    if (widget.sourceTab == 'in-vivo') {
-      labelSize = "Lesion Size";
-      labelColor = "Lesion Color";
-    } else {
-      labelSize = "Colony Diameter";
-      labelColor = "Colony Color";
-    }
-
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
@@ -145,60 +163,62 @@ class _AddLogScreenState extends State<AddLogScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 12),
-
-                                /// Size Label
-                                Text(
-                                  labelSize,
-                                  style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                    fontSize: 12,
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                /// Size Value
-                                Text(
-                                  size,
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat-Black',
-                                    fontSize: 16,
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 12),
-
-                                /// Color Label
-                                Text(
-                                  labelColor,
-                                  style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                    fontSize: 12,
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-
-                                /// Color Value
-                                Text(
-                                  color,
-                                  style: const TextStyle(
-                                    fontFamily: 'Montserrat-Black',
-                                    fontSize: 16,
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            const SizedBox.shrink(),
                           ],
+                        ),
+
+                        if (widget.includeSize) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                            child: Text(
+                              _sizeLabel,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                          BuildTextBox(
+                            hintText: _sizeHint,
+                            controller: _sizeController,
+                            showPassword: false,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                          child: Text(
+                            _colorLabel,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                        BuildTextBox(
+                          hintText: _colorHint,
+                          controller: _colorController,
+                          showPassword: false,
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                          child: Text(
+                            _textureLabel,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                        BuildTextBox(
+                          hintText: _textureHint,
+                          controller: _textureController,
+                          showPassword: false,
                         ),
 
                         /// Additional Notes Label

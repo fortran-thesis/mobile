@@ -150,6 +150,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       ),
       AdditionalCharacteristicsTab(
         onSubmit: _submitCharacteristics,
+        onBack: _goToPreviousTab,
         onPhialideArrangementChanged: (v) => setState(() => formData['phialideArrangement'] = v),
         onSterigmataArrangementChanged: (v) => setState(() => formData['sterigmataArrangement'] = v),
       ),

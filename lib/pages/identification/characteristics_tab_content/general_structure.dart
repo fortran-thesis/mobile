@@ -125,7 +125,7 @@ class GeneralStructureTab extends StatelessWidget {
             onPressed: onNext,
             buttonText: 'Next Section',
             backgroundColor: MoldifyColors.primaryColor,
-            textColor: MoldifyColors.backgroundColor,
+            textColor: Colors.white,
             buttonHeight: 45,
             buttonRadius: 10,
             buttonWidth: double.infinity,

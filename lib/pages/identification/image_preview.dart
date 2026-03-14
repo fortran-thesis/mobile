@@ -17,6 +17,8 @@ class ImagePreviewScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final bool includeSize;
+  final bool returnResult;
 
   const ImagePreviewScreen({
     super.key,
@@ -24,6 +26,8 @@ class ImagePreviewScreen extends StatefulWidget {
     this.source,
     this.sourceTab,
     this.caseId,
+    this.includeSize = true,
+    this.returnResult = false,
   });
 
   @override
@@ -157,19 +161,31 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       AppLogger.d('Cropped image saved to: ${file.path}');
 
       if (!mounted) return;
+      // Cropping is complete; stop the preview processing overlay before next step.
+      setState(() {
+        _isProcessing = false;
+      });
       
       // Check the source to determine next action
       if (widget.source == 'add_log') {
         // For add_log source, navigate directly without API call
-        Navigator.pushNamed(
+        final result = await Navigator.pushNamed(
           context,
           '/add-log',
           arguments: {
             'imagePath': file.path,
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'includeSize': widget.includeSize,
           },
         );
+
+        // Bubble the local result back to caller (e.g., monitoring setup).
+        if (!mounted) return;
+        if (result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       } else {
         // For main_camera source, show modal to let user choose
         AppLogger.d('🔷 ImagePreview: Showing confirmation dialog');
@@ -354,18 +370,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   /// Helper method to handle "No, See Result" button action
   Future<void> _handleNoSeeResult(BuildContext context, String imagePath, Uint8List imageBytes, String fileName) async {
     AppLogger.d('🟢 ImagePreview: _handleNoSeeResult called');
-    
-    // Show loading indicator
+
+    // Use the page-level loading overlay to avoid stacked loading indicators.
     if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            color: MoldifyColors.primaryColor,
-          ),
-        ),
-      );
+      setState(() {
+        _isProcessing = true;
+      });
     }
     
     try {
@@ -400,13 +410,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         AppLogger.d('✅ ImagePreview: moldDetails keys: ${moldDetails.keys.toList()}');
       }
       
-      // Dismiss loading
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
       if (!context.mounted) return;
       
       AppLogger.d('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
-      Navigator.of(context).pushNamed(
+      final result = await Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': imagePath,
@@ -414,12 +421,15 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'moldDetails': moldDetails,
         },
       );
+
+      if (!context.mounted) return;
+      if (widget.returnResult && result != null) {
+        Navigator.of(context).pop(result);
+        return;
+      }
     } catch (e, stackTrace) {
       AppLogger.e('❌ ImagePreview: EXCEPTION in _handleNoSeeResult', error: e, stackTrace: stackTrace);
-      
-      // Dismiss loading
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
+
       if (!context.mounted) return;
       
       // Show error message
@@ -428,7 +438,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       );
       
       // Navigate anyway with error data
-      Navigator.of(context).pushNamed(
+      final result = await Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': imagePath,
@@ -436,6 +446,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'moldDetails': {'error': e.toString()},
         },
       );
+
+      if (!context.mounted) return;
+      if (widget.returnResult && result != null) {
+        Navigator.of(context).pop(result);
+        return;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 }

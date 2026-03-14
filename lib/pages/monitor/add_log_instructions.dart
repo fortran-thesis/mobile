@@ -11,8 +11,21 @@ class AddLogInstructionsScreen extends StatefulWidget {
   // 1. Add sourceTab as a constructor argument
   final String? sourceTab;
   final String? caseId;
+  final bool includeSize;
 
-  const AddLogInstructionsScreen({super.key, this.sourceTab, this.caseId});
+  /// Optional overrides so this screen can be reused for other capture flows
+  /// (e.g. "Initial Microscopic") with different titles.
+  final String? pageTitle;
+  final String? pageSubtitle;
+
+  const AddLogInstructionsScreen({
+    super.key,
+    this.sourceTab,
+    this.caseId,
+    this.pageTitle,
+    this.pageSubtitle,
+    this.includeSize = true,
+  });
 
   @override
   State<AddLogInstructionsScreen> createState() => _AddLogInstructionsScreenState();
@@ -41,16 +54,23 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
       if (imageFile != null) {
         AppLogger.d('Image selected from gallery: ${imageFile.path}');
         // 2. Pass both 'source' and the new 'sourceTab' argument
-        await Navigator.pushNamed(
+        final result = await Navigator.pushNamed(
           context,
           RouteNames.imagePreview,
           arguments: {
             'imagePath': imageFile.path,
             'source': 'add_log',
             'sourceTab': widget.sourceTab,
-            'caseId': widget.caseId
+            'caseId': widget.caseId,
+            'includeSize': widget.includeSize,
           },
         );
+
+        if (!mounted) return;
+        if (result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       } else {
         AppLogger.d('No image selected.');
       }
@@ -75,9 +95,15 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
       arguments: {
         'source': 'add_log',
         'sourceTab': widget.sourceTab,
-        'caseId': widget.caseId
+        'caseId': widget.caseId,
+        'includeSize': widget.includeSize,
       },
-    );
+    ).then((result) {
+      if (!mounted) return;
+      if (result != null) {
+        Navigator.of(context).pop(result);
+      }
+    });
   }
 
   @override
@@ -85,7 +111,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
-        title: 'Add New Log',
+        title: widget.pageTitle ?? 'Add New Log',
       ),
       body: Stack(
         children: [
@@ -101,7 +127,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
                       /// ----------- Mold Scanner Header -----------
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Text('Add New Log',
+                        child: Text(
+                            widget.pageTitle ?? 'Add New Log',
                             style: TextStyle(
                               fontSize: 36,
                               fontFamily: 'Montserrat-Black',
@@ -111,7 +138,7 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: Text(
-                            'Please submit an image of the mold sample you want to log.',
+                            widget.pageSubtitle ?? 'Please submit an image of the mold sample you want to log.',
                             style: TextStyle(
                               fontSize: 16,
                               fontFamily: 'Bricolage-Grotesque-Regular',

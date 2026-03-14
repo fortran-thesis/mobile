@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/language_provider.dart';
-import '../misc/appbar/secondary_appbar.dart';
+import '../misc/appbar/primary_app_bar.dart';
 import '../misc/colors.dart';
 
+/// [LanguageSettingsScreen] provides a clean interface for users to toggle
+/// between supported application locales. It uses [LanguageProvider] to 
+/// persist changes globally.
 class LanguageSettingsScreen extends StatelessWidget {
   const LanguageSettingsScreen({super.key});
 
@@ -16,53 +18,47 @@ class LanguageSettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: SecondaryAppBar(
+      appBar: PrimaryAppBar(
         title: l10n.languagePageTitle,
-        color: MoldifyColors.backgroundColor,
-        themeColor: MoldifyColors.backgroundColor,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               l10n.languagePageTitle,
               style: const TextStyle(
-                fontSize: 28,
+                fontSize: 32,
                 fontFamily: 'Montserrat-Black',
                 color: MoldifyColors.primaryColor,
+                letterSpacing: -0.8,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               l10n.languagePageSubtitle,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontFamily: 'Bricolage-Grotesque-Regular',
-                color: MoldifyColors.MoldifyBlack,
+                color: MoldifyColors.MoldifyGrey,
               ),
             ),
-            const SizedBox(height: 30),
-            Container(
-              height: 1.0,
-              color: MoldifyColors.MoldifySoftGrey,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             Consumer<LanguageProvider>(
               builder: (context, langProvider, _) {
                 return Column(
                   children: [
                     _LanguageOption(
                       label: l10n.english,
-                      locale: const Locale('en'),
+                      localeCode: 'EN',
                       selected: langProvider.selectedLocale.languageCode == 'en',
                       onTap: () => langProvider.setLocale(const Locale('en')),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     _LanguageOption(
                       label: l10n.filipino,
-                      locale: const Locale('fil'),
+                      localeCode: 'PH',
                       selected: langProvider.selectedLocale.languageCode == 'fil',
                       onTap: () => langProvider.setLocale(const Locale('fil')),
                     ),
@@ -77,15 +73,22 @@ class LanguageSettingsScreen extends StatelessWidget {
   }
 }
 
+/// A private helper widget to render individual language selection rows.
+/// 
+/// Parameters:
+/// - [label]: The display name of the language (e.g., English).
+/// - [localeCode]: Short string used for the leading badge (e.g., EN).
+/// - [selected]: Boolean flag to toggle active styling.
+/// - [onTap]: Callback triggered when the user selects this option.
 class _LanguageOption extends StatelessWidget {
   final String label;
-  final Locale locale;
+  final String localeCode;
   final bool selected;
   final VoidCallback onTap;
 
   const _LanguageOption({
     required this.label,
-    required this.locale,
+    required this.localeCode,
     required this.selected,
     required this.onTap,
   });
@@ -94,49 +97,81 @@ class _LanguageOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
         decoration: BoxDecoration(
-          color: selected
-              ? MoldifyColors.primaryColor.withValues(alpha: 0.08)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: MoldifyColors.taupe,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected
-                ? MoldifyColors.primaryColor
-                : MoldifyColors.MoldifySoftGrey,
-            width: selected ? 2 : 1,
+            color: selected 
+                ? MoldifyColors.primaryColor 
+                : MoldifyColors.MoldifySoftGrey.withValues(alpha: 0.5),
+            width: selected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(
-              FontAwesomeIcons.globe,
-              size: 18,
-              color: selected
-                  ? MoldifyColors.primaryColor
-                  : MoldifyColors.MoldifyGrey,
+            // Subtly use of Accent Color as a vertical indicator bar for selection
+            if (selected)
+              Container(
+                width: 4,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: MoldifyColors.accentColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            if (selected) const SizedBox(width: 12),
+            
+            // Leading language badge
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: selected 
+                    ? MoldifyColors.primaryColor.withValues(alpha: 0.1) 
+                    : MoldifyColors.backgroundColor,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                localeCode,
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Bold',
+                  fontSize: 12,
+                  color: selected ? MoldifyColors.primaryColor : MoldifyColors.MoldifyGrey,
+                ),
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
+            
+            // Language Name
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontFamily: selected
-                      ? 'Bricolage-Grotesque-SemiBold'
+                  fontFamily: selected 
+                      ? 'Bricolage-Grotesque-SemiBold' 
                       : 'Bricolage-Grotesque-Regular',
-                  fontSize: 16,
-                  color: selected
-                      ? MoldifyColors.primaryColor
-                      : MoldifyColors.MoldifyBlack,
+                  fontSize: 17,
+                  color: MoldifyColors.MoldifyBlack,
                 ),
               ),
             ),
+            
+            // Functional Icon - Accent color used sparingly here for the "check"
             if (selected)
               const Icon(
-                FontAwesomeIcons.circleCheck,
-                size: 18,
-                color: MoldifyColors.primaryColor,
+                FontAwesomeIcons.solidCircleCheck,
+                size: 20,
+                color: MoldifyColors.accentColor,
+              )
+            else
+              Icon(
+                FontAwesomeIcons.circle,
+                size: 20,
+                color: MoldifyColors.MoldifySoftGrey,
               ),
           ],
         ),

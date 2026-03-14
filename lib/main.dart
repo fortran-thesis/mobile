@@ -145,6 +145,10 @@ class _MainPageState extends State<MainPage> {
   DateTime? _lastBackPressedAt;
   GlobalKey<NavigatorState> _homeTabNavigatorKey = GlobalKey<NavigatorState>();
   GlobalKey<NavigatorState> _workTabNavigatorKey = GlobalKey<NavigatorState>();
+  late final NavigatorObserver _homeTabObserver;
+  late final NavigatorObserver _workTabObserver;
+  bool _homeTabAtRoot = true;
+  bool _workTabAtRoot = true;
 
   static const Duration _backExitWindow = Duration(seconds: 2);
 
@@ -153,6 +157,18 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
+    _homeTabObserver = _TabRouteObserver(
+      onAtRootChanged: (atRoot) {
+        if (!mounted || _homeTabAtRoot == atRoot) return;
+        setState(() => _homeTabAtRoot = atRoot);
+      },
+    );
+    _workTabObserver = _TabRouteObserver(
+      onAtRootChanged: (atRoot) {
+        if (!mounted || _workTabAtRoot == atRoot) return;
+        setState(() => _workTabAtRoot = atRoot);
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
@@ -164,6 +180,8 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final showNavChrome = selectedPosition == 0 ? _homeTabAtRoot : _workTabAtRoot;
+
     return BlocListener<UserBloc, UserState>(
       listener: (context, state) {
         if (state is UserProfileLoaded) {
@@ -194,7 +212,7 @@ class _MainPageState extends State<MainPage> {
         child: Scaffold(
           resizeToAvoidBottomInset: false,
             extendBody: false,
-          drawer: selectedPosition == 0 ? const AppDrawer() : null,
+          drawer: showNavChrome && selectedPosition == 0 ? const AppDrawer() : null,
           body: IndexedStack(
             index: selectedPosition,
             children: [
@@ -202,29 +220,31 @@ class _MainPageState extends State<MainPage> {
               _buildTabNavigator(tabIndex: 1),
             ],
           ),
-          floatingActionButton: SizedBox(
-            height: 63.0,
-            width: 63.0,
-            child: FloatingActionButton(
-              onPressed: null,
-              backgroundColor: MoldifyColors.primaryColor,
-              shape: const CircleBorder(),
-              elevation: 0,
-              focusElevation: 0,
-              hoverElevation: 0,
-              highlightElevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Image.asset(
-                  'assets/images/moldify-logo.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
+          floatingActionButton: showNavChrome
+              ? SizedBox(
+                  height: 63.0,
+                  width: 63.0,
+                  child: FloatingActionButton(
+                    onPressed: null,
+                    backgroundColor: MoldifyColors.primaryColor,
+                    shape: const CircleBorder(),
+                    elevation: 0,
+                    focusElevation: 0,
+                    hoverElevation: 0,
+                    highlightElevation: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Image.asset(
+                        'assets/images/moldify-logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                )
+              : null,
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerDocked,
-          bottomNavigationBar: _buildBottomNavigationBar(),
+          bottomNavigationBar: showNavChrome ? _buildBottomNavigationBar() : null,
         ),
       ),
     );
@@ -237,6 +257,7 @@ class _MainPageState extends State<MainPage> {
 
     return Navigator(
       key: tabIndex == 0 ? _homeTabNavigatorKey : _workTabNavigatorKey,
+      observers: [tabIndex == 0 ? _homeTabObserver : _workTabObserver],
       onGenerateRoute: (settings) {
         if (settings.name == Navigator.defaultRouteName) {
           return MaterialPageRoute(
@@ -359,5 +380,41 @@ class _MainPageState extends State<MainPage> {
           duration: Duration(seconds: 2),
         ),
       );
+  }
+}
+
+class _TabRouteObserver extends NavigatorObserver {
+  _TabRouteObserver({required this.onAtRootChanged});
+
+  final ValueChanged<bool> onAtRootChanged;
+
+  void _notify() {
+    final nav = navigator;
+    if (nav == null) return;
+    onAtRootChanged(!nav.canPop());
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    _notify();
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    _notify();
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didRemove(route, previousRoute);
+    _notify();
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    _notify();
   }
 }

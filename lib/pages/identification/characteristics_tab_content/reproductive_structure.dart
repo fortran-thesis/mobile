@@ -56,33 +56,30 @@ class ReproductiveStructureTab extends StatelessWidget {
   Widget _buildNavigationButtons({bool showBack = false}) {
     return Padding(
       padding: const EdgeInsets.only(top: 30.0),
-      child: Column(
+      child: Row(
         children: [
-          if (showBack)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Expanded(
-                child: BuildButton(
-                  onPressed: onBack!,
-                  buttonText: 'Go Back',
-                  backgroundColor: MoldifyColors.backgroundColor,
-                  textColor: MoldifyColors.primaryColor,
-                  buttonHeight: 45,
-                  buttonRadius: 10,
-                  borderColor: MoldifyColors.primaryColor,
-                  buttonWidth: double.infinity,
-                ),
+          if (showBack) ...[  
+            Expanded(
+              child: BuildButton(
+                onPressed: onBack!,
+                buttonText: 'Back',
+                backgroundColor: MoldifyColors.taupe,
+                textColor: MoldifyColors.primaryColor,
+                buttonHeight: 45,
+                buttonRadius: 10,
               ),
             ),
-          if (showBack) const SizedBox(width: 10),
-          BuildButton(
-            onPressed: onNext,
-            buttonText: 'Next Section',
-            backgroundColor: MoldifyColors.primaryColor,
-            textColor: MoldifyColors.backgroundColor,
-            buttonHeight: 45,
-            buttonRadius: 10,
-            buttonWidth: double.infinity,
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: BuildButton(
+              onPressed: onNext,
+              buttonText: 'Next Section',
+              backgroundColor: MoldifyColors.primaryColor,
+              textColor: Colors.white,
+              buttonHeight: 45,
+              buttonRadius: 10,
+            ),
           ),
         ],
       ),

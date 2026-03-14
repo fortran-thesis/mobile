@@ -341,7 +341,11 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: BuildButton(
                           onPressed: () {
-                            ///To do: Implement Save Result Functionality
+                            Navigator.of(context).pop({
+                              'imagePath': widget.croppedImagePath,
+                              'identifiedMold': moldGenus,
+                              'confidence': confidenceLevel,
+                            });
                           },
                           buttonText: 'Save Result',
                           backgroundColor: MoldifyColors.primaryColor,

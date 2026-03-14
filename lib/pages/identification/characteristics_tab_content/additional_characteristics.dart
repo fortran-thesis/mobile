@@ -6,7 +6,7 @@ import 'package:moldify/core/constants/morphology_schema.dart';
 
 class AdditionalCharacteristicsTab extends StatelessWidget {
   final VoidCallback onSubmit;
-
+  final VoidCallback onBack;
 
   // Parent-level callbacks
   final Function(String?)? onPhialideArrangementChanged;
@@ -15,6 +15,7 @@ class AdditionalCharacteristicsTab extends StatelessWidget {
   const AdditionalCharacteristicsTab({
     super.key,
     required this.onSubmit,
+    required this.onBack,
     this.onPhialideArrangementChanged,
     this.onSterigmataArrangementChanged,
   });
@@ -43,21 +44,30 @@ class AdditionalCharacteristicsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildNavigationButtons({bool showBack = false, bool isLast = false}) {
+  Widget _buildNavigationButtons() {
     return Padding(
       padding: const EdgeInsets.only(top: 30.0),
       child: Row(
         children: [
-          if (showBack)
+          Expanded(
+            child: BuildButton(
+              onPressed: onBack,
+              buttonText: 'Back',
+              backgroundColor: MoldifyColors.taupe,
+              textColor: MoldifyColors.primaryColor,
+              buttonHeight: 45,
+              buttonRadius: 10,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: BuildButton(
               onPressed: onSubmit,
-              buttonText: 'Submit Characteristics',
+              buttonText: 'Submit',
               backgroundColor: MoldifyColors.primaryColor,
-              textColor: MoldifyColors.backgroundColor,
+              textColor: Colors.white,
               buttonHeight: 45,
               buttonRadius: 10,
-              buttonWidth: double.infinity,
             ),
           ),
         ],
@@ -110,7 +120,7 @@ class AdditionalCharacteristicsTab extends StatelessWidget {
         ),
 
         /// Navigation buttons (Back + Submit)
-        _buildNavigationButtons(showBack: true, isLast: true),
+        _buildNavigationButtons(),
       ],
     );
   }

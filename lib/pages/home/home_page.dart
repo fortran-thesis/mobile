@@ -230,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
           label: l10n.statusLabelInProgress,
         ),
         StatisticTile(
-          icon: FontAwesomeIcons.circleCheck,
+          icon: FontAwesomeIcons.solidCircleCheck,
           statusColor: MoldifyColors.primaryColor, 
           value: _statusCount('resolved', padTwoDigits: true),
           label: l10n.statusLabelResolved,
@@ -574,7 +574,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 6,
                 mainAxisSpacing: 12,
-                childAspectRatio: 2.1, 
+                childAspectRatio: 1.9,
                 children: _buildStatusTiles(l10n),
               ),
             ],
