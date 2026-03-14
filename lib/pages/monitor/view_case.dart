@@ -520,182 +520,148 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                 isHeader: true,
               ),
 
-              ///2. Case details
-              Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: MoldifyColors.backgroundColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
-                    ),
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: MoldifyColors.backgroundColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40.0), // Deep, high-end curve
+                    topRight: Radius.circular(40.0),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 15.0, bottom: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            StatusBox(status: priorityLevel, fontSize: 12,),
-                            SizedBox(width: 5),
-                            StatusBox(status: reportStatus, fontSize: 12,),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 15.0),
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'End Date: ',
-                                  style: const TextStyle(
-                                    fontSize: 10.0,
-                                    color: MoldifyColors.primaryColor,
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: endDate,
-                                  style: const TextStyle(
-                                    fontSize: 10.0,
-                                    color: MoldifyColors.primaryColor,
-                                    fontFamily: 'Bricolage-Grotesque-Bold',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            _case?.name ?? 'Tomato Mold',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat-Black',
-                              fontSize: 24,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 35.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Row 1: Status & Date (Small, caps, widely spaced - very editorial)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "ENDS $endDate".toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              letterSpacing: 1.5,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
                               color: MoldifyColors.primaryColor,
-                              height: 1.2,
                             ),
                           ),
+                          Row(
+                            children: [
+                              StatusBox(status: priorityLevel, fontSize: 10),
+                              const SizedBox(width: 8),
+                              StatusBox(status: reportStatus, fontSize: 10),
+                            ],
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 20),
+
+                      // Row 2: The Hero Title
+                      Text(
+                        _case?.name ?? 'Tomato Mold',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat-Black',
+                          fontSize: 34,
+                          color: MoldifyColors.primaryColor,
+                          height: 1.0,
+                          letterSpacing: -1.0,
                         ),
-                        /// Crop Name
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Row 3: Metadata (Large, clean, minimal)
+                      Row(
+                        children: [
+                          Text(
+                            _getCaseCropName(),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              color: MoldifyColors.accentColor,
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          const Text("•", style: TextStyle(color: MoldifyColors.primaryColor)),
+                          const SizedBox(width: 15),
+                          Text(
+                            location,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              color: MoldifyColors.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Row 4: The Result (The Editorial Focus)
+                      const Text(
+                        "ANALYSIS RESULT",
+                        style: TextStyle(
+                          fontSize: 10,
+                          letterSpacing: 2.0,
+                          fontFamily: 'Bricolage-Grotesque-Bold',
+                          color: MoldifyColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "[Fungi Name]", 
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontFamily: 'Bricolage-Grotesque-Bold',
+                          color: MoldifyColors.primaryColor,
+                          height: 1.1,
+                        ),
+                      ),
+
+                      if (!isCaseClosed) ...[
+                        const SizedBox(height: 30),
+                        // Row 5: Action Buttons with full logic
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: RichText(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                text: TextSpan(
-                                  children: [
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Icon(
-                                        FontAwesomeIcons.seedling,
-                                        size: 16,
-                                        color: MoldifyColors.accentColor,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: "			${_getCaseCropName()}",
-                                      style: TextStyle(
-                                        color: MoldifyColors.primaryColor,
-                                        fontSize: 12,
-                                        fontFamily:
-                                        'Bricolage-Grotesque-Regular',
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            Expanded(
+                              child: BuildButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.mainCamera,
+                                    arguments: {'showAppBar': true},
+                                  );
+                                },
+                                buttonText: 'IDENTIFY',
+                                fontSize: 12,
+                                backgroundColor: MoldifyColors.primaryColor,
+                                textColor: MoldifyColors.backgroundColor,
+                                buttonHeight: 48, // Taller buttons for a premium feel
+                                buttonRadius: 15,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: RichText(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                text: TextSpan(
-                                  children: [
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Icon(
-                                        FontAwesomeIcons.locationDot,
-                                        size: 16,
-                                        color: MoldifyColors.accentColor,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: "			$location",
-                                      style: TextStyle(
-                                        color: MoldifyColors.primaryColor,
-                                        fontSize: 12,
-                                        fontFamily:
-                                        'Bricolage-Grotesque-Regular',
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: BuildButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/add-treatment');
+                                },
+                                buttonText: 'TREATMENT',
+                                fontSize: 12,
+                                backgroundColor: MoldifyColors.accentColor,
+                                textColor: MoldifyColors.MoldifyBlack,
+                                buttonHeight: 48,
+                                buttonRadius: 15,
                               ),
                             ),
                           ],
                         ),
-
-                        if(!isCaseClosed)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: BuildButton(
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        RouteNames.mainCamera,
-                                        arguments: {'showAppBar': true},
-                                      );
-                                    },
-                                    buttonText: 'Identify Mold',
-                                    fontSize: 12,
-                                    backgroundColor: MoldifyColors.primaryColor,
-                                    textColor: MoldifyColors.backgroundColor,
-                                    leftIcon: FontAwesomeIcons.camera,
-                                    iconSize: 12,
-                                    iconColor: MoldifyColors.backgroundColor,
-                                    paddingIconText: 10,
-                                    buttonHeight: 30,
-                                    buttonRadius: 7,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Flexible(
-                                  child: BuildButton(
-                                    onPressed: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/add-treatment',
-                                      );
-                                    },
-                                    buttonText: 'Add Treatment',
-                                    fontSize: 12,
-                                    backgroundColor: MoldifyColors.accentColor,
-                                    textColor: MoldifyColors.MoldifyBlack,
-                                    leftIcon: FontAwesomeIcons.plus,
-                                    iconSize: 12,
-                                    iconColor: MoldifyColors.MoldifyBlack,
-                                    paddingIconText: 10,
-                                    buttonHeight: 30,
-                                    buttonRadius: 7,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+  
                         Padding(
                           padding: const EdgeInsets.only(top: 10.0),
                           child: SizedBox(
@@ -739,10 +705,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                           ),
                         )
                       ],
+        ],      
                     ),
                   ),
                 ),
-              ),
+),
 
             ],
           ),
@@ -750,4 +717,33 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       ),
     );
   }
+}
+
+Widget _buildGridItem(String label, String value) {
+  return Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontFamily: 'Bricolage-Grotesque-Bold',
+            color: MoldifyColors.MoldifyGrey,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 11,
+            color: MoldifyColors.primaryColor,
+            fontFamily: 'Bricolage-Grotesque-Regular',
+          ),
+        ),
+      ],
+    ),
+  );
 }

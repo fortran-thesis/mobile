@@ -206,46 +206,45 @@ class EvidenceTab extends StatelessWidget {
                 ),
 
                 // 2. Metadata Area
-                // 2. Metadata Area
-if (hasMacroscopicImage)
-  Padding(
-    padding: const EdgeInsets.all(20.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Wrap Rows in IntrinsicHeight to equalize box heights
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
-            children: [
-              _buildDataTile("Color", macroColorController.text, Icons.palette_outlined),
-              const SizedBox(width: 12),
-              _buildDataTile("Texture", macroTextureController.text, Icons.texture_rounded),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch, // Ensures both boxes are same height
-            children: [
-              _buildDataTile(
-                "Symptoms",
-                macroSymptomsController.text,
-                Icons.healing_outlined,
-              ),
-              const SizedBox(width: 12),
-              _buildDataTile(
-                "Characteristics",
-                macroCharacteristicsController.text,
-                Icons.science_outlined,
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  ),
+              if (hasMacroscopicImage)
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Wrap Rows in IntrinsicHeight to equalize box heights
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
+                          children: [
+                            _buildDataTile("Color", macroColorController.text, Icons.palette_outlined),
+                            const SizedBox(width: 12),
+                            _buildDataTile("Texture", macroTextureController.text, Icons.texture_rounded),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch, 
+                          children: [
+                            _buildDataTile(
+                              "Symptoms",
+                              macroSymptomsController.text,
+                              Icons.healing_outlined,
+                            ),
+                            const SizedBox(width: 12),
+                            _buildDataTile(
+                              "Characteristics",
+                              macroCharacteristicsController.text,
+                              Icons.science_outlined,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
