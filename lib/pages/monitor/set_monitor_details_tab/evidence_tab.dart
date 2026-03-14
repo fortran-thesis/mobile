@@ -8,8 +8,6 @@ import '../../misc/colors.dart';
 
 /// Final step of monitoring setup where supporting evidence is added.
 ///
-/// This tab is "fetch-ready": if image paths come from backend data,
-/// both local file paths and remote URLs are supported.
 ///
 /// Parameters:
 /// - [locationController]: Field for location gathered.
@@ -33,6 +31,8 @@ class EvidenceTab extends StatelessWidget {
   final TextEditingController microTextureController;
   final TextEditingController macroColorController;
   final TextEditingController macroTextureController;
+  final TextEditingController macroSymptomsController;
+  final TextEditingController macroCharacteristicsController;
   final String? microscopicImagePath;
   final String? macroscopicImagePath;
   final VoidCallback onCaptureMicro;
@@ -49,6 +49,8 @@ class EvidenceTab extends StatelessWidget {
     required this.microTextureController,
     required this.macroColorController,
     required this.macroTextureController,
+    required this.macroSymptomsController,
+    required this.macroCharacteristicsController,
     this.microscopicImagePath,
     this.macroscopicImagePath,
     required this.onCaptureMicro,
@@ -126,7 +128,7 @@ class EvidenceTab extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                              color: Colors.black.withOpacity(0.5),
+                              color: Colors.black.withValues(alpha: 0.5),
                               child: Text(
                                 microController.text.isNotEmpty 
                                   ? microController.text 
@@ -148,7 +150,9 @@ class EvidenceTab extends StatelessWidget {
                         ),
                       ],
                     )
-                  : _buildCaptureEmptyState('Tap to capture initial microscopic image'),
+                  : _buildUnifiedEmptyCaptureCard(
+                      message: 'Tap to capture initial microscopic image',
+                    ),
             ),
           ),
           const SizedBox(height: 16),
@@ -172,7 +176,7 @@ class EvidenceTab extends StatelessWidget {
               color: MoldifyColors.taupe, 
               borderRadius: BorderRadius.circular(24),
               // Use a subtle border in Primary Color to define the shape
-              border: Border.all(color: MoldifyColors.primaryColor.withOpacity(0.15)),
+              border: Border.all(color: MoldifyColors.primaryColor.withValues(alpha: 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,45 +200,52 @@ class EvidenceTab extends StatelessWidget {
                             ),
                           ],
                         )
-                      : _buildCaptureEmptyState('Tap to capture initial macroscopic image'),
+                      : _buildUnifiedEmptyCaptureCard(
+                          message: 'Tap to capture initial macroscopic image',
+                        ),
                 ),
 
                 // 2. Metadata Area
-                if (hasMacroscopicImage)
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            _buildDataTile("Color", macroColorController.text, Icons.palette_outlined),
-                            const SizedBox(width: 12),
-                            _buildDataTile("Texture", macroTextureController.text, Icons.texture_rounded),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          "ANALYSIS DETAILS",
-                          style: TextStyle(
-                            fontSize: 11, 
-                            fontFamily: 'Bricolage-Grotesque-Bold', 
-                            color: MoldifyColors.primaryColor.withOpacity(0.5),
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          macroController.text.isNotEmpty ? macroController.text : "No additional findings.",
-                          style: const TextStyle(
-                            fontSize: 14, 
-                            color: MoldifyColors.MoldifyBlack,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                // 2. Metadata Area
+if (hasMacroscopicImage)
+  Padding(
+    padding: const EdgeInsets.all(20.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Wrap Rows in IntrinsicHeight to equalize box heights
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
+            children: [
+              _buildDataTile("Color", macroColorController.text, Icons.palette_outlined),
+              const SizedBox(width: 12),
+              _buildDataTile("Texture", macroTextureController.text, Icons.texture_rounded),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Ensures both boxes are same height
+            children: [
+              _buildDataTile(
+                "Symptoms",
+                macroSymptomsController.text,
+                Icons.healing_outlined,
+              ),
+              const SizedBox(width: 12),
+              _buildDataTile(
+                "Characteristics",
+                macroCharacteristicsController.text,
+                Icons.science_outlined,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
               ],
             ),
           ),
@@ -271,11 +282,15 @@ class EvidenceTab extends StatelessWidget {
   }
 }
 
+/// Checks if a string is not null, not empty, and not just whitespace.
+/// 
+/// Returns [true] if the string has actual content.
 bool _isNotBlank(String? value) => value != null && value.trim().isNotEmpty;
 
 /// Renders an evidence image from either a local file path or a remote URL.
 ///
-/// This makes the UI fetch-ready when image paths are loaded from backend APIs.
+/// [imagePath] can be a local file path (from camera/gallery) or a URL.
+/// This ensures the UI is fetch-ready for backend integration.
 Widget _buildEvidencePreviewImage(String imagePath) {
   final normalized = imagePath.trim();
   final isRemote = normalized.startsWith('http://') || normalized.startsWith('https://');
@@ -286,7 +301,9 @@ Widget _buildEvidencePreviewImage(String imagePath) {
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => _buildImageFallback(),
       loadingBuilder: (context, child, loadingProgress) {
+        // Return the image once loading is complete
         if (loadingProgress == null) return child;
+        // Show the shimmer-like loader during network fetch
         return _buildImageFallback(showLoader: true);
       },
     );
@@ -299,6 +316,9 @@ Widget _buildEvidencePreviewImage(String imagePath) {
   );
 }
 
+/// Provides a placeholder when an image is loading or fails to load.
+///
+/// [showLoader] toggles between a simple broken image icon and a progress indicator.
 Widget _buildImageFallback({bool showLoader = false}) {
   return Container(
     color: MoldifyColors.primaryColor.withValues(alpha: 0.08),
@@ -317,13 +337,18 @@ Widget _buildImageFallback({bool showLoader = false}) {
   );
 }
 
+/// Builds a tonal data tile to display identification results (Color, Texture, etc.).
+///
+/// This uses a monochromatic Primary-on-Taupe style to avoid "ugly" white clashes.
+/// [label] The header text (e.g., "Color").
+/// [value] The data to display (e.g., "Yellowish").
+/// [icon] The descriptive icon for the tile.
 Widget _buildDataTile(String label, String value, IconData icon) {
   return Expanded(
     child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        // No white. We use a very subtle tint of the primary color 
-        // to create a "recessed" look against the Taupe background.
+        // Recessed tonal look to blend with the Taupe card
         color: MoldifyColors.primaryColor.withValues(alpha: 0.04), 
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
@@ -334,7 +359,6 @@ Widget _buildDataTile(String label, String value, IconData icon) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Use the primary color for icons to keep it tonal
           Icon(icon, size: 16, color: MoldifyColors.primaryColor),
           const SizedBox(height: 8),
           Text(
@@ -348,11 +372,11 @@ Widget _buildDataTile(String label, String value, IconData icon) {
           ),
           const SizedBox(height: 4),
           Text(
-            value.isNotEmpty ? value : "---",
+            _isNotBlank(value) ? value : "---",
             style: const TextStyle(
               fontFamily: 'Bricolage-Grotesque-SemiBold', 
               fontSize: 14,
-              color: MoldifyColors.primaryColor, // Dark text for readability
+              color: MoldifyColors.primaryColor,
             ),
           ),
         ],
@@ -360,6 +384,11 @@ Widget _buildDataTile(String label, String value, IconData icon) {
     ),
   );
 }
+
+/// A glassmorphic button overlay allowing users to re-capture an image.
+///
+/// Uses [BackdropFilter] to create a premium blurred effect over the image preview.
+/// [onTap] The callback to trigger the camera/gallery picker again.
 Widget _buildGlassRetake(VoidCallback onTap) {
   return InkWell(
     onTap: onTap,
@@ -372,10 +401,19 @@ Widget _buildGlassRetake(VoidCallback onTap) {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           color: Colors.black.withOpacity(0.4),
           child: const Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.refresh_rounded, size: 14, color: Colors.white),
               SizedBox(width: 6),
-              Text("RETAKE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              Text(
+                "RETAKE", 
+                style: TextStyle(
+                  color: Colors.white, 
+                  fontSize: 10, 
+                  fontWeight: FontWeight.w900, 
+                  letterSpacing: 0.5
+                )
+              ),
             ],
           ),
         ),
@@ -384,24 +422,38 @@ Widget _buildGlassRetake(VoidCallback onTap) {
   );
 }
 
-Widget _buildCaptureEmptyState(String message) {
-  return Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Icon(
-        Icons.biotech_outlined,
-        color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
-        size: 32,
+/// Displays an inviting placeholder state when no image has been captured yet.
+///
+/// [message] The hint text to guide the user (e.g., "Tap to capture image").
+Widget _buildUnifiedEmptyCaptureCard({required String message}) {
+  return Container(
+    width: double.infinity,
+    height: 100,
+    decoration: BoxDecoration(
+      color: MoldifyColors.primaryColor.withValues(alpha: 0.03),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
+        width: 1.5,
       ),
-      const SizedBox(height: 8),
-      Text(
-        message,
-        style: TextStyle(
-          color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-          fontFamily: 'Bricolage-Grotesque-Regular',
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.biotech_outlined,
+          color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
+          size: 32,
         ),
-      ),
-    ],
+        const SizedBox(height: 8),
+        Text(
+          message,
+          style: TextStyle(
+            color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+            fontFamily: 'Bricolage-Grotesque-Regular',
+          ),
+        ),
+      ],
+    ),
   );
 }
-

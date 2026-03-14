@@ -42,6 +42,8 @@ class _SetMonitoringDetailsScreenState
     final TextEditingController _initialMicroscopicTextureController = TextEditingController();
     final TextEditingController _initialMacroscopicColorController = TextEditingController();
     final TextEditingController _initialMacroscopicTextureController = TextEditingController();
+    final TextEditingController _initialMacroscopicSymptomsController = TextEditingController();
+    final TextEditingController _initialMacroscopicCharacteristicsController = TextEditingController();
     final TextEditingController _incubationTempController = TextEditingController();
     final TextEditingController _environmentalTempController = TextEditingController();
     final TextEditingController _specimenTypeController = TextEditingController();
@@ -265,6 +267,8 @@ class _SetMonitoringDetailsScreenState
     _initialMicroscopicTextureController.dispose();
     _initialMacroscopicColorController.dispose();
     _initialMacroscopicTextureController.dispose();
+    _initialMacroscopicSymptomsController.dispose();
+    _initialMacroscopicCharacteristicsController.dispose();
     _incubationTempController.dispose();
     _environmentalTempController.dispose();
     _specimenTypeController.dispose();
@@ -381,10 +385,14 @@ class _SetMonitoringDetailsScreenState
             result['color']?.toString() ?? '';
         _initialMacroscopicTextureController.text =
             result['texture']?.toString() ?? '';
+        _initialMacroscopicSymptomsController.text =
+          result['symptomsDisplay']?.toString() ?? '';
+        _initialMacroscopicCharacteristicsController.text =
+          result['characteristicsDisplay']?.toString() ?? '';
         _initialMacroscopicController.text =
-            (result['additional']?.toString().isNotEmpty ?? false)
-                ? result['additional'].toString()
-                : 'Captured via add log instructions';
+          (result['additional']?.toString().isNotEmpty ?? false)
+            ? result['additional'].toString()
+            : 'Captured via add log instructions';
       } else {
         _initialMacroscopicController.text =
             _initialMacroscopicController.text.isEmpty
@@ -550,6 +558,8 @@ class _SetMonitoringDetailsScreenState
         microTextureController: _initialMicroscopicTextureController,
         macroColorController: _initialMacroscopicColorController,
         macroTextureController: _initialMacroscopicTextureController,
+        macroSymptomsController: _initialMacroscopicSymptomsController,
+        macroCharacteristicsController: _initialMacroscopicCharacteristicsController,
         microscopicImagePath: _initialMicroscopicImagePath,
         macroscopicImagePath: _initialMacroscopicImagePath,
         onCaptureMicro: _openInitialMicroscopicCapture,

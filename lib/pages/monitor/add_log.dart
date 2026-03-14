@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
@@ -33,7 +34,30 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final TextEditingController _colorController = TextEditingController();
   final TextEditingController _textureController = TextEditingController();
   final TextEditingController _logNotesController = TextEditingController();
+  final TextEditingController _symptomsController = TextEditingController();
+  final TextEditingController _characteristicsController = TextEditingController();
   bool _isSaving = false;
+
+  final List<String> _selectedSymptoms = [];
+  final List<String> _selectedCharacteristics = [];
+
+  static const List<String> _symptomOptions = [
+    'Leaf spots',
+    'Wilting',
+    'Yellowing',
+    'Soft rot',
+    'Stem lesions',
+    'Necrosis',
+  ];
+
+  static const List<String> _characteristicOptions = [
+    'Cottony',
+    'Powdery',
+    'Slimy',
+    'Fuzzy',
+    'Water-soaked',
+    'Rapid spreading',
+  ];
 
   late final String _sizeLabel;
   late final String _sizeHint;
@@ -41,6 +65,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
   late final String _colorHint;
   late final String _textureLabel;
   late final String _textureHint;
+
+  bool get _isInitialMacroscopicMode =>
+      widget.sourceTab == 'in-vivo' && !widget.includeSize;
 
   @override
   void initState() {
@@ -80,7 +107,49 @@ class _AddLogScreenState extends State<AddLogScreen> {
     _colorController.dispose();
     _textureController.dispose();
     _logNotesController.dispose();
+    _symptomsController.dispose();
+    _characteristicsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickSymptoms() async {
+    final selected = await showMultiChipSelectionModal(
+      context: context,
+      title: 'Select Symptoms',
+      options: _symptomOptions,
+      currentSelections: _selectedSymptoms,
+      customInputHint: 'Add custom symptom(s), comma-separated',
+      othersLabel: 'Others/Iba pa',
+      isMultiLine: true,
+    );
+
+    if (selected == null || selected.isEmpty) return;
+    setState(() {
+      _selectedSymptoms
+        ..clear()
+        ..addAll(selected);
+      _symptomsController.text = selected.join(', ');
+    });
+  }
+
+  Future<void> _pickCharacteristics() async {
+    final selected = await showMultiChipSelectionModal(
+      context: context,
+      title: 'Select Characteristics',
+      options: _characteristicOptions,
+      currentSelections: _selectedCharacteristics,
+      customInputHint: 'Add custom characteristic(s), comma-separated',
+      othersLabel: 'Others/Iba pa',
+      isMultiLine: true,
+    );
+
+    if (selected == null || selected.isEmpty) return;
+    setState(() {
+      _selectedCharacteristics
+        ..clear()
+        ..addAll(selected);
+      _characteristicsController.text = selected.join(', ');
+    });
   }
 
   Future<void> _saveCultivationLog() async {
@@ -96,10 +165,18 @@ class _AddLogScreenState extends State<AddLogScreen> {
         'sourceTab': widget.sourceTab,
         'color': _colorController.text.trim(),
         'texture': _textureController.text.trim(),
-        'additional': _logNotesController.text.trim(),
+        'additional': _isInitialMacroscopicMode
+            ? ''
+            : _logNotesController.text.trim(),
       };
       if (widget.includeSize) {
         result['size'] = _sizeController.text.trim();
+      }
+      if (_isInitialMacroscopicMode) {
+        result['symptoms'] = List<String>.from(_selectedSymptoms);
+        result['characteristics'] = List<String>.from(_selectedCharacteristics);
+        result['symptomsDisplay'] = _symptomsController.text.trim();
+        result['characteristicsDisplay'] = _characteristicsController.text.trim();
       }
 
       Navigator.of(context).pop(result);
@@ -221,25 +298,66 @@ class _AddLogScreenState extends State<AddLogScreen> {
                           showPassword: false,
                         ),
 
-                        /// Additional Notes Label
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                          child: const Text(
-                            'Additional Notes:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-SemiBold',
-                              color: MoldifyColors.primaryColor,
+                        if (_isInitialMacroscopicMode) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                            child: const Text(
+                              'Symptoms',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
                             ),
                           ),
-                        ),
-                        /// Additional Notes TextBox
-                        BuildTextBox(
-                            hintText: 'Enter additional details about the log here...',
-                            controller: _logNotesController,
+                          BuildTextBox(
+                            hintText: 'Select symptom(s)',
+                            controller: _symptomsController,
+                            showPassword: false,
                             isMultiline: true,
-                            showPassword: false
-                        ),
+                            readOnly: true,
+                            onTap: _pickSymptoms,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                            child: const Text(
+                              'Characteristics',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                          BuildTextBox(
+                            hintText: 'Select characteristic(s)',
+                            controller: _characteristicsController,
+                            showPassword: false,
+                            isMultiline: true,
+                            readOnly: true,
+                            onTap: _pickCharacteristics,
+                          ),
+                        ] else ...[
+                          /// Additional Notes Label
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                            child: const Text(
+                              'Additional Notes:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                            ),
+                          ),
+                          /// Additional Notes TextBox
+                          BuildTextBox(
+                              hintText: 'Enter additional details about the log here...',
+                              controller: _logNotesController,
+                              isMultiline: true,
+                              showPassword: false
+                          ),
+                        ],
 
                         /// Save Log Button
                         Padding(
