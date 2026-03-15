@@ -4,7 +4,7 @@ import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
-import 'package:moldify/pages/misc/tiles/expansion_tile.dart';
+import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 
 
 class GiveRecommendationScreen extends StatefulWidget {
@@ -198,7 +198,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             fontFamily: 'Bricolage-Grotesque-Bold',
             fontSize: 18, // Significantly larger for hierarchy
             letterSpacing: 0.5,
-            color: MoldifyColors.primaryColor,
+            color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 8),
@@ -208,18 +208,25 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   }
 
   Widget _buildIPMControls() {
+    IconData iconForTitle(String title) {
+      final normalized = title.toLowerCase();
+      if (normalized.contains('mechanical')) return Icons.settings_suggest_outlined;
+      if (normalized.contains('biological')) return Icons.biotech_outlined;
+      if (normalized.contains('chemical')) return Icons.science_outlined;
+      if (normalized.contains('physical')) return Icons.build_outlined;
+      if (normalized.contains('cultural')) return Icons.agriculture_outlined;
+      return Icons.medical_services_outlined;
+    }
+
     return Column(
       children: _managementControls.asMap().entries.map((entry) {
-        final index = entry.key;
         final item = entry.value;
-        return Padding(
-          padding: EdgeInsets.only(bottom: index == _managementControls.length - 1 ? 0 : 12),
-          child: CustomExpansionTile(
-            title: item['title'] ?? '',
-            content: (item['content'] ?? '').isNotEmpty
-                ? item['content']!
-                : 'No recommendation available yet.',
-          ),
+        return ControlManagementTile(
+          title: item['title'] ?? '',
+          description: (item['content'] ?? '').isNotEmpty
+              ? item['content']!
+              : 'No recommendation available yet.',
+          icon: iconForTitle(item['title'] ?? ''),
         );
       }).toList(),
     );
@@ -238,7 +245,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               fontFamily: 'Bricolage-Grotesque-Bold',
               fontSize: 12,
               letterSpacing: 1.0,
-              color: MoldifyColors.primaryColor.withOpacity(0.7),
+              color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -248,7 +255,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               fontFamily: 'Bricolage-Grotesque-Regular',
               fontSize: 16,
               height: 1.6,
-              color: MoldifyColors.MoldifyBlack.withOpacity(0.9),
+              color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -264,7 +271,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         fontFamily: 'Bricolage-Grotesque-Bold',
         fontSize: 12,
         letterSpacing: 1.5,
-        color: MoldifyColors.primaryColor.withOpacity(0.5),
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
       ),
     );
   }
