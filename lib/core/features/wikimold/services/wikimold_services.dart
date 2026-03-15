@@ -50,7 +50,7 @@ class WikiService {
           throw Exception('Invalid snapshot format: expected array but got ${snapshot.runtimeType}');
         }
 
-        final List<WikiArticle> articles = (snapshot as List<dynamic>)
+        final List<WikiArticle> articles = snapshot
             .whereType<Map>()
             .map((item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)))
             .where((article) => article.id.isNotEmpty)
@@ -121,7 +121,7 @@ class WikiService {
         if (snapshot is! List) 
           throw Exception('Invalid snapshot format: expected array but got ${snapshot.runtimeType}');
 
-        final List<WikiArticle> articles = (snapshot as List<dynamic>)
+        final List<WikiArticle> articles = snapshot
             .whereType<Map>()
             .map((item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)))
             .where((article) => article.id.isNotEmpty)

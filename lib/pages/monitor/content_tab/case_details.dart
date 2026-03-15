@@ -64,7 +64,7 @@ class CaseDetailsTab extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
                   /// Submitted By Label
                   Text(

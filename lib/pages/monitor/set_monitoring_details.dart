@@ -83,20 +83,6 @@ class _SetMonitoringDetailsScreenState
       'Spreading rapidly',
     ];
 
-    final List<String> _initialMicroscopicOptions = [
-      'Hyphae visible',
-      'Spore clusters',
-      'Septate hyphae',
-      'Non-septate hyphae',
-    ];
-
-    final List<String> _initialMacroscopicOptions = [
-      'Circular colony',
-      'Irregular colony',
-      'Raised growth',
-      'Flat growth',
-    ];
-    
     final MoldCaseService _service = MoldCaseService();
     
     String? _selectedGrowthMedium;

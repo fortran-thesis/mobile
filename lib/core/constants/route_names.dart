@@ -15,10 +15,12 @@ class RouteNames {
   static const String viewCase = '/view-case';
   static const String editLog = '/edit-log';
   static const String addTreatment = '/add-treatment';
+  static const String giveRecommendation = '/give-recommendation';
   static const String identificationHistory = '/identification-history';
   static const String treatmentHistory = '/treatment-history';
   static const String addLogInstructions = '/add-log-instructions';
   static const String addLog = '/add-log';
+  static const String addLogChoices = '/add-log-choices';
   static const String mainCamera = '/main-camera';
   static const String inputCharacteristics = '/input-characteristics';
   static const String splash = '/splash';

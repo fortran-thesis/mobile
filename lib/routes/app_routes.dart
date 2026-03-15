@@ -6,6 +6,7 @@ import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
+import 'package:moldify/pages/monitor/add_log_choices.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
 import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/terms_of_agreement.dart';
@@ -25,6 +26,7 @@ import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
 import '../pages/monitor/add_log_instructions.dart';
 import '../pages/monitor/edit_log.dart';
+import '../pages/monitor/give_recommendation.dart';
 import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
@@ -145,6 +147,9 @@ class AppRoutes {
           case RouteNames.addTreatment:
             return AddTreatmentScreen();
 
+          case RouteNames.giveRecommendation:
+            return const GiveRecommendationScreen();
+
           case RouteNames.identificationHistory:
             return IdentificationHistoryScreen();
 
@@ -207,6 +212,81 @@ class AppRoutes {
             return TermsOfAgreementScreen();
           case RouteNames.privacy:
             return PrivacyPolicyScreen();
+          case RouteNames.addLogChoices:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final sourceTab = args?['sourceTab'] as String?;
+            final caseId = args?['caseId'] as String?;
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            final microscopicImagePath = args?['microscopicImagePath'] as String?;
+            final macroscopicImagePath = args?['macroscopicImagePath'] as String?;
+            final Map<String, dynamic>? macroResult =
+                args?['macroResult'] as Map<String, dynamic>?;
+
+            return AddLogChoicesScreen(
+              microscopicImagePath: microscopicImagePath,
+              macroscopicImagePath: macroscopicImagePath,
+              onCaptureMicro: () {
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.mainCamera,
+                  arguments: {
+                    'showAppBar': true,
+                    'returnResult': true,
+                  },
+                ).then((result) {
+                  if (result is Map<String, dynamic>) {
+                    final nextMicroPath = result['imagePath']?.toString();
+                    Navigator.pushReplacementNamed(
+                      context,
+                      RouteNames.addLogChoices,
+                      arguments: {
+                        'sourceTab': sourceTab,
+                        'caseId': caseId,
+                        'includeSize': includeSize,
+                        'microscopicImagePath': nextMicroPath,
+                        'macroscopicImagePath': macroscopicImagePath,
+                        'macroResult': macroResult,
+                      },
+                    );
+                  }
+                });
+              },
+              onCaptureMacro: () {
+                if (sourceTab == null || caseId == null) return;
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.addLogInstructions,
+                  arguments: {
+                    'sourceTab': sourceTab,
+                    'caseId': caseId,
+                    'includeSize': includeSize,
+                  },
+                ).then((result) {
+                  if (result is Map<String, dynamic>) {
+                    final nextMacroPath = result['imagePath']?.toString();
+                    Navigator.pushReplacementNamed(
+                      context,
+                      RouteNames.addLogChoices,
+                      arguments: {
+                        'sourceTab': sourceTab,
+                        'caseId': caseId,
+                        'includeSize': includeSize,
+                        'microscopicImagePath': microscopicImagePath,
+                        'macroscopicImagePath': nextMacroPath,
+                        'macroResult': result,
+                      },
+                    );
+                  }
+                });
+              },
+              onSubmit: () {
+                if (macroResult != null) {
+                  Navigator.of(context).pop(macroResult);
+                } else {
+                  Navigator.of(context).pop();
+                }
+              },
+            );
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

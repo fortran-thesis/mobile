@@ -7,7 +7,6 @@ import '../misc/functions/step_indicator.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
-import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/utils/auth_navigation.dart';
 
 /// SetNewPasswordScreen is a screen for setting a new password during the account recovery process.

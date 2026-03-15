@@ -1,43 +1,263 @@
+// ignore_for_file: library_private_types_in_public_api
+
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
+import 'initial_observation_components/observation_data_tile.dart';
+import 'initial_observation_components/observation_empty_state_card.dart';
+import 'initial_observation_components/observation_preview_image.dart';
 
+/// A single monitoring log entry displayed inside the In Vitro or In Vivo timeline.
+///
+/// Each entry contains two evidence sections that mirror the structure used in
+/// [SetMonitoringDetailsScreen] > EvidenceTab:
+///
+/// - **Microscopic section**: image from the mold scanner with a glassmorphic
+///   genus-name overlay (identical visual to [InitialObservationTab]).
+///
+/// - **Macroscopic section**: taupe card containing the macroscopic image, three
+///   observation chips (shape, size, texture), and a two-column metadata row
+///   (symptoms, characteristics).
+///
+/// ---
+/// Parameters:
+///
+/// [dateTime] — Human-readable timestamp string shown at the top of the tile.
+///
+/// **Microscopic**
+/// [microscopicImagePath] — Local file path, asset path, or remote URL of the
+///   image captured via the mold scanner.
+/// [microGenusName] — Identified genus/species name returned by the scanner
+///   (e.g. "Aspergillus fumigatus"). Displayed as a glass overlay on the image.
+///
+/// **Macroscopic**
+/// [macroscopicImagePath] — Local file path, asset path, or remote URL of the
+///   macroscopic observation image.
+/// [macroShape] — Observed colony/lesion shape (e.g. "Circular").
+/// [macroSize]  — Observed colony/lesion size in mm (e.g. "12").
+/// [macroTexture] — Observed surface texture (e.g. "Powdery").
+/// [macroSymptoms] — Comma-separated symptoms (e.g. "Leaf spots, Wilting").
+/// [macroCharacteristics] — Comma-separated characteristic traits.
+///
+/// **Context-sensitive labels** (supplied by the parent tab):
+/// [shapeLabel]   — e.g. "Colony Shape" (in-vitro) or "Lesion Shape" (in-vivo).
+/// [sizeLabel]    — e.g. "Colony Size"  or "Lesion Size".
+/// [textureLabel] — e.g. "Colony Texture" or "Lesion Texture".
+///
+/// **General**
+/// [notes]   — Optional free-text notes rendered at the bottom.
+/// [isFirst] / [isLast] — Timeline connector visibility flags.
+///
+/// **Popup menu** (all optional)
+/// [popupMenuItems] — Labels for the 3-dot overflow menu.
+/// [popupMenuIcons] — Matching icons for each menu item.
+/// [onPopupMenuItemSelected] — Callback with the index of the tapped item.
+/// [popupMenuIcon] — Custom trigger icon widget (defaults to 3 dots).
 class ExperimentTimelineTile extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor parameters
+  // ---------------------------------------------------------------------------
+
   final String dateTime;
-  final String imagePath;
-  final String sizeValue;
-  final String colorValue;
-  final String notes;
-  final bool isFirst;
-  final bool isLast;
+
+  // --- Microscopic ---
+
+  /// Path to the image captured via the mold scanner.
+  final String microscopicImagePath;
+
+  /// Genus/species name returned by the scanner (shown as overlay label).
+  final String microGenusName;
+
+  // --- Macroscopic ---
+
+  /// Path to the macroscopic observation image.
+  final String macroscopicImagePath;
+
+  /// Observed colony/lesion shape.
+  final String macroShape;
+
+  /// Observed colony/lesion size (in mm or descriptive).
+  final String macroSize;
+
+  /// Observed surface texture.
+  final String macroTexture;
+
+  /// Comma-separated symptoms.
+  final String macroSymptoms;
+
+  /// Comma-separated characteristic traits.
+  final String macroCharacteristics;
+
+  // --- Context-sensitive chip labels (set by the parent tab) ---
+
+  /// "Colony Shape" for in-vitro, "Lesion Shape" for in-vivo.
+  final String shapeLabel;
+
+  /// "Colony Size" for in-vitro, "Lesion Size" for in-vivo.
   final String sizeLabel;
-  final String colorLabel;
+
+  /// "Colony Texture" for in-vitro, "Lesion Texture" for in-vivo.
+  final String textureLabel;
+
+  // --- General ---
+
+  /// Optional free-text notes shown at the bottom of the entry.
+  final String notes;
+
+  /// Whether this is the first tile in the timeline (hides upper connector).
+  final bool isFirst;
+
+  /// Whether this is the last tile in the timeline (hides lower connector).
+  final bool isLast;
+
+  // --- Popup menu (all optional) ---
 
   final List<String>? popupMenuItems;
   final List<IconData>? popupMenuIcons;
+
+  /// Callback receiving the tapped item's index.
   final ValueChanged<int>? onPopupMenuItemSelected;
+
+  /// Custom icon widget for the popup-menu trigger.
   final Widget? popupMenuIcon;
+
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
 
   const ExperimentTimelineTile({
     super.key,
     required this.dateTime,
-    required this.imagePath,
-    required this.sizeValue,
-    required this.colorValue,
-    required this.notes,
+    // Microscopic
+    required this.microscopicImagePath,
+    required this.microGenusName,
+    // Macroscopic
+    required this.macroscopicImagePath,
+    required this.macroShape,
+    required this.macroSize,
+    required this.macroTexture,
+    required this.macroSymptoms,
+    required this.macroCharacteristics,
+    // Labels
+    required this.shapeLabel,
+    required this.sizeLabel,
+    required this.textureLabel,
+    // General
+    this.notes = '',
     this.isFirst = false,
     this.isLast = false,
+    // Popup menu
     this.popupMenuItems,
     this.popupMenuIcons,
     this.onPopupMenuItemSelected,
     this.popupMenuIcon,
-    required this.sizeLabel,
-    required this.colorLabel,
   });
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  /// Opens [imagePath] as a full-screen, pinch-to-zoom dialog.
+  void _showFullscreen(BuildContext context, String imagePath) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        backgroundColor: Colors.black.withValues(alpha: 0.9),
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: ObservationPreviewImage(
+                  imagePath: imagePath,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 20,
+              right: 15,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Uppercase section heading with a faint trailing divider line.
+  Widget _sectionHeader(String label) => Padding(
+        padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+        child: Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontFamily: 'Bricolage-Grotesque-SemiBold',
+            fontSize: 11,
+            letterSpacing: 1.2,
+            color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+          ),
+        ),
+      );
+
+  /// Compact chip displaying a [label] / [value] pair.
+  ///
+  /// Used for the three macroscopic observation chips:
+  /// shape, size, and texture.
+  Widget _chip(String label, String value) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+          decoration: BoxDecoration(
+            color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: MoldifyColors.primaryColor.withValues(alpha: 0.12),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                  color: MoldifyColors.primaryColor.withValues(alpha: 0.65),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value.trim().isNotEmpty ? value : '---',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  color: Colors.black87,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      );
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
+    final hasMicro = microscopicImagePath.trim().isNotEmpty;
+    final hasMacro = macroscopicImagePath.trim().isNotEmpty;
+
     return TimelineTile(
       alignment: TimelineAlign.start,
       lineXY: 0.5,
@@ -46,7 +266,7 @@ class ExperimentTimelineTile extends StatelessWidget {
       indicatorStyle: IndicatorStyle(
         width: 10,
         color: MoldifyColors.primaryColor,
-        indicatorXY: 0.1,
+        indicatorXY: 0.04,
         padding: const EdgeInsets.all(6),
       ),
       beforeLineStyle: LineStyle(
@@ -54,11 +274,11 @@ class ExperimentTimelineTile extends StatelessWidget {
         thickness: 1,
       ),
       endChild: Padding(
-        padding: const EdgeInsets.only(left: 12.0, bottom: 24.0, right: 12.0),
+        padding: const EdgeInsets.only(left: 12.0, bottom: 28.0, right: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- DATE ---
+            // --- Date + overflow menu row ---
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -71,8 +291,9 @@ class ExperimentTimelineTile extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
-                // 1. Conditionally build the PopupMenu only if items and a selection handler are provided.
-                if (popupMenuItems != null && popupMenuItems!.isNotEmpty && onPopupMenuItemSelected != null)
+                if (popupMenuItems != null &&
+                    popupMenuItems!.isNotEmpty &&
+                    onPopupMenuItemSelected != null)
                   PopupMenu(
                     popMenuColor: MoldifyColors.MoldifyGrey,
                     popMenuIcon: popupMenuIcon,
@@ -83,152 +304,186 @@ class ExperimentTimelineTile extends StatelessWidget {
               ],
             ),
 
-            // --- IMAGE + DETAILS ROW ---
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // IMAGE
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: true,
-                      builder: (_) {
-                        return Dialog(
-                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          backgroundColor: Colors.black.withValues(alpha: 0.9),
-                          insetPadding: EdgeInsets.zero,
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: InteractiveViewer(
-                                  child: Image.network(
-                                    imagePath,
-                                    fit: BoxFit.contain,
+            // =================================================================
+            // MICROSCOPIC SECTION
+            //
+            // Shows the mold-scanner image with a glassmorphic genus-name
+            // overlay at the bottom — identical to InitialObservationTab.
+            // Tapping the image opens the full-screen viewer.
+            // =================================================================
+            _sectionHeader('Microscopic'),
+
+            GestureDetector(
+              onTap: hasMicro
+                  ? () => _showFullscreen(context, microscopicImagePath)
+                  : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: double.infinity,
+                height: hasMicro ? 180 : 80,
+                decoration: BoxDecoration(
+                  color: MoldifyColors.primaryColor.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
+                    width: 1.5,
+                  ),
+                ),
+                child: hasMicro
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Microscopic image
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ObservationPreviewImage(
+                                imagePath: microscopicImagePath),
+                          ),
+                          // Glassmorphic genus-name label
+                          Positioned(
+                            bottom: 12,
+                            left: 12,
+                            right: 12,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: BackdropFilter(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 7, horizontal: 12),
+                                  color:
+                                      Colors.black.withValues(alpha: 0.5),
+                                  child: Text(
+                                    microGenusName.trim().isNotEmpty
+                                        ? microGenusName
+                                        : 'Identified: Pending Analysis',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontFamily:
+                                          'Bricolage-Grotesque-Regular',
+                                    ),
                                   ),
                                 ),
                               ),
-                              Positioned(
-                                top: 20,
-                                right: 15,
-                                child: IconButton(
-                                  icon: const Icon(Icons.close,
-                                      color: Colors.white, size: 28),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      imagePath,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 100,
-                          height: 100,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.broken_image, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // DETAILS COLUMN
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // COLONY DIAMETER & COLOR
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                               Text(
-                                sizeLabel,
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                  fontSize: 14,
-                                  color: MoldifyColors.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                sizeValue,
-                                style: const TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                           Text(
-                            colorLabel,
-                            style: TextStyle(
-                              fontFamily: 'Bricolage-Grotesque-Bold',
-                              fontSize: 14,
-                              color: MoldifyColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            colorValue,
-                            style: const TextStyle(
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              fontSize: 16,
-                              color: Colors.black87,
-                              height: 1.4,
                             ),
                           ),
                         ],
+                      )
+                    : const ObservationEmptyStateCard(
+                        message: 'No microscopic image captured',
+                        height: 80,
                       ),
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        "Additional Notes:",
-                        style: TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Bold',
-                          fontSize: 14,
-                          color: MoldifyColors.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        notes,
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          fontSize: 16,
-                          color: Colors.black87,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
 
+            // =================================================================
+            // MACROSCOPIC SECTION
+            //
+            // Taupe card:
+            //   1. Full-bleed image header (tap to full-screen)
+            //   2. Three chips: shape | size | texture
+            //      (labels are context-driven by the parent tab)
+            //   3. Two ObservationDataTile widgets: symptoms | characteristics
+            // =================================================================
+            _sectionHeader('Macroscopic'),
+
+            Container(
+              decoration: BoxDecoration(
+                color: MoldifyColors.taupe,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: MoldifyColors.primaryColor.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image header
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(15)),
+                    child: hasMacro
+                        ? GestureDetector(
+                            onTap: () =>
+                                _showFullscreen(context, macroscopicImagePath),
+                            child: SizedBox(
+                              height: 180,
+                              width: double.infinity,
+                              child: ObservationPreviewImage(
+                                  imagePath: macroscopicImagePath),
+                            ),
+                          )
+                        : const ObservationEmptyStateCard(
+                            message: 'No macroscopic image captured',
+                          ),
+                  ),
+
+                  // Metadata (only shown when an image exists)
+                  if (hasMacro)
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        children: [
+                          // Row 1: shape | size | texture chips
+                          Row(
+                            children: [
+                              _chip(shapeLabel, macroShape),
+                              const SizedBox(width: 6),
+                              _chip(sizeLabel, macroSize),
+                              const SizedBox(width: 6),
+                              _chip(textureLabel, macroTexture),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Row 2: symptoms | characteristics tiles
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ObservationDataTile(
+                                  label: 'Symptoms',
+                                  value: macroSymptoms,
+                                  icon: Icons.healing_outlined,
+                                ),
+                                const SizedBox(width: 8),
+                                ObservationDataTile(
+                                  label: 'Characteristics',
+                                  value: macroCharacteristics,
+                                  icon: Icons.science_outlined,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Optional notes
+            if (notes.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Notes',
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                  fontSize: 12,
+                  color: MoldifyColors.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                notes,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 13,
+                  color: MoldifyColors.MoldifyBlack,
+                ),
+              ),
+            ],
           ],
         ),
       ),

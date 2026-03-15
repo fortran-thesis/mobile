@@ -66,8 +66,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
   late final String _textureLabel;
   late final String _textureHint;
 
-  bool get _isInitialMacroscopicMode =>
-      widget.sourceTab == 'in-vivo' && !widget.includeSize;
+  // Evidence-style mode (color/texture + symptoms + characteristics)
+  // should apply to both in-vivo and in-vitro when includeSize is disabled.
+  bool get _isInitialMacroscopicMode => !widget.includeSize;
 
   @override
   void initState() {

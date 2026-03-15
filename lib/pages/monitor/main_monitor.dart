@@ -149,23 +149,6 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     return null;
   }
 
-  String? _extractCoverPhotoFromReport(Map<String, dynamic> payload) {
-    final topLevelPhoto = _extractPhotoUrl(payload['cover_photo']);
-    if (topLevelPhoto != null) return topLevelPhoto;
-
-    final caseDetails = payload['case_details'];
-    if (caseDetails is List) {
-      for (final detail in caseDetails) {
-        if (detail is Map<String, dynamic>) {
-          final photo = _extractPhotoUrl(detail['cover_photo']);
-          if (photo != null) return photo;
-        }
-      }
-    }
-
-    return null;
-  }
-
   String? _resolveTileImageUrl(MoldCase moldCase) {
     // Return the case's photo URL directly
     return _extractPhotoUrl(moldCase.photoUrl);

@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
+import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_empty_state_card.dart';
+import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_preview_image.dart';
 import '../../misc/colors.dart';
 
 /// Final step of monitoring setup where supporting evidence is added.
@@ -117,7 +119,9 @@ class EvidenceTab extends StatelessWidget {
                         // The preview supports both local file and remote URL paths.
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: _buildEvidencePreviewImage(microscopicImagePath!),
+                          child: ObservationPreviewImage(
+                            imagePath: microscopicImagePath!,
+                          ),
                         ),
                         // Glassmorphic Label Overlay
                         Positioned(
@@ -150,7 +154,7 @@ class EvidenceTab extends StatelessWidget {
                         ),
                       ],
                     )
-                  : _buildUnifiedEmptyCaptureCard(
+                  : const ObservationEmptyStateCard(
                       message: 'Tap to capture initial microscopic image',
                     ),
             ),
@@ -190,7 +194,9 @@ class EvidenceTab extends StatelessWidget {
                             SizedBox(
                               height: 200,
                               width: double.infinity,
-                              child: _buildEvidencePreviewImage(macroscopicImagePath!),
+                              child: ObservationPreviewImage(
+                                imagePath: macroscopicImagePath!,
+                              ),
                             ),
                             // Refined Glassmorphic Retake
                             Positioned(
@@ -200,7 +206,7 @@ class EvidenceTab extends StatelessWidget {
                             ),
                           ],
                         )
-                      : _buildUnifiedEmptyCaptureCard(
+                      : const ObservationEmptyStateCard(
                           message: 'Tap to capture initial macroscopic image',
                         ),
                 ),
@@ -217,9 +223,17 @@ class EvidenceTab extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
                           children: [
-                            _buildDataTile("Color", macroColorController.text, Icons.palette_outlined),
+                            ObservationDataTile(
+                              label: 'Color',
+                              value: macroColorController.text,
+                              icon: Icons.palette_outlined,
+                            ),
                             const SizedBox(width: 12),
-                            _buildDataTile("Texture", macroTextureController.text, Icons.texture_rounded),
+                            ObservationDataTile(
+                              label: 'Texture',
+                              value: macroTextureController.text,
+                              icon: Icons.texture_rounded,
+                            ),
                           ],
                         ),
                       ),
@@ -228,16 +242,16 @@ class EvidenceTab extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch, 
                           children: [
-                            _buildDataTile(
-                              "Symptoms",
-                              macroSymptomsController.text,
-                              Icons.healing_outlined,
+                            ObservationDataTile(
+                              label: 'Symptoms',
+                              value: macroSymptomsController.text,
+                              icon: Icons.healing_outlined,
                             ),
                             const SizedBox(width: 12),
-                            _buildDataTile(
-                              "Characteristics",
-                              macroCharacteristicsController.text,
-                              Icons.science_outlined,
+                            ObservationDataTile(
+                              label: 'Characteristics',
+                              value: macroCharacteristicsController.text,
+                              icon: Icons.science_outlined,
                             ),
                           ],
                         ),
@@ -286,103 +300,6 @@ class EvidenceTab extends StatelessWidget {
 /// Returns [true] if the string has actual content.
 bool _isNotBlank(String? value) => value != null && value.trim().isNotEmpty;
 
-/// Renders an evidence image from either a local file path or a remote URL.
-///
-/// [imagePath] can be a local file path (from camera/gallery) or a URL.
-/// This ensures the UI is fetch-ready for backend integration.
-Widget _buildEvidencePreviewImage(String imagePath) {
-  final normalized = imagePath.trim();
-  final isRemote = normalized.startsWith('http://') || normalized.startsWith('https://');
-
-  if (isRemote) {
-    return Image.network(
-      normalized,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _buildImageFallback(),
-      loadingBuilder: (context, child, loadingProgress) {
-        // Return the image once loading is complete
-        if (loadingProgress == null) return child;
-        // Show the shimmer-like loader during network fetch
-        return _buildImageFallback(showLoader: true);
-      },
-    );
-  }
-
-  return Image.file(
-    File(normalized),
-    fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) => _buildImageFallback(),
-  );
-}
-
-/// Provides a placeholder when an image is loading or fails to load.
-///
-/// [showLoader] toggles between a simple broken image icon and a progress indicator.
-Widget _buildImageFallback({bool showLoader = false}) {
-  return Container(
-    color: MoldifyColors.primaryColor.withValues(alpha: 0.08),
-    alignment: Alignment.center,
-    child: showLoader
-        ? const SizedBox(
-            height: 24,
-            width: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : const Icon(
-            Icons.broken_image_outlined,
-            color: MoldifyColors.primaryColor,
-            size: 28,
-          ),
-  );
-}
-
-/// Builds a tonal data tile to display identification results (Color, Texture, etc.).
-///
-/// This uses a monochromatic Primary-on-Taupe style to avoid "ugly" white clashes.
-/// [label] The header text (e.g., "Color").
-/// [value] The data to display (e.g., "Yellowish").
-/// [icon] The descriptive icon for the tile.
-Widget _buildDataTile(String label, String value, IconData icon) {
-  return Expanded(
-    child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        // Recessed tonal look to blend with the Taupe card
-        color: MoldifyColors.primaryColor.withValues(alpha: 0.04), 
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: MoldifyColors.primaryColor),
-          const SizedBox(height: 8),
-          Text(
-            label.toUpperCase(), 
-            style: TextStyle(
-              fontSize: 9, 
-              color: MoldifyColors.primaryColor.withValues(alpha: 0.5), 
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
-            )
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _isNotBlank(value) ? value : "---",
-            style: const TextStyle(
-              fontFamily: 'Bricolage-Grotesque-SemiBold', 
-              fontSize: 14,
-              color: MoldifyColors.primaryColor,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
 /// A glassmorphic button overlay allowing users to re-capture an image.
 ///
@@ -421,38 +338,3 @@ Widget _buildGlassRetake(VoidCallback onTap) {
   );
 }
 
-/// Displays an inviting placeholder state when no image has been captured yet.
-///
-/// [message] The hint text to guide the user (e.g., "Tap to capture image").
-Widget _buildUnifiedEmptyCaptureCard({required String message}) {
-  return Container(
-    width: double.infinity,
-    height: 100,
-    decoration: BoxDecoration(
-      color: MoldifyColors.primaryColor.withValues(alpha: 0.03),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
-        width: 1.5,
-      ),
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.biotech_outlined,
-          color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
-          size: 32,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          message,
-          style: TextStyle(
-            color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-            fontFamily: 'Bricolage-Grotesque-Regular',
-          ),
-        ),
-      ],
-    ),
-  );
-}
