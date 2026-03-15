@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/tiles/bottom_sheet.dart';
+import 'package:moldify/pages/misc/tiles/bottom_sheet_contents/culture_timer.dart';
 
 import '../../misc/colors.dart';
 import '../../misc/functions/empty_state.dart';
@@ -78,15 +80,50 @@ class InVitroTab extends StatelessWidget {
                 children: [
                   BuildButton(
                     buttonText: 'CULTURE',
-                    onPressed: () {},
+                    onPressed: () {
+                    showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => BuildBottomSheet(
+                          showDragHandle: true,
+                          child: CultureHubBottomSheetContent(
+                            onCreateNew: () {
+                              Navigator.of(context).pop();
+                              Navigator.pushNamed(
+                                context,
+                                RouteNames.setCulture,
+                                arguments: {'caseId': caseId},
+                              ).then((result) {
+                                if (result is! Map<String, dynamic>) return;
+                                final cultureName = result['name']?.toString().trim();
+                                if (cultureName == null || cultureName.isEmpty) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Culture "$cultureName" initialized.')),
+                                );
+                              });
+                            },
+                            onViewActive: () {
+                              Navigator.of(context).pop();
+                              Navigator.pushNamed(
+                                context,
+                                RouteNames.cultureDashboard,
+                                arguments: {'caseId': caseId},
+                              );
+
+                            },
+                          ),
+                        ),
+                      );
+                    },
                     backgroundColor: Colors.transparent,
-                    textColor: MoldifyColors.primaryColor.withOpacity(0.6),
+                    textColor: MoldifyColors.primaryColor.withValues(alpha: 0.6),
                     buttonHeight: 30,
                     buttonRadius: 0,
-                    fontSize: 10,
+                    fontSize: 12,
                   ),
                   const SizedBox(width: 4),
-                  const Text("|", style: TextStyle(color: Colors.black12)), // Vertical divider
+                  const Text("|", style: TextStyle(color: Colors.black12)),
                   const SizedBox(width: 4),
                   BuildButton(
                     buttonText: 'ADD LOG',
@@ -109,7 +146,7 @@ class InVitroTab extends StatelessWidget {
                     paddingIconText: 6,
                     buttonHeight: 30,
                     buttonRadius: 0,
-                    fontSize: 10,
+                    fontSize: 12,
                   ),
                 ],
               ),
@@ -141,7 +178,6 @@ class InVitroTab extends StatelessWidget {
                   textureLabel: 'Colony Texture',
                   macroSymptoms: entry['macroSymptoms'] ?? '',
                   macroCharacteristics: entry['macroCharacteristics'] ?? '',
-                  notes: entry['notes'] ?? '',
                   isFirst: index == 0,
                   isLast: index == inVitroEntries.length - 1,
                   // Hide popup menu when the case is closed
@@ -151,7 +187,7 @@ class InVitroTab extends StatelessWidget {
                     if (selectedIndex == 0) {
                       Navigator.pushNamed(
                         context,
-                        '/edit-log',
+                        RouteNames.editLog,
                         arguments: {'tabName': 'In Vitro'},
                       );
                     } else if (selectedIndex == 1) {

@@ -232,6 +232,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     );
   }
 
+
   Future<void> _loadCaseFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
     AppLogger.d('ViewCase: args = $args');

@@ -49,7 +49,6 @@ import 'initial_observation_components/observation_preview_image.dart';
 /// [textureLabel] — e.g. "Colony Texture" or "Lesion Texture".
 ///
 /// **General**
-/// [notes]   — Optional free-text notes rendered at the bottom.
 /// [isFirst] / [isLast] — Timeline connector visibility flags.
 ///
 /// **Popup menu** (all optional)
@@ -105,9 +104,6 @@ class ExperimentTimelineTile extends StatelessWidget {
 
   // --- General ---
 
-  /// Optional free-text notes shown at the bottom of the entry.
-  final String notes;
-
   /// Whether this is the first tile in the timeline (hides upper connector).
   final bool isFirst;
 
@@ -147,7 +143,6 @@ class ExperimentTimelineTile extends StatelessWidget {
     required this.sizeLabel,
     required this.textureLabel,
     // General
-    this.notes = '',
     this.isFirst = false,
     this.isLast = false,
     // Popup menu
@@ -463,27 +458,6 @@ class ExperimentTimelineTile extends StatelessWidget {
               ),
             ),
 
-            // Optional notes
-            if (notes.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Notes',
-                style: TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-SemiBold',
-                  fontSize: 12,
-                  color: MoldifyColors.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                notes,
-                style: const TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  fontSize: 13,
-                  color: MoldifyColors.MoldifyBlack,
-                ),
-              ),
-            ],
           ],
         ),
       ),

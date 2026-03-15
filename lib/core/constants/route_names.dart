@@ -31,5 +31,8 @@ class RouteNames {
   static const String submitReport = '/submit-report';
   static const String viewReport = '/view-report';
   static const String addFollowUp = '/add-follow-up';
+  /// for culture
+  static const String cultureDashboard = '/culture-dashboard';
+  static const String setCulture = '/set-culture';
   // Add more route names as needed
 }

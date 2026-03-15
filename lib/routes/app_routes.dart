@@ -31,6 +31,8 @@ import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
 import '../pages/monitor/view_case.dart';
+import '../pages/monitor/culture/view_timers.dart';
+import '../pages/monitor/culture/set_timer.dart';
 import '../splash_screen.dart';
 
 class AppRoutes {
@@ -287,6 +289,13 @@ class AppRoutes {
                 }
               },
             );
+
+          case RouteNames.cultureDashboard:
+            return const CultureDashboard();
+
+          case RouteNames.setCulture:
+            return const InitializeCulturePage();
+
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),
