@@ -1,15 +1,15 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'dart:io';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/identification/mold_result_content/mold_info_content.dart';
+import 'package:moldify/pages/identification/mold_result_content/revised_results_content.dart';
+import 'package:moldify/pages/identification/mold_result_content/result_action_section.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/functions/tab_bar.dart';
+import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 
-import '../misc/buttons/primary_button.dart';
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
 import 'mold_result_content/prevention_treatment_content.dart';
@@ -51,8 +51,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "are also used commercially for the production of citric acid and other enzymes, highlighting "
     "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
-  bool _showFullText = false;
-  late TapGestureRecognizer _tapRecognizer;
+  int _selectedTabIndex = 0;
 
   final Map<String, String> taxonomy = {
     "Kingdom": "Fungi",
@@ -71,6 +70,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       'PHYSICAL::Physical Control::Improve ventilation in affected areas to reduce moisture buildup. Use dehumidifiers to maintain optimal humidity levels. Ensure proper air circulation and maintain appropriate temperature control.|'
       'CULTURAL::Cultural Control::Implement proper sanitation practices and field hygiene. Rotate crops annually to prevent soil-borne diseases. Remove and destroy contaminated materials to prevent recontamination. Monitor and record treatments for effectiveness.';
 
+  late final Map<String, String> _recommendationSections;
+
 
   @override
   void initState() {
@@ -79,12 +80,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     AppLogger.d('MoldResult: modelResult = ${widget.modelResult}');
     AppLogger.d('MoldResult: moldDetails = ${widget.moldDetails}');
     
-    _tapRecognizer = TapGestureRecognizer()
-      ..onTap = () {
-        setState(() {
-          _showFullText = !_showFullText;
-        });
-      };
     // Initialize from modelResult argument
     // Convert probability from decimal to percentage string
     final prob = widget.modelResult?['probability'];
@@ -121,11 +116,20 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     } else {
       AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
     }
+
+    _recommendationSections = {
+      'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+      'DESCRIPTION': fullDescription,
+      'AFFECTED CROPS / HOSTS': plantThreatContent,
+      'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+      'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+      'IMPACT': '$healthContent\n\n$plantThreatContent',
+      'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+    };
   }
 
   @override
   void dispose() {
-    _tapRecognizer.dispose();
     super.dispose();
   }
 
@@ -300,59 +304,56 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         ),
                       ),
               
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.7,
-                        child: BuildTabBar(
-                            tabs: ['Mold Info', 'Prevention Tactics'],
-                            tabContents: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                                child: MoldInfoSection(
-                                    description: fullDescription,
-                                    taxonomy: taxonomy,
-                                  healthContent: healthContent,
-                                  plantThreatContent: plantThreatContent,
-                                  additionalInfoContent: additionalInfoContent,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                                child: PreventionTreatmentContent(
-                                  treatmentsContent: treatmentsContent,
-                                ),
-                              ),
-                            ]
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: ScrollableTabBar(
+                          tabs: const [
+                            'Mold Info',
+                            'Prevention Tactics',
+                            'Revised Results',
+                          ],
+                          currentIndex: _selectedTabIndex,
+                          onTabSelected: (index) {
+                            setState(() {
+                              _selectedTabIndex = index;
+                            });
+                          },
                         ),
                       ),
 
-                      SizedBox(height: 10),
+                      const SizedBox(height: 15),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Text(
-                          'Disclaimer: This app only suggests possible mold genus based on image analysis. This should not replace expert advice or laboratory confirmation.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            color: MoldifyColors.MoldifyGrey,
-                          ),
+                        child: IndexedStack(
+                          index: _selectedTabIndex,
+                          children: [
+                            MoldInfoSection(
+                              description: fullDescription,
+                              taxonomy: taxonomy,
+                              healthContent: healthContent,
+                              plantThreatContent: plantThreatContent,
+                              additionalInfoContent: additionalInfoContent,
+                            ),
+                            PreventionTreatmentContent(
+                              treatmentsContent: treatmentsContent,
+                            ),
+                            RevisedResultsContent(
+                              sections: _recommendationSections,
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: BuildButton(
-                          onPressed: () {
+                        child: ResultActionSection(
+                          onSave: () {
                             Navigator.of(context).pop({
                               'imagePath': widget.croppedImagePath,
                               'identifiedMold': moldGenus,
                               'confidence': confidenceLevel,
                             });
                           },
-                          buttonText: 'Save Result',
-                          backgroundColor: MoldifyColors.primaryColor,
-                          textColor: MoldifyColors.backgroundColor,
-                          buttonHeight: 45,
-                          buttonWidth: double.infinity,
-                          buttonRadius: 10,
                         ),
                       ),
                     ],

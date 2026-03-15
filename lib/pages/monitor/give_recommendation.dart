@@ -6,7 +6,6 @@ import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 
-
 class GiveRecommendationScreen extends StatefulWidget {
   const GiveRecommendationScreen({super.key});
 
@@ -22,12 +21,14 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   String? _reportId;
   String? _caseId;
 
-  String _screenTitle = 'Give Recommendation';
-  String _screenSubtitle = 'Finalize the entry and review the diagnostic overview';
+  final String _screenTitle = 'Give Recommendation';
+  final String _screenSubtitle = 'Finalize the entry and review the diagnostic overview';
 
+  /// Standard sections including HEALTH RISKS
   final Map<String, String> _analysisSections = {
     'OVERVIEW': '',
     'DESCRIPTION': '',
+    'HEALTH RISKS': '',
     'AFFECTED CROPS / HOSTS': '',
     'SYMPTOMS & SIGNS': '',
     'DISEASE CYCLE / SPREAD': '',
@@ -61,11 +62,17 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       _selectedGenus = args['genus']?.toString();
 
       final Map<String, dynamic>? analysis = args['analysis'] as Map<String, dynamic>?;
+      
       if (analysis != null) {
-        for (final key in _analysisSections.keys.toList()) {
+        // Map all standard sections from the analysis payload
+        for (final key in _analysisSections.keys) {
           _analysisSections[key] = analysis[key]?.toString() ?? '';
         }
+
+       
       }
+
+      
 
       final List<dynamic>? controls = args['managementControls'] as List<dynamic>?;
       if (controls != null) {
@@ -93,6 +100,15 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     }
   }
 
+  String? _readKeyVariants(Map<String, dynamic> source, List<String> keys) {
+    for (final key in keys) {
+      if (source.containsKey(key) && source[key].toString().isNotEmpty) {
+        return source[key].toString();
+      }
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _diseaseController.dispose();
@@ -109,26 +125,24 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// ----------- Identification History Header -----------
-              Text(
-                  _screenTitle,
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontFamily: 'Montserrat-Black',
-                    color: MoldifyColors.primaryColor,
-                  )
-              ),
-              Text(
-                  _screenSubtitle,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    color: MoldifyColors.MoldifyBlack,
-                  )
-              ),
-            const SizedBox(height: 20),
+            Text(
+              _screenTitle,
+              style: const TextStyle(
+                fontSize: 36,
+                fontFamily: 'Montserrat-Black',
+                color: MoldifyColors.primaryColor,
+              )
+            ),
+            Text(
+              _screenSubtitle,
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                color: MoldifyColors.MoldifyBlack,
+              )
+            ),
+            const SizedBox(height: 40),
 
-            // --- INPUT SECTION ---
             _buildFormLabel("DISEASE NAME"),
             const SizedBox(height: 12),
             BuildTextBox(
@@ -148,11 +162,11 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               onChanged: (val) => setState(() => _selectedGenus = val),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 50),
             
-            // --- REVISED RESULTS HEADER ---
             _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
             const SizedBox(height: 30),
+            
             if (_isLoading)
               const Center(
                 child: Padding(
@@ -164,12 +178,11 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               ..._analysisSections.entries.map(
                 (entry) => _buildTextSection(
                   entry.key,
-                  entry.value.isNotEmpty ? entry.value : 'No data available yet.',
+                  entry.value.trim().isNotEmpty ? entry.value : 'No data available yet.',
+                  isWarning: entry.key == 'HEALTH RISKS',
                 ),
               ),
             
-
-            // --- MANAGEMENT CONTROLS HEADER ---
             _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
             const SizedBox(height: 25),
             
@@ -183,11 +196,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     );
   }
 
-  // --- COMPONENT BUILDERS ---
-
- 
-  /// **Major Section Headers** (Revised Results / IPM Controls)
-  /// Purpose: Create high-visibility anchors for the editorial layout.
   Widget _buildMajorSectionHeader(String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +204,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
           title,
           style: TextStyle(
             fontFamily: 'Bricolage-Grotesque-Bold',
-            fontSize: 18, // Significantly larger for hierarchy
+            fontSize: 18,
             letterSpacing: 0.5,
             color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
           ),
@@ -232,21 +240,34 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     );
   }
 
-  /// Individual detail blocks within the report.
-  Widget _buildTextSection(String label, String body) {
+  Widget _buildTextSection(String label, String body, {bool isWarning = false}) {
+    // If the body is the fallback text, we don't want the "warning" color/icon 
+    // because there isn't actually a risk identified yet.
+    final bool showWarningStyle = isWarning && body != 'No data available yet.';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Bricolage-Grotesque-Bold',
-              fontSize: 12,
-              letterSpacing: 1.0,
-              color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
-            ),
+          Row(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Bold',
+                  fontSize: 12,
+                  letterSpacing: 1.0,
+                  color: showWarningStyle 
+                    ? Colors.redAccent.withValues(alpha: 0.8) 
+                    : MoldifyColors.primaryColor.withValues(alpha: 0.7),
+                ),
+              ),
+              if (showWarningStyle) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.redAccent),
+              ]
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -263,7 +284,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     );
   }
 
-  /// Small labels for Input fields.
   Widget _buildFormLabel(String text) {
     return Text(
       text,
@@ -284,7 +304,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
           Navigator.of(context).pop(true);
         },
         buttonText: 'Confirm Diagnosis',
-        fontSize: 16, // Balanced with the new header sizes
+        fontSize: 16,
         backgroundColor: MoldifyColors.primaryColor,
         textColor: MoldifyColors.backgroundColor,
         buttonHeight: 56,
