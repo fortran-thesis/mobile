@@ -2,17 +2,15 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:moldify/pages/identification/mold_result_content/mold_info_content.dart';
 import 'package:moldify/pages/identification/mold_result_content/revised_results_content.dart';
 import 'package:moldify/pages/identification/mold_result_content/result_action_section.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
+import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
-import 'mold_result_content/prevention_treatment_content.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 
@@ -34,8 +32,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.";
   final String plantThreatContent =
     "Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.";
-  final String additionalInfoContent =
-    "Aspergillus species are also used in biotechnology for the production of enzymes and pharmaceuticals, showcasing their industrial significance.";
 
   final String fullDescription =
     "Aspergillus is a genus of common molds that can be found in various environments, "
@@ -51,17 +47,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "are also used commercially for the production of citric acid and other enzymes, highlighting "
     "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
-  int _selectedTabIndex = 0;
-
-  final Map<String, String> taxonomy = {
-    "Kingdom": "Fungi",
-    "Phylum": "Ascomycota",
-    "Class": "Eurotiomycetes",
-    "Order": "Eurotiales",
-    "Family": "Aspergillaceae",
-    "Genus": "Aspergillus",
-  };
-
   // Prevention tactics using structured format (pipe-delimited)
   final String treatmentsContent = 
       'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags. Clean and dry surfaces thoroughly to prevent mold spread.|'
@@ -71,6 +56,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       'CULTURAL::Cultural Control::Implement proper sanitation practices and field hygiene. Rotate crops annually to prevent soil-borne diseases. Remove and destroy contaminated materials to prevent recontamination. Monitor and record treatments for effectiveness.';
 
   late final Map<String, String> _recommendationSections;
+  late final List<Map<String, String>> _managementControls;
 
 
   @override
@@ -120,17 +106,114 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     _recommendationSections = {
       'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
       'DESCRIPTION': fullDescription,
+      'HEALTH RISKS': healthContent,
       'AFFECTED CROPS / HOSTS': plantThreatContent,
       'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
       'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
       'IMPACT': '$healthContent\n\n$plantThreatContent',
       'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
     };
+
+    _managementControls = _parseManagementControls(treatmentsContent);
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 24, 15, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Bold',
+              fontSize: 18,
+              letterSpacing: 0.5,
+              color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Divider(thickness: 1.5, color: MoldifyColors.primaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionBody(Widget child) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: child,
+    );
+  }
+
+  List<Map<String, String>> _parseManagementControls(String content) {
+    final entries = content
+        .split('|')
+        .where((part) => part.trim().isNotEmpty)
+        .map((part) => part.split('::'))
+        .where((parts) => parts.length >= 3)
+        .map(
+          (parts) => {
+            'type': parts[0].trim(),
+            'title': parts[1].trim(),
+            'content': parts[2].trim(),
+          },
+        )
+        .toList();
+
+    return entries;
+  }
+
+  IconData _iconForControlType(String type) {
+    switch (type.toUpperCase()) {
+      case 'MECHANICAL':
+        return Icons.settings_suggest_outlined;
+      case 'BIOLOGICAL':
+        return Icons.biotech_outlined;
+      case 'CHEMICAL':
+        return Icons.science_outlined;
+      case 'PHYSICAL':
+        return Icons.build_outlined;
+      case 'CULTURAL':
+        return Icons.agriculture_outlined;
+      default:
+        return Icons.medical_services_outlined;
+    }
+  }
+
+  Widget _buildManagementControls() {
+    if (_managementControls.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text(
+          'No recommendation available yet.',
+          style: TextStyle(
+            fontFamily: 'Bricolage-Grotesque-Regular',
+            fontSize: 16,
+            color: MoldifyColors.MoldifyGrey,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _managementControls
+          .map(
+            (item) => ControlManagementTile(
+              title: item['title'] ?? '',
+              description: (item['content'] ?? '').isNotEmpty
+                  ? item['content']!
+                  : 'No recommendation available yet.',
+              icon: _iconForControlType(item['type'] ?? ''),
+            ),
+          )
+          .toList(),
+    );
   }
 
   @override
@@ -303,47 +386,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                           ],
                         ),
                       ),
-              
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: ScrollableTabBar(
-                          tabs: const [
-                            'Mold Info',
-                            'Prevention Tactics',
-                            'Revised Results',
-                          ],
-                          currentIndex: _selectedTabIndex,
-                          onTabSelected: (index) {
-                            setState(() {
-                              _selectedTabIndex = index;
-                            });
-                          },
+
+                      _buildSectionHeader('OVERVIEW ANALYSIS'),
+                      _buildSectionBody(
+                        RevisedResultsContent(
+                          sections: _recommendationSections,
                         ),
                       ),
 
-                      const SizedBox(height: 15),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: IndexedStack(
-                          index: _selectedTabIndex,
-                          children: [
-                            MoldInfoSection(
-                              description: fullDescription,
-                              taxonomy: taxonomy,
-                              healthContent: healthContent,
-                              plantThreatContent: plantThreatContent,
-                              additionalInfoContent: additionalInfoContent,
-                            ),
-                            PreventionTreatmentContent(
-                              treatmentsContent: treatmentsContent,
-                            ),
-                            RevisedResultsContent(
-                              sections: _recommendationSections,
-                            ),
-                          ],
-                        ),
+                      _buildSectionHeader('TREATMENT MANAGEMENT CONTROLS'),
+                      _buildSectionBody(
+                        _buildManagementControls(),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: ResultActionSection(

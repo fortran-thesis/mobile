@@ -50,10 +50,9 @@ class _MoldInfoSectionState extends State<MoldInfoSection> {
     final List<String> words = widget.description.split(' ');
     final bool isLongText = words.length > 40;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           /// Description section
           Padding(
             padding: const EdgeInsets.all(15.0),
@@ -197,8 +196,7 @@ class _MoldInfoSectionState extends State<MoldInfoSection> {
               content: widget.additionalInfoContent,
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

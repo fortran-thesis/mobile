@@ -80,31 +80,29 @@ class _PreventionTreatmentContentState
   Widget build(BuildContext context) {
     final controlMethods = _buildTreatmentTiles(widget.treatmentsContent);
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (controlMethods.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(
-                  child: AutoSizeText(
-                    'No prevention tactics available',
-                    style: TextStyle(
-                      fontFamily: 'Bricolage-Grotesque-Regular',
-                      fontSize: 14,
-                      color: MoldifyColors.MoldifyGrey,
-                    ),
-                    minFontSize: 10,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (controlMethods.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: AutoSizeText(
+                  'No prevention tactics available',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 14,
+                    color: MoldifyColors.MoldifyGrey,
                   ),
+                  minFontSize: 10,
                 ),
-              )
-            else
-              ...controlMethods,
-          ],
-        ),
+              ),
+            )
+          else
+            ...controlMethods,
+        ],
       ),
     );
   }
