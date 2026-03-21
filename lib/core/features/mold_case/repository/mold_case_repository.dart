@@ -66,15 +66,15 @@ class MoldCaseRepository {
     return result['cases'] as List<MoldCase>;
   }
 
-  /// Normalize field names from /api/v1/mold-report/assigned response
-  /// to match MoldCase model expectations.
+  /// Normalize field names from /api/v1/mold-case/assigned response
+  /// to match MoldCase model expectations. Also handles legacy mold-report fields for compatibility.
   Map<String, dynamic> _normalizeMoldReportFields(Map<String, dynamic> json) {
     return {
       ...json,
-      // Map API field names to model field names
+      // Map legacy mold-report field names to mold-case field names (backward compatibility)
       if (json.containsKey('case_name')) 'name': json['case_name'],
       if (json.containsKey('assigned_mycologist_id')) 'mycologist_id': json['assigned_mycologist_id'],
-      // The 'id' from assigned endpoint is the report ID
+      // The 'id' from mold-report endpoint is the report ID
       if (json.containsKey('id') && !json.containsKey('mold_report_id')) 'mold_report_id': json['id'],
     };
   }
