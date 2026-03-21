@@ -13,9 +13,16 @@ class MoldReportRepository {
   Future<Map<String, dynamic>> fetchPageWithToken({
     String? pageToken,
     String? sessionCookie,
+    String scope = 'own',
   }) async {
     AppLogger.d('MoldReportRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
-    final result = await _service.fetchMoldReports(sessionCookie: sessionCookie, limit: pageSize, pageToken: pageToken, path: '/user');
+    final result = await _service.fetchMoldReports(
+      sessionCookie: sessionCookie,
+      limit: pageSize,
+      pageToken: pageToken,
+      scope: scope,
+      path: '/',
+    );
     AppLogger.d('MoldReportRepository: raw API response: $result');
 
     // Normalize the returned data shape. Backend may return:
@@ -70,8 +77,8 @@ class MoldReportRepository {
   }
 
   /// Legacy convenience wrapper for callers that only need report items.
-  Future<List<MoldReport>> fetchPage({String? pageToken, String? sessionCookie}) async {
-    final result = await fetchPageWithToken(pageToken: pageToken, sessionCookie: sessionCookie);
+  Future<List<MoldReport>> fetchPage({String? pageToken, String? sessionCookie, String scope = 'own'}) async {
+    final result = await fetchPageWithToken(pageToken: pageToken, sessionCookie: sessionCookie, scope: scope);
     return result['reports'] as List<MoldReport>;
   }
 
@@ -99,11 +106,13 @@ class MoldReportRepository {
     String? status,
     String? pageToken,
     String? sessionCookie,
+    String scope = 'own',
   }) async {
     AppLogger.d('MoldReportRepository: searching with query="$search", status="$status", pageToken="$pageToken"');
     final result = await _service.searchMoldReports(
       search: search,
       status: status,
+      scope: scope,
       limit: pageSize,
       pageToken: pageToken,
       sessionCookie: sessionCookie,

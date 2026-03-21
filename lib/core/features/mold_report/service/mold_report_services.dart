@@ -123,11 +123,13 @@ class MoldReportService {
     String? sessionCookie,
     int? limit,
     String? pageToken,
+    String? scope,
     String path = '/user',
   }) async {
     final queryParams = <String, dynamic>{};
     if (limit != null) queryParams['limit'] = limit;
     if (pageToken != null) queryParams['pageToken'] = pageToken;
+    if (scope != null && scope.isNotEmpty) queryParams['scope'] = scope;
 
     final response = await _apiService.get(
       path,
@@ -164,12 +166,14 @@ class MoldReportService {
     String? sessionCookie,
     int? limit,
     String? pageToken,
+    String? scope,
   }) async {
     return fetchMoldReports(
       sessionCookie: sessionCookie,
       limit: limit,
       pageToken: pageToken,
-      path: '/user/closed',
+      scope: scope,
+      path: '/closed',
     );
   }
 
@@ -386,6 +390,7 @@ class MoldReportService {
   Future<Map<String, dynamic>> searchMoldReports({
     String? search,
     String? status,
+    String? scope,
     int? limit,
     String? pageToken,
     String? sessionCookie,
@@ -393,6 +398,7 @@ class MoldReportService {
     final queryParams = <String, String>{};
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (status != null && status.isNotEmpty) queryParams['status'] = status;
+    if (scope != null && scope.isNotEmpty) queryParams['scope'] = scope;
     if (limit != null) queryParams['limit'] = limit.toString();
     if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
 

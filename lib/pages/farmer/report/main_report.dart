@@ -36,6 +36,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
   bool _isFetchingMore = false;
   final Map<String, MoldReport> _detailedReportById = {};
   final Set<String> _requestedDetailedReportIds = {};
+  static const String _reportScope = 'own';
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      _bloc.add(FetchMoldReports(sessionCookie: sessionCookie));
+      _bloc.add(FetchMoldReports(sessionCookie: sessionCookie, scope: _reportScope));
     });
 
     _scrollController.addListener(() {
@@ -60,7 +61,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
             _isFetchingMore = true;
             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
             final sessionCookie = authProvider.cookie;
-            _bloc.add(FetchMoldReports(pageToken: state.nextPageToken, sessionCookie: sessionCookie));
+            _bloc.add(FetchMoldReports(pageToken: state.nextPageToken, sessionCookie: sessionCookie, scope: _reportScope));
             // Use a more reliable way to reset the flag after fetch completes
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) _isFetchingMore = false;
@@ -221,7 +222,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                 if (!mounted) return;
                                 if (result == true) {
                                   final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie, scope: _reportScope));
                                 }
                               },
                               child: Row(
@@ -302,7 +303,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                               return RefreshIndicator(
                                 onRefresh: () async {
                                   final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
+                                  _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie, scope: _reportScope));
                                 },
                                 child: ListView.builder(
                                   controller: _scrollController,

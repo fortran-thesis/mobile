@@ -14,16 +14,18 @@ abstract class MoldReportEvent extends Equatable {
 class FetchMoldReports extends MoldReportEvent {
   final String? pageToken;
   final String? sessionCookie;
-  FetchMoldReports({this.pageToken, this.sessionCookie});
+  final String scope;
+  FetchMoldReports({this.pageToken, this.sessionCookie, this.scope = 'own'});
   @override
-  List<Object?> get props => [pageToken, sessionCookie];
+  List<Object?> get props => [pageToken, sessionCookie, scope];
 }
 
 class RefreshMoldReports extends MoldReportEvent {
   final String? sessionCookie;
-  RefreshMoldReports({this.sessionCookie});
+  final String scope;
+  RefreshMoldReports({this.sessionCookie, this.scope = 'own'});
   @override
-  List<Object?> get props => [sessionCookie];
+  List<Object?> get props => [sessionCookie, scope];
 }
 
 class CreateMoldReportEvent extends MoldReportEvent {
@@ -38,13 +40,15 @@ class SearchMoldReports extends MoldReportEvent {
   final String? searchQuery;
   final String? statusFilter;
   final String? sessionCookie;
+  final String scope;
   SearchMoldReports({
     this.searchQuery,
     this.statusFilter,
     this.sessionCookie,
+    this.scope = 'own',
   });
   @override
-  List<Object?> get props => [searchQuery, statusFilter, sessionCookie];
+  List<Object?> get props => [searchQuery, statusFilter, sessionCookie, scope];
 }
 
 // States
@@ -102,6 +106,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
       final page = await repository.fetchPageWithToken(
         pageToken: event.pageToken,
         sessionCookie: event.sessionCookie,
+        scope: event.scope,
       );
       final pageReports = page['reports'] as List<MoldReport>;
       final incomingNextPageToken = page['nextPageToken'] as String?;
@@ -133,7 +138,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
       _allReports.clear();
       _nextPageToken = null;
       
-      final page = await repository.fetchPageWithToken(pageToken: null, sessionCookie: event.sessionCookie);
+      final page = await repository.fetchPageWithToken(pageToken: null, sessionCookie: event.sessionCookie, scope: event.scope);
       final pageReports = page['reports'] as List<MoldReport>;
       final incomingNextPageToken = page['nextPageToken'] as String?;
       _allReports.addAll(pageReports);
@@ -155,7 +160,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
       // Refresh to get updated list
       _allReports.clear();
       _nextPageToken = null;
-      final page = await repository.fetchPageWithToken(pageToken: null, sessionCookie: event.sessionCookie);
+      final page = await repository.fetchPageWithToken(pageToken: null, sessionCookie: event.sessionCookie, scope: 'own');
       final pageReports = page['reports'] as List<MoldReport>;
       final incomingNextPageToken = page['nextPageToken'] as String?;
       _allReports.addAll(pageReports);
@@ -189,6 +194,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
         status: normalizedStatus,
         pageToken: null,
         sessionCookie: event.sessionCookie,
+        scope: event.scope,
       );
 
       _allReports.addAll(searchResults);
