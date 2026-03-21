@@ -22,6 +22,7 @@ class AppLogger {
   static void d(String message, {String tag = 'Moldify'}) {
     if (kDebugMode) {
       developer.log(message, name: tag);
+      debugPrint('[$tag] $message');
     }
   }
 
@@ -29,6 +30,7 @@ class AppLogger {
   static void w(String message, {String tag = 'Moldify'}) {
     if (kDebugMode) {
       developer.log('⚠️ $message', name: tag);
+      debugPrint('[$tag] ⚠️ $message');
     }
   }
 
@@ -46,6 +48,9 @@ class AppLogger {
         error: error,
         stackTrace: stackTrace,
       );
+      debugPrint('[$tag] ❌ $message');
+      if (error != null) debugPrint('[$tag] error: $error');
+      if (stackTrace != null) debugPrint('[$tag] stack: $stackTrace');
     }
   }
 }
