@@ -33,6 +33,9 @@ class ChipSelectionModal extends StatefulWidget {
   
   /// Currently selected value (if any)
   final String? currentSelection;
+
+  /// Currently selected values for multi-select mode
+  final List<String>? currentSelections;
   
   /// Hint text for the custom input field
   final String customInputHint;
@@ -41,15 +44,18 @@ class ChipSelectionModal extends StatefulWidget {
   final String othersLabel;
 
   final bool isMultiLine;
+  final bool allowMultiSelect;
 
   const ChipSelectionModal({
     super.key,
     required this.title,
     required this.options,
     this.currentSelection,
+    this.currentSelections,
     this.customInputHint = 'Type your answer here',
     this.othersLabel = 'Others/Iba pa', 
     required this.isMultiLine,
+    this.allowMultiSelect = false,
   });
 
   @override
@@ -59,6 +65,8 @@ class ChipSelectionModal extends StatefulWidget {
 class _ChipSelectionModalState extends State<ChipSelectionModal> {
   /// Currently selected option (null if custom input is selected)
   String? _selectedOption;
+
+  final Set<String> _selectedOptions = <String>{};
   
   /// Whether the "Others" option is selected
   bool _isCustomInputSelected = false;
@@ -74,6 +82,26 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
 
   /// Initialize selection based on current value
   void _initializeSelection() {
+    if (widget.allowMultiSelect) {
+      final currentSelections = widget.currentSelections ?? <String>[];
+      if (currentSelections.isNotEmpty) {
+        final optionSelections = currentSelections
+            .where((selection) => widget.options.contains(selection))
+            .toList();
+        _selectedOptions.addAll(optionSelections);
+
+        final customSelections = currentSelections
+            .where((selection) => !widget.options.contains(selection))
+            .toList();
+
+        if (customSelections.isNotEmpty) {
+          _isCustomInputSelected = true;
+          _customInputController.text = customSelections.join(', ');
+        }
+      }
+      return;
+    }
+
     if (widget.currentSelection != null && widget.currentSelection!.isNotEmpty) {
       // Check if current selection matches any predefined option
       if (widget.options.contains(widget.currentSelection)) {
@@ -94,6 +122,17 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
 
   /// Handle chip selection
   void _onChipSelected(String option) {
+    if (widget.allowMultiSelect) {
+      setState(() {
+        if (_selectedOptions.contains(option)) {
+          _selectedOptions.remove(option);
+        } else {
+          _selectedOptions.add(option);
+        }
+      });
+      return;
+    }
+
     setState(() {
       _selectedOption = option;
       _isCustomInputSelected = false;
@@ -104,13 +143,70 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
   /// Handle "Others" option selection
   void _onOthersSelected() {
     setState(() {
-      _selectedOption = null;
-      _isCustomInputSelected = true;
+      if (widget.allowMultiSelect) {
+        _isCustomInputSelected = !_isCustomInputSelected;
+        if (!_isCustomInputSelected) {
+          _customInputController.clear();
+        }
+      } else {
+        _selectedOption = null;
+        _isCustomInputSelected = true;
+      }
     });
   }
 
   /// Validate and return the selected value
   void _onConfirm() {
+    if (widget.allowMultiSelect) {
+      final customText = _customInputController.text.trim();
+      final results = <String>[..._selectedOptions];
+
+      if (_isCustomInputSelected) {
+        if (customText.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Please enter your custom input',
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  color: MoldifyColors.backgroundColor,
+                ),
+              ),
+              backgroundColor: MoldifyColors.primaryColor,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+
+        final customEntries = customText
+            .split(',')
+            .map((entry) => entry.trim())
+            .where((entry) => entry.isNotEmpty);
+        results.addAll(customEntries);
+      }
+
+      if (results.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select at least one option',
+              style: TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                color: MoldifyColors.backgroundColor,
+              ),
+            ),
+            backgroundColor: MoldifyColors.primaryColor,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      Navigator.of(context).pop(results.toList());
+      return;
+    }
+
     String? result;
     
     if (_isCustomInputSelected) {
@@ -232,7 +328,9 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
                             runSpacing: 8.0,
                             alignment: WrapAlignment.center,
                             children: widget.options.map((option) {
-                              final isSelected = _selectedOption == option;
+                              final isSelected = widget.allowMultiSelect
+                                  ? _selectedOptions.contains(option)
+                                  : _selectedOption == option;
                               return _buildChip(
                                 label: option,
                                 isSelected: isSelected,
@@ -407,6 +505,32 @@ Future<String?> showChipSelectionModal({
         customInputHint: customInputHint,
         othersLabel: othersLabel,
         isMultiLine: isMultiLine,
+      );
+    },
+  );
+}
+
+Future<List<String>?> showMultiChipSelectionModal({
+  required BuildContext context,
+  required String title,
+  required List<String> options,
+  List<String>? currentSelections,
+  String customInputHint = 'Type your answer here',
+  String othersLabel = 'Others/Iba pa',
+  required bool isMultiLine,
+}) async {
+  return await showDialog<List<String>>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return ChipSelectionModal(
+        title: title,
+        options: options,
+        currentSelections: currentSelections,
+        customInputHint: customInputHint,
+        othersLabel: othersLabel,
+        isMultiLine: isMultiLine,
+        allowMultiSelect: true,
       );
     },
   );

@@ -17,6 +17,10 @@ class ImagePreviewScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final String? sourceFlow;
+  final String? scanModality;
+  final bool includeSize;
+  final bool returnResult;
 
   const ImagePreviewScreen({
     super.key,
@@ -24,6 +28,10 @@ class ImagePreviewScreen extends StatefulWidget {
     this.source,
     this.sourceTab,
     this.caseId,
+    this.sourceFlow,
+    this.scanModality,
+    this.includeSize = true,
+    this.returnResult = false,
   });
 
   @override
@@ -157,19 +165,33 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       AppLogger.d('Cropped image saved to: ${file.path}');
 
       if (!mounted) return;
+      // Cropping is complete; stop the preview processing overlay before next step.
+      setState(() {
+        _isProcessing = false;
+      });
       
       // Check the source to determine next action
       if (widget.source == 'add_log') {
         // For add_log source, navigate directly without API call
-        Navigator.pushNamed(
+        final result = await Navigator.pushNamed(
           context,
           '/add-log',
           arguments: {
             'imagePath': file.path,
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'includeSize': widget.includeSize,
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
           },
         );
+
+        // Bubble the local result back to caller (e.g., monitoring setup).
+        if (!mounted) return;
+        if (result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       } else {
         // For main_camera source, show modal to let user choose
         AppLogger.d('🔷 ImagePreview: Showing confirmation dialog');
@@ -194,8 +216,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       'croppedImagePath': file.path,
                       'imageBytes': pngBytes,
                       'fileName': fileName,
+                      'sourceFlow': widget.sourceFlow,
+                      'scanModality': widget.scanModality,
+                      'sourceTab': widget.sourceTab,
+                      'caseId': widget.caseId,
+                      'returnResult': widget.returnResult,
                     },
-                  );
+                  ).then((result) {
+                    if (!mounted) return;
+                    if (result != null) {
+                      Navigator.of(context).pop(result);
+                    }
+                  });
                 },
                 onCancel: () {
                   // NO action: Call identifyImage API, then fetch mold details
@@ -354,18 +386,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   /// Helper method to handle "No, See Result" button action
   Future<void> _handleNoSeeResult(BuildContext context, String imagePath, Uint8List imageBytes, String fileName) async {
     AppLogger.d('🟢 ImagePreview: _handleNoSeeResult called');
-    
-    // Show loading indicator
+
+    // Use the page-level loading overlay to avoid stacked loading indicators.
     if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            color: MoldifyColors.primaryColor,
-          ),
-        ),
-      );
+      setState(() {
+        _isProcessing = true;
+      });
     }
     
     try {
@@ -380,16 +406,17 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       );
       AppLogger.d('📊 ImagePreview: identifyImage result: $modelResult');
       
-      // Step 2: Extract genus from predicted_class
+      // Step 2: Get predicted class name from model response
       final predictedClass = modelResult['predicted_class']?.toString() ?? '';
-      final genus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
       
       AppLogger.d('🟡 ImagePreview: Step 2 - Predicted class: $predictedClass');
-      AppLogger.d('🟡 ImagePreview: Extracted genus: $genus');
       
-      // Step 3: Fetch detailed mold information
-      AppLogger.d('🟡 ImagePreview: Step 3 - Calling getMoldDetails(genus: $genus)');
-      final moldDetails = await cameraService.getMoldDetails(genus: genus);
+      // Step 3: Fetch detailed mold information using full predicted class name
+      AppLogger.d('🟡 ImagePreview: Step 3 - Calling getMoldDetails(moldName: $predictedClass)');
+      final moldDetails = await cameraService.getMoldDetails(
+        moldName: predictedClass,
+        sessionCookie: authProvider.cookie,
+      );
       
       AppLogger.d('✅ ImagePreview: getMoldDetails completed');
       AppLogger.d('✅ ImagePreview: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
@@ -400,26 +427,30 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         AppLogger.d('✅ ImagePreview: moldDetails keys: ${moldDetails.keys.toList()}');
       }
       
-      // Dismiss loading
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
       if (!context.mounted) return;
       
       AppLogger.d('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
-      Navigator.of(context).pushNamed(
+      final result = await Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': imagePath,
           'modelResult': modelResult,
           'moldDetails': moldDetails,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
         },
       );
+
+      if (!context.mounted) return;
+      if (result != null) {
+        Navigator.of(context).pop(result);
+        return;
+      }
     } catch (e, stackTrace) {
       AppLogger.e('❌ ImagePreview: EXCEPTION in _handleNoSeeResult', error: e, stackTrace: stackTrace);
-      
-      // Dismiss loading
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
+
       if (!context.mounted) return;
       
       // Show error message
@@ -428,14 +459,30 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       );
       
       // Navigate anyway with error data
-      Navigator.of(context).pushNamed(
+      final result = await Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': imagePath,
           'modelResult': {'error': e.toString()},
           'moldDetails': {'error': e.toString()},
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
         },
       );
+
+      if (!context.mounted) return;
+      if (result != null) {
+        Navigator.of(context).pop(result);
+        return;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 }

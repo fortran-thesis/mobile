@@ -10,8 +10,21 @@ import 'package:moldify/core/utils/logger.dart';
 class MainCameraScreen extends StatefulWidget {
   // 1. Add a boolean to control AppBar visibility, defaulting to false.
   final bool showAppBar;
+  final bool returnResult;
+  final String? sourceFlow;
+  final String? scanModality;
+  final String? sourceTab;
+  final String? moldCaseId;
 
-  const MainCameraScreen({super.key, this.showAppBar = false});
+  const MainCameraScreen({
+    super.key,
+    this.showAppBar = false,
+    this.returnResult = false,
+    this.sourceFlow,
+    this.scanModality,
+    this.sourceTab,
+    this.moldCaseId,
+  });
 
   @override
   State<MainCameraScreen> createState() => _MainCameraScreenState();
@@ -40,8 +53,21 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
       if (imageFile != null) {
         AppLogger.d('Image selected from gallery: ${imageFile.path}');
         // Use named route for navigation
-        await Navigator.pushNamed(context, RouteNames.imagePreview,
-            arguments: {'imagePath': imageFile.path, 'source': 'main_camera'});
+        final result = await Navigator.pushNamed(context, RouteNames.imagePreview,
+            arguments: {
+              'imagePath': imageFile.path,
+              'source': 'main_camera',
+              'returnResult': widget.returnResult,
+              'sourceFlow': widget.sourceFlow,
+              'scanModality': widget.scanModality,
+              'sourceTab': widget.sourceTab,
+              'caseId': widget.moldCaseId,
+            });
+        if (!mounted) return;
+        if (widget.returnResult && result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       } else {
         AppLogger.d('No image selected.');
       }
@@ -61,7 +87,19 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
     if (_isProcessingImage) return;
     // Use named route for navigation
     Navigator.pushNamed(context, RouteNames.camera,
-        arguments: {'source': 'main_camera'});
+        arguments: {
+          'source': 'main_camera',
+          'returnResult': widget.returnResult,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.moldCaseId,
+        }).then((result) {
+      if (!mounted) return;
+      if (widget.returnResult && result != null) {
+        Navigator.of(context).pop(result);
+      }
+    });
   }
 
   // 2. The page's UI content is extracted into a helper method to avoid duplication.

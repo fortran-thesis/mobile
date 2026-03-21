@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:moldify/pages/misc/colors.dart';
 
 
@@ -73,7 +74,21 @@ class _PhotoUploaderState extends State<PhotoUploader> {
           _showLimitSnackBar();
           break;
         }
-        _addPhoto(File(img.path));
+        // Copy XFile to persistent temp file immediately
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = img.name;
+          final tempFile = File('${tempDir.path}/${timestamp}_$fileName');
+          
+          final bytes = await img.readAsBytes();
+          final savedFile = await tempFile.writeAsBytes(bytes);
+          
+          _addPhoto(savedFile);
+        } catch (e) {
+          // Skip files that can't be copied
+          continue;
+        }
       }
     }
   }
@@ -85,7 +100,21 @@ class _PhotoUploaderState extends State<PhotoUploader> {
       if (_photos.length >= 5) {
         _showLimitSnackBar();
       } else {
-        _addPhoto(File(image.path));
+        // Copy XFile to persistent temp file immediately
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = image.name;
+          final tempFile = File('${tempDir.path}/${timestamp}_$fileName');
+          
+          final bytes = await image.readAsBytes();
+          final savedFile = await tempFile.writeAsBytes(bytes);
+          
+          _addPhoto(savedFile);
+        } catch (e) {
+          // Skip files that can't be copied
+          return;
+        }
       }
     }
   }
@@ -136,7 +165,9 @@ class _PhotoUploaderState extends State<PhotoUploader> {
 
   void _notifyParent() {
     if (widget.onPhotosChanged != null) {
-      widget.onPhotosChanged!(_photos);
+      // Create a copy of the list to prevent parent from referencing
+      // PhotoUploader's internal _photos list directly
+      widget.onPhotosChanged!([..._photos]);
     }
   }
   String _formatFileSize(int bytes) {

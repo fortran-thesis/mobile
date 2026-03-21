@@ -22,10 +22,13 @@ class ApiUrl {
   static String get user => '$_v1/user';
   static String get moldReport => '$_v1/mold-report';
   static String get moldCase => '$_v1/mold-case';
+  static String get mold => '$_v1/mold';
   static String get moldipedia => '$_v1/moldipedia';
+  static String get lookup => '$_v1/lookup';
   static String get userReport => '$_v1/reports';
   static String get flagReport => '$_v1/flag-report';
   static String get sysReq => '$_v1/system-request';
   static String get notification => '$_v1/notification';
   static String get model => '$_v1/model';
+  static String get scan => '$_v1/scan';
 }

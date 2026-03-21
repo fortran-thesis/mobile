@@ -110,6 +110,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
         sessionCookie: sessionCookie,
         limit: _pageSize,
         pageToken: pageToken,
+        scope: 'own',
       );
 
       final data = _extractData(response);
@@ -158,7 +159,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
 
   String _toTitleCase(String value) {
     final normalized = value.trim().replaceAll('_', ' ').toLowerCase();
-    if (normalized.isEmpty) return 'Closed';
+    if (normalized.isEmpty) return 'Rejected';
     return normalized
         .split(' ')
         .where((word) => word.isNotEmpty)
@@ -198,7 +199,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                 )
             ),
             Text(
-                'View records of closed and rejected mold reports.',
+              'View records of rejected mold reports.',
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: 'Bricolage-Grotesque-Regular',

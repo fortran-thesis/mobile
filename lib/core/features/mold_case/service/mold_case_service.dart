@@ -7,12 +7,14 @@ import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
 
 class MoldCaseService {
-  // Use moldReport base URL for assigned endpoint per API documentation
-  // Endpoint: GET /api/v1/mold-report/assigned
-  final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldReport);
+  // API clients: case endpoints and report endpoints
+  // Case endpoints root: /api/v1/mold-case
+  final ApiService _caseApi = ApiService(baseUrl: ApiUrl.moldCase);
+  // Report endpoints root: /api/v1/mold-report (used for assigned list and some analytics)
+  final ApiService _reportApi = ApiService(baseUrl: ApiUrl.moldReport);
 
   /// Fetch all assigned mold cases for the authenticated curator.
-  /// Endpoint: GET /assigned
+  /// Endpoint: GET /api/v1/mold-case/assigned
   /// 
   /// [limit] - page size (defaults to 10)
   /// [pageToken] - cursor token for pagination
@@ -29,7 +31,7 @@ class MoldCaseService {
           'pageToken': pageToken.trim(),
       };
 
-      final response = await _apiService.get(
+      final response = await _caseApi.get(
         '/assigned',
         headers: {'Content-Type': 'application/json'},
         sessionCookie: sessionCookie,
@@ -77,7 +79,7 @@ class MoldCaseService {
     String? sessionCookie,
   }) async {
     try {
-      final response = await _apiService.get(
+      final response = await _caseApi.get(
         '/$id',
         headers: {'Content-Type': 'application/json'},
         sessionCookie: sessionCookie,
@@ -125,7 +127,7 @@ class MoldCaseService {
     String? sessionCookie,
   }) async {
     try {
-      final response = await _apiService.get(
+      final response = await _caseApi.get(
         '/by-report/$reportId',
         headers: {'Content-Type': 'application/json'},
         sessionCookie: sessionCookie,
@@ -172,7 +174,7 @@ class MoldCaseService {
     Map<String, dynamic> update, {
     String? sessionCookie,
   }) async {
-    final response = await _apiService.patch(
+    final response = await _caseApi.patch(
       '/$id',
       headers: {'Content-Type': 'application/json'},
       body: update,
@@ -191,7 +193,7 @@ class MoldCaseService {
     String id, {
     String? sessionCookie,
   }) async {
-    final response = await _apiService.delete(
+    final response = await _caseApi.delete(
       '/$id',
       sessionCookie: sessionCookie,
     );
@@ -221,7 +223,7 @@ class MoldCaseService {
           'pageToken': pageToken.trim(),
       };
 
-      final response = await _apiService.get(
+      final response = await _caseApi.get(
         '/archive',
         headers: {'Content-Type': 'application/json'},
         sessionCookie: sessionCookie,
@@ -270,9 +272,8 @@ class MoldCaseService {
   Future<Map<String, dynamic>> getPriorityBreakdown({
     String? sessionCookie,
   }) async {
-    // Create temporary service for report analytics
-    final reportService = _apiService;
-    final response = await reportService.get(
+    // Use report API for priority analytics
+    final response = await _reportApi.get(
       '/counts/priorities',
       headers: {'Content-Type': 'application/json'},
       sessionCookie: sessionCookie,
@@ -280,7 +281,12 @@ class MoldCaseService {
     );
 
     if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+      final responseBody = response.data as Map<String, dynamic>;
+      // Extract the data wrapper if it exists, otherwise return the response as-is
+      final data = responseBody['data'] is Map<String, dynamic>
+          ? responseBody['data'] as Map<String, dynamic>
+          : responseBody;
+      return data;
     } else {
       throw Exception('Failed to fetch priority breakdown: ${response.statusCode}');
     }
@@ -353,7 +359,7 @@ class MoldCaseService {
       }
 
       // Use multipart request with image
-      final response = await _apiService.postMultipart(
+      final response = await _caseApi.postMultipart(
         '/$caseId/logs',
         fields: fields,
         fileFieldName: 'image',
@@ -362,11 +368,83 @@ class MoldCaseService {
       );
 
       if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to add cultivation log';
+          throw Exception(error);
+        }
+
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+
+        return {
+          'success': success == false ? false : true,
+          'data': data,
+        };
       }
       throw Exception('Failed to add cultivation log: ${response.statusCode} ${response.data}');
     } catch (e) {
       throw Exception('Failed to add cultivation log: $e');
+    }
+  }
+
+  /// Get cultivation logs for a mold case from subcollection
+  /// Endpoint: GET /:caseId/logs
+  Future<Map<String, dynamic>> getCultivationLogs(
+    String caseId, {
+    int limit = 50,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+        if (pageToken != null && pageToken.trim().isNotEmpty)
+          'pageToken': pageToken.trim(),
+      };
+
+      final response = await _caseApi.get(
+        '/$caseId/logs',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        queryParams: queryParams,
+        cacheOptions: CacheConfig.volatileData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to fetch cultivation logs';
+          throw Exception(error);
+        }
+
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+
+        return data;
+      }
+
+      throw Exception('Failed to fetch cultivation logs: ${response.statusCode} ${response.data}');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -377,7 +455,7 @@ class MoldCaseService {
     Map<String, dynamic> details, {
     String? sessionCookie,
   }) async {
-    final response = await _apiService.patch(
+    final response = await _caseApi.patch(
       '/$caseId/cultivation-details',
       headers: {'Content-Type': 'application/json'},
       body: details,
@@ -400,7 +478,7 @@ class MoldCaseService {
   }) async {
     // This would typically use a multipart request with the image file
     // For now, returning a placeholder that matches the backend response
-    final response = await _apiService.post(
+    final response = await _caseApi.post(
       '/$caseId/analyze-cultivation',
       headers: {'Content-Type': 'application/json'},
       body: {'image_path': imagePath},
@@ -436,7 +514,7 @@ class MoldCaseService {
         if (pageToken != null && pageToken.trim().isNotEmpty) 'pageToken': pageToken.trim(),
       };
 
-      final response = await _apiService.get(
+      final response = await _caseApi.get(
         '/search',
         headers: {'Content-Type': 'application/json'},
         queryParams: queryParams.isEmpty ? null : queryParams,
@@ -472,6 +550,74 @@ class MoldCaseService {
         throw Exception('Server error: $error');
       } else {
         throw Exception('Failed to search mold cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Submit final mold verdict from mycologist
+  /// Endpoint: PATCH /:caseId/verdict
+  /// 
+  /// [caseId] - ID of the mold case
+  /// [moldId] - ID of the confirmed mold species
+  /// [moldName] - Name of the confirmed mold species
+  /// [confidence] - Confidence score (0-100) from lookup algorithm
+  /// [notes] - Optional mycologist notes on the verdict
+  /// [sessionCookie] - required for authentication
+  Future<Map<String, dynamic>> submitVerdict(
+    String caseId, {
+    required String moldId,
+    required String moldName,
+    required double confidence,
+    String? notes,
+    String? sessionCookie,
+  }) async {
+    try {
+      final body = {
+        'moldId': moldId,
+        'moldName': moldName,
+        'confidence': confidence,
+        if (notes != null && notes.isNotEmpty) 'mycologist_notes': notes,
+      };
+
+      final response = await _caseApi.patch(
+        '/$caseId/verdict',
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+        sessionCookie: sessionCookie,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        final Map<String, dynamic> responseBody = 
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final success = responseBody['success'];
+        if (success == false) {
+          final error = responseBody['error'] ?? 'Failed to submit verdict';
+          throw Exception(error);
+        }
+
+        final data = responseBody['data'] is Map<String, dynamic>
+            ? responseBody['data'] as Map<String, dynamic>
+            : responseBody;
+
+        return data;
+      } else if (response.statusCode == 400) {
+        final error = response.data is Map ? response.data['error'] : 'Bad request';
+        throw Exception('Invalid verdict data: $error');
+      } else if (response.statusCode == 404) {
+        throw Exception('Mold case not found: $caseId');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to submit verdict: HTTP ${response.statusCode}');
       }
     } catch (e) {
       rethrow;

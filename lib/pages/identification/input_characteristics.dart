@@ -150,6 +150,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       ),
       AdditionalCharacteristicsTab(
         onSubmit: _submitCharacteristics,
+        onBack: _goToPreviousTab,
         onPhialideArrangementChanged: (v) => setState(() => formData['phialideArrangement'] = v),
         onSterigmataArrangementChanged: (v) => setState(() => formData['sterigmataArrangement'] = v),
       ),
@@ -183,6 +184,10 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
     final croppedImagePath = args['croppedImagePath'];
     final imageBytes = args['imageBytes'] as Uint8List?;
     final fileName = args['fileName'] as String?;
+    final sourceFlow = args['sourceFlow'] as String?;
+    final scanModality = args['scanModality'] as String?;
+    final sourceTab = args['sourceTab'] as String?;
+    final caseId = args['caseId'] as String?;
 
     if (imageBytes == null || fileName == null) {
       AppLogger.e("Error: Image bytes or filename missing.");
@@ -200,6 +205,7 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       showDialog(
         context: context,
         barrierDismissible: false,
+        useRootNavigator: false,
         builder: (context) => const Center(
           child: CircularProgressIndicator(),
         ),
@@ -236,15 +242,14 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
 
       // Step 2: Extract genus from predicted_class
       final predictedClass = modelResult['predicted_class']?.toString() ?? '';
-      final genus =
-          predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
-
       AppLogger.d('🟡 InputCharacteristics: Step 2 - Predicted class: $predictedClass');
-      AppLogger.d('🟡 InputCharacteristics: Extracted genus: $genus');
 
-      // Step 3: Fetch detailed mold information
-      AppLogger.d('🟡 InputCharacteristics: Step 3 - Calling getMoldDetails(genus: $genus)');
-      final moldDetails = await cameraService.getMoldDetails(genus: genus);
+      // Step 3: Fetch detailed mold information using full predicted class name
+      AppLogger.d('🟡 InputCharacteristics: Step 3 - Calling getMoldDetails(moldName: $predictedClass)');
+      final moldDetails = await cameraService.getMoldDetails(
+        moldName: predictedClass,
+        sessionCookie: authProvider.cookie,
+      );
 
       AppLogger.d('✅ InputCharacteristics: getMoldDetails completed');
       AppLogger.d('✅ InputCharacteristics: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
@@ -261,15 +266,24 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       if (!mounted) return;
 
       AppLogger.d('🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics');
-      Navigator.of(context).pushNamed(
+      final result = await Navigator.of(context).pushNamed(
         '/mold_result',
         arguments: {
           'croppedImagePath': croppedImagePath,
           'modelResult': modelResult,
           'moldDetails': moldDetails,
           'characteristics': apiCharacteristics,
+          'sourceFlow': sourceFlow,
+          'scanModality': scanModality,
+          'sourceTab': sourceTab,
+          'caseId': caseId,
         },
       );
+
+      if (!mounted) return;
+      if (result != null) {
+        Navigator.of(context).pop(result);
+      }
     } catch (e, stackTrace) {
       AppLogger.e('❌ InputCharacteristics: EXCEPTION during submit', error: e, stackTrace: stackTrace);
 

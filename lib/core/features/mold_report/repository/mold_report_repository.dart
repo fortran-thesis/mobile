@@ -9,9 +9,20 @@ class MoldReportRepository {
   MoldReportRepository({this.pageSize = 10});
 
   /// Fetch a page from API. Uses cursor-based pagination with [pageToken].
-  Future<List<MoldReport>> fetchPage({String? pageToken, String? sessionCookie}) async {
+  /// Returns both parsed reports and the next cursor token.
+  Future<Map<String, dynamic>> fetchPageWithToken({
+    String? pageToken,
+    String? sessionCookie,
+    String scope = 'own',
+  }) async {
     AppLogger.d('MoldReportRepository: fetching page from API (pageToken: "$pageToken", limit: $pageSize)');
-    final result = await _service.fetchMoldReports(sessionCookie: sessionCookie, limit: pageSize, pageToken: pageToken, path: '/user');
+    final result = await _service.fetchMoldReports(
+      sessionCookie: sessionCookie,
+      limit: pageSize,
+      pageToken: pageToken,
+      scope: scope,
+      path: '/',
+    );
     AppLogger.d('MoldReportRepository: raw API response: $result');
 
     // Normalize the returned data shape. Backend may return:
@@ -24,15 +35,24 @@ class MoldReportRepository {
     if (result.containsKey('data')) raw = result['data'];
 
     List<dynamic> rawDataList = <dynamic>[];
+    String? nextPageToken;
     if (raw is List) {
       rawDataList = raw;
     } else if (raw is Map) {
       // Check for 'snapshot' field first (new backend format)
       if (raw['snapshot'] is List) {
         rawDataList = raw['snapshot'] as List<dynamic>;
+        final tokenRaw = raw['nextPageToken'];
+        if (tokenRaw != null && tokenRaw.toString().trim().isNotEmpty) {
+          nextPageToken = tokenRaw.toString().trim();
+        }
       } else if (raw['data'] is List) {
         // If data is a wrapper map that itself contains a list under 'data'
         rawDataList = raw['data'] as List<dynamic>;
+        final tokenRaw = raw['nextPageToken'];
+        if (tokenRaw != null && tokenRaw.toString().trim().isNotEmpty) {
+          nextPageToken = tokenRaw.toString().trim();
+        }
       } else {
         // treat single object as a one-element list
         rawDataList = [raw];
@@ -48,8 +68,18 @@ class MoldReportRepository {
         .where((r) => r.id.isNotEmpty) // ignore invalid/empty placeholder objects
         .toList();
 
-    AppLogger.d('MoldReportRepository: parsed ${reports.length} valid reports (filtered empty ids)');
-    return reports;
+    AppLogger.d('MoldReportRepository: parsed ${reports.length} valid reports (filtered empty ids), nextPageToken=$nextPageToken');
+
+    return {
+      'reports': reports,
+      'nextPageToken': nextPageToken,
+    };
+  }
+
+  /// Legacy convenience wrapper for callers that only need report items.
+  Future<List<MoldReport>> fetchPage({String? pageToken, String? sessionCookie, String scope = 'own'}) async {
+    final result = await fetchPageWithToken(pageToken: pageToken, sessionCookie: sessionCookie, scope: scope);
+    return result['reports'] as List<MoldReport>;
   }
 
   /// Get a report by id.
@@ -76,11 +106,13 @@ class MoldReportRepository {
     String? status,
     String? pageToken,
     String? sessionCookie,
+    String scope = 'own',
   }) async {
     AppLogger.d('MoldReportRepository: searching with query="$search", status="$status", pageToken="$pageToken"');
     final result = await _service.searchMoldReports(
       search: search,
       status: status,
+      scope: scope,
       limit: pageSize,
       pageToken: pageToken,
       sessionCookie: sessionCookie,

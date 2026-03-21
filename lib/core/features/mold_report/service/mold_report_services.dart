@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
 import 'package:moldify/services/api_service.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class MoldReportService {
   final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldReport);
@@ -24,6 +25,15 @@ class MoldReportService {
     File? coverPhoto,
     List<File>? coverPhotos,
     String? sessionCookie,
+    /// If true, poll the server after creation until the case detail's
+    /// `cover_photo` array is populated or the timeout elapses. This is
+    /// frontend-only behavior to work around the backend returning before
+    /// async uploads complete.
+    bool waitForPhotos = false,
+    /// Poll interval in seconds
+    int pollIntervalSeconds = 1,
+    /// Maximum wait time in seconds
+    int timeoutSeconds = 15,
   }) async {
     final photosToUpload =
         coverPhotos ?? (coverPhoto != null ? [coverPhoto] : <File>[]);
@@ -33,10 +43,13 @@ class MoldReportService {
 
     for (final photo in photosToUpload) {
       final filename = photo.path.split(Platform.pathSeparator).last;
-      formData.files.add(MapEntry(
-        'cover_photo',
-        await MultipartFile.fromFile(photo.path, filename: filename),
-      ));
+      // Read bytes and create multipart file (works for temp files)
+      final bytes = await photo.readAsBytes();
+      final multipartFile = MultipartFile.fromBytes(
+        bytes,
+        filename: filename,
+      );
+      formData.files.add(MapEntry('cover_photo', multipartFile));
     }
 
     final response = await _apiService.dio.post(
@@ -49,12 +62,53 @@ class MoldReportService {
       ),
     );
 
+    // Session cookie is included in headers. Dio handles multipart boundaries
+    // correctly even with custom headers.
+
     if (response.statusCode == 201 || response.statusCode == 200) {
       if (response.data == null ||
           (response.data is String && (response.data as String).isEmpty)) {
         return <String, dynamic>{};
       }
-      return response.data as Map<String, dynamic>;
+      final Map<String, dynamic> created = response.data as Map<String, dynamic>;
+
+      // Optionally poll for uploaded photos if requested and we have an id
+      if (waitForPhotos) {
+        try {
+          final id = (created['id'] ?? created['_id'] ?? created['case_id'])?.toString();
+          if (id != null && id.isNotEmpty) {
+            final int maxTries = (timeoutSeconds / (pollIntervalSeconds > 0 ? pollIntervalSeconds : 1)).ceil();
+            int tries = 0;
+            while (tries < maxTries) {
+              await Future.delayed(Duration(seconds: pollIntervalSeconds));
+              tries += 1;
+              try {
+                final refreshed = await getMoldReportById(id, sessionCookie: sessionCookie);
+                // Check first case_detail cover_photo
+                final caseDetails = refreshed['case_details'] as List<dynamic>?;
+                if (caseDetails != null && caseDetails.isNotEmpty) {
+                  final first = caseDetails.first as Map<String, dynamic>?;
+                  if (first != null) {
+                    final covers = first['cover_photo'];
+                    if (covers is List && covers.isNotEmpty) {
+                      return refreshed;
+                    }
+                    if (covers is String && covers.isNotEmpty) {
+                      return refreshed;
+                    }
+                  }
+                }
+              } catch (_) {
+                // ignore and retry until timeout
+              }
+            }
+          }
+        } catch (_) {
+          // ignore polling errors and return initial created payload
+        }
+      }
+
+      return created;
     } else {
       throw Exception(
         'Failed to create mold report: ${response.statusCode} ${response.data}',
@@ -69,11 +123,13 @@ class MoldReportService {
     String? sessionCookie,
     int? limit,
     String? pageToken,
+    String? scope,
     String path = '/user',
   }) async {
     final queryParams = <String, dynamic>{};
     if (limit != null) queryParams['limit'] = limit;
     if (pageToken != null) queryParams['pageToken'] = pageToken;
+    if (scope != null && scope.isNotEmpty) queryParams['scope'] = scope;
 
     final response = await _apiService.get(
       path,
@@ -110,12 +166,14 @@ class MoldReportService {
     String? sessionCookie,
     int? limit,
     String? pageToken,
+    String? scope,
   }) async {
     return fetchMoldReports(
       sessionCookie: sessionCookie,
       limit: limit,
       pageToken: pageToken,
-      path: '/user/closed',
+      scope: scope,
+      path: '/closed',
     );
   }
 
@@ -225,7 +283,12 @@ class MoldReportService {
     );
 
     if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+      final responseBody = response.data as Map<String, dynamic>;
+      // Extract the data wrapper if it exists, otherwise return the response as-is
+      final data = responseBody['data'] is Map<String, dynamic>
+          ? responseBody['data'] as Map<String, dynamic>
+          : responseBody;
+      return data;
     }
     throw Exception('Failed to fetch report counts: ${response.statusCode}');
   }
@@ -327,6 +390,7 @@ class MoldReportService {
   Future<Map<String, dynamic>> searchMoldReports({
     String? search,
     String? status,
+    String? scope,
     int? limit,
     String? pageToken,
     String? sessionCookie,
@@ -334,6 +398,7 @@ class MoldReportService {
     final queryParams = <String, String>{};
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (status != null && status.isNotEmpty) queryParams['status'] = status;
+    if (scope != null && scope.isNotEmpty) queryParams['scope'] = scope;
     if (limit != null) queryParams['limit'] = limit.toString();
     if (pageToken != null && pageToken.isNotEmpty) queryParams['pageToken'] = pageToken;
 

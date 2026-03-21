@@ -77,6 +77,30 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
     on<SearchMoldCases>(_onSearch);
   }
 
+  List<MoldCase> _dedupeByReportIdPreferHigherPriority(List<MoldCase> cases) {
+    final priorityOrder = {'low': 1, 'medium': 2, 'high': 3};
+    final Map<String, MoldCase> byReport = {};
+
+    for (final moldCase in cases) {
+      final key = moldCase.moldReportId.trim().isNotEmpty
+          ? moldCase.moldReportId
+          : moldCase.id;
+      final existing = byReport[key];
+      if (existing == null) {
+        byReport[key] = moldCase;
+        continue;
+      }
+
+      final existingRank = priorityOrder[existing.priority.toLowerCase()] ?? 0;
+      final currentRank = priorityOrder[moldCase.priority.toLowerCase()] ?? 0;
+      if (currentRank > existingRank) {
+        byReport[key] = moldCase;
+      }
+    }
+
+    return byReport.values.toList();
+  }
+
   Future<void> _onFetch(FetchMoldCases event, Emitter<MoldCaseState> emit) async {
     try {
       if (event.pageToken == null) {
@@ -93,14 +117,14 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       
       final pageCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
-      
-      // Deduplicate: only add cases with IDs we haven't seen yet
-      final existingIds = _allCases.map((c) => c.id).toSet();
-      final newCases = pageCases.where((c) => !existingIds.contains(c.id)).toList();
-      
-      AppLogger.d('MoldCaseBloc: fetched ${pageCases.length} cases, adding ${newCases.length} new unique cases (filtered ${pageCases.length - newCases.length} duplicates)');
-      
-      _allCases.addAll(newCases);
+
+      final merged = <MoldCase>[..._allCases, ...pageCases];
+      final deduped = _dedupeByReportIdPreferHigherPriority(merged);
+      AppLogger.d('MoldCaseBloc: fetched ${pageCases.length} cases, merged ${merged.length}, deduped to ${deduped.length} by mold_report_id');
+
+      _allCases
+        ..clear()
+        ..addAll(deduped);
       _nextPageToken = nextToken;
       
       // hasMore is true if we have a nextPageToken from the server
@@ -125,8 +149,9 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       
       final pageCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
-      
-      _allCases.addAll(pageCases);
+
+      final deduped = _dedupeByReportIdPreferHigherPriority(pageCases);
+      _allCases.addAll(deduped);
       _nextPageToken = nextToken;
       
       final hasMore = nextToken != null && nextToken.isNotEmpty;
@@ -151,8 +176,9 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
 
       final searchCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
-      
-      _allCases.addAll(searchCases);
+
+      final deduped = _dedupeByReportIdPreferHigherPriority(searchCases);
+      _allCases.addAll(deduped);
       _nextPageToken = nextToken;
       
       final hasMore = nextToken != null && nextToken.isNotEmpty;

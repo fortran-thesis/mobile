@@ -21,7 +21,7 @@ class BuildCoverImage extends StatelessWidget {
     const String fallbackAsset = 'assets/images/Branding2.png';
 
     return Container(
-      height: 200,
+      height: 350,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadiusContainer),
         color: Colors.grey.shade300,

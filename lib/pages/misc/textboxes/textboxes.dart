@@ -40,6 +40,7 @@ class BuildTextBox extends StatefulWidget {
   final VoidCallback? onTap;
   final bool readOnly;
   final bool showPhoneNumberPrefix;
+  final List<TextInputFormatter>? customInputFormatters;
 
 
   const BuildTextBox({
@@ -62,6 +63,7 @@ class BuildTextBox extends StatefulWidget {
     this.onTap,
     this.readOnly = false,
     this.showPhoneNumberPrefix = false,
+    this.customInputFormatters,
   });
 
   @override
@@ -79,9 +81,10 @@ class _BuildTextBoxState extends State<BuildTextBox> {
       obscureText: widget.showPassword ? _obscureText : false,
       textAlign: widget.textAlign ?? TextAlign.start,
       keyboardType: widget.showPhoneNumberPrefix ? TextInputType.number : (widget.keyboardType ?? TextInputType.text),
-      inputFormatters: widget.showPhoneNumberPrefix
+      inputFormatters: widget.customInputFormatters ??
+          (widget.showPhoneNumberPrefix
           ? [FilteringTextInputFormatter.digitsOnly]
-          : null,
+          : null),
       maxLength: widget.maxLength,
       onChanged: widget.onChanged,
       focusNode: widget.focusNode,

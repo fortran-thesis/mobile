@@ -6,9 +6,11 @@ import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
 import 'package:moldify/pages/identification/input_characteristics.dart';
+import 'package:moldify/pages/monitor/add_log_choices.dart';
 import 'package:moldify/pages/monitor/add_treatment.dart';
 import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/terms_of_agreement.dart';
+import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -25,10 +27,13 @@ import '../pages/identification/mold_result.dart';
 import '../pages/monitor/add_log.dart';
 import '../pages/monitor/add_log_instructions.dart';
 import '../pages/monitor/edit_log.dart';
+import '../pages/monitor/give_recommendation.dart';
 import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
 import '../pages/monitor/view_case.dart';
+import '../pages/monitor/culture/view_timers.dart';
+import '../pages/monitor/culture/set_timer.dart';
 import '../splash_screen.dart';
 
 class AppRoutes {
@@ -76,7 +81,19 @@ class AppRoutes {
             final source = args?['source'] as String?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
-            return CameraScreen(source: source, sourceTab: sourceTab, caseId: caseId);
+            final sourceFlow = args?['sourceFlow'] as String?;
+            final scanModality = args?['scanModality'] as String?;
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            final returnResult = args?['returnResult'] as bool? ?? false;
+            return CameraScreen(
+              source: source,
+              sourceTab: sourceTab,
+              caseId: caseId,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+              includeSize: includeSize,
+              returnResult: returnResult,
+            );
 
           case RouteNames.imagePreview:
             if (settings.arguments is Map<String, dynamic>) {
@@ -86,7 +103,20 @@ class AppRoutes {
                 final String? source = args['source'] as String?;
                 final String? sourceTab = args['sourceTab'] as String?;
                 final String? caseId = args['caseId'] as String?;
-                return ImagePreviewScreen(imagePath: imagePath, source: source, sourceTab: sourceTab, caseId: caseId);
+                final String? sourceFlow = args['sourceFlow'] as String?;
+                final String? scanModality = args['scanModality'] as String?;
+                final bool includeSize = args['includeSize'] as bool? ?? true;
+                final bool returnResult = args['returnResult'] as bool? ?? false;
+                return ImagePreviewScreen(
+                  imagePath: imagePath,
+                  source: source,
+                  sourceTab: sourceTab,
+                  caseId: caseId,
+                  sourceFlow: sourceFlow,
+                  scanModality: scanModality,
+                  includeSize: includeSize,
+                  returnResult: returnResult,
+                );
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('imagePath missing')));
               }
@@ -101,7 +131,19 @@ class AppRoutes {
                 final String croppedImagePath = args['croppedImagePath'] as String;
                 final Map<String, dynamic>? modelResult = args['modelResult'] as Map<String, dynamic>?;
                 final Map<String, dynamic>? moldDetails = args['moldDetails'] as Map<String, dynamic>?;
-                return MoldResultScreen(croppedImagePath: croppedImagePath, modelResult: modelResult, moldDetails: moldDetails);
+                final String? sourceFlow = args['sourceFlow'] as String?;
+                final String? scanModality = args['scanModality'] as String?;
+                final String? sourceTab = args['sourceTab'] as String?;
+                final String? caseId = args['caseId'] as String?;
+                return MoldResultScreen(
+                  croppedImagePath: croppedImagePath,
+                  modelResult: modelResult,
+                  moldDetails: moldDetails,
+                  sourceFlow: sourceFlow,
+                  scanModality: scanModality,
+                  sourceTab: sourceTab,
+                  caseId: caseId,
+                );
               } else {
                 return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('croppedImagePath missing')));
               }
@@ -141,6 +183,9 @@ class AppRoutes {
           case RouteNames.addTreatment:
             return AddTreatmentScreen();
 
+          case RouteNames.giveRecommendation:
+            return const GiveRecommendationScreen();
+
           case RouteNames.identificationHistory:
             return IdentificationHistoryScreen();
 
@@ -151,7 +196,22 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
-            return AddLogInstructionsScreen(sourceTab: sourceTab, caseId: caseId);
+            final pageTitle = args?['pageTitle'] as String?;
+            final pageSubtitle = args?['pageSubtitle'] as String?;
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            final sourceFlow = args?['sourceFlow'] as String?;
+            final scanModality = args?['scanModality'] as String?;
+            final returnResult = args?['returnResult'] as bool? ?? false;
+            return AddLogInstructionsScreen(
+              sourceTab: sourceTab,
+              caseId: caseId,
+              pageTitle: pageTitle,
+              pageSubtitle: pageSubtitle,
+              includeSize: includeSize,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+              returnResult: returnResult,
+            );
 
           case RouteNames.addLog:
             if (settings.arguments is Map<String, dynamic>) {
@@ -162,7 +222,17 @@ class AppRoutes {
                 final imagePath = args['imagePath'] as String;
                 final sourceTab = args['sourceTab'] as String;
                 final caseId = args['caseId'] as String;
-                return AddLogScreen(imagePath: imagePath, sourceTab: sourceTab, caseId: caseId);
+                final includeSize = args['includeSize'] as bool? ?? true;
+                final sourceFlow = args['sourceFlow'] as String?;
+                final scanModality = args['scanModality'] as String?;
+                return AddLogScreen(
+                  imagePath: imagePath,
+                  sourceTab: sourceTab,
+                  caseId: caseId,
+                  includeSize: includeSize,
+                  sourceFlow: sourceFlow,
+                  scanModality: scanModality,
+                );
               } else {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Argument Error')),
@@ -179,7 +249,19 @@ class AppRoutes {
           case RouteNames.mainCamera:
             final args = settings.arguments as Map<String, dynamic>?;
             final bool showAppBar = args?['showAppBar'] as bool? ?? false;
-            return MainCameraScreen(showAppBar: showAppBar);
+            final bool returnResult = args?['returnResult'] as bool? ?? false;
+            final String? sourceFlow = args?['sourceFlow'] as String?;
+            final String? scanModality = args?['scanModality'] as String?;
+            final String? sourceTab = args?['sourceTab'] as String?;
+            final String? moldCaseId = args?['caseId'] as String?;
+            return MainCameraScreen(
+              showAppBar: showAppBar,
+              returnResult: returnResult,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+              sourceTab: sourceTab,
+              moldCaseId: moldCaseId,
+            );
             case RouteNames.submitReport:
               return SubmitReportScreen();
           case RouteNames.viewReport:
@@ -192,6 +274,236 @@ class AppRoutes {
             return TermsOfAgreementScreen();
           case RouteNames.privacy:
             return PrivacyPolicyScreen();
+          case RouteNames.addLogChoices:
+            final args = settings.arguments as Map<String, dynamic>?;
+            final sourceTab = args?['sourceTab'] as String?;
+            final caseId = args?['caseId'] as String?;
+            final includeSize = args?['includeSize'] as bool? ?? true;
+            final microscopicImagePath = args?['microscopicImagePath'] as String?;
+            final macroscopicImagePath = args?['macroscopicImagePath'] as String?;
+            final Map<String, dynamic>? microResult =
+              args?['microResult'] as Map<String, dynamic>?;
+            final Map<String, dynamic>? macroResult =
+                args?['macroResult'] as Map<String, dynamic>?;
+            final String? initialMicroIdentifiedMold =
+              args?['initialMicroIdentifiedMold'] as String?;
+            final String? initialMacroColor = args?['initialMacroColor'] as String?;
+            final String? initialMacroTexture =
+              args?['initialMacroTexture'] as String?;
+            final String? initialMacroSymptoms =
+              args?['initialMacroSymptoms'] as String?;
+            final String? initialMacroCharacteristics =
+              args?['initialMacroCharacteristics'] as String?;
+
+            List<String> toStringList(dynamic value) {
+              if (value is List) {
+                return value
+                    .map((e) => e.toString().trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+              }
+              return <String>[];
+            }
+
+            String? extractScanId(Map<String, dynamic>? payload) {
+              if (payload == null) return null;
+              final direct = payload['scanId']?.toString().trim();
+              if (direct != null && direct.isNotEmpty) return direct;
+
+              final savedScan = payload['savedScan'];
+              if (savedScan is Map<String, dynamic>) {
+                final nested = savedScan['id']?.toString().trim();
+                if (nested != null && nested.isNotEmpty) return nested;
+              }
+
+              final fallback = payload['id']?.toString().trim();
+              if (fallback != null && fallback.isNotEmpty) return fallback;
+              return null;
+            }
+
+            return AddLogChoicesScreen(
+              microscopicImagePath: microscopicImagePath,
+              macroscopicImagePath: macroscopicImagePath,
+              microResult: microResult,
+              macroResult: macroResult,
+              initialMicroIdentifiedMold: initialMicroIdentifiedMold,
+              initialMacroColor: initialMacroColor,
+              initialMacroTexture: initialMacroTexture,
+              initialMacroSymptoms: initialMacroSymptoms,
+              initialMacroCharacteristics: initialMacroCharacteristics,
+              onCaptureMicro: () {
+                final navigator = Navigator.of(context);
+                navigator.pushNamed(
+                  RouteNames.mainCamera,
+                  arguments: {
+                    'showAppBar': true,
+                    'returnResult': true,
+                    'sourceFlow': 'cultivation_log',
+                    'scanModality': 'microscopic',
+                    'sourceTab': sourceTab,
+                    'caseId': caseId,
+                  },
+                ).then((result) {
+                  if (result is Map<String, dynamic>) {
+                    final nextMicroPath = result['imagePath']?.toString();
+                    navigator.pushReplacementNamed(
+                      RouteNames.addLogChoices,
+                      arguments: {
+                        'sourceTab': sourceTab,
+                        'caseId': caseId,
+                        'includeSize': includeSize,
+                        'microscopicImagePath': nextMicroPath,
+                        'macroscopicImagePath': macroscopicImagePath,
+                        'microResult': result,
+                        'macroResult': macroResult,
+                        'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
+                        'initialMacroColor': initialMacroColor,
+                        'initialMacroTexture': initialMacroTexture,
+                        'initialMacroSymptoms': initialMacroSymptoms,
+                        'initialMacroCharacteristics': initialMacroCharacteristics,
+                      },
+                    );
+                  }
+                });
+              },
+              onCaptureMacro: () {
+                if (sourceTab == null || caseId == null) return;
+                final navigator = Navigator.of(context);
+                navigator.pushNamed(
+                  RouteNames.addLogInstructions,
+                  arguments: {
+                    'sourceTab': sourceTab,
+                    'caseId': caseId,
+                    'includeSize': includeSize,
+                    'sourceFlow': 'cultivation_log',
+                    'scanModality': 'macroscopic',
+                    'returnResult': true,
+                  },
+                ).then((result) {
+                  if (result is Map<String, dynamic>) {
+                    final nextMacroPath = result['imagePath']?.toString();
+                    navigator.pushReplacementNamed(
+                      RouteNames.addLogChoices,
+                      arguments: {
+                        'sourceTab': sourceTab,
+                        'caseId': caseId,
+                        'includeSize': includeSize,
+                        'microscopicImagePath': microscopicImagePath,
+                        'macroscopicImagePath': nextMacroPath,
+                        'microResult': microResult,
+                        'macroResult': result,
+                        'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
+                        'initialMacroColor': initialMacroColor,
+                        'initialMacroTexture': initialMacroTexture,
+                        'initialMacroSymptoms': initialMacroSymptoms,
+                        'initialMacroCharacteristics': initialMacroCharacteristics,
+                      },
+                    );
+                  }
+                });
+              },
+              onSubmit: () async {
+                if (microResult == null && macroResult == null) {
+                  Navigator.of(context).pop();
+                  return;
+                }
+
+                final microScanId = extractScanId(microResult);
+                final macroScanId = extractScanId(macroResult);
+                final hasAnyScanId = (microScanId != null && microScanId.isNotEmpty) ||
+                    (macroScanId != null && macroScanId.isNotEmpty);
+
+                bool scanAssociationSaved = false;
+                final scannedMicroscopicIdsAdded = <String>[];
+                final scannedMacroscopicIdsAdded = <String>[];
+
+                if (caseId != null && caseId.isNotEmpty && hasAnyScanId) {
+                  try {
+                    final moldCaseService = MoldCaseService();
+                    final caseData = await moldCaseService.getMoldCaseById(
+                      caseId,
+                      sessionCookie: authProvider.cookie,
+                    );
+
+                    final existingDetails =
+                        (caseData['cultivation_details'] is Map<String, dynamic>)
+                            ? Map<String, dynamic>.from(
+                                caseData['cultivation_details'] as Map<String, dynamic>,
+                              )
+                            : <String, dynamic>{};
+
+                    final microscopicIds = toStringList(existingDetails['scanned_microscopic_ids']);
+                    final macroscopicIds = toStringList(existingDetails['scanned_macroscopic_ids']);
+
+                    if (microScanId != null && microScanId.isNotEmpty && !microscopicIds.contains(microScanId)) {
+                      microscopicIds.add(microScanId);
+                      scannedMicroscopicIdsAdded.add(microScanId);
+                    }
+                    if (macroScanId != null && macroScanId.isNotEmpty && !macroscopicIds.contains(macroScanId)) {
+                      macroscopicIds.add(macroScanId);
+                      scannedMacroscopicIdsAdded.add(macroScanId);
+                    }
+
+                    existingDetails['scanned_microscopic_ids'] = microscopicIds;
+                    existingDetails['scanned_macroscopic_ids'] = macroscopicIds;
+
+                    await moldCaseService.updateCultivationDetails(
+                      caseId,
+                      {'cultivation_details': existingDetails},
+                      sessionCookie: authProvider.cookie,
+                    );
+
+                    scanAssociationSaved = true;
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to associate scan IDs to case: $e'),
+                      ),
+                    );
+                    return;
+                  }
+                }
+
+                final Map<String, dynamic>? enrichedMacroResult = macroResult == null
+                    ? null
+                    : {
+                        ...macroResult,
+                        'scanAssociationSaved': scanAssociationSaved,
+                        'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
+                        'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                      };
+
+                final Map<String, dynamic>? enrichedMicroResult = microResult == null
+                    ? null
+                    : {
+                        ...microResult,
+                        'scanAssociationSaved': scanAssociationSaved,
+                        'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
+                        'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                      };
+
+                if (!context.mounted) return;
+
+                Navigator.of(context).pop({
+                  'sourceTab': sourceTab,
+                  'microscopicImagePath': microscopicImagePath,
+                  'macroscopicImagePath': macroscopicImagePath,
+                  'scanAssociationSaved': scanAssociationSaved,
+                  'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
+                  'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                  if (enrichedMicroResult != null) 'microResult': enrichedMicroResult,
+                  if (enrichedMacroResult != null) 'macroResult': enrichedMacroResult,
+                });
+              },
+            );
+
+          case RouteNames.cultureDashboard:
+            return const CultureDashboard();
+
+          case RouteNames.setCulture:
+            return const InitializeCulturePage();
+
           default:
             return Scaffold(
               body: Center(child: Text('No route defined for \'${settings.name}\'')),

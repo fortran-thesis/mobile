@@ -1,27 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../../../misc/colors.dart';
+import '../../../misc/tiles/control_management_tile.dart';
 
 class PreventionTacticsContent extends StatelessWidget {
-  final List<String> recommendedFungicides;
-  final String additionalInformation;
+  final String treatmentsContent;
+  
+  // Parsing delimiters for structured data (same as WikiMold)
+  static const String _stageDelimiter = '|';
+  static const String _fieldDelimiter = '::';
 
   const PreventionTacticsContent({
     super.key,
-    required this.recommendedFungicides,
-    required this.additionalInformation
+    required this.treatmentsContent,
   });
+
+  /// Icon mapping for different treatment types
+  IconData _getIconForTreatmentType(String type) {
+    const iconMap = {
+      'MECHANICAL': Icons.settings_suggest_outlined,
+      'BIOLOGICAL': Icons.biotech_outlined,
+      'CHEMICAL': Icons.science_outlined,
+      'PHYSICAL': Icons.build_outlined,
+      'CULTURAL': Icons.agriculture_outlined,
+    };
+    return iconMap[type.toUpperCase()] ?? Icons.medical_services_outlined;
+  }
+
+  /// Parse structured treatment format: TYPE::Title::Description|TYPE::...
+  List<Widget> _buildTreatmentTiles(String content) {
+    if (content.isEmpty) return [];
+    
+    if (content.contains(_fieldDelimiter)) {
+      final treatments = content
+          .split(_stageDelimiter)
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
+      
+      final widgets = <Widget>[];
+      for (final treatment in treatments) {
+        final parts = treatment.split(_fieldDelimiter);
+        if (parts.length >= 3) {
+          final type = parts[0].toUpperCase();
+          final title = parts[1];
+          final desc = parts[2];
+          final icon = _getIconForTreatmentType(type);
+          
+          widgets.add(
+            ControlManagementTile(
+              title: title,
+              icon: icon,
+              description: desc,
+            ),
+          );
+        }
+      }
+      return widgets;
+    }
+    
+    // Fallback: render plain text as generic treatment card
+    return [
+      ControlManagementTile(
+        title: 'Treatment Recommendations',
+        icon: Icons.medical_services_outlined,
+        description: content.replaceAll(RegExp(r'<[^>]*>'), ''),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final controlMethods = _buildTreatmentTiles(treatmentsContent);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Case Details Header
-          Text (
+          /// Header
+          const Text(
             'Prevention Tactics',
             style: TextStyle(
               fontFamily: 'Montserrat-Black',
@@ -29,96 +85,33 @@ class PreventionTacticsContent extends StatelessWidget {
               color: MoldifyColors.primaryColor,
             ),
           ),
-          Text (
-            'View recommended prevention tactics to avoid mold growth.',
+          const Text(
+            'Comprehensive mold control management strategies.',
             style: TextStyle(
               fontFamily: 'Bricolage-Grotesque-Regular',
               fontSize: 12,
               color: MoldifyColors.MoldifyGrey,
             ),
           ),
-          /// End of Case Details Header
+          const SizedBox(height: 20),
 
-          SizedBox(height: 12),
-          Text(
-            'Recommend Fungicides',
-            style: TextStyle(
-              fontFamily: 'Bricolage-Grotesque-SemiBold',
-              fontSize: 16,
-              color: MoldifyColors.primaryColor,
-            ),
-          ),
-          // Bullet List
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: recommendedFungicides
-                .map((fungicide) => Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '• ',
-                    style: TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                  Expanded(
-                    child: Text(
-                      fungicide,
-                      style: const TextStyle(
-                          height: 1.4,
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          fontSize: 16,
-                          color: MoldifyColors.MoldifyBlack
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ))
-                .toList(),
-          ),
-          SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: MoldifyColors.taupe,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.circleInfo,
-                      color: MoldifyColors.accentColor,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Additional Information',
-                        style: TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-SemiBold',
-                          fontSize: 16,
-                          color: MoldifyColors.primaryColor,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                SizedBox(height: 10),
-                Text(
-                  additionalInformation,
+          /// Control Management Tiles
+          if (controlMethods.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text(
+                  'No prevention tactics available',
                   style: TextStyle(
                     fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 16,
-                    color: MoldifyColors.MoldifyBlack,
+                    fontSize: 14,
+                    color: MoldifyColors.MoldifyGrey,
                   ),
-                  textAlign: TextAlign.justify,
                 ),
-              ],
-            ),
-          )
+              ),
+            )
+          else
+            ...controlMethods,
         ],
       ),
     );

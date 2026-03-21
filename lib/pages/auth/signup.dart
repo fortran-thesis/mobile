@@ -1,6 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/pages/auth/login.dart';
 import '../misc/buttons/primary_button.dart';
@@ -9,6 +10,36 @@ import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
 import '../../core/constants/route_names.dart';
+
+/// Custom input formatter for phone number with dashes (9XX-XXX-XXXX format)
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text.replaceAll('-', '');
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    if (text.length <= 3) {
+      return newValue.copyWith(text: text);
+    } else if (text.length <= 6) {
+      final formatted = '${text.substring(0, 3)}-${text.substring(3)}';
+      return newValue.copyWith(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    } else {
+      final formatted =
+          '${text.substring(0, 3)}-${text.substring(3, 6)}-${text.substring(6, 10)}';
+      return newValue.copyWith(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
+  }
+}
 
 /// This is the Sign Up screen for the Moldify app.
 /// It allows users to create a new account by providing their username, email, password, and confirming the password.
@@ -39,6 +70,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final phoneNumController = TextEditingController();
 
   String? _passwordErrorText;
+  String? _phoneErrorText;
 
   @override
   void dispose() {
@@ -106,9 +138,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null; // Password is valid
   }
 
+  /// Validates phone number (Philippine format: 10 digits)
+  String? _validatePhoneNumber(String phoneNumber) {
+    // Remove dashes for validation
+    final digitsOnly = phoneNumber.replaceAll('-', '');
+    if (digitsOnly.isEmpty) {
+      return 'Phone number is required';
+    }
+    if (digitsOnly.length != 10) {
+      return 'Phone number must be exactly 10 digits';
+    }
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(digitsOnly)) {
+      return 'Phone number must contain only digits';
+    }
+    return null; // Phone number is valid
+  }
+
   Future<void> _handleUserSignUp() async {
     setState(() {
       _passwordErrorText = null;
+      _phoneErrorText = null;
     });
 
     // Check terms & conditions FIRST before any other validation
@@ -132,6 +181,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (passwordController.text != confirmPasswordController.text) {
       _showErrorSnackBar('Passwords do not match.');
+      return;
+    }
+
+    // Validate phone number
+    final phoneValidationError = _validatePhoneNumber(phoneNumController.text);
+    if (phoneValidationError != null) {
+      setState(() {
+        _phoneErrorText = phoneValidationError;
+      });
       return;
     }
 
@@ -159,7 +217,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       fnameController.text,
       lnameController.text,
       addressController.text,
-      '+63${phoneNumController.text}',
+      '+63${phoneNumController.text.replaceAll('-', '')}',
     );
     setState(() => isLoading = false);
 
@@ -376,13 +434,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter phone number',
+                              hintText: '9__-___-____',
                               controller: phoneNumController,
                               showPassword: false,
                               keyboardType: TextInputType.phone,
                               showPhoneNumberPrefix: true,
+                              maxLength: 12,
+                              customInputFormatters: [PhoneNumberFormatter()],
                             ),
                           ),
+
+                          if (_phoneErrorText != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                              child: AutoSizeText(
+                                _phoneErrorText!,
+                                style: const TextStyle(
+                                  color: MoldifyColors.MoldifyRed,
+                                  fontSize: 14,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                ),
+                                maxLines: 2,
+                                minFontSize: 12,
+                              ),
+                            ),
 
                           /// Location Label
                           Padding(

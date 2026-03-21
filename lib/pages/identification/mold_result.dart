@@ -1,18 +1,19 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'dart:io';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:moldify/pages/identification/mold_result_content/mold_info_content.dart';
+import 'package:moldify/pages/identification/mold_result_content/revised_results_content.dart';
+import 'package:moldify/pages/identification/mold_result_content/result_action_section.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/functions/tab_bar.dart';
+import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
-import '../misc/buttons/primary_button.dart';
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
-import 'mold_result_content/prevention_treatment_content.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 
@@ -20,8 +21,21 @@ class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
   final Map<String, dynamic>? modelResult;
   final Map<String, dynamic>? moldDetails;
+  final String? sourceFlow;
+  final String? scanModality;
+  final String? sourceTab;
+  final String? caseId;
 
-  const MoldResultScreen({super.key, required this.croppedImagePath, this.modelResult, this.moldDetails});
+  const MoldResultScreen({
+    super.key,
+    required this.croppedImagePath,
+    this.modelResult,
+    this.moldDetails,
+    this.sourceFlow,
+    this.scanModality,
+    this.sourceTab,
+    this.caseId,
+  });
 
   @override
   State<MoldResultScreen> createState() => _MoldResultScreenState();
@@ -30,12 +44,11 @@ class MoldResultScreen extends StatefulWidget {
 class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
+  bool _isSavingResult = false;
   final String healthContent =
     "Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.";
   final String plantThreatContent =
     "Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.";
-  final String additionalInfoContent =
-    "Aspergillus species are also used in biotechnology for the production of enzymes and pharmaceuticals, showcasing their industrial significance.";
 
   final String fullDescription =
     "Aspergillus is a genus of common molds that can be found in various environments, "
@@ -51,45 +64,16 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     "are also used commercially for the production of citric acid and other enzymes, highlighting "
     "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
-  bool _showFullText = false;
-  late TapGestureRecognizer _tapRecognizer;
+  // Prevention tactics using structured format (pipe-delimited)
+  final String treatmentsContent = 
+      'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags. Clean and dry surfaces thoroughly to prevent mold spread.|'
+      'BIOLOGICAL::Biological Control::Apply beneficial microorganisms that compete with mold growth. Use natural antifungal agents like vinegar, hydrogen peroxide, or neem oil for surface treatment. UV light treatment can also help control surface mold.|'
+      'CHEMICAL::Chemical Control::Recommended fungicides: Chlorothalonil, Mancozeb, and Copper-based fungicides. Rotate products with different active ingredients to prevent resistance. Always follow label recommendations for dosage and application frequency.|'
+      'PHYSICAL::Physical Control::Improve ventilation in affected areas to reduce moisture buildup. Use dehumidifiers to maintain optimal humidity levels. Ensure proper air circulation and maintain appropriate temperature control.|'
+      'CULTURAL::Cultural Control::Implement proper sanitation practices and field hygiene. Rotate crops annually to prevent soil-borne diseases. Remove and destroy contaminated materials to prevent recontamination. Monitor and record treatments for effectiveness.';
 
-  final Map<String, String> taxonomy = {
-    "Kingdom": "Fungi",
-    "Phylum": "Ascomycota",
-    "Class": "Eurotiomycetes",
-    "Order": "Eurotiales",
-    "Family": "Aspergillaceae",
-    "Genus": "Aspergillus",
-  };
-
-  final List<String> recommendedFungicides = [
-    "Chlorothalonil",
-    "Mancozeb",
-    "Copper-based fungicides",
-  ];
-
-  final String resistanceContent = "To minimize the risk of mold developing "
-      "resistance to fungicides, rotate products that contain different active "
-      "ingredients or modes of action. Avoid repeated use of the same fungicide "
-      "type across multiple treatments. Always follow label recommendations for dosage "
-      "and application frequency. Overuse or incorrect application can reduce fungicide "
-      "effectiveness and contribute to resistance in future mold outbreaks.";
-
-  final String alternativeMethodsContent = "Implement non-chemical control methods alongside "
-      "fungicide use for best results. Improve ventilation in affected areas to reduce "
-      "moisture buildup, and use a dehumidifier where possible. Clean and dry surfaces "
-      "thoroughly, and remove contaminated materials to prevent further spread. UV light "
-      "treatment and natural antifungal agents like vinegar or hydrogen peroxide can help "
-      "control surface mold growth.";
-
-  final String additionalInfoTreatmentContent = "Always wear protective gloves and a mask "
-      "when handling mold or applying treatments. Dispose of contaminated "
-      "materials properly to prevent recontamination. For large or recurring "
-      "infestations, contact a certified mold remediation specialist. "
-      "Local regulations may require professional cleanup for certain mold species or "
-      "in public spaces. Keep records of treatments and observations to help monitor "
-      "mold recurrence and treatment effectiveness.";
+  late final Map<String, String> _recommendationSections;
+  late final List<Map<String, String>> _managementControls;
 
 
   @override
@@ -99,12 +83,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     AppLogger.d('MoldResult: modelResult = ${widget.modelResult}');
     AppLogger.d('MoldResult: moldDetails = ${widget.moldDetails}');
     
-    _tapRecognizer = TapGestureRecognizer()
-      ..onTap = () {
-        setState(() {
-          _showFullText = !_showFullText;
-        });
-      };
     // Initialize from modelResult argument
     // Convert probability from decimal to percentage string
     final prob = widget.modelResult?['probability'];
@@ -141,12 +119,144 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     } else {
       AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
     }
+
+    _recommendationSections = {
+      'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+      'DESCRIPTION': fullDescription,
+      'HEALTH RISKS': healthContent,
+      'AFFECTED CROPS / HOSTS': plantThreatContent,
+      'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+      'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+      'IMPACT': '$healthContent\n\n$plantThreatContent',
+      'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+    };
+
+    _managementControls = _parseManagementControls(treatmentsContent);
+  }
+
+  List<Map<String, dynamic>> _buildTopPredictions() {
+    final dynamic raw = widget.modelResult?['all_probabilities'];
+    if (raw is! Map) return [];
+
+    final entries = <Map<String, dynamic>>[];
+    raw.forEach((key, value) {
+      if (key == null) return;
+      final className = key.toString();
+      final probability = (value as num?)?.toDouble() ?? 0.0;
+      entries.add({
+        'class': className,
+        'probability': probability,
+      });
+    });
+
+    entries.sort((a, b) => ((b['probability'] as double).compareTo(a['probability'] as double)));
+    return entries.take(3).toList();
+  }
+
+  String _inferImageFormat(String path) {
+    final dotIndex = path.lastIndexOf('.');
+    final extension = dotIndex >= 0 ? path.substring(dotIndex + 1).toLowerCase() : '';
+    if (extension.isNotEmpty) return extension;
+    return 'png';
   }
 
   @override
   void dispose() {
-    _tapRecognizer.dispose();
     super.dispose();
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 24, 15, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Bold',
+              fontSize: 18,
+              letterSpacing: 0.5,
+              color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Divider(thickness: 1.5, color: MoldifyColors.primaryColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionBody(Widget child) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: child,
+    );
+  }
+
+  List<Map<String, String>> _parseManagementControls(String content) {
+    final entries = content
+        .split('|')
+        .where((part) => part.trim().isNotEmpty)
+        .map((part) => part.split('::'))
+        .where((parts) => parts.length >= 3)
+        .map(
+          (parts) => {
+            'type': parts[0].trim(),
+            'title': parts[1].trim(),
+            'content': parts[2].trim(),
+          },
+        )
+        .toList();
+
+    return entries;
+  }
+
+  IconData _iconForControlType(String type) {
+    switch (type.toUpperCase()) {
+      case 'MECHANICAL':
+        return Icons.settings_suggest_outlined;
+      case 'BIOLOGICAL':
+        return Icons.biotech_outlined;
+      case 'CHEMICAL':
+        return Icons.science_outlined;
+      case 'PHYSICAL':
+        return Icons.build_outlined;
+      case 'CULTURAL':
+        return Icons.agriculture_outlined;
+      default:
+        return Icons.medical_services_outlined;
+    }
+  }
+
+  Widget _buildManagementControls() {
+    if (_managementControls.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text(
+          'No recommendation available yet.',
+          style: TextStyle(
+            fontFamily: 'Bricolage-Grotesque-Regular',
+            fontSize: 16,
+            color: MoldifyColors.MoldifyGrey,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _managementControls
+          .map(
+            (item) => ControlManagementTile(
+              title: item['title'] ?? '',
+              description: (item['content'] ?? '').isNotEmpty
+                  ? item['content']!
+                  : 'No recommendation available yet.',
+              icon: _iconForControlType(item['type'] ?? ''),
+            ),
+          )
+          .toList(),
+    );
   }
 
   @override
@@ -227,12 +337,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 decoration: BoxDecoration(
                   color: MoldifyColors.backgroundColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.0),
-                    topRight: Radius.circular(20.0),
+                    topLeft: Radius.circular(40.0),
+                    topRight: Radius.circular(40.0),
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -319,59 +429,89 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                           ],
                         ),
                       ),
-              
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.7,
-                        child: BuildTabBar(
-                            tabs: ['Mold Info', 'Prevention Tactics'],
-                            tabContents: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                                child: MoldInfoSection(
-                                    description: fullDescription,
-                                    taxonomy: taxonomy,
-                                  healthContent: healthContent,
-                                  plantThreatContent: plantThreatContent,
-                                  additionalInfoContent: additionalInfoContent,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 15.0),
-                                child: PreventionTreatmentContent(
-                                  recommendedFungicides: recommendedFungicides,
-                                  resistanceContent: resistanceContent,
-                                  alternativeMethodsContent: alternativeMethodsContent,
-                                  additionalInfoTreatmentContent: additionalInfoContent,
-                                ),
-                              ),
-                            ]
+
+                      _buildSectionHeader('OVERVIEW ANALYSIS'),
+                      _buildSectionBody(
+                        RevisedResultsContent(
+                          sections: _recommendationSections,
                         ),
                       ),
 
-                      SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: Text(
-                          'Disclaimer: This app only suggests possible mold genus based on image analysis. This should not replace expert advice or laboratory confirmation.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            color: MoldifyColors.MoldifyGrey,
-                          ),
-                        ),
+                      _buildSectionHeader('TREATMENT MANAGEMENT CONTROLS'),
+                      _buildSectionBody(
+                        _buildManagementControls(),
                       ),
+                      const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: BuildButton(
-                          onPressed: () {
-                            ///To do: Implement Save Result Functionality
+                        child: ResultActionSection(
+                          onSave: () async {
+                            if (_isSavingResult) return;
+                            setState(() => _isSavingResult = true);
+                            final topPredictions = _buildTopPredictions();
+                            final confidenceDecimal = (widget.modelResult?['probability'] as num?)?.toDouble() ?? 0.0;
+                            final predictedClassName = widget.modelResult?['predicted_class']?.toString();
+                            final nowIso = DateTime.now().toUtc().toIso8601String();
+
+                            final savePayload = <String, dynamic>{
+                              'imagePath': widget.croppedImagePath,
+                              'identifiedMold': moldGenus,
+                              'confidence': confidenceLevel,
+                              // Backward-compatible additions for mycologist decision support
+                              'confidenceDecimal': confidenceDecimal,
+                              'topPredictions': topPredictions,
+                              'modelSource': widget.modelResult?['model_source'],
+                              'usedFusion': widget.modelResult?['used_fusion'] ?? false,
+                              'usedAnn': widget.modelResult?['used_ann'] ?? false,
+                              'scanModality': widget.scanModality ?? 'microscopic',
+                              'sourceFlow': widget.sourceFlow ?? 'identification',
+                              'sourceTab': widget.sourceTab,
+                              'moldCaseId': widget.caseId,
+                              'predictedClassName': predictedClassName,
+                            };
+
+                            try {
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              final cameraService = CameraService();
+
+                              final scanRes = await cameraService.createScannedMold(
+                                imagePath: widget.croppedImagePath,
+                                imageFormat: _inferImageFormat(widget.croppedImagePath),
+                                scanModality: (widget.scanModality ?? 'microscopic'),
+                                sourceFlow: (widget.sourceFlow ?? 'identification'),
+                                sourceTab: widget.sourceTab,
+                                moldCaseId: widget.caseId,
+                                predictedClassName: predictedClassName,
+                                capturedAt: nowIso,
+                                scannedResults: {
+                                  'confidence_score': confidenceDecimal,
+                                  'flagged': confidenceDecimal < 0.70,
+                                },
+                                sessionCookie: authProvider.cookie,
+                              );
+
+                              if (scanRes['error'] != null) {
+                                AppLogger.e('MoldResult: Failed to persist scan: ${scanRes['error']}');
+                                savePayload['scanSaveError'] = scanRes['error'];
+                              } else {
+                                final data = scanRes['data'];
+                                if (data is Map<String, dynamic>) {
+                                  savePayload['scanId'] = data['id']?.toString();
+                                  savePayload['savedScan'] = data;
+                                }
+                              }
+                            } catch (e, s) {
+                              AppLogger.e('MoldResult: Exception while persisting scan', error: e, stackTrace: s);
+                              savePayload['scanSaveError'] = e.toString();
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isSavingResult = false);
+                              }
+                            }
+
+                            if (!context.mounted) return;
+                            Navigator.of(context).pop(savePayload);
                           },
-                          buttonText: 'Save Result',
-                          backgroundColor: MoldifyColors.primaryColor,
-                          textColor: MoldifyColors.backgroundColor,
-                          buttonHeight: 45,
-                          buttonWidth: double.infinity,
-                          buttonRadius: 10,
                         ),
                       ),
                     ],
@@ -379,6 +519,17 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 ),
               ),
             ),
+            if (_isSavingResult)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: MoldifyColors.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
