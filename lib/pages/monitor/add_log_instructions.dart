@@ -12,6 +12,9 @@ class AddLogInstructionsScreen extends StatefulWidget {
   final String? sourceTab;
   final String? caseId;
   final bool includeSize;
+  final String? sourceFlow;
+  final String? scanModality;
+  final bool returnResult;
 
   /// Optional overrides so this screen can be reused for other capture flows
   /// (e.g. "Initial Microscopic") with different titles.
@@ -25,6 +28,9 @@ class AddLogInstructionsScreen extends StatefulWidget {
     this.pageTitle,
     this.pageSubtitle,
     this.includeSize = true,
+    this.sourceFlow,
+    this.scanModality,
+    this.returnResult = false,
   });
 
   @override
@@ -63,6 +69,9 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
             'includeSize': widget.includeSize,
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
+            'returnResult': widget.returnResult,
           },
         );
 
@@ -97,6 +106,9 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
         'sourceTab': widget.sourceTab,
         'caseId': widget.caseId,
         'includeSize': widget.includeSize,
+        'sourceFlow': widget.sourceFlow,
+        'scanModality': widget.scanModality,
+        'returnResult': widget.returnResult,
       },
     ).then((result) {
       if (!mounted) return;

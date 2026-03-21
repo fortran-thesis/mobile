@@ -53,6 +53,8 @@ class _SetMonitoringDetailsScreenState
   final List<String> _selectedSpecimenTypes = [];
   final List<String> _selectedInitialSymptoms = [];
   final List<String> _selectedInitialCharacteristics = [];
+  final List<String> _scannedMicroscopicIds = [];
+  final List<String> _scannedMacroscopicIds = [];
 
     final List<String> _specimenTypeOptions = [
       'Leaf',
@@ -88,6 +90,9 @@ class _SetMonitoringDetailsScreenState
     String? _selectedGrowthMedium;
     String? _initialMicroscopicImagePath;
     String? _initialMacroscopicImagePath;
+    String? _initialMicroscopicImageUrl;
+    String? _initialMacroscopicImageUrl;
+    Map<String, dynamic>? _microscopicAiSnapshot;
     bool _isLoading = false;
     int _selectedTab = 0;
     final List<String> _tabTitles = const ['Schedule', 'Specimen', 'Evidence'];
@@ -103,6 +108,8 @@ class _SetMonitoringDetailsScreenState
       final details = widget.moldCase.cultivationDetails;
       
       _startDateController.text = DateFormat('MMMM dd, yyyy').format(widget.moldCase.startDate);
+      // Crop name comes from the mold case `name` field
+      _cropNameController.text = widget.moldCase.name;
       
       if (widget.moldCase.endDate != null) {
         _endDateController.text = DateFormat('MMMM dd, yyyy').format(widget.moldCase.endDate!);
@@ -110,13 +117,87 @@ class _SetMonitoringDetailsScreenState
       
       if (details != null) {
         _selectedGrowthMedium = details.growthMedium;
-        
+        // Populate temperatures
         if (details.inVitroDetails != null) {
           _incubationTempController.text = details.inVitroDetails!.incubationTemperature.toString();
         }
         
         if (details.inVivoDetails != null) {
           _environmentalTempController.text = details.inVivoDetails!.environmentalTemperature.toString();
+        }
+
+        // Populate specimen entries (pair specimen_types and specimen_quantities)
+        if (details.specimenTypes != null && details.specimenTypes!.isNotEmpty) {
+          final types = details.specimenTypes!;
+          final quantities = details.specimenQuantities ?? [];
+          for (var i = 0; i < types.length; i++) {
+            final type = types[i];
+            final qty = i < quantities.length ? quantities[i] : '';
+            _specimenEntries.add({'type': type, 'quantity': qty});
+          }
+          _specimenTypeController.text = types.join(', ');
+        }
+
+        // Populate initial symptoms & characteristics
+        if (details.initialSymptoms != null && details.initialSymptoms!.isNotEmpty) {
+          _selectedInitialSymptoms.clear();
+          _selectedInitialSymptoms.addAll(details.initialSymptoms!);
+          _initialSymptomsController.text = details.initialSymptoms!.join(', ');
+        }
+        if (details.initialCharacteristics != null && details.initialCharacteristics!.isNotEmpty) {
+          _selectedInitialCharacteristics.clear();
+          _selectedInitialCharacteristics.addAll(details.initialCharacteristics!);
+          _initialCharacteristicsController.text = details.initialCharacteristics!.join(', ');
+        }
+
+        // Populate evidence and metadata
+        if (details.locationGathered != null && details.locationGathered!.isNotEmpty) {
+          _locationController.text = details.locationGathered!;
+        }
+        if (details.initialMicroscopic != null && details.initialMicroscopic!.isNotEmpty) {
+          _initialMicroscopicController.text = details.initialMicroscopic!;
+        }
+        if (details.initialMacroscopic != null && details.initialMacroscopic!.isNotEmpty) {
+          _initialMacroscopicController.text = details.initialMacroscopic!;
+        }
+        if (details.initialMicroscopicColor != null && details.initialMicroscopicColor!.isNotEmpty) {
+          _initialMicroscopicColorController.text = details.initialMicroscopicColor!;
+        }
+        if (details.initialMicroscopicTexture != null && details.initialMicroscopicTexture!.isNotEmpty) {
+          _initialMicroscopicTextureController.text = details.initialMicroscopicTexture!;
+        }
+        if (details.initialMacroscopicColor != null && details.initialMacroscopicColor!.isNotEmpty) {
+          _initialMacroscopicColorController.text = details.initialMacroscopicColor!;
+        }
+        if (details.initialMacroscopicTexture != null && details.initialMacroscopicTexture!.isNotEmpty) {
+          _initialMacroscopicTextureController.text = details.initialMacroscopicTexture!;
+        }
+        if (details.initialMacroscopicSymptoms != null && details.initialMacroscopicSymptoms!.isNotEmpty) {
+          _initialMacroscopicSymptomsController.text = details.initialMacroscopicSymptoms!;
+        }
+        if (details.initialMacroscopicCharacteristics != null && details.initialMacroscopicCharacteristics!.isNotEmpty) {
+          _initialMacroscopicCharacteristicsController.text = details.initialMacroscopicCharacteristics!;
+        }
+        if (details.initialMicroscopicImageUrl != null && details.initialMicroscopicImageUrl!.isNotEmpty) {
+          _initialMicroscopicImageUrl = details.initialMicroscopicImageUrl;
+          _initialMicroscopicImagePath = details.initialMicroscopicImageUrl;
+        }
+        if (details.initialMacroscopicImageUrl != null && details.initialMacroscopicImageUrl!.isNotEmpty) {
+          _initialMacroscopicImageUrl = details.initialMacroscopicImageUrl;
+          _initialMacroscopicImagePath = details.initialMacroscopicImageUrl;
+        }
+        if (details.dateObservation != null && details.dateObservation!.isNotEmpty) {
+          _dateOfObservationController.text = details.dateObservation!;
+        }
+        if (details.scannedMicroscopicIds != null && details.scannedMicroscopicIds!.isNotEmpty) {
+          _scannedMicroscopicIds
+            ..clear()
+            ..addAll(details.scannedMicroscopicIds!);
+        }
+        if (details.scannedMacroscopicIds != null && details.scannedMacroscopicIds!.isNotEmpty) {
+          _scannedMacroscopicIds
+            ..clear()
+            ..addAll(details.scannedMacroscopicIds!);
         }
       }
     }
@@ -190,6 +271,38 @@ class _SetMonitoringDetailsScreenState
           cultivationDetailsMap['initial_macroscopic'] =
               _initialMacroscopicController.text.trim();
         }
+        if (_initialMicroscopicColorController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_microscopic_color'] =
+              _initialMicroscopicColorController.text.trim();
+        }
+        if (_initialMicroscopicTextureController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_microscopic_texture'] =
+              _initialMicroscopicTextureController.text.trim();
+        }
+        if (_initialMacroscopicColorController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_macroscopic_color'] =
+              _initialMacroscopicColorController.text.trim();
+        }
+        if (_initialMacroscopicTextureController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_macroscopic_texture'] =
+              _initialMacroscopicTextureController.text.trim();
+        }
+        if (_initialMacroscopicSymptomsController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_macroscopic_symptoms'] =
+              _initialMacroscopicSymptomsController.text.trim();
+        }
+        if (_initialMacroscopicCharacteristicsController.text.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_macroscopic_characteristics'] =
+              _initialMacroscopicCharacteristicsController.text.trim();
+        }
+        if (_initialMicroscopicImageUrl != null && _initialMicroscopicImageUrl!.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_microscopic_image_url'] =
+              _initialMicroscopicImageUrl!.trim();
+        }
+        if (_initialMacroscopicImageUrl != null && _initialMacroscopicImageUrl!.trim().isNotEmpty) {
+          cultivationDetailsMap['initial_macroscopic_image_url'] =
+              _initialMacroscopicImageUrl!.trim();
+        }
         if (_locationController.text.trim().isNotEmpty) {
           cultivationDetailsMap['location_gathered'] =
               _locationController.text.trim();
@@ -197,6 +310,15 @@ class _SetMonitoringDetailsScreenState
         if (_dateOfObservationController.text.trim().isNotEmpty) {
           cultivationDetailsMap['date_observation'] =
               _dateOfObservationController.text.trim();
+        }
+        if (_microscopicAiSnapshot != null && _microscopicAiSnapshot!.isNotEmpty) {
+          cultivationDetailsMap['microscopic_ai_snapshot'] = _microscopicAiSnapshot;
+        }
+        if (_scannedMicroscopicIds.isNotEmpty) {
+          cultivationDetailsMap['scanned_microscopic_ids'] = List<String>.from(_scannedMicroscopicIds);
+        }
+        if (_scannedMacroscopicIds.isNotEmpty) {
+          cultivationDetailsMap['scanned_macroscopic_ids'] = List<String>.from(_scannedMacroscopicIds);
         }
         
         // Build payload for service
@@ -332,6 +454,9 @@ class _SetMonitoringDetailsScreenState
       arguments: {
         'showAppBar': true,
         'returnResult': true,
+        'sourceFlow': 'monitoring_initial',
+        'scanModality': 'microscopic',
+        'caseId': widget.moldCase.id,
       },
     );
     if (!mounted) return;
@@ -342,6 +467,46 @@ class _SetMonitoringDetailsScreenState
         _initialMicroscopicTextureController.clear();
         _initialMicroscopicController.text =
             result['identifiedMold']?.toString() ?? 'Mold identified';
+        _initialMicroscopicColorController.text =
+          result['microColor']?.toString() ?? _initialMicroscopicColorController.text;
+        _initialMicroscopicTextureController.text =
+          result['microTexture']?.toString() ?? _initialMicroscopicTextureController.text;
+
+        final confidenceDecimal = (result['confidenceDecimal'] as num?)?.toDouble();
+        final topPredictionsRaw = result['topPredictions'];
+        final topPredictions = (topPredictionsRaw is List)
+            ? topPredictionsRaw
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList()
+            : <Map<String, dynamic>>[];
+
+        _microscopicAiSnapshot = {
+          'identified_mold': _initialMicroscopicController.text.trim(),
+          if (result['confidence'] != null)
+            'confidence_display': result['confidence'].toString(),
+          if (confidenceDecimal != null)
+            'confidence': confidenceDecimal,
+          'model_source': result['modelSource']?.toString() ?? 'unknown',
+          'used_fusion': result['usedFusion'] == true,
+          'used_ann': result['usedAnn'] == true,
+          'top_predictions': topPredictions,
+          'captured_at': DateTime.now().toUtc().toIso8601String(),
+        };
+
+        final scanId = result['scanId']?.toString();
+        if (scanId != null && scanId.isNotEmpty && !_scannedMicroscopicIds.contains(scanId)) {
+          _scannedMicroscopicIds.add(scanId);
+        }
+
+        final savedScan = result['savedScan'];
+        if (savedScan is Map<String, dynamic>) {
+          final savedUrl = savedScan['image_url']?.toString();
+          if (savedUrl != null && savedUrl.isNotEmpty) {
+            _initialMicroscopicImageUrl = savedUrl;
+            _initialMicroscopicImagePath = savedUrl;
+          }
+        }
       } else {
         _initialMicroscopicController.text =
             _initialMicroscopicController.text.isEmpty
@@ -349,6 +514,16 @@ class _SetMonitoringDetailsScreenState
                 : _initialMicroscopicController.text;
       }
     });
+
+    if (!mounted || result is! Map<String, dynamic>) return;
+    final confidence = (result['confidenceDecimal'] as num?)?.toDouble();
+    if (confidence != null && confidence < 0.70) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Low AI confidence detected. Consider adding more observations before final verdict.'),
+        ),
+      );
+    }
   }
 
   Future<void> _openInitialMacroscopicCapture() async {
@@ -361,6 +536,9 @@ class _SetMonitoringDetailsScreenState
         'pageSubtitle':
             'Submit a macroscopic image of the initial mold sample.',
         'includeSize': false,
+        'sourceFlow': 'monitoring_initial',
+        'scanModality': 'macroscopic',
+        'returnResult': true,
       },
     );
     if (!mounted) return;
@@ -379,6 +557,20 @@ class _SetMonitoringDetailsScreenState
           (result['additional']?.toString().isNotEmpty ?? false)
             ? result['additional'].toString()
             : 'Captured via add log instructions';
+
+        final scanId = result['scanId']?.toString();
+        if (scanId != null && scanId.isNotEmpty && !_scannedMacroscopicIds.contains(scanId)) {
+          _scannedMacroscopicIds.add(scanId);
+        }
+
+        final savedScan = result['savedScan'];
+        if (savedScan is Map<String, dynamic>) {
+          final savedUrl = savedScan['image_url']?.toString();
+          if (savedUrl != null && savedUrl.isNotEmpty) {
+            _initialMacroscopicImageUrl = savedUrl;
+            _initialMacroscopicImagePath = savedUrl;
+          }
+        }
       } else {
         _initialMacroscopicController.text =
             _initialMacroscopicController.text.isEmpty
@@ -551,18 +743,21 @@ class _SetMonitoringDetailsScreenState
         onCaptureMicro: _openInitialMicroscopicCapture,
         onCaptureMacro: _openInitialMacroscopicCapture,
         onSubmit: _submitData,
+        isSaving: _isLoading,
         onBack: () => setState(() => _selectedTab = 1),
       ),
     ];
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: const PrimaryAppBar(title: 'Setup Monitoring'),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               /// ----------- Identification History Header -----------
               Text(
                   'Set Monitoring Details',
@@ -604,9 +799,22 @@ class _SetMonitoringDetailsScreenState
                   }).toList(),
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.35),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: MoldifyColors.primaryColor,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

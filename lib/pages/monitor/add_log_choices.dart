@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_empty_state_card.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_preview_image.dart';
@@ -11,6 +10,13 @@ import 'package:moldify/pages/misc/tiles/initial_observation_components/observat
 class AddLogChoicesScreen extends StatefulWidget {
   final String? microscopicImagePath;
   final String? macroscopicImagePath;
+  final Map<String, dynamic>? microResult;
+  final Map<String, dynamic>? macroResult;
+  final String? initialMicroIdentifiedMold;
+  final String? initialMacroColor;
+  final String? initialMacroTexture;
+  final String? initialMacroSymptoms;
+  final String? initialMacroCharacteristics;
   final VoidCallback onCaptureMicro;
   final VoidCallback onCaptureMacro;
   final VoidCallback onSubmit;
@@ -19,6 +25,13 @@ class AddLogChoicesScreen extends StatefulWidget {
     super.key,
     this.microscopicImagePath,
     this.macroscopicImagePath,
+    this.microResult,
+    this.macroResult,
+    this.initialMicroIdentifiedMold,
+    this.initialMacroColor,
+    this.initialMacroTexture,
+    this.initialMacroSymptoms,
+    this.initialMacroCharacteristics,
     required this.onCaptureMicro,
     required this.onCaptureMacro,
     required this.onSubmit,
@@ -35,6 +48,36 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   final TextEditingController _macroTextureController = TextEditingController();
   final TextEditingController _macroSymptomsController = TextEditingController();
   final TextEditingController _macroCharacteristicsController = TextEditingController();
+
+    @override
+    void initState() {
+    super.initState();
+    _hydrateFromArguments();
+    }
+
+    void _hydrateFromArguments() {
+    _microAnalysisController.text =
+      widget.microResult?['identifiedMold']?.toString() ??
+      widget.initialMicroIdentifiedMold?.toString() ??
+      '';
+
+    _macroColorController.text =
+      widget.macroResult?['color']?.toString() ??
+      widget.initialMacroColor?.toString() ??
+      '';
+    _macroTextureController.text =
+      widget.macroResult?['texture']?.toString() ??
+      widget.initialMacroTexture?.toString() ??
+      '';
+    _macroSymptomsController.text =
+      widget.macroResult?['symptomsDisplay']?.toString() ??
+      widget.initialMacroSymptoms?.toString() ??
+      '';
+    _macroCharacteristicsController.text =
+      widget.macroResult?['characteristicsDisplay']?.toString() ??
+      widget.initialMacroCharacteristics?.toString() ??
+      '';
+    }
 
   @override
   void dispose() {
@@ -225,18 +268,6 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
           const SizedBox(width: 12),
           Expanded(child: ObservationDataTile(label: l2, value: v2, icon: i2)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFormLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontFamily: 'Bricolage-Grotesque-Bold',
-        fontSize: 12,
-        letterSpacing: 1.5,
-        color: MoldifyColors.primaryColor.withOpacity(0.5),
       ),
     );
   }

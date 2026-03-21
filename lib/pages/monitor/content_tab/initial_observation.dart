@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/functions/empty_state.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_preview_image.dart';
 
@@ -46,6 +47,23 @@ class InitialObservationTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasMicroscopic = microscopicImagePath.trim().isNotEmpty ||
+        identifiedMold.trim().isNotEmpty ||
+        confidence.trim().isNotEmpty;
+    final hasMacroscopic = macroscopicImagePath.trim().isNotEmpty ||
+        macroColor.trim().isNotEmpty ||
+        macroTexture.trim().isNotEmpty ||
+        macroSymptoms.trim().isNotEmpty ||
+        macroCharacteristics.trim().isNotEmpty;
+
+    if (!hasMicroscopic && !hasMacroscopic) {
+      return EmptyState(
+        message: 'No entries made yet.',
+        icon: Icons.image_not_supported_outlined,
+        height: MediaQuery.of(context).size.height - 400,
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(

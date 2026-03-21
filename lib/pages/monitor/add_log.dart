@@ -1,13 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
+import 'package:moldify/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 class AddLogScreen extends StatefulWidget {
   // 1. Add parameters for imagePath and the new sourceTab
@@ -15,6 +20,8 @@ class AddLogScreen extends StatefulWidget {
   final String sourceTab;
   final String caseId; // Add caseId for API call
   final bool includeSize;
+  final String? sourceFlow;
+  final String? scanModality;
 
   // 2. Update the constructor to require them
   const AddLogScreen({
@@ -23,6 +30,8 @@ class AddLogScreen extends StatefulWidget {
     required this.sourceTab,
     required this.caseId,
     this.includeSize = true,
+    this.sourceFlow,
+    this.scanModality,
   });
 
   @override
@@ -157,8 +166,30 @@ class _AddLogScreenState extends State<AddLogScreen> {
     try {
       setState(() => _isSaving = true);
 
-      if (!mounted) return;
-      setState(() => _isSaving = false);
+      final sourceFlow = widget.sourceFlow ?? (_isInitialMacroscopicMode ? 'monitoring_initial' : 'cultivation_log');
+      final scanModality = widget.scanModality ?? 'macroscopic';
+      final scannedResults = {
+        'confidence_score': 0,
+        'flagged': false,
+      };
+      final cultivationType = _resolveCultivationType(widget.sourceTab);
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final moldCaseService = MoldCaseService();
+      final pathSegments = widget.imagePath.split('.');
+      final imageFormat = pathSegments.length > 1 ? pathSegments.last.toLowerCase() : 'png';
+      final scanRes = await cameraService.createScannedMold(
+        imagePath: widget.imagePath,
+        imageFormat: imageFormat,
+        scanModality: scanModality,
+        sourceFlow: sourceFlow,
+        sourceTab: widget.sourceTab,
+        moldCaseId: widget.caseId,
+        capturedAt: DateTime.now().toUtc().toIso8601String(),
+        scannedResults: scannedResults,
+        sessionCookie: authProvider.cookie,
+      );
 
       // Local-only return payload (dummy-friendly, no backend write).
       final result = <String, dynamic>{
@@ -180,6 +211,90 @@ class _AddLogScreenState extends State<AddLogScreen> {
         result['characteristicsDisplay'] = _characteristicsController.text.trim();
       }
 
+      if (scanRes['error'] != null) {
+        result['scanSaveError'] = scanRes['error'];
+        AppLogger.e('AddLog: Failed to persist macroscopic scan: ${scanRes['error']}');
+      } else {
+        final data = scanRes['data'];
+        if (data is Map<String, dynamic>) {
+          final scanId = data['id']?.toString();
+          result['scanId'] = scanId;
+          result['savedScan'] = data;
+
+          if (scanId != null && scanId.isNotEmpty) {
+            try {
+              await _persistScannedMoldIdToCase(
+                moldCaseService: moldCaseService,
+                sessionCookie: authProvider.cookie,
+                scanId: scanId,
+                scanModality: scanModality,
+              );
+              result['scanAssociatedToCase'] = true;
+            } catch (e) {
+              result['scanAssociationError'] = e.toString();
+              AppLogger.e(
+                'AddLog: scan was saved but failed to associate scanId=$scanId '
+                'to caseId=${widget.caseId}',
+                error: e,
+              );
+            }
+          }
+        }
+      }
+
+      final isCultivationLogFlow = sourceFlow == 'cultivation_log';
+      if (isCultivationLogFlow) {
+        final characteristics = _buildNormalizedCharacteristics();
+        final payload = <String, dynamic>{
+          'type': cultivationType,
+          'characteristics': characteristics,
+          'additional_info': _logNotesController.text.trim(),
+        };
+
+        AppLogger.d(
+          'AddLog: saving cultivation log '
+          'caseId=${widget.caseId} sourceTab=${widget.sourceTab} type=$cultivationType '
+          'characteristicsKeys=${characteristics.keys.toList()}',
+        );
+
+        try {
+          final logResponse = await moldCaseService.addCultivationLog(
+            widget.caseId,
+            payload,
+            imagePath: widget.imagePath,
+            sessionCookie: authProvider.cookie,
+          );
+
+          final logData = logResponse['data'];
+          result['cultivationLogSaved'] = true;
+          if (logData is Map<String, dynamic>) {
+            result['cultivationLog'] = logData;
+          }
+
+          AppLogger.d(
+            'AddLog: cultivation log persisted '
+            'caseId=${widget.caseId} sourceTab=${widget.sourceTab} '
+            'logId=${(logData is Map<String, dynamic>) ? logData['id'] : null}',
+          );
+        } catch (e) {
+          AppLogger.e(
+            'AddLog: cultivation log save failed '
+            'caseId=${widget.caseId} sourceTab=${widget.sourceTab} type=$cultivationType',
+            error: e,
+          );
+
+          if (!mounted) return;
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save cultivation log: $e')),
+          );
+          return;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+
       Navigator.of(context).pop(result);
     } catch (e) {
       if (!mounted) return;
@@ -189,6 +304,91 @@ class _AddLogScreenState extends State<AddLogScreen> {
         SnackBar(content: Text('Failed to prepare log: $e')),
       );
     }
+  }
+
+  String _resolveCultivationType(String sourceTab) {
+    if (sourceTab == 'in-vivo') return 'vivo';
+    return 'vitro';
+  }
+
+  Map<String, dynamic> _buildNormalizedCharacteristics() {
+    final size = widget.includeSize ? _sizeController.text.trim() : '';
+    final color = _colorController.text.trim();
+    final texture = _textureController.text.trim();
+    final symptomsDisplay = _symptomsController.text.trim();
+    final characteristicsDisplay = _characteristicsController.text.trim();
+    final symptoms = List<String>.from(_selectedSymptoms);
+    final characteristics = List<String>.from(_selectedCharacteristics);
+
+    final map = <String, dynamic>{
+      'size': size,
+      'color': color,
+      'texture': texture,
+      'symptoms': symptoms.isNotEmpty ? symptoms : symptomsDisplay,
+      'characteristics': characteristics.isNotEmpty ? characteristics : characteristicsDisplay,
+    };
+
+    if (widget.sourceTab == 'in-vivo') {
+      map['lesion_size'] = size;
+      map['lesion_color'] = color;
+      map['lesion_texture'] = texture;
+    } else {
+      map['colony_diameter'] = size;
+      map['colony_color'] = color;
+      map['colony_texture'] = texture;
+    }
+
+    return map;
+  }
+
+  List<String> _toStringList(dynamic value) {
+    if (value is List) {
+      return value
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return <String>[];
+  }
+
+  Future<void> _persistScannedMoldIdToCase({
+    required MoldCaseService moldCaseService,
+    required String? sessionCookie,
+    required String scanId,
+    required String scanModality,
+  }) async {
+    final caseData = await moldCaseService.getMoldCaseById(
+      widget.caseId,
+      sessionCookie: sessionCookie,
+    );
+
+    final existingDetails = (caseData['cultivation_details'] is Map<String, dynamic>)
+        ? Map<String, dynamic>.from(caseData['cultivation_details'] as Map<String, dynamic>)
+        : <String, dynamic>{};
+
+    final microscopicIds = _toStringList(existingDetails['scanned_microscopic_ids']);
+    final macroscopicIds = _toStringList(existingDetails['scanned_macroscopic_ids']);
+
+    if (scanModality == 'microscopic') {
+      if (!microscopicIds.contains(scanId)) microscopicIds.add(scanId);
+    } else {
+      if (!macroscopicIds.contains(scanId)) macroscopicIds.add(scanId);
+    }
+
+    existingDetails['scanned_microscopic_ids'] = microscopicIds;
+    existingDetails['scanned_macroscopic_ids'] = macroscopicIds;
+
+    await moldCaseService.updateCultivationDetails(
+      widget.caseId,
+      {'cultivation_details': existingDetails},
+      sessionCookie: sessionCookie,
+    );
+
+    AppLogger.d(
+      'AddLog: associated scanned mold id to case '
+      'caseId=${widget.caseId} scanId=$scanId modality=$scanModality '
+      'microscopicCount=${microscopicIds.length} macroscopicCount=${macroscopicIds.length}',
+    );
   }
 
   @override

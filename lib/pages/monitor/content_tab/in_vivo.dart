@@ -14,6 +14,12 @@ class InVivoTab extends StatelessWidget {
   final String environmentalTemperature;
   final List<Map<String, String>> inVivoEntries;
   final String caseId;
+  final String? initialMicroIdentifiedMold;
+  final String? initialMacroColor;
+  final String? initialMacroTexture;
+  final String? initialMacroSymptoms;
+  final String? initialMacroCharacteristics;
+  final ValueChanged<Map<String, dynamic>>? onLogSaved;
 
   const InVivoTab({
     super.key,
@@ -22,6 +28,12 @@ class InVivoTab extends StatelessWidget {
     required this.environmentalTemperature,
     required this.inVivoEntries,
     required this.caseId,
+    this.initialMicroIdentifiedMold,
+    this.initialMacroColor,
+    this.initialMacroTexture,
+    this.initialMacroSymptoms,
+    this.initialMacroCharacteristics,
+    this.onLogSaved,
   });
 
   @override
@@ -121,16 +133,25 @@ class InVivoTab extends StatelessWidget {
                   const SizedBox(width: 4),
                   BuildButton(
                     buttonText: 'ADD LOG',
-                    onPressed: () {
-                        Navigator.pushNamed(
+                    onPressed: () async {
+                        final result = await Navigator.pushNamed(
                           context,
                           RouteNames.addLogChoices,
                           arguments: {
                             'sourceTab': 'in-vivo',
                             'caseId': caseId,
                             'includeSize': false,
+                            'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
+                            'initialMacroColor': initialMacroColor,
+                            'initialMacroTexture': initialMacroTexture,
+                            'initialMacroSymptoms': initialMacroSymptoms,
+                            'initialMacroCharacteristics': initialMacroCharacteristics,
                           },
                         );
+
+                        if (result is Map && onLogSaved != null) {
+                          onLogSaved!(Map<String, dynamic>.from(result));
+                        }
                       },
                     backgroundColor: Colors.transparent,
                     textColor: MoldifyColors.primaryColor,

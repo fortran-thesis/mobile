@@ -41,6 +41,7 @@ class EvidenceTab extends StatelessWidget {
   final VoidCallback onCaptureMacro;
   final VoidCallback onSubmit;
   final VoidCallback onBack;
+  final bool isSaving;
 
   const EvidenceTab({
     super.key,
@@ -59,6 +60,7 @@ class EvidenceTab extends StatelessWidget {
     required this.onCaptureMacro,
     required this.onSubmit,
     required this.onBack,
+    this.isSaving = false,
   });
 
   @override
@@ -280,8 +282,8 @@ class EvidenceTab extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: BuildButton(
-                onPressed: onSubmit,
-                buttonText: 'Save Changes',
+                onPressed: isSaving ? () {} : onSubmit,
+                buttonText: isSaving ? 'Saving Changes...' : 'Save Changes',
                 backgroundColor: MoldifyColors.primaryColor,
                 textColor: Colors.white,
                 buttonHeight: 45,
