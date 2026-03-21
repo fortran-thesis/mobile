@@ -9,6 +9,8 @@ import '../../../core/features/user/logic/user_bloc.dart';
 
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import '../../../core/features/user/services/user_services.dart';
+import '../../../core/features/lookup/service/lookup_service.dart';
+import '../../../core/utils/logger.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +22,7 @@ import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/overlays/modals/chip_selection_modal.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/photo_uploader.dart';
+import '../../identification/lookup_results_screen.dart';
 
 class SubmitReportScreen extends StatefulWidget {
   const SubmitReportScreen({super.key});
@@ -131,8 +134,10 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   bool _isSubmitting = false;
 
   void _handlePhotoChange(List<File> photos) {
+    AppLogger.d('[SubmitReport] photos changed: ${photos.map((p) => p.path).toList()}');
     setState(() {
-      uploadedPhotos = photos;
+      // Create a copy to ensure we have our own list
+      uploadedPhotos = List<File>.from(photos);
     });
   }
 
@@ -512,11 +517,14 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         _isSubmitting = true;
                       });
 
-                      // Show loading dialog
+                      // Show loading dialog and capture its BuildContext so we
+                      // can reliably dismiss it even if this widget unmounts.
+                      BuildContext? _loadingDialogContext;
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (BuildContext context) {
+                        builder: (BuildContext dialogContext) {
+                          _loadingDialogContext = dialogContext;
                           return PopScope(
                             canPop: false,
                             child: Center(
@@ -630,20 +638,49 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                             reportPayload,
                             coverPhotos: uploadedPhotos,
                             sessionCookie: sessionCookie,
+                            waitForPhotos: true,
+                            pollIntervalSeconds: 1,
+                            timeoutSeconds: 15,
                           );
                         } else {
                           await service.createMoldReport(
                             reportPayload,
                             coverPhoto: cover,
                             sessionCookie: sessionCookie,
+                            waitForPhotos: true,
+                            pollIntervalSeconds: 1,
+                            timeoutSeconds: 15,
                           );
                         }
 
-                        // Close loading dialog
-                        if (!context.mounted) return;
-                        Navigator.of(context).pop(); // Close loading dialog
+                        // Attempt lookup based on reported problem descriptions
+                        // This provides initial mold suggestions based on farmer observations
+                        List<Map<String, dynamic>> lookupResults = [];
+                        try {
+                          if (_selectedProblemDescriptions.isNotEmpty && context.mounted) {
+                            final lookupService = LookupService();
+                            lookupResults = await lookupService.performLookup(
+                              reportedSymptoms: _selectedProblemDescriptions,
+                              sessionCookie: sessionCookie,
+                            );
+                          }
+                        } catch (lookupError) {
+                          // Lookup is not critical — log error but don't block submission
+                          AppLogger.w('⚠️ Lookup failed (non-blocking): $lookupError');
+                        }
 
-                        // On success, show a confirmation snackbar and pop
+                        // Close loading dialog using captured dialog context
+                        try {
+                          if (_loadingDialogContext != null) {
+                            Navigator.of(_loadingDialogContext!).pop();
+                          } else if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        } catch (_) {
+                          // ignore — dialog may already be dismissed
+                        }
+
+                        // Show success message
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -658,14 +695,53 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           ),
                         );
 
-                        // Close the submit screen after a short delay so the user can see the message
+                        // If lookup results found, navigate to results screen; otherwise pop screen
                         await Future.delayed(const Duration(milliseconds: 300));
                         if (!context.mounted) return;
-                        Navigator.of(context).pop(true); // Signal success so caller can refresh
+
+                        if (lookupResults.isNotEmpty) {
+                          // Navigate to lookup results screen to allow farmer to review suggestions
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => LookupResultsScreen(
+                                lookupResults: lookupResults,
+                                onSelectMold: (moldId, moldName, confidence) {
+                                  // After farmer selects a mold, return to main flow
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Selected: $moldName (${confidence.toStringAsFixed(0)}% match)',
+                                        style: const TextStyle(
+                                          fontFamily: 'Bricolage-Grotesque-Regular',
+                                          color: MoldifyColors.backgroundColor,
+                                        ),
+                                      ),
+                                      backgroundColor: MoldifyColors.primaryColor,
+                                    ),
+                                  );
+                                },
+                                onBack: () {
+                                  Navigator.of(context).pop(true); // Signal success and return
+                                },
+                              ),
+                            ),
+                          );
+                        } else {
+                          // No lookup results — just return from this screen
+                          Navigator.of(context).pop(true); // Signal success so caller can refresh
+                        }
                       } catch (e) {
-                        // Close loading dialog
-                        if (!context.mounted) return;
-                        Navigator.of(context).pop(); // Close loading dialog
+                        // Close loading dialog using captured dialog context
+                        try {
+                          if (_loadingDialogContext != null) {
+                            Navigator.of(_loadingDialogContext!).pop();
+                          } else if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        } catch (_) {
+                          // ignore — dialog may already be dismissed
+                        }
 
                         // Show error
                         if (!context.mounted) return;
@@ -682,6 +758,17 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         ),
                         );
                       } finally {
+                        // Ensure loading dialog is dismissed even if we returned early
+                        try {
+                          if (_loadingDialogContext != null) {
+                            Navigator.of(_loadingDialogContext!).pop();
+                          } else if (mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        } catch (_) {
+                          // ignore - dialog may already be dismissed
+                        }
+
                         if (mounted) {
                           setState(() {
                             _isSubmitting = false;

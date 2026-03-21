@@ -76,16 +76,6 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
 
-      if (sessionCookie == null) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Authentication error. Please log in again.')),
-          );
-        }
-        return;
-      }
-
       final result = await _wikiService.fetchMoldipedia(
         sessionCookie: sessionCookie,
       );
@@ -113,11 +103,6 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-
-      if (sessionCookie == null) {
-        if(mounted) setState(() => _isLoadingMore = false);
-        return;
-      }
 
       final result = await _wikiService.fetchMoldipedia(
         pageToken: _nextPageToken,

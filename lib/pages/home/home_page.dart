@@ -112,14 +112,14 @@ class _HomeScreenState extends State<HomeScreen> {
   ) async {
     try {
       final response = await reportService.getReportCounts(sessionCookie: sessionCookie);
-      final data = response['data'] as Map<String, dynamic>? ?? {};
+      // Response is already unwrapped by the service
       
       return {
-        'total': data['total'] ?? 0,
-        'pending': data['pending'] ?? 0,
-        'in_progress': data['in_progress'] ?? 0,
-        'resolved': data['resolved'] ?? 0,
-        'rejected': data['rejected'] ?? data['closed'] ?? 0,
+        'total': response['total'] ?? 0,
+        'pending': response['pending'] ?? 0,
+        'in_progress': response['in_progress'] ?? 0,
+        'resolved': response['resolved'] ?? 0,
+        'rejected': response['rejected'] ?? response['closed'] ?? 0,
       };
     } catch (e) {
       AppLogger.e('Failed to fetch report counts', error: e);
@@ -139,7 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
       'id': report['id']?.toString() ?? '',
       'mycologist_id': report['assigned_mycologist_id']?.toString() ?? report['mycologist_id']?.toString() ?? '',
       'name': report['case_name']?.toString() ?? report['name']?.toString() ?? '',
-      'mold_report_id': report['id']?.toString() ?? '',
+      // For /mold-case/assigned payloads, id is case id while mold_report_id is the report id.
+      // Fall back to id only for legacy payloads that do not include mold_report_id.
+      'mold_report_id': report['mold_report_id']?.toString() ?? report['id']?.toString() ?? '',
       'photo_url': report['cover_photo'] ?? report['photo_url'],
       'priority': report['priority']?.toString() ?? 'low',
       'start_date': report['date_observed'] ?? report['created_at'] ?? DateTime.now().toIso8601String(),
@@ -168,11 +170,30 @@ class _HomeScreenState extends State<HomeScreen> {
         // Extract snapshot from response { snapshot: [...], nextPageToken: ... }
         final snapshot = casesResponse['snapshot'];
         if (snapshot is List) {
-          cases = snapshot
+          final parsedCases = snapshot
               .whereType<Map>()
               .map((c) => _normalizeMoldReport(Map<String, dynamic>.from(c)))
               .map((normalized) => MoldCase.fromJson(normalized))
               .toList();
+
+          // Keep one case per mold report. If duplicates exist, prefer higher priority.
+          final priorityOrder = {'low': 1, 'medium': 2, 'high': 3};
+          final dedupedByReport = <String, MoldCase>{};
+          for (final case_ in parsedCases) {
+            final key = case_.moldReportId.trim().isNotEmpty ? case_.moldReportId : case_.id;
+            final existing = dedupedByReport[key];
+            if (existing == null) {
+              dedupedByReport[key] = case_;
+              continue;
+            }
+
+            final existingRank = priorityOrder[existing.priority.toLowerCase()] ?? 0;
+            final currentRank = priorityOrder[case_.priority.toLowerCase()] ?? 0;
+            if (currentRank > existingRank) {
+              dedupedByReport[key] = case_;
+            }
+          }
+          cases = dedupedByReport.values.toList();
 
           // Fetch report statuses for each case
           for (final case_ in cases) {
@@ -489,7 +510,16 @@ class _HomeScreenState extends State<HomeScreen> {
               caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
               imageHeight: 70.0,
               imageWidth: 70.0,
-              onTap: () => Navigator.pushNamed(context, '/view-case'),
+              onTap: () {
+                final reportId = case_.moldReportId.trim().isNotEmpty
+                    ? case_.moldReportId
+                    : case_.id;
+                Navigator.pushNamed(
+                  context,
+                  '/view-case',
+                  arguments: {'id': reportId},
+                );
+              },
             ),
           )),
         if (_assignedCases.length > 3)

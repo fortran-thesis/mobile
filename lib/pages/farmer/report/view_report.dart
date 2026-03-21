@@ -10,6 +10,8 @@ import '../../../core/features/user/logic/user_bloc.dart';
 import '../../../core/features/mold_report/models/mold_report.dart';
 import '../../../core/features/mold_report/repository/mold_report_repository.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
+import '../../../core/features/mold/service/mold_service.dart';
+import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
@@ -32,6 +34,13 @@ class ViewReportScreen extends StatefulWidget {
 }
 
 class _ViewReportScreenState extends State<ViewReportScreen> {
+  static const String _defaultPreventionTacticsContent =
+      'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags.|'
+      'BIOLOGICAL::Biological Control::Apply beneficial microorganisms like Bacillus subtilis. Use organic fungicides such as neem oil or garlic extract. Encourage natural predators in the environment.|'
+      'CHEMICAL::Chemical Control::Recommended fungicides: Mancozeb, Chlorothalonil, Copper-based fungicides, Azoxystrobin. Apply according to manufacturer instructions and observe safety protocols.|'
+      'PHYSICAL::Physical Control::Ensure proper plant spacing for good air circulation. Water at the base of plants to keep foliage dry. Maintain optimal temperature and humidity levels.|'
+      'CULTURAL::Cultural Control::Rotate crops annually to prevent soil-borne diseases. Use resistant plant varieties if available. Practice proper sanitation and field hygiene.';
+
   String? caseImageUrl;
   // Change the status to 'Resolved', 'Closed', 'In Progress', or 'Rejected' to see different UI states.
   String caseStatus = 'Pending';
@@ -112,6 +121,41 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   bool _isLoading = true;
   String? _error;
   MoldReport? _report;
+  String _finalVerdictMoldName = '';
+  String _finalVerdictConfidence = '';
+  String _finalVerdictNotes = '';
+  String _preventionTacticsContent = _defaultPreventionTacticsContent;
+
+  String _formatConfidence(dynamic value) {
+    if (value == null) return '';
+    if (value is num) {
+      return '${value.toStringAsFixed(1)}%';
+    }
+    final parsed = double.tryParse(value.toString());
+    if (parsed == null) return '';
+    return '${parsed.toStringAsFixed(1)}%';
+  }
+
+  String _buildPreventionContentFromMold(MoldCatalogEntry mold) {
+    final prevention = mold.prevention;
+
+    String segment(String type, String title, String key) {
+      final text = prevention[key]?.trim() ?? '';
+      if (text.isEmpty) return '';
+      return '$type::$title::$text';
+    }
+
+    final segments = <String>[
+      segment('MECHANICAL', 'Mechanical Control', 'Mechanical Control'),
+      segment('BIOLOGICAL', 'Biological Control', 'Biological Control'),
+      segment('CHEMICAL', 'Chemical Control', 'Chemical Control'),
+      segment('PHYSICAL', 'Physical Control', 'Physical Control'),
+      segment('CULTURAL', 'Cultural Control', 'Cultural Control'),
+    ].where((s) => s.isNotEmpty).toList();
+
+    if (segments.isEmpty) return _defaultPreventionTacticsContent;
+    return segments.join('|');
+  }
 
   Future<void> _loadReportFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -168,6 +212,47 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       AppLogger.d('ViewReport: report.status = ${report.status}');
       AppLogger.d('ViewReport: report.caseDetails.length = ${report.caseDetails.length}');
 
+      String localVerdictMoldName = '';
+      String localVerdictConfidence = '';
+      String localVerdictNotes = '';
+      String localPreventionTacticsContent = _defaultPreventionTacticsContent;
+
+      try {
+        final moldCaseService = MoldCaseService();
+        final caseData = await moldCaseService.getMoldCasesByReportId(
+          report.id,
+          sessionCookie: sessionCookie,
+        );
+
+        final casePayload = (caseData['data'] is Map<String, dynamic>)
+            ? caseData['data'] as Map<String, dynamic>
+            : caseData;
+        final finalVerdict = casePayload['final_verdict'];
+        if (finalVerdict is Map<String, dynamic>) {
+          localVerdictMoldName = finalVerdict['moldName']?.toString() ?? '';
+          localVerdictConfidence = _formatConfidence(finalVerdict['confidence']);
+          localVerdictNotes = finalVerdict['mycologist_notes']?.toString() ?? '';
+
+          final verdictMoldId =
+              finalVerdict['moldId']?.toString().trim().isNotEmpty == true
+                  ? finalVerdict['moldId'].toString().trim()
+                  : (finalVerdict['mold_id']?.toString().trim() ?? '');
+
+          if (verdictMoldId.isNotEmpty) {
+            final moldService = MoldService();
+            final moldCatalog = await moldService.fetchMoldById(
+              verdictMoldId,
+              sessionCookie: sessionCookie,
+            );
+            if (moldCatalog != null) {
+              localPreventionTacticsContent = _buildPreventionContentFromMold(moldCatalog);
+            }
+          }
+        }
+      } catch (e) {
+        AppLogger.w('ViewReport: no final verdict enrichment found for report=${report.id}: $e');
+      }
+
       setState(() {
         _report = report;
         // Capitalize the first letter of status
@@ -179,6 +264,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         caseImageUrl = report.caseDetails.isNotEmpty && report.caseDetails.first.coverPhoto.isNotEmpty
             ? report.caseDetails.first.coverPhoto.first
             : null;
+        _finalVerdictMoldName = localVerdictMoldName;
+        _finalVerdictConfidence = localVerdictConfidence;
+        _finalVerdictNotes = localVerdictNotes;
+        _preventionTacticsContent = localPreventionTacticsContent;
         AppLogger.d('ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl');
         _isLoading = false;
       });
@@ -377,6 +466,56 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                         if (caseStatus == 'Resolved' || caseStatus == 'Closed')
                           Column(
                             children: [
+                              if (_finalVerdictMoldName.trim().isNotEmpty)
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(top: 14),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Final Diagnosis',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          letterSpacing: 1.1,
+                                          fontFamily: 'Bricolage-Grotesque-Bold',
+                                          color: MoldifyColors.primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        _finalVerdictConfidence.trim().isEmpty
+                                            ? _finalVerdictMoldName
+                                            : '$_finalVerdictMoldName (${_finalVerdictConfidence.trim()})',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontFamily: 'Montserrat-Black',
+                                          color: MoldifyColors.primaryColor,
+                                        ),
+                                      ),
+                                      if (_finalVerdictNotes.trim().isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _finalVerdictNotes,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontFamily: 'Bricolage-Grotesque-Regular',
+                                            color: MoldifyColors.MoldifyBlack,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
                               // Buttons are only visible if the case is 'Resolved'
                               if (caseStatus == 'Resolved')
                                 Padding(
@@ -524,12 +663,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
                                         child: PreventionTacticsContent(
-                                          treatmentsContent: 
-                                              'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags.|'
-                                              'BIOLOGICAL::Biological Control::Apply beneficial microorganisms like Bacillus subtilis. Use organic fungicides such as neem oil or garlic extract. Encourage natural predators in the environment.|'
-                                              'CHEMICAL::Chemical Control::Recommended fungicides: Mancozeb, Chlorothalonil, Copper-based fungicides, Azoxystrobin. Apply according to manufacturer instructions and observe safety protocols.|'
-                                              'PHYSICAL::Physical Control::Ensure proper plant spacing for good air circulation. Water at the base of plants to keep foliage dry. Maintain optimal temperature and humidity levels.|'
-                                              'CULTURAL::Cultural Control::Rotate crops annually to prevent soil-borne diseases. Use resistant plant varieties if available. Practice proper sanitation and field hygiene.',
+                                          treatmentsContent: _preventionTacticsContent,
                                         ),
                                       ),
                                     ],
