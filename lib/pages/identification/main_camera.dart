@@ -11,11 +11,19 @@ class MainCameraScreen extends StatefulWidget {
   // 1. Add a boolean to control AppBar visibility, defaulting to false.
   final bool showAppBar;
   final bool returnResult;
+  final String? sourceFlow;
+  final String? scanModality;
+  final String? sourceTab;
+  final String? moldCaseId;
 
   const MainCameraScreen({
     super.key,
     this.showAppBar = false,
     this.returnResult = false,
+    this.sourceFlow,
+    this.scanModality,
+    this.sourceTab,
+    this.moldCaseId,
   });
 
   @override
@@ -50,6 +58,10 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
               'imagePath': imageFile.path,
               'source': 'main_camera',
               'returnResult': widget.returnResult,
+              'sourceFlow': widget.sourceFlow,
+              'scanModality': widget.scanModality,
+              'sourceTab': widget.sourceTab,
+              'caseId': widget.moldCaseId,
             });
         if (!mounted) return;
         if (widget.returnResult && result != null) {
@@ -78,6 +90,10 @@ class _MainCameraScreenState extends State<MainCameraScreen> {
         arguments: {
           'source': 'main_camera',
           'returnResult': widget.returnResult,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.moldCaseId,
         }).then((result) {
       if (!mounted) return;
       if (widget.returnResult && result != null) {

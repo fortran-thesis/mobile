@@ -8,6 +8,8 @@ class CameraScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final String? sourceFlow;
+  final String? scanModality;
   final bool includeSize;
   final bool returnResult;
 
@@ -16,6 +18,8 @@ class CameraScreen extends StatefulWidget {
     this.source,
     this.sourceTab,
     this.caseId,
+    this.sourceFlow,
+    this.scanModality,
     this.includeSize = true,
     this.returnResult = false,
   });
@@ -116,6 +120,8 @@ class _CameraScreenState extends State<CameraScreen> {
             'source': widget.source,
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
             'includeSize': widget.includeSize,
             'returnResult': widget.returnResult,
           },

@@ -8,6 +8,9 @@ import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
@@ -18,8 +21,21 @@ class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
   final Map<String, dynamic>? modelResult;
   final Map<String, dynamic>? moldDetails;
+  final String? sourceFlow;
+  final String? scanModality;
+  final String? sourceTab;
+  final String? caseId;
 
-  const MoldResultScreen({super.key, required this.croppedImagePath, this.modelResult, this.moldDetails});
+  const MoldResultScreen({
+    super.key,
+    required this.croppedImagePath,
+    this.modelResult,
+    this.moldDetails,
+    this.sourceFlow,
+    this.scanModality,
+    this.sourceTab,
+    this.caseId,
+  });
 
   @override
   State<MoldResultScreen> createState() => _MoldResultScreenState();
@@ -28,6 +44,7 @@ class MoldResultScreen extends StatefulWidget {
 class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
+  bool _isSavingResult = false;
   final String healthContent =
     "Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.";
   final String plantThreatContent =
@@ -115,6 +132,32 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     };
 
     _managementControls = _parseManagementControls(treatmentsContent);
+  }
+
+  List<Map<String, dynamic>> _buildTopPredictions() {
+    final dynamic raw = widget.modelResult?['all_probabilities'];
+    if (raw is! Map) return [];
+
+    final entries = <Map<String, dynamic>>[];
+    raw.forEach((key, value) {
+      if (key == null) return;
+      final className = key.toString();
+      final probability = (value as num?)?.toDouble() ?? 0.0;
+      entries.add({
+        'class': className,
+        'probability': probability,
+      });
+    });
+
+    entries.sort((a, b) => ((b['probability'] as double).compareTo(a['probability'] as double)));
+    return entries.take(3).toList();
+  }
+
+  String _inferImageFormat(String path) {
+    final dotIndex = path.lastIndexOf('.');
+    final extension = dotIndex >= 0 ? path.substring(dotIndex + 1).toLowerCase() : '';
+    if (extension.isNotEmpty) return extension;
+    return 'png';
   }
 
   @override
@@ -402,12 +445,72 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: ResultActionSection(
-                          onSave: () {
-                            Navigator.of(context).pop({
+                          onSave: () async {
+                            if (_isSavingResult) return;
+                            setState(() => _isSavingResult = true);
+                            final topPredictions = _buildTopPredictions();
+                            final confidenceDecimal = (widget.modelResult?['probability'] as num?)?.toDouble() ?? 0.0;
+                            final predictedClassName = widget.modelResult?['predicted_class']?.toString();
+                            final nowIso = DateTime.now().toUtc().toIso8601String();
+
+                            final savePayload = <String, dynamic>{
                               'imagePath': widget.croppedImagePath,
                               'identifiedMold': moldGenus,
                               'confidence': confidenceLevel,
-                            });
+                              // Backward-compatible additions for mycologist decision support
+                              'confidenceDecimal': confidenceDecimal,
+                              'topPredictions': topPredictions,
+                              'modelSource': widget.modelResult?['model_source'],
+                              'usedFusion': widget.modelResult?['used_fusion'] ?? false,
+                              'usedAnn': widget.modelResult?['used_ann'] ?? false,
+                              'scanModality': widget.scanModality ?? 'microscopic',
+                              'sourceFlow': widget.sourceFlow ?? 'identification',
+                              'sourceTab': widget.sourceTab,
+                              'moldCaseId': widget.caseId,
+                              'predictedClassName': predictedClassName,
+                            };
+
+                            try {
+                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              final cameraService = CameraService();
+
+                              final scanRes = await cameraService.createScannedMold(
+                                imagePath: widget.croppedImagePath,
+                                imageFormat: _inferImageFormat(widget.croppedImagePath),
+                                scanModality: (widget.scanModality ?? 'microscopic'),
+                                sourceFlow: (widget.sourceFlow ?? 'identification'),
+                                sourceTab: widget.sourceTab,
+                                moldCaseId: widget.caseId,
+                                predictedClassName: predictedClassName,
+                                capturedAt: nowIso,
+                                scannedResults: {
+                                  'confidence_score': confidenceDecimal,
+                                  'flagged': confidenceDecimal < 0.70,
+                                },
+                                sessionCookie: authProvider.cookie,
+                              );
+
+                              if (scanRes['error'] != null) {
+                                AppLogger.e('MoldResult: Failed to persist scan: ${scanRes['error']}');
+                                savePayload['scanSaveError'] = scanRes['error'];
+                              } else {
+                                final data = scanRes['data'];
+                                if (data is Map<String, dynamic>) {
+                                  savePayload['scanId'] = data['id']?.toString();
+                                  savePayload['savedScan'] = data;
+                                }
+                              }
+                            } catch (e, s) {
+                              AppLogger.e('MoldResult: Exception while persisting scan', error: e, stackTrace: s);
+                              savePayload['scanSaveError'] = e.toString();
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isSavingResult = false);
+                              }
+                            }
+
+                            if (!context.mounted) return;
+                            Navigator.of(context).pop(savePayload);
                           },
                         ),
                       ),
@@ -416,6 +519,17 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 ),
               ),
             ),
+            if (_isSavingResult)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: MoldifyColors.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

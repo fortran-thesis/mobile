@@ -17,6 +17,8 @@ class ImagePreviewScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final String? sourceFlow;
+  final String? scanModality;
   final bool includeSize;
   final bool returnResult;
 
@@ -26,6 +28,8 @@ class ImagePreviewScreen extends StatefulWidget {
     this.source,
     this.sourceTab,
     this.caseId,
+    this.sourceFlow,
+    this.scanModality,
     this.includeSize = true,
     this.returnResult = false,
   });
@@ -177,6 +181,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
             'includeSize': widget.includeSize,
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
           },
         );
 
@@ -210,8 +216,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                       'croppedImagePath': file.path,
                       'imageBytes': pngBytes,
                       'fileName': fileName,
+                      'sourceFlow': widget.sourceFlow,
+                      'scanModality': widget.scanModality,
+                      'sourceTab': widget.sourceTab,
+                      'caseId': widget.caseId,
+                      'returnResult': widget.returnResult,
                     },
-                  );
+                  ).then((result) {
+                    if (!mounted) return;
+                    if (result != null) {
+                      Navigator.of(context).pop(result);
+                    }
+                  });
                 },
                 onCancel: () {
                   // NO action: Call identifyImage API, then fetch mold details
@@ -390,16 +406,17 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       );
       AppLogger.d('📊 ImagePreview: identifyImage result: $modelResult');
       
-      // Step 2: Extract genus from predicted_class
+      // Step 2: Get predicted class name from model response
       final predictedClass = modelResult['predicted_class']?.toString() ?? '';
-      final genus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
       
       AppLogger.d('🟡 ImagePreview: Step 2 - Predicted class: $predictedClass');
-      AppLogger.d('🟡 ImagePreview: Extracted genus: $genus');
       
-      // Step 3: Fetch detailed mold information
-      AppLogger.d('🟡 ImagePreview: Step 3 - Calling getMoldDetails(genus: $genus)');
-      final moldDetails = await cameraService.getMoldDetails(genus: genus);
+      // Step 3: Fetch detailed mold information using full predicted class name
+      AppLogger.d('🟡 ImagePreview: Step 3 - Calling getMoldDetails(moldName: $predictedClass)');
+      final moldDetails = await cameraService.getMoldDetails(
+        moldName: predictedClass,
+        sessionCookie: authProvider.cookie,
+      );
       
       AppLogger.d('✅ ImagePreview: getMoldDetails completed');
       AppLogger.d('✅ ImagePreview: Response preview: ${moldDetails.toString().substring(0, moldDetails.toString().length > 200 ? 200 : moldDetails.toString().length)}...');
@@ -419,11 +436,15 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'croppedImagePath': imagePath,
           'modelResult': modelResult,
           'moldDetails': moldDetails,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
         },
       );
 
       if (!context.mounted) return;
-      if (widget.returnResult && result != null) {
+      if (result != null) {
         Navigator.of(context).pop(result);
         return;
       }
@@ -444,11 +465,15 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'croppedImagePath': imagePath,
           'modelResult': {'error': e.toString()},
           'moldDetails': {'error': e.toString()},
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
         },
       );
 
       if (!context.mounted) return;
-      if (widget.returnResult && result != null) {
+      if (result != null) {
         Navigator.of(context).pop(result);
         return;
       }
