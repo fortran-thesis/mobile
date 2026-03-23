@@ -26,18 +26,18 @@ import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 class ViewCaseScreen extends StatefulWidget {
-
   const ViewCaseScreen({super.key});
 
   @override
   _ViewCaseScreenState createState() => _ViewCaseScreenState();
 }
+
 class _ViewCaseScreenState extends State<ViewCaseScreen> {
-  String? caseImageUrl = "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
+  String? caseImageUrl =
+      "https://aggie-horticulture.tamu.edu/wp-content/uploads/sites/10/2012/01/black_mold.jpg";
   String caseStatus = 'Pending';
   String reportStatus = 'Unknown';
   String cropName = '';
-
 
   // Backend-driven state
   bool _isLoading = true;
@@ -105,6 +105,32 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return '';
   }
 
+  bool _looksLikeMicroscopicLog(Map<String, dynamic> characteristics) {
+    return _firstNonEmpty([
+      characteristics['microscopic_identification'],
+      characteristics['identified_mold'],
+      characteristics['identifiedMold'],
+      characteristics['confidence'],
+      characteristics['top_predictions'],
+    ]).isNotEmpty;
+  }
+
+  bool _looksLikeMacroscopicLog(Map<String, dynamic> characteristics) {
+    return _firstNonEmpty([
+      characteristics['size'],
+      characteristics['lesion_size'],
+      characteristics['colony_diameter'],
+      characteristics['color'],
+      characteristics['lesion_color'],
+      characteristics['colony_color'],
+      characteristics['texture'],
+      characteristics['lesion_texture'],
+      characteristics['colony_texture'],
+      characteristics['symptoms'],
+      characteristics['characteristics'],
+    ]).isNotEmpty;
+  }
+
   String _formatLogDate(DateTime? value) {
     if (value == null) return 'Log Entry';
     return DateFormat('MMMM dd, yyyy • hh:mm a').format(value.toLocal());
@@ -112,6 +138,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
   Map<String, String> _mapCultivationLogToTimelineEntry(CultivationLog log) {
     final characteristics = log.characteristics;
+    final hasMicroData = _looksLikeMicroscopicLog(characteristics);
+    final hasMacroData = _looksLikeMacroscopicLog(characteristics);
     final size = _firstNonEmpty([
       characteristics['size'],
       characteristics['lesion_size'],
@@ -138,11 +166,26 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       characteristics['characteristicsDisplay'],
     ]);
 
+    final microscopicImage = _firstNonEmpty([
+      characteristics['microscopic_image_url'],
+      hasMicroData ? log.imageUrl : '',
+    ]);
+    final macroscopicImage = _firstNonEmpty([
+      characteristics['macroscopic_image_url'],
+      hasMacroData ? log.imageUrl : '',
+    ]);
+
+    final microGenus = _firstNonEmpty([
+      characteristics['microscopic_identification'],
+      characteristics['identified_mold'],
+      characteristics['identifiedMold'],
+    ]);
+
     return {
       'date': _formatLogDate(log.createdAt),
-      'microscopicImagePath': '',
-      'macroscopicImagePath': log.imageUrl,
-      'microGenusName': '',
+      'microscopicImagePath': microscopicImage,
+      'macroscopicImagePath': macroscopicImage,
+      'microGenusName': microGenus,
       'macroSize': size,
       'macroTexture': texture,
       'macroShape': color,
@@ -159,20 +202,34 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return cultivationLog is Map<String, dynamic> && cultivationLog.isNotEmpty;
   }
 
-  Future<void> _handleLogSaved(Map<String, dynamic> payload, {required String sourceTab}) async {
+  bool _didMicroscopicLogPersist(Map<String, dynamic> payload) {
+    if (payload['microCultivationLogSaved'] == true) return true;
+    final microLog = payload['microCultivationLog'];
+    return microLog is Map<String, dynamic> && microLog.isNotEmpty;
+  }
+
+  Future<void> _handleLogSaved(
+    Map<String, dynamic> payload, {
+    required String sourceTab,
+  }) async {
     final macro = payload['macroResult'] as Map<String, dynamic>?;
-    final persisted = _didCultivationLogPersist(macro);
+    final macroPersisted = _didCultivationLogPersist(macro);
+    final microPersisted = _didMicroscopicLogPersist(payload);
+    final persisted = macroPersisted || microPersisted;
 
     AppLogger.d(
       'ViewCase: onLogSaved sourceTab=$sourceTab persisted=$persisted '
-      'hasMacroResult=${macro != null}',
+      'hasMacroResult=${macro != null} '
+      'macroPersisted=$macroPersisted microPersisted=$microPersisted',
     );
 
     if (!persisted) {
       final hadMacroAttempt = macro != null;
       if (hadMacroAttempt && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cultivation log was not saved. Please try again.')),
+          const SnackBar(
+            content: Text('Cultivation log was not saved. Please try again.'),
+          ),
         );
       }
       return;
@@ -199,6 +256,14 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           ),
         ),
       );
+    } else if (payload['microLogSaveError'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Microscopic log save failed: ${payload['microLogSaveError']}',
+          ),
+        ),
+      );
     }
   }
 
@@ -212,7 +277,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
   String _getCaseCropName() {
     return cropName.isNotEmpty ? cropName : 'Kamatis Tagalog';
-
   }
 
   /// Handles the temporary local "Give Recommendation" flow.
@@ -364,7 +428,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     final inputs = _collectLookupInputsFromCase();
     final totalInputCount =
-        inputs['symptoms']!.length + inputs['signs']!.length + inputs['characteristics']!.length;
+        inputs['symptoms']!.length +
+        inputs['signs']!.length +
+        inputs['characteristics']!.length;
 
     if (totalInputCount == 0) {
       if (!mounted) return;
@@ -408,7 +474,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         _lookupTopConfidenceDisplay = _formatLookupConfidence(topResult);
       });
     } catch (e) {
-      AppLogger.w('ViewCase: lookup refresh failed, falling back to pending analysis');
+      AppLogger.w(
+        'ViewCase: lookup refresh failed, falling back to pending analysis',
+      );
       if (!mounted) return;
       setState(() {
         _lookupTopMoldId = '';
@@ -467,7 +535,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     );
   }
 
-
   Future<void> _loadCaseFromArgs() async {
     final args = ModalRoute.of(context)?.settings.arguments;
     AppLogger.d('ViewCase: args = $args');
@@ -491,7 +558,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      AppLogger.d('ViewCase: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
+      AppLogger.d(
+        'ViewCase: sessionCookie = ${sessionCookie?.substring(0, 20)}...',
+      );
 
       final reportService = MoldReportService();
       AppLogger.d('ViewCase: calling getMoldReportById($reportId)');
@@ -511,27 +580,32 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         return normalized[0].toUpperCase() + normalized.substring(1);
       }
 
-      final resolvedReportId = reportPayload['id']?.toString().trim().isNotEmpty == true
+      final resolvedReportId =
+          reportPayload['id']?.toString().trim().isNotEmpty == true
           ? reportPayload['id'].toString().trim()
           : reportId;
 
       final statusRaw = reportPayload['status']?.toString() ?? 'Unknown';
       final localReportStatus = capitalizeStatus(statusRaw);
-      final localCaseName = reportPayload['case_name']?.toString() ??
+      final localCaseName =
+          reportPayload['case_name']?.toString() ??
           reportPayload['name']?.toString() ??
           'Unknown Case';
-      final localMycologistId = reportPayload['assigned_mycologist_id']?.toString() ??
+      final localMycologistId =
+          reportPayload['assigned_mycologist_id']?.toString() ??
           reportPayload['mycologist_id']?.toString() ??
           '';
-        final localHasRecommendation =
+      final localHasRecommendation =
           (reportPayload['recommendation'] != null) ||
           (reportPayload['analysis'] is Map<String, dynamic> &&
-            (reportPayload['analysis'] as Map<String, dynamic>).isNotEmpty) ||
-          ((reportPayload['recommended_mold']?.toString().trim().isNotEmpty ?? false));
+              (reportPayload['analysis'] as Map<String, dynamic>).isNotEmpty) ||
+          ((reportPayload['recommended_mold']?.toString().trim().isNotEmpty ??
+              false));
 
       final dateObservedRaw = reportPayload['date_observed']?.toString();
       final startDate = (dateObservedRaw != null && dateObservedRaw.isNotEmpty)
-          ? (DateTime.tryParse(dateObservedRaw)?.toUtc() ?? DateTime.now().toUtc())
+          ? (DateTime.tryParse(dateObservedRaw)?.toUtc() ??
+                DateTime.now().toUtc())
           : DateTime.now().toUtc();
 
       // Build a fallback case from report payload so view page always works.
@@ -568,19 +642,29 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             final logsRaw = logsResponse['snapshot'];
             final logs = (logsRaw is List)
                 ? logsRaw
-                    .whereType<Map>()
-                    .map((e) => CultivationLog.fromJson(Map<String, dynamic>.from(e)))
-                    .toList()
+                      .whereType<Map>()
+                      .map(
+                        (e) => CultivationLog.fromJson(
+                          Map<String, dynamic>.from(e),
+                        ),
+                      )
+                      .toList()
                 : <CultivationLog>[];
 
             moldCase = _cloneCaseWithLogs(moldCase, logs);
-            AppLogger.d('ViewCase: loaded ${logs.length} cultivation logs for caseId=${moldCase.id}');
+            AppLogger.d(
+              'ViewCase: loaded ${logs.length} cultivation logs for caseId=${moldCase.id}',
+            );
           } catch (e) {
-            AppLogger.w('ViewCase: failed to fetch cultivation logs for caseId=${moldCase.id}: $e');
+            AppLogger.w(
+              'ViewCase: failed to fetch cultivation logs for caseId=${moldCase.id}: $e',
+            );
           }
         }
       } catch (e) {
-        AppLogger.w('ViewCase: no mold-case enrichment found, using report payload only');
+        AppLogger.w(
+          'ViewCase: no mold-case enrichment found, using report payload only',
+        );
       }
 
       // Fetch farmer details from the mold report
@@ -606,13 +690,16 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         }
         if (details != null) {
           localEmailAddress = details['email']?.toString() ?? localEmailAddress;
-          localContactNumber = details['phone_number']?.toString() ?? localContactNumber;
-          localLocation = details['location']?.toString() ??
+          localContactNumber =
+              details['phone_number']?.toString() ?? localContactNumber;
+          localLocation =
+              details['location']?.toString() ??
               reportPayload['location']?.toString() ??
               details['address']?.toString() ??
               'Unknown Location';
         } else {
-          localLocation = reportPayload['location']?.toString() ?? localLocation;
+          localLocation =
+              reportPayload['location']?.toString() ?? localLocation;
         }
       } else {
         localLocation = reportPayload['location']?.toString() ?? localLocation;
@@ -633,7 +720,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           final description = detail['description']?.toString() ?? '';
           String entryDate = localDateFirstObserved;
 
-          // Primary source per API 
+          // Primary source per API
           final timestamp = detail['timestamp']?.toString();
           if (timestamp != null && timestamp.isNotEmpty) {
             entryDate = formatIsoDateToDisplay(timestamp);
@@ -665,7 +752,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localInVitroGrowthMedium = 'Not specified';
       String localInVitroIncubationTemperature = 'Not specified';
       List<Map<String, String>> localInVitroEntries = [];
-      
+
       String localInVivoDateTime = 'No data';
       String localInVivoEnvironmentalTemperature = 'Not specified';
       List<Map<String, String>> localInVivoEntries = [];
@@ -673,32 +760,37 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       if (moldCase.cultivationDetails != null) {
         final cultivationDetails = moldCase.cultivationDetails!;
 
-        _initMicroscopicImagePath = cultivationDetails.initialMicroscopicImageUrl ?? '';
-        _initMacroscopicImagePath = cultivationDetails.initialMacroscopicImageUrl ?? '';
+        _initMicroscopicImagePath =
+            cultivationDetails.initialMicroscopicImageUrl ?? '';
+        _initMacroscopicImagePath =
+            cultivationDetails.initialMacroscopicImageUrl ?? '';
         _initIdentifiedMold = cultivationDetails.initialMicroscopic ?? '';
         final snapshot = cultivationDetails.microscopicAiSnapshot;
         if (_initIdentifiedMold.trim().isEmpty && snapshot != null) {
           _initIdentifiedMold = snapshot['identified_mold']?.toString() ?? '';
         }
         _initConfidence = snapshot != null
-          ? (snapshot['confidence_display']?.toString() ?? '')
-          : '';
+            ? (snapshot['confidence_display']?.toString() ?? '')
+            : '';
         _initMacroColor = cultivationDetails.initialMacroscopicColor ?? '';
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
-        _initMacroSymptoms = cultivationDetails.initialMacroscopicSymptoms ?? '';
+        _initMacroSymptoms =
+            cultivationDetails.initialMacroscopicSymptoms ?? '';
         _initMacroCharacteristics =
-          cultivationDetails.initialMacroscopicCharacteristics ?? '';
-        
+            cultivationDetails.initialMacroscopicCharacteristics ?? '';
+
         // Extract in vitro details
         if (cultivationDetails.inVitroDetails != null) {
-          localInVitroIncubationTemperature = '${cultivationDetails.inVitroDetails!.incubationTemperature}°C';
+          localInVitroIncubationTemperature =
+              '${cultivationDetails.inVitroDetails!.incubationTemperature}°C';
         }
-        localInVitroGrowthMedium = cultivationDetails.growthMedium.isNotEmpty 
-            ? cultivationDetails.growthMedium 
+        localInVitroGrowthMedium = cultivationDetails.growthMedium.isNotEmpty
+            ? cultivationDetails.growthMedium
             : 'Not specified';
 
         // Extract cultivation logs and categorize them.
-        if (moldCase.cultivationLogs != null && moldCase.cultivationLogs!.isNotEmpty) {
+        if (moldCase.cultivationLogs != null &&
+            moldCase.cultivationLogs!.isNotEmpty) {
           for (final log in moldCase.cultivationLogs!) {
             final entry = _mapCultivationLogToTimelineEntry(log);
             if (log.type == 'vitro') {
@@ -714,7 +806,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                 .map((log) => log.createdAt)
                 .firstWhere((value) => value != null, orElse: () => null);
             if (firstVitroDate != null) {
-              localInVitroDateTime = DateFormat('MMMM dd, yyyy – hh:mm a').format(firstVitroDate.toLocal());
+              localInVitroDateTime = DateFormat(
+                'MMMM dd, yyyy – hh:mm a',
+              ).format(firstVitroDate.toLocal());
             }
           }
 
@@ -724,14 +818,17 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                 .map((log) => log.createdAt)
                 .firstWhere((value) => value != null, orElse: () => null);
             if (firstVivoDate != null) {
-              localInVivoDateTime = DateFormat('MMMM dd, yyyy – hh:mm a').format(firstVivoDate.toLocal());
+              localInVivoDateTime = DateFormat(
+                'MMMM dd, yyyy – hh:mm a',
+              ).format(firstVivoDate.toLocal());
             }
           }
         }
 
         // Extract in vivo details
         if (cultivationDetails.inVivoDetails != null) {
-          localInVivoEnvironmentalTemperature = '${cultivationDetails.inVivoDetails!.environmentalTemperature}°C';
+          localInVivoEnvironmentalTemperature =
+              '${cultivationDetails.inVivoDetails!.environmentalTemperature}°C';
         }
       }
 
@@ -755,9 +852,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         inVivoEnvironmentalTemperature = localInVivoEnvironmentalTemperature;
         inVivoEntries = localInVivoEntries;
         cropName = cropName;
-        _hasGivenRecommendation = _hasGivenRecommendation || localHasRecommendation;
+        _hasGivenRecommendation =
+            _hasGivenRecommendation || localHasRecommendation;
         _isLoading = false;
-
       });
     } catch (e, stackTrace) {
       AppLogger.e('ViewCase: ERROR', error: e);
@@ -768,7 +865,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       });
     }
   }
-
 
   @override
   void initState() {
@@ -794,14 +890,13 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final String identifiedFungi = _buildIdentifiedFungiLabel();
 
     // Use API data if available, otherwise use fallback defaults
-    String priorityLevel = _case?.priority != null 
+    String priorityLevel = _case?.priority != null
         ? '${_case!.priority[0].toUpperCase()}${_case!.priority.substring(1)} Priority'
         : 'Low Priority';
-    
-    String endDate = _case?.endDate != null
-      ? DateFormat('MMMM dd, yyyy').format(_case!.endDate!)
-      : 'N/A';
 
+    String endDate = _case?.endDate != null
+        ? DateFormat('MMMM dd, yyyy').format(_case!.endDate!)
+        : 'N/A';
 
     //Dynamically build the list of menu items based on the case status.
     final List<String> popupMenuItems = [
@@ -809,7 +904,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       if (!isCaseClosed && !_hasGivenRecommendation) 'Give Recommendation',
       'Identification History',
       'Treatment History',
-      'Export PDF'
+      'Export PDF',
     ];
 
     final List<IconData> popupMenuIcons = [
@@ -820,7 +915,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       FontAwesomeIcons.solidFilePdf,
     ];
 
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -829,38 +923,34 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
-            title: 'View Case',
-            showPopupMenu: true,
-            popupMenuItems: popupMenuItems,
-            popupMenuIcons: popupMenuIcons,
-            onPopupMenuItemSelected: (index) async {
-              // The selected item is now correctly determined from the same list used by the menu.
-              final selectedItem = popupMenuItems[index];
+          title: 'View Case',
+          showPopupMenu: true,
+          popupMenuItems: popupMenuItems,
+          popupMenuIcons: popupMenuIcons,
+          onPopupMenuItemSelected: (index) async {
+            // The selected item is now correctly determined from the same list used by the menu.
+            final selectedItem = popupMenuItems[index];
 
-              if (selectedItem == 'Set Monitoring Details') {
-                final result = await Navigator.pushNamed(
-                  context,
-                  '/set-monitoring-details',
-                  arguments: {'moldCase': _case},
-                );
-                if (result == true && mounted) {
-                  setState(() => _mutationOccurred = true);
-                  _refreshCaseAndPendingAnalysis(showLoader: false);
-                }
+            if (selectedItem == 'Set Monitoring Details') {
+              final result = await Navigator.pushNamed(
+                context,
+                '/set-monitoring-details',
+                arguments: {'moldCase': _case},
+              );
+              if (result == true && mounted) {
+                setState(() => _mutationOccurred = true);
+                _refreshCaseAndPendingAnalysis(showLoader: false);
               }
-              else if (selectedItem == 'Give Recommendation') {
-                await _handleGiveRecommendation();
-              }
-              else if (selectedItem == 'Identification History') {
-                Navigator.pushNamed(context, '/identification-history');
-              }
-              else if (selectedItem == 'Treatment History') {
-                Navigator.pushNamed(context, '/treatment-history');
-              }
-              else if (selectedItem == 'Export PDF') {
-                // Implement export PDF functionality here
-              }
+            } else if (selectedItem == 'Give Recommendation') {
+              await _handleGiveRecommendation();
+            } else if (selectedItem == 'Identification History') {
+              Navigator.pushNamed(context, '/identification-history');
+            } else if (selectedItem == 'Treatment History') {
+              Navigator.pushNamed(context, '/treatment-history');
+            } else if (selectedItem == 'Export PDF') {
+              // Implement export PDF functionality here
             }
+          },
         ),
         body: _isLoading
             ? const Center(
@@ -869,237 +959,266 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                 ),
               )
             : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            FontAwesomeIcons.triangleExclamation,
-                            size: 48,
-                            color: MoldifyColors.accentColor,
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Error Loading Case',
-                            style: TextStyle(
-                              fontFamily: 'Montserrat-Bold',
-                              fontSize: 16,
-                              color: MoldifyColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: 'Bricolage-Grotesque-Regular',
-                              fontSize: 12,
-                              color: MoldifyColors.primaryColor,
-                            ),
-                          ),
-                        ],
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        FontAwesomeIcons.triangleExclamation,
+                        size: 48,
+                        color: MoldifyColors.accentColor,
                       ),
-                    ),
-                  )
-                : RefreshIndicator(
-                color: MoldifyColors.primaryColor,
-                onRefresh: () => _refreshCaseAndPendingAnalysis(showLoader: false),
-                child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Stack(
-                  children: [
-                    /// Cover image for the case
-                    BuildCoverImage(
-                      imageUrl: caseImageUrl,
-                      borderRadiusContainer: 0,
-                      borderRadiusImage: 0,
-                      isHeader: true,
-                    ),
-
-                    Padding(
-                      padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: const BoxDecoration(
-                          color: MoldifyColors.backgroundColor,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30.0),
-                            topRight: Radius.circular(30.0),
-                          ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Error Loading Case',
+                        style: TextStyle(
+                          fontFamily: 'Montserrat-Bold',
+                          fontSize: 16,
+                          color: MoldifyColors.primaryColor,
                         ),
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(25, 30, 25, 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // --- HEADER ---
-                              // Groups the Status and Title into a single, clean unit
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      StatusBox(status: priorityLevel, fontSize: 8),
-                                      const SizedBox(width: 5),
-                                      StatusBox(status: reportStatus, fontSize: 8),
-                                    ],
-                                  ),
-                                  Text(
-                                    "End Date: $endDate".toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontFamily: 'Bricolage-Grotesque-Bold',
-                                      color: MoldifyColors.primaryColor,
-                                      letterSpacing: 1.0,
-                                      
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              
-                              const SizedBox(height: 12),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-Regular',
+                          fontSize: 12,
+                          color: MoldifyColors.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                color: MoldifyColors.primaryColor,
+                onRefresh: () =>
+                    _refreshCaseAndPendingAnalysis(showLoader: false),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Stack(
+                    children: [
+                      /// Cover image for the case
+                      BuildCoverImage(
+                        imageUrl: caseImageUrl,
+                        borderRadiusContainer: 0,
+                        borderRadiusImage: 0,
+                        isHeader: true,
+                      ),
 
-                              Text(
-                                _case?.name ?? 'Tomato Mold',
-                                style: const TextStyle(
-                                  fontFamily: 'Montserrat-Black',
-                                  fontSize: 32,
-                                  color: MoldifyColors.primaryColor,
-                                  height: 1.0,
-                                  letterSpacing: -1.2,
-                                ),
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              // Metadata Row
-                              Row(
-                                children: [
-                                  Text(
-                                    _getCaseCropName().toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Bricolage-Grotesque-Bold',
-                                      color: MoldifyColors.accentColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  const Text("•", style: TextStyle(color: MoldifyColors.primaryColor, fontSize: 12)),
-                                  const SizedBox(width: 15),
-                                  Text(
-                                    location,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      color: MoldifyColors.primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 25),
-
-                              // --- THE ANALYSIS HIGHLIGHT ---
-                              const Text(
-                                "IDENTIFIED FUNGI",
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  letterSpacing: 2.0,
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                  color: MoldifyColors.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                identifiedFungi, // Using the variable
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontFamily: 'Bricolage-Grotesque-Bold',
-                                  color: MoldifyColors.primaryColor,
-                                  height: 1.1,
-                                ),
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              // --- CONTENT TABS ---
-                              ScrollableTabBar(
-                                tabs: const [
-                                  'Case Details',
-                                  'Initial Observation',
-                                  'In Vitro',
-                                  'In Vivo',
-                                ],
-                                currentIndex: _selectedTabIndex,
-                                onTabSelected: (i) => setState(() => _selectedTabIndex = i),
-                              ),
-                              
-                              const SizedBox(height: 15),
-
-                              SizedBox(
-                                height: MediaQuery.of(context).size.height * 0.7,
-                                child: IndexedStack(
-                                  index: _selectedTabIndex,
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).size.height * 0.23,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            color: MoldifyColors.backgroundColor,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(30.0),
+                              topRight: Radius.circular(30.0),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(25, 30, 25, 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // --- HEADER ---
+                                // Groups the Status and Title into a single, clean unit
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    CaseDetailsTab(
-                                      entries: caseEntries,
-                                      farmerName: farmerName,
-                                      dateFirstObserved: dateFirstObserved,
-                                      emailAddress: emailAddress,
-                                      contactNumber: contactNumber,
+                                    Row(
+                                      children: [
+                                        StatusBox(
+                                          status: priorityLevel,
+                                          fontSize: 8,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        StatusBox(
+                                          status: reportStatus,
+                                          fontSize: 8,
+                                        ),
+                                      ],
                                     ),
-                                    InitialObservationTab(
-                                      microscopicImagePath: _initMicroscopicImagePath,
-                                      macroscopicImagePath: _initMacroscopicImagePath,
-                                      identifiedMold: _initIdentifiedMold,
-                                      confidence: _initConfidence,
-                                      macroColor: _initMacroColor,
-                                      macroTexture: _initMacroTexture,
-                                      macroSymptoms: _initMacroSymptoms,
-                                      macroCharacteristics: _initMacroCharacteristics,
-                                    ),
-                                    InVitroTab(
-                                      isCaseClosed: isCaseClosed,
-                                      dateTime: inVitroDateTime,
-                                      growthMedium: inVitroGrowthMedium,
-                                      incubationTemperature: inVitroIncubationTemperature,
-                                      inVitroEntries: inVitroEntries,
-                                      caseId: _case!.id,
-                                      initialMicroIdentifiedMold: _initIdentifiedMold,
-                                      initialMacroColor: _initMacroColor,
-                                      initialMacroTexture: _initMacroTexture,
-                                      initialMacroSymptoms: _initMacroSymptoms,
-                                      initialMacroCharacteristics: _initMacroCharacteristics,
-                                      onLogSaved: _handleInVitroLogSaved,
-                                    ),
-                                    InVivoTab(
-                                      isCaseClosed: isCaseClosed,
-                                      dateTime: inVivoDateTime,
-                                      environmentalTemperature: inVivoEnvironmentalTemperature,
-                                      inVivoEntries: inVivoEntries,
-                                      caseId: _case!.id,
-                                      initialMicroIdentifiedMold: _initIdentifiedMold,
-                                      initialMacroColor: _initMacroColor,
-                                      initialMacroTexture: _initMacroTexture,
-                                      initialMacroSymptoms: _initMacroSymptoms,
-                                      initialMacroCharacteristics: _initMacroCharacteristics,
-                                      onLogSaved: _handleInVivoLogSaved,
+                                    Text(
+                                      "End Date: $endDate".toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontFamily: 'Bricolage-Grotesque-Bold',
+                                        color: MoldifyColors.primaryColor,
+                                        letterSpacing: 1.0,
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+
+                                const SizedBox(height: 12),
+
+                                Text(
+                                  _case?.name ?? 'Tomato Mold',
+                                  style: const TextStyle(
+                                    fontFamily: 'Montserrat-Black',
+                                    fontSize: 32,
+                                    color: MoldifyColors.primaryColor,
+                                    height: 1.0,
+                                    letterSpacing: -1.2,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                // Metadata Row
+                                Row(
+                                  children: [
+                                    Text(
+                                      _getCaseCropName().toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontFamily: 'Bricolage-Grotesque-Bold',
+                                        color: MoldifyColors.accentColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    const Text(
+                                      "•",
+                                      style: TextStyle(
+                                        color: MoldifyColors.primaryColor,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Text(
+                                      location,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontFamily:
+                                            'Bricolage-Grotesque-Regular',
+                                        color: MoldifyColors.primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                // --- THE ANALYSIS HIGHLIGHT ---
+                                const Text(
+                                  "IDENTIFIED FUNGI",
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    letterSpacing: 2.0,
+                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  identifiedFungi, // Using the variable
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                    color: MoldifyColors.primaryColor,
+                                    height: 1.1,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 30),
+
+                                // --- CONTENT TABS ---
+                                ScrollableTabBar(
+                                  tabs: const [
+                                    'Case Details',
+                                    'Initial Observation',
+                                    'In Vitro',
+                                    'In Vivo',
+                                  ],
+                                  currentIndex: _selectedTabIndex,
+                                  onTabSelected: (i) =>
+                                      setState(() => _selectedTabIndex = i),
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.7,
+                                  child: IndexedStack(
+                                    index: _selectedTabIndex,
+                                    children: [
+                                      CaseDetailsTab(
+                                        entries: caseEntries,
+                                        farmerName: farmerName,
+                                        dateFirstObserved: dateFirstObserved,
+                                        emailAddress: emailAddress,
+                                        contactNumber: contactNumber,
+                                      ),
+                                      InitialObservationTab(
+                                        microscopicImagePath:
+                                            _initMicroscopicImagePath,
+                                        macroscopicImagePath:
+                                            _initMacroscopicImagePath,
+                                        identifiedMold: _initIdentifiedMold,
+                                        confidence: _initConfidence,
+                                        macroColor: _initMacroColor,
+                                        macroTexture: _initMacroTexture,
+                                        macroSymptoms: _initMacroSymptoms,
+                                        macroCharacteristics:
+                                            _initMacroCharacteristics,
+                                      ),
+                                      InVitroTab(
+                                        isCaseClosed: isCaseClosed,
+                                        dateTime: inVitroDateTime,
+                                        growthMedium: inVitroGrowthMedium,
+                                        incubationTemperature:
+                                            inVitroIncubationTemperature,
+                                        inVitroEntries: inVitroEntries,
+                                        caseId: _case!.id,
+                                        initialMicroIdentifiedMold:
+                                            _initIdentifiedMold,
+                                        initialMacroColor: _initMacroColor,
+                                        initialMacroTexture: _initMacroTexture,
+                                        initialMacroSymptoms:
+                                            _initMacroSymptoms,
+                                        initialMacroCharacteristics:
+                                            _initMacroCharacteristics,
+                                        onLogSaved: _handleInVitroLogSaved,
+                                      ),
+                                      InVivoTab(
+                                        isCaseClosed: isCaseClosed,
+                                        dateTime: inVivoDateTime,
+                                        environmentalTemperature:
+                                            inVivoEnvironmentalTemperature,
+                                        inVivoEntries: inVivoEntries,
+                                        caseId: _case!.id,
+                                        initialMicroIdentifiedMold:
+                                            _initIdentifiedMold,
+                                        initialMacroColor: _initMacroColor,
+                                        initialMacroTexture: _initMacroTexture,
+                                        initialMacroSymptoms:
+                                            _initMacroSymptoms,
+                                        initialMacroCharacteristics:
+                                            _initMacroCharacteristics,
+                                        onLogSaved: _handleInVivoLogSaved,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ))
-            ),
-          );
-        }
-      }
-
+              ),
+      ),
+    );
+  }
+}

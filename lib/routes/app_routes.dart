@@ -41,8 +41,12 @@ class AppRoutes {
     return MaterialPageRoute(
       settings: settings, // Pass settings so arguments are accessible
       builder: (context) {
-        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-        final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
+        final authProvider = Provider.of<AppAuthProvider>(
+          context,
+          listen: false,
+        );
+        final isAuthenticated =
+            authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
         switch (settings.name) {
           case RouteNames.splash:
             return const SplashScreen();
@@ -57,12 +61,18 @@ class AppRoutes {
             return SignUpScreen();
           case RouteNames.emailRecoverAccount:
             final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null ? args['pageTitle'] as String : '';
+            final pageTitle = args != null && args['pageTitle'] != null
+                ? args['pageTitle'] as String
+                : '';
             return EmailRecoverAccountScreen(pageTitle: pageTitle);
           case RouteNames.codeRecoverAccount:
             final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null ? args['pageTitle'] as String : '';
-            final email = args != null && args['email'] != null ? args['email'] as String : '';
+            final pageTitle = args != null && args['pageTitle'] != null
+                ? args['pageTitle'] as String
+                : '';
+            final email = args != null && args['email'] != null
+                ? args['email'] as String
+                : '';
             return CodeRecoverAccountScreen(email: email, pageTitle: pageTitle);
           case RouteNames.intro:
             if (isAuthenticated) {
@@ -73,7 +83,9 @@ class AppRoutes {
             return MainPage();
           case RouteNames.setNewPassword:
             final args = settings.arguments as Map<String, dynamic>?;
-            final token = args != null && args['token'] != null ? args['token'] as String : '';
+            final token = args != null && args['token'] != null
+                ? args['token'] as String
+                : '';
             return SetNewPasswordScreen(token: token);
 
           case RouteNames.camera:
@@ -98,7 +110,8 @@ class AppRoutes {
           case RouteNames.imagePreview:
             if (settings.arguments is Map<String, dynamic>) {
               final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('imagePath') && args['imagePath'] is String) {
+              if (args.containsKey('imagePath') &&
+                  args['imagePath'] is String) {
                 final String imagePath = args['imagePath'] as String;
                 final String? source = args['source'] as String?;
                 final String? sourceTab = args['sourceTab'] as String?;
@@ -106,7 +119,8 @@ class AppRoutes {
                 final String? sourceFlow = args['sourceFlow'] as String?;
                 final String? scanModality = args['scanModality'] as String?;
                 final bool includeSize = args['includeSize'] as bool? ?? true;
-                final bool returnResult = args['returnResult'] as bool? ?? false;
+                final bool returnResult =
+                    args['returnResult'] as bool? ?? false;
                 return ImagePreviewScreen(
                   imagePath: imagePath,
                   source: source,
@@ -118,19 +132,31 @@ class AppRoutes {
                   returnResult: returnResult,
                 );
               } else {
-                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('imagePath missing')));
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Error')),
+                  body: const Center(child: Text('imagePath missing')),
+                );
               }
             } else {
-              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for imagePreview')));
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Invalid arguments for imagePreview'),
+                ),
+              );
             }
 
           case RouteNames.moldResult:
             if (settings.arguments is Map<String, dynamic>) {
               final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('croppedImagePath') && args['croppedImagePath'] is String) {
-                final String croppedImagePath = args['croppedImagePath'] as String;
-                final Map<String, dynamic>? modelResult = args['modelResult'] as Map<String, dynamic>?;
-                final Map<String, dynamic>? moldDetails = args['moldDetails'] as Map<String, dynamic>?;
+              if (args.containsKey('croppedImagePath') &&
+                  args['croppedImagePath'] is String) {
+                final String croppedImagePath =
+                    args['croppedImagePath'] as String;
+                final Map<String, dynamic>? modelResult =
+                    args['modelResult'] as Map<String, dynamic>?;
+                final Map<String, dynamic>? moldDetails =
+                    args['moldDetails'] as Map<String, dynamic>?;
                 final String? sourceFlow = args['sourceFlow'] as String?;
                 final String? scanModality = args['scanModality'] as String?;
                 final String? sourceTab = args['sourceTab'] as String?;
@@ -145,10 +171,18 @@ class AppRoutes {
                   caseId: caseId,
                 );
               } else {
-                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('croppedImagePath missing')));
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Error')),
+                  body: const Center(child: Text('croppedImagePath missing')),
+                );
               }
             } else {
-              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for moldResult')));
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Invalid arguments for moldResult'),
+                ),
+              );
             }
 
           case RouteNames.setMonitoringDetails:
@@ -158,10 +192,18 @@ class AppRoutes {
                 final moldCase = args['moldCase'];
                 return SetMonitoringDetailsScreen(moldCase: moldCase);
               } else {
-                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('moldCase missing')));
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Error')),
+                  body: const Center(child: Text('moldCase missing')),
+                );
               }
             } else {
-              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for setMonitoringDetails')));
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Invalid arguments for setMonitoringDetails'),
+                ),
+              );
             }
 
           case RouteNames.viewCase:
@@ -174,10 +216,18 @@ class AppRoutes {
                 final String tabName = args['tabName'] as String;
                 return EditLogScreen(tabName: tabName);
               } else {
-                return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('tabName missing')));
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Error')),
+                  body: const Center(child: Text('tabName missing')),
+                );
               }
             } else {
-              return Scaffold(appBar: AppBar(title: const Text('Error')), body: const Center(child: Text('Invalid arguments for editLog')));
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: const Center(
+                  child: Text('Invalid arguments for editLog'),
+                ),
+              );
             }
 
           case RouteNames.addTreatment:
@@ -216,9 +266,12 @@ class AppRoutes {
           case RouteNames.addLog:
             if (settings.arguments is Map<String, dynamic>) {
               final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('imagePath') && args['imagePath'] is String &&
-                  args.containsKey('sourceTab') && args['sourceTab'] is String &&
-                  args.containsKey('caseId') && args['caseId'] is String) {
+              if (args.containsKey('imagePath') &&
+                  args['imagePath'] is String &&
+                  args.containsKey('sourceTab') &&
+                  args['sourceTab'] is String &&
+                  args.containsKey('caseId') &&
+                  args['caseId'] is String) {
                 final imagePath = args['imagePath'] as String;
                 final sourceTab = args['sourceTab'] as String;
                 final caseId = args['caseId'] as String;
@@ -236,16 +289,24 @@ class AppRoutes {
               } else {
                 return Scaffold(
                   appBar: AppBar(title: const Text('Argument Error')),
-                  body: const Center(child: Text('AddLog: imagePath, sourceTab, or caseId missing or invalid.')),
+                  body: const Center(
+                    child: Text(
+                      'AddLog: imagePath, sourceTab, or caseId missing or invalid.',
+                    ),
+                  ),
                 );
               }
             } else {
               return Scaffold(
                 appBar: AppBar(title: const Text('Navigation Error')),
-                body: Center(child: Text('AddLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.')),
+                body: Center(
+                  child: Text(
+                    'AddLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.',
+                  ),
+                ),
               );
             }
-            
+
           case RouteNames.mainCamera:
             final args = settings.arguments as Map<String, dynamic>?;
             final bool showAppBar = args?['showAppBar'] as bool? ?? false;
@@ -262,14 +323,14 @@ class AppRoutes {
               sourceTab: sourceTab,
               moldCaseId: moldCaseId,
             );
-            case RouteNames.submitReport:
-              return SubmitReportScreen();
+          case RouteNames.submitReport:
+            return SubmitReportScreen();
           case RouteNames.viewReport:
-              return ViewReportScreen();
+            return ViewReportScreen();
           case RouteNames.addFollowUp:
-              return AddFollowUpScreen();
-              case RouteNames.inputCharacteristics:
-                return InputCharacteristicsScreen();
+            return AddFollowUpScreen();
+          case RouteNames.inputCharacteristics:
+            return InputCharacteristicsScreen();
           case RouteNames.terms:
             return TermsOfAgreementScreen();
           case RouteNames.privacy:
@@ -279,21 +340,24 @@ class AppRoutes {
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
             final includeSize = args?['includeSize'] as bool? ?? true;
-            final microscopicImagePath = args?['microscopicImagePath'] as String?;
-            final macroscopicImagePath = args?['macroscopicImagePath'] as String?;
+            final microscopicImagePath =
+                args?['microscopicImagePath'] as String?;
+            final macroscopicImagePath =
+                args?['macroscopicImagePath'] as String?;
             final Map<String, dynamic>? microResult =
-              args?['microResult'] as Map<String, dynamic>?;
+                args?['microResult'] as Map<String, dynamic>?;
             final Map<String, dynamic>? macroResult =
                 args?['macroResult'] as Map<String, dynamic>?;
             final String? initialMicroIdentifiedMold =
-              args?['initialMicroIdentifiedMold'] as String?;
-            final String? initialMacroColor = args?['initialMacroColor'] as String?;
+                args?['initialMicroIdentifiedMold'] as String?;
+            final String? initialMacroColor =
+                args?['initialMacroColor'] as String?;
             final String? initialMacroTexture =
-              args?['initialMacroTexture'] as String?;
+                args?['initialMacroTexture'] as String?;
             final String? initialMacroSymptoms =
-              args?['initialMacroSymptoms'] as String?;
+                args?['initialMacroSymptoms'] as String?;
             final String? initialMacroCharacteristics =
-              args?['initialMacroCharacteristics'] as String?;
+                args?['initialMacroCharacteristics'] as String?;
 
             List<String> toStringList(dynamic value) {
               if (value is List) {
@@ -321,6 +385,18 @@ class AppRoutes {
               return null;
             }
 
+            bool didCultivationLogPersist(Map<String, dynamic>? payload) {
+              if (payload == null) return false;
+              if (payload['cultivationLogSaved'] == true) return true;
+              final saved = payload['cultivationLog'];
+              return saved is Map<String, dynamic> && saved.isNotEmpty;
+            }
+
+            String resolveCultivationType(String? tab) {
+              if (tab == 'in-vivo') return 'vivo';
+              return 'vitro';
+            }
+
             return AddLogChoicesScreen(
               microscopicImagePath: microscopicImagePath,
               macroscopicImagePath: macroscopicImagePath,
@@ -333,74 +409,82 @@ class AppRoutes {
               initialMacroCharacteristics: initialMacroCharacteristics,
               onCaptureMicro: () {
                 final navigator = Navigator.of(context);
-                navigator.pushNamed(
-                  RouteNames.mainCamera,
-                  arguments: {
-                    'showAppBar': true,
-                    'returnResult': true,
-                    'sourceFlow': 'cultivation_log',
-                    'scanModality': 'microscopic',
-                    'sourceTab': sourceTab,
-                    'caseId': caseId,
-                  },
-                ).then((result) {
-                  if (result is Map<String, dynamic>) {
-                    final nextMicroPath = result['imagePath']?.toString();
-                    navigator.pushReplacementNamed(
-                      RouteNames.addLogChoices,
+                navigator
+                    .pushNamed(
+                      RouteNames.mainCamera,
                       arguments: {
+                        'showAppBar': true,
+                        'returnResult': true,
+                        'sourceFlow': 'cultivation_log',
+                        'scanModality': 'microscopic',
                         'sourceTab': sourceTab,
                         'caseId': caseId,
-                        'includeSize': includeSize,
-                        'microscopicImagePath': nextMicroPath,
-                        'macroscopicImagePath': macroscopicImagePath,
-                        'microResult': result,
-                        'macroResult': macroResult,
-                        'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
-                        'initialMacroColor': initialMacroColor,
-                        'initialMacroTexture': initialMacroTexture,
-                        'initialMacroSymptoms': initialMacroSymptoms,
-                        'initialMacroCharacteristics': initialMacroCharacteristics,
                       },
-                    );
-                  }
-                });
+                    )
+                    .then((result) {
+                      if (result is Map<String, dynamic>) {
+                        final nextMicroPath = result['imagePath']?.toString();
+                        navigator.pushReplacementNamed(
+                          RouteNames.addLogChoices,
+                          arguments: {
+                            'sourceTab': sourceTab,
+                            'caseId': caseId,
+                            'includeSize': includeSize,
+                            'microscopicImagePath': nextMicroPath,
+                            'macroscopicImagePath': macroscopicImagePath,
+                            'microResult': result,
+                            'macroResult': macroResult,
+                            'initialMicroIdentifiedMold':
+                                initialMicroIdentifiedMold,
+                            'initialMacroColor': initialMacroColor,
+                            'initialMacroTexture': initialMacroTexture,
+                            'initialMacroSymptoms': initialMacroSymptoms,
+                            'initialMacroCharacteristics':
+                                initialMacroCharacteristics,
+                          },
+                        );
+                      }
+                    });
               },
               onCaptureMacro: () {
                 if (sourceTab == null || caseId == null) return;
                 final navigator = Navigator.of(context);
-                navigator.pushNamed(
-                  RouteNames.addLogInstructions,
-                  arguments: {
-                    'sourceTab': sourceTab,
-                    'caseId': caseId,
-                    'includeSize': includeSize,
-                    'sourceFlow': 'cultivation_log',
-                    'scanModality': 'macroscopic',
-                    'returnResult': true,
-                  },
-                ).then((result) {
-                  if (result is Map<String, dynamic>) {
-                    final nextMacroPath = result['imagePath']?.toString();
-                    navigator.pushReplacementNamed(
-                      RouteNames.addLogChoices,
+                navigator
+                    .pushNamed(
+                      RouteNames.addLogInstructions,
                       arguments: {
                         'sourceTab': sourceTab,
                         'caseId': caseId,
                         'includeSize': includeSize,
-                        'microscopicImagePath': microscopicImagePath,
-                        'macroscopicImagePath': nextMacroPath,
-                        'microResult': microResult,
-                        'macroResult': result,
-                        'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
-                        'initialMacroColor': initialMacroColor,
-                        'initialMacroTexture': initialMacroTexture,
-                        'initialMacroSymptoms': initialMacroSymptoms,
-                        'initialMacroCharacteristics': initialMacroCharacteristics,
+                        'sourceFlow': 'cultivation_log',
+                        'scanModality': 'macroscopic',
+                        'returnResult': true,
                       },
-                    );
-                  }
-                });
+                    )
+                    .then((result) {
+                      if (result is Map<String, dynamic>) {
+                        final nextMacroPath = result['imagePath']?.toString();
+                        navigator.pushReplacementNamed(
+                          RouteNames.addLogChoices,
+                          arguments: {
+                            'sourceTab': sourceTab,
+                            'caseId': caseId,
+                            'includeSize': includeSize,
+                            'microscopicImagePath': microscopicImagePath,
+                            'macroscopicImagePath': nextMacroPath,
+                            'microResult': microResult,
+                            'macroResult': result,
+                            'initialMicroIdentifiedMold':
+                                initialMicroIdentifiedMold,
+                            'initialMacroColor': initialMacroColor,
+                            'initialMacroTexture': initialMacroTexture,
+                            'initialMacroSymptoms': initialMacroSymptoms,
+                            'initialMacroCharacteristics':
+                                initialMacroCharacteristics,
+                          },
+                        );
+                      }
+                    });
               },
               onSubmit: () async {
                 if (microResult == null && macroResult == null) {
@@ -408,9 +492,64 @@ class AppRoutes {
                   return;
                 }
 
+                final moldCaseService = MoldCaseService();
+
+                Map<String, dynamic>? microCultivationLog;
+                String? microLogSaveError;
+
+                final microPersisted = didCultivationLogPersist(microResult);
+                final microImagePath =
+                    microResult?['imagePath']?.toString().trim() ?? '';
+
+                // Persist a microscopic-only cultivation log when no macroscopic
+                // log was stored. This ensures microscopy entries appear in the
+                // case timeline and are included in refresh flows.
+                if (!microPersisted &&
+                    caseId != null &&
+                    caseId.isNotEmpty &&
+                    microResult != null &&
+                    microImagePath.isNotEmpty) {
+                  try {
+                    final microscopicCharacteristics = <String, dynamic>{
+                      'microscopic_identification':
+                          microResult['identifiedMold']?.toString() ?? '',
+                      'identified_mold':
+                          microResult['identifiedMold']?.toString() ?? '',
+                      'confidence':
+                          (microResult['confidenceDecimal'] as num?)
+                              ?.toDouble() ??
+                          0.0,
+                      if (microResult['topPredictions'] is List)
+                        'top_predictions': microResult['topPredictions'],
+                      if (microResult['modelSource'] != null)
+                        'model_source': microResult['modelSource'].toString(),
+                    };
+
+                    final microLogResponse = await moldCaseService
+                        .addCultivationLog(
+                          caseId,
+                          {
+                            'type': resolveCultivationType(sourceTab),
+                            'characteristics': microscopicCharacteristics,
+                            'additional_info': '',
+                          },
+                          imagePath: microImagePath,
+                          sessionCookie: authProvider.cookie,
+                        );
+
+                    final savedLog = microLogResponse['data'];
+                    if (savedLog is Map<String, dynamic>) {
+                      microCultivationLog = savedLog;
+                    }
+                  } catch (e) {
+                    microLogSaveError = e.toString();
+                  }
+                }
+
                 final microScanId = extractScanId(microResult);
                 final macroScanId = extractScanId(macroResult);
-                final hasAnyScanId = (microScanId != null && microScanId.isNotEmpty) ||
+                final hasAnyScanId =
+                    (microScanId != null && microScanId.isNotEmpty) ||
                     (macroScanId != null && macroScanId.isNotEmpty);
 
                 bool scanAssociationSaved = false;
@@ -426,20 +565,30 @@ class AppRoutes {
                     );
 
                     final existingDetails =
-                        (caseData['cultivation_details'] is Map<String, dynamic>)
-                            ? Map<String, dynamic>.from(
-                                caseData['cultivation_details'] as Map<String, dynamic>,
-                              )
-                            : <String, dynamic>{};
+                        (caseData['cultivation_details']
+                            is Map<String, dynamic>)
+                        ? Map<String, dynamic>.from(
+                            caseData['cultivation_details']
+                                as Map<String, dynamic>,
+                          )
+                        : <String, dynamic>{};
 
-                    final microscopicIds = toStringList(existingDetails['scanned_microscopic_ids']);
-                    final macroscopicIds = toStringList(existingDetails['scanned_macroscopic_ids']);
+                    final microscopicIds = toStringList(
+                      existingDetails['scanned_microscopic_ids'],
+                    );
+                    final macroscopicIds = toStringList(
+                      existingDetails['scanned_macroscopic_ids'],
+                    );
 
-                    if (microScanId != null && microScanId.isNotEmpty && !microscopicIds.contains(microScanId)) {
+                    if (microScanId != null &&
+                        microScanId.isNotEmpty &&
+                        !microscopicIds.contains(microScanId)) {
                       microscopicIds.add(microScanId);
                       scannedMicroscopicIdsAdded.add(microScanId);
                     }
-                    if (macroScanId != null && macroScanId.isNotEmpty && !macroscopicIds.contains(macroScanId)) {
+                    if (macroScanId != null &&
+                        macroScanId.isNotEmpty &&
+                        !macroscopicIds.contains(macroScanId)) {
                       macroscopicIds.add(macroScanId);
                       scannedMacroscopicIdsAdded.add(macroScanId);
                     }
@@ -447,40 +596,46 @@ class AppRoutes {
                     existingDetails['scanned_microscopic_ids'] = microscopicIds;
                     existingDetails['scanned_macroscopic_ids'] = macroscopicIds;
 
-                    await moldCaseService.updateCultivationDetails(
-                      caseId,
-                      {'cultivation_details': existingDetails},
-                      sessionCookie: authProvider.cookie,
-                    );
+                    await moldCaseService.updateCultivationDetails(caseId, {
+                      'cultivation_details': existingDetails,
+                    }, sessionCookie: authProvider.cookie);
 
                     scanAssociationSaved = true;
                   } catch (e) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Failed to associate scan IDs to case: $e'),
+                        content: Text(
+                          'Failed to associate scan IDs to case: $e',
+                        ),
                       ),
                     );
                     return;
                   }
                 }
 
-                final Map<String, dynamic>? enrichedMacroResult = macroResult == null
+                final Map<String, dynamic>? enrichedMacroResult =
+                    macroResult == null
                     ? null
                     : {
                         ...macroResult,
                         'scanAssociationSaved': scanAssociationSaved,
-                        'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
-                        'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                        'scannedMicroscopicIdsAdded':
+                            scannedMicroscopicIdsAdded,
+                        'scannedMacroscopicIdsAdded':
+                            scannedMacroscopicIdsAdded,
                       };
 
-                final Map<String, dynamic>? enrichedMicroResult = microResult == null
+                final Map<String, dynamic>? enrichedMicroResult =
+                    microResult == null
                     ? null
                     : {
                         ...microResult,
                         'scanAssociationSaved': scanAssociationSaved,
-                        'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
-                        'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                        'scannedMicroscopicIdsAdded':
+                            scannedMicroscopicIdsAdded,
+                        'scannedMacroscopicIdsAdded':
+                            scannedMacroscopicIdsAdded,
                       };
 
                 if (!context.mounted) return;
@@ -489,11 +644,17 @@ class AppRoutes {
                   'sourceTab': sourceTab,
                   'microscopicImagePath': microscopicImagePath,
                   'macroscopicImagePath': macroscopicImagePath,
+                  'microCultivationLog': microCultivationLog,
+                  'microCultivationLogSaved': microCultivationLog != null,
+                  if (microLogSaveError != null)
+                    'microLogSaveError': microLogSaveError,
                   'scanAssociationSaved': scanAssociationSaved,
                   'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
                   'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
-                  if (enrichedMicroResult != null) 'microResult': enrichedMicroResult,
-                  if (enrichedMacroResult != null) 'macroResult': enrichedMacroResult,
+                  if (enrichedMicroResult != null)
+                    'microResult': enrichedMicroResult,
+                  if (enrichedMacroResult != null)
+                    'macroResult': enrichedMacroResult,
                 });
               },
             );
@@ -506,7 +667,9 @@ class AppRoutes {
 
           default:
             return Scaffold(
-              body: Center(child: Text('No route defined for \'${settings.name}\'')),
+              body: Center(
+                child: Text('No route defined for \'${settings.name}\''),
+              ),
             );
         }
       },

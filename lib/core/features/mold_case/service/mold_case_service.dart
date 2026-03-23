@@ -15,7 +15,7 @@ class MoldCaseService {
 
   /// Fetch all assigned mold cases for the authenticated curator.
   /// Endpoint: GET /api/v1/mold-case/assigned
-  /// 
+  ///
   /// [limit] - page size (defaults to 10)
   /// [pageToken] - cursor token for pagination
   /// [sessionCookie] - required for authentication
@@ -27,7 +27,7 @@ class MoldCaseService {
     try {
       final queryParams = <String, String>{
         if (limit != null) 'limit': limit.toString(),
-        if (pageToken != null && pageToken.trim().isNotEmpty) 
+        if (pageToken != null && pageToken.trim().isNotEmpty)
           'pageToken': pageToken.trim(),
       };
 
@@ -36,7 +36,7 @@ class MoldCaseService {
         headers: {'Content-Type': 'application/json'},
         sessionCookie: sessionCookie,
         queryParams: queryParams.isEmpty ? null : queryParams,
-        cacheOptions: CacheConfig.refresh,
+        cacheOptions: CacheConfig.noCache,
       );
 
       if (response.statusCode == 200 || response.statusCode == 304) {
@@ -48,7 +48,7 @@ class MoldCaseService {
 
         // Handle response structure: { data: { snapshot, nextPageToken } }
         // According to API docs, assigned reports return directly with data wrapper
-        final Map<String, dynamic> responseBody = 
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
 
         // Extract the data object
@@ -62,10 +62,14 @@ class MoldCaseService {
       } else if (response.statusCode == 404) {
         throw Exception('Failed to retrieve assigned mold reports');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Server error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Server error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to fetch assigned cases: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch assigned cases: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow; // Preserve error chain
@@ -91,29 +95,33 @@ class MoldCaseService {
         if (responseData == null) {
           throw Exception('Empty response from server');
         }
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         // Check application-level success flag
         final success = responseBody['success'];
         if (success == false) {
           final error = responseBody['error'] ?? 'Failed to fetch mold case';
           throw Exception(error);
         }
-        
+
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
-        
+
         return data;
       } else if (response.statusCode == 404) {
         throw Exception('Mold case not found: $id');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to fetch mold case: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch mold case: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;
@@ -139,29 +147,33 @@ class MoldCaseService {
         if (responseData == null) {
           throw Exception('Empty response from server');
         }
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         // Check application-level success flag
         final success = responseBody['success'];
         if (success == false) {
           final error = responseBody['error'] ?? 'Failed to fetch mold cases';
           throw Exception(error);
         }
-        
+
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
-        
+
         return data;
       } else if (response.statusCode == 404) {
         throw Exception('No mold cases found for report: $reportId');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to fetch mold cases: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch mold cases: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;
@@ -189,10 +201,7 @@ class MoldCaseService {
   }
 
   /// Delete a mold case by id.
-  Future<void> deleteMoldCase(
-    String id, {
-    String? sessionCookie,
-  }) async {
+  Future<void> deleteMoldCase(String id, {String? sessionCookie}) async {
     final response = await _caseApi.delete(
       '/$id',
       sessionCookie: sessionCookie,
@@ -207,7 +216,7 @@ class MoldCaseService {
 
   /// Get all archived (closed) mold cases for the user.
   /// Endpoint: GET /archive
-  /// 
+  ///
   /// [limit] - page size
   /// [pageToken] - cursor token for pagination
   /// [sessionCookie] - required for authentication
@@ -219,7 +228,7 @@ class MoldCaseService {
     try {
       final queryParams = <String, String>{
         if (limit != null) 'limit': limit.toString(),
-        if (pageToken != null && pageToken.trim().isNotEmpty) 
+        if (pageToken != null && pageToken.trim().isNotEmpty)
           'pageToken': pageToken.trim(),
       };
 
@@ -236,29 +245,34 @@ class MoldCaseService {
         if (responseData == null) {
           throw Exception('Empty response from server');
         }
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         // Check application-level success flag
         final success = responseBody['success'];
         if (success == false) {
-          final error = responseBody['error'] ?? 'Failed to fetch archived cases';
+          final error =
+              responseBody['error'] ?? 'Failed to fetch archived cases';
           throw Exception(error);
         }
-        
+
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
-        
+
         return data;
       } else if (response.statusCode == 404) {
         throw Exception('No archived cases found');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to fetch archived cases: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch archived cases: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;
@@ -288,7 +302,9 @@ class MoldCaseService {
           : responseBody;
       return data;
     } else {
-      throw Exception('Failed to fetch priority breakdown: ${response.statusCode}');
+      throw Exception(
+        'Failed to fetch priority breakdown: ${response.statusCode}',
+      );
     }
   }
 
@@ -325,7 +341,9 @@ class MoldCaseService {
 
       // Save to app cache directory
       final cacheDir = await getTemporaryDirectory();
-      final compressedFile = File('${cacheDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      final compressedFile = File(
+        '${cacheDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
 
       await compressedFile.writeAsBytes(compressedBytes);
 
@@ -378,7 +396,8 @@ class MoldCaseService {
 
         final success = responseBody['success'];
         if (success == false) {
-          final error = responseBody['error'] ?? 'Failed to add cultivation log';
+          final error =
+              responseBody['error'] ?? 'Failed to add cultivation log';
           throw Exception(error);
         }
 
@@ -386,12 +405,11 @@ class MoldCaseService {
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
-        return {
-          'success': success == false ? false : true,
-          'data': data,
-        };
+        return {'success': success == false ? false : true, 'data': data};
       }
-      throw Exception('Failed to add cultivation log: ${response.statusCode} ${response.data}');
+      throw Exception(
+        'Failed to add cultivation log: ${response.statusCode} ${response.data}',
+      );
     } catch (e) {
       throw Exception('Failed to add cultivation log: $e');
     }
@@ -431,7 +449,8 @@ class MoldCaseService {
 
         final success = responseBody['success'];
         if (success == false) {
-          final error = responseBody['error'] ?? 'Failed to fetch cultivation logs';
+          final error =
+              responseBody['error'] ?? 'Failed to fetch cultivation logs';
           throw Exception(error);
         }
 
@@ -442,7 +461,9 @@ class MoldCaseService {
         return data;
       }
 
-      throw Exception('Failed to fetch cultivation logs: ${response.statusCode} ${response.data}');
+      throw Exception(
+        'Failed to fetch cultivation logs: ${response.statusCode} ${response.data}',
+      );
     } catch (e) {
       rethrow;
     }
@@ -465,7 +486,9 @@ class MoldCaseService {
     if (response.statusCode == 200) {
       return response.data as Map<String, dynamic>;
     }
-    throw Exception('Failed to update cultivation details: ${response.statusCode}');
+    throw Exception(
+      'Failed to update cultivation details: ${response.statusCode}',
+    );
   }
 
   /// Analyze a cultivation log image using the backend ML service
@@ -474,26 +497,37 @@ class MoldCaseService {
   Future<Map<String, dynamic>> analyzeCultivationImage(
     String caseId,
     String imagePath, {
+    String cultivationType = 'vivo',
     String? sessionCookie,
   }) async {
-    // This would typically use a multipart request with the image file
-    // For now, returning a placeholder that matches the backend response
-    final response = await _caseApi.post(
+    final response = await _caseApi.postMultipart(
       '/$caseId/analyze-cultivation',
-      headers: {'Content-Type': 'application/json'},
-      body: {'image_path': imagePath},
+      headers: {'Content-Type': 'multipart/form-data'},
+      fields: {'type': cultivationType},
+      fileFieldName: 'image',
+      filePath: imagePath,
       sessionCookie: sessionCookie,
     );
 
     if (response.statusCode == 200) {
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        final data = responseData['data'];
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        return responseData;
+      }
+      return {'data': responseData};
     }
-    throw Exception('Failed to analyze cultivation image: ${response.statusCode}');
+    throw Exception(
+      'Failed to analyze cultivation image: ${response.statusCode}',
+    );
   }
 
   /// Search assigned mold cases for the mycologist
   /// Endpoint: GET /search
-  /// 
+  ///
   /// [search] - search query for case name
   /// [priority] - filter by priority (low, medium, high)
   /// [limit] - page size
@@ -509,9 +543,11 @@ class MoldCaseService {
     try {
       final queryParams = <String, String>{
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        if (priority != null && priority.trim().isNotEmpty) 'priority': priority.trim(),
+        if (priority != null && priority.trim().isNotEmpty)
+          'priority': priority.trim(),
         if (limit != null) 'limit': limit.toString(),
-        if (pageToken != null && pageToken.trim().isNotEmpty) 'pageToken': pageToken.trim(),
+        if (pageToken != null && pageToken.trim().isNotEmpty)
+          'pageToken': pageToken.trim(),
       };
 
       final response = await _caseApi.get(
@@ -527,29 +563,33 @@ class MoldCaseService {
         if (responseData == null) {
           throw Exception('Empty response from server');
         }
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         // Check application-level success flag
         final success = responseBody['success'];
         if (success == false) {
           final error = responseBody['error'] ?? 'Failed to search mold cases';
           throw Exception(error);
         }
-        
+
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
-        
+
         return data;
       } else if (response.statusCode == 404) {
         throw Exception('No cases found matching search criteria');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to search mold cases: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to search mold cases: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;
@@ -558,7 +598,7 @@ class MoldCaseService {
 
   /// Submit final mold verdict from mycologist
   /// Endpoint: PATCH /:caseId/verdict
-  /// 
+  ///
   /// [caseId] - ID of the mold case
   /// [moldId] - ID of the confirmed mold species
   /// [moldName] - Name of the confirmed mold species
@@ -594,7 +634,7 @@ class MoldCaseService {
           throw Exception('Empty response from server');
         }
 
-        final Map<String, dynamic> responseBody = 
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
 
         final success = responseBody['success'];
@@ -609,15 +649,21 @@ class MoldCaseService {
 
         return data;
       } else if (response.statusCode == 400) {
-        final error = response.data is Map ? response.data['error'] : 'Bad request';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Bad request';
         throw Exception('Invalid verdict data: $error');
       } else if (response.statusCode == 404) {
         throw Exception('Mold case not found: $caseId');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to submit verdict: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to submit verdict: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;

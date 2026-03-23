@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class MoldCase {
   final String id;
   final String mycologistId;
@@ -56,8 +58,9 @@ class MoldCase {
       isArchived: json['is_archived'] == null
           ? false
           : (json['is_archived'] is bool
-              ? json['is_archived'] as bool
-              : (json['is_archived'].toString() == '1' || json['is_archived'].toString().toLowerCase() == 'true')),
+                ? json['is_archived'] as bool
+                : (json['is_archived'].toString() == '1' ||
+                      json['is_archived'].toString().toLowerCase() == 'true')),
     );
   }
 
@@ -108,8 +111,10 @@ class MoldCase {
       'priority': priority,
       'start_date': startDate.toUtc().toIso8601String(),
       'end_date': endDate?.toUtc().toIso8601String(),
-      if (cultivationDetails != null) 'cultivation_details': cultivationDetails!.toJson(),
-      if (cultivationLogs != null) 'cultivation_logs': cultivationLogs!.map((e) => e.toJson()).toList(),
+      if (cultivationDetails != null)
+        'cultivation_details': cultivationDetails!.toJson(),
+      if (cultivationLogs != null)
+        'cultivation_logs': cultivationLogs!.map((e) => e.toJson()).toList(),
       'is_archived': isArchived,
     };
   }
@@ -194,18 +199,23 @@ class CultivationDetails {
     InVitroDetails? inVitro;
 
     if (json['in_vivo_details'] is Map<String, dynamic>) {
-      inVivo = InVivoDetails.fromJson(json['in_vivo_details'] as Map<String, dynamic>);
+      inVivo = InVivoDetails.fromJson(
+        json['in_vivo_details'] as Map<String, dynamic>,
+      );
     }
 
     if (json['in_vitro_details'] is Map<String, dynamic>) {
-      inVitro = InVitroDetails.fromJson(json['in_vitro_details'] as Map<String, dynamic>);
+      inVitro = InVitroDetails.fromJson(
+        json['in_vitro_details'] as Map<String, dynamic>,
+      );
     }
 
     // Parse specimen types and quantities
     final List<String>? specimenTypes = (json['specimen_types'] is List)
         ? List<String>.from(json['specimen_types'] as List)
         : null;
-    final List<String>? specimenQuantities = (json['specimen_quantities'] is List)
+    final List<String>? specimenQuantities =
+        (json['specimen_quantities'] is List)
         ? List<String>.from(json['specimen_quantities'] as List)
         : null;
 
@@ -213,31 +223,44 @@ class CultivationDetails {
     final List<String>? initialSymptoms = (json['initial_symptoms'] is List)
         ? List<String>.from(json['initial_symptoms'] as List)
         : null;
-    final List<String>? initialCharacteristics = (json['initial_characteristics'] is List)
+    final List<String>? initialCharacteristics =
+        (json['initial_characteristics'] is List)
         ? List<String>.from(json['initial_characteristics'] as List)
         : null;
 
     final String? initialMicroscopic = json['initial_microscopic']?.toString();
     final String? initialMacroscopic = json['initial_macroscopic']?.toString();
-    final String? initialMicroscopicColor = json['initial_microscopic_color']?.toString();
-    final String? initialMicroscopicTexture = json['initial_microscopic_texture']?.toString();
-    final String? initialMacroscopicColor = json['initial_macroscopic_color']?.toString();
-    final String? initialMacroscopicTexture = json['initial_macroscopic_texture']?.toString();
-    final String? initialMacroscopicSymptoms = json['initial_macroscopic_symptoms']?.toString();
-    final String? initialMacroscopicCharacteristics = json['initial_macroscopic_characteristics']?.toString();
-    final String? initialMicroscopicImageUrl = json['initial_microscopic_image_url']?.toString();
-    final String? initialMacroscopicImageUrl = json['initial_macroscopic_image_url']?.toString();
+    final String? initialMicroscopicColor = json['initial_microscopic_color']
+        ?.toString();
+    final String? initialMicroscopicTexture =
+        json['initial_microscopic_texture']?.toString();
+    final String? initialMacroscopicColor = json['initial_macroscopic_color']
+        ?.toString();
+    final String? initialMacroscopicTexture =
+        json['initial_macroscopic_texture']?.toString();
+    final String? initialMacroscopicSymptoms =
+        json['initial_macroscopic_symptoms']?.toString();
+    final String? initialMacroscopicCharacteristics =
+        json['initial_macroscopic_characteristics']?.toString();
+    final String? initialMicroscopicImageUrl =
+        json['initial_microscopic_image_url']?.toString();
+    final String? initialMacroscopicImageUrl =
+        json['initial_macroscopic_image_url']?.toString();
     final String? dateObservation = json['date_observation']?.toString();
     final Map<String, dynamic>? microscopicAiSnapshot =
-      (json['microscopic_ai_snapshot'] is Map<String, dynamic>)
-        ? Map<String, dynamic>.from(json['microscopic_ai_snapshot'] as Map<String, dynamic>)
+        (json['microscopic_ai_snapshot'] is Map<String, dynamic>)
+        ? Map<String, dynamic>.from(
+            json['microscopic_ai_snapshot'] as Map<String, dynamic>,
+          )
         : null;
-    final List<String>? scannedMicroscopicIds = (json['scanned_microscopic_ids'] is List)
-      ? List<String>.from(json['scanned_microscopic_ids'] as List)
-      : null;
-    final List<String>? scannedMacroscopicIds = (json['scanned_macroscopic_ids'] is List)
-      ? List<String>.from(json['scanned_macroscopic_ids'] as List)
-      : null;
+    final List<String>? scannedMicroscopicIds =
+        (json['scanned_microscopic_ids'] is List)
+        ? List<String>.from(json['scanned_microscopic_ids'] as List)
+        : null;
+    final List<String>? scannedMacroscopicIds =
+        (json['scanned_macroscopic_ids'] is List)
+        ? List<String>.from(json['scanned_macroscopic_ids'] as List)
+        : null;
 
     return CultivationDetails(
       growthMedium: json['growth_medium']?.toString() ?? '',
@@ -273,7 +296,8 @@ class CultivationDetails {
       if (specimenTypes != null) 'specimen_types': specimenTypes,
       if (specimenQuantities != null) 'specimen_quantities': specimenQuantities,
       if (initialSymptoms != null) 'initial_symptoms': initialSymptoms,
-      if (initialCharacteristics != null) 'initial_characteristics': initialCharacteristics,
+      if (initialCharacteristics != null)
+        'initial_characteristics': initialCharacteristics,
       if (locationGathered != null) 'location_gathered': locationGathered,
       if (initialMicroscopic != null) 'initial_microscopic': initialMicroscopic,
       if (initialMacroscopic != null) 'initial_macroscopic': initialMacroscopic,
@@ -288,7 +312,8 @@ class CultivationDetails {
       if (initialMacroscopicSymptoms != null)
         'initial_macroscopic_symptoms': initialMacroscopicSymptoms,
       if (initialMacroscopicCharacteristics != null)
-        'initial_macroscopic_characteristics': initialMacroscopicCharacteristics,
+        'initial_macroscopic_characteristics':
+            initialMacroscopicCharacteristics,
       if (initialMicroscopicImageUrl != null)
         'initial_microscopic_image_url': initialMicroscopicImageUrl,
       if (initialMacroscopicImageUrl != null)
@@ -316,9 +341,7 @@ class InVivoDetails {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'environmental_temperature': environmentalTemperature,
-    };
+    return {'environmental_temperature': environmentalTemperature};
   }
 }
 
@@ -334,9 +357,7 @@ class InVitroDetails {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'incubation_temperature': incubationTemperature,
-    };
+    return {'incubation_temperature': incubationTemperature};
   }
 }
 
@@ -358,6 +379,19 @@ class CultivationLog {
   });
 
   factory CultivationLog.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> parseCharacteristics(dynamic raw) {
+      if (raw is Map<String, dynamic>) return raw;
+      if (raw is String) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) return decoded;
+        } catch (_) {
+          return <String, dynamic>{};
+        }
+      }
+      return <String, dynamic>{};
+    }
+
     DateTime? parseDate(dynamic raw) {
       if (raw == null) return null;
       if (raw is DateTime) return raw.toUtc();
@@ -371,7 +405,10 @@ class CultivationLog {
       if (raw is Map<String, dynamic>) {
         final seconds = raw['_seconds'] ?? raw['seconds'];
         if (seconds is int) {
-          return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+          return DateTime.fromMillisecondsSinceEpoch(
+            seconds * 1000,
+            isUtc: true,
+          );
         }
       }
       return null;
@@ -384,12 +421,11 @@ class CultivationLog {
     return CultivationLog(
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? 'vivo',
-      characteristics: (json['characteristics'] is Map<String, dynamic>)
-          ? json['characteristics'] as Map<String, dynamic>
-          : {},
+      characteristics: parseCharacteristics(json['characteristics']),
       additionalInfo: json['additional_info']?.toString() ?? '',
       imageUrl: json['image_url']?.toString() ?? '',
-      createdAt: parseDate(json['created_at']) ?? parseDate(metadata?['created_at']),
+      createdAt:
+          parseDate(json['created_at']) ?? parseDate(metadata?['created_at']),
     );
   }
 
