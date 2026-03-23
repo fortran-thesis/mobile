@@ -107,6 +107,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return '';
   }
 
+  Map<String, dynamic>? _asStringMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
   bool _looksLikeMicroscopicLog(Map<String, dynamic> characteristics) {
     return _firstNonEmpty([
       characteristics['microscopic_identification'],
@@ -442,8 +448,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       candidate = _latestReportLookupResults.first;
     }
 
-    final snapshotTopPrediction =
-        _firstMapFromValue(_latestMicroscopicSnapshot?['top_predictions']);
+    final snapshotTopPrediction = _firstMapFromValue(
+      _latestMicroscopicSnapshot?['top_predictions'],
+    );
     candidate ??= snapshotTopPrediction;
 
     if (candidate == null && _latestMicroscopicSnapshot != null) {
@@ -624,12 +631,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           ? reportData['data'] as Map<String, dynamic>
           : reportData;
 
-        final lookupResultsRaw = reportPayload['lookup_results'];
-        final parsedLookupResults = (lookupResultsRaw is List)
+      final lookupResultsRaw = reportPayload['lookup_results'];
+      final parsedLookupResults = (lookupResultsRaw is List)
           ? lookupResultsRaw
-            .whereType<Map>()
-            .map((entry) => Map<String, dynamic>.from(entry))
-            .toList()
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList()
           : <Map<String, dynamic>>[];
 
       String capitalizeStatus(String raw) {
@@ -736,10 +743,10 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';
 
       // Extract reporter details from the report
-      final reporter = reportPayload['reporter'] as Map<String, dynamic>?;
+      final reporter = _asStringMap(reportPayload['reporter']);
       if (reporter != null) {
-        final user = reporter['user'] as Map<String, dynamic>?;
-        final details = reporter['details'] as Map<String, dynamic>?;
+        final user = _asStringMap(reporter['user']);
+        final details = _asStringMap(reporter['details']);
 
         if (user != null) {
           localFarmerName =
@@ -784,11 +791,16 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             entryDate = formatIsoDateToDisplay(timestamp);
           } else {
             // Backward compatibility for legacy payloads
-            final metadata = detail['metadata'] as Map<String, dynamic>?;
+            final metadata = _asStringMap(detail['metadata']);
             if (metadata != null && metadata['created_at'] != null) {
-              entryDate = formatFirestoreTimestampToDisplay(
-                metadata['created_at'] as Map<String, dynamic>?,
-              );
+              final createdAt = metadata['created_at'];
+              if (createdAt is String && createdAt.trim().isNotEmpty) {
+                entryDate = formatIsoDateToDisplay(createdAt);
+              } else {
+                entryDate = formatFirestoreTimestampToDisplay(
+                  _asStringMap(createdAt),
+                );
+              }
             }
           }
 
