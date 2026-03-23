@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -13,10 +14,13 @@ import 'package:flutter_svg/svg.dart';
 /// - [buttonRadius]: The border radius of the button's corners.
 /// - [borderColor]: Optional border color; defaults to transparent.
 /// - [leftIcon]: Optional Material icon displayed before the text.
+/// - [rightIcon]: Optional Material icon displayed after the text.
 /// - [svg]: Optional SVG asset path displayed before the text.
 /// - [iconColor]: Optional color to tint the icon or SVG.
+/// - [rightIconColor]: Optional color to tint the right icon (defaults to iconColor).
 /// - [paddingIconText]: Optional horizontal padding between icon/svg and text (default 24.0).
 /// - [iconSize]: Optional size for the icon.
+/// - [rightIconSize]: Optional size for the right icon (defaults to iconSize).
 /// - [svgHeight]: Optional height for the SVG asset.
 /// - [fontSize]: Optional font size for the button text (default 16.0).
 
@@ -26,29 +30,35 @@ class BuildButton extends StatelessWidget {
   final Color? borderColor;
   final Color textColor, backgroundColor;
   final IconData? leftIcon;
+  final IconData? rightIcon;
   final String? svg;
   final Color? iconColor;
-  final double? paddingIconText, iconSize, svgHeight, fontSize;
-  final double buttonHeight, buttonWidth, buttonRadius;
+  final Color? rightIconColor;
+  final double? paddingIconText, iconSize, rightIconSize, svgHeight, fontSize, borderWidth, buttonWidth;
+  final double buttonHeight, buttonRadius;
 
   const BuildButton({
-    Key? key,
+    super.key,
     required this.buttonText,
     required this.onPressed,
     required this.backgroundColor,
     required this.textColor,
     required this.buttonHeight,
-    required this.buttonWidth,
     required this.buttonRadius,
+    this.buttonWidth,
     this.borderColor,
     this.leftIcon,
+    this.rightIcon,
     this.svg,
     this.iconColor,
+    this.rightIconColor,
     this.paddingIconText,
     this.iconSize,
+    this.rightIconSize,
     this.svgHeight,
     this.fontSize,
-  }) : super(key: key);
+    this.borderWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,15 +70,16 @@ class BuildButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(buttonRadius),
-            side:BorderSide(
-              color: borderColor ?? Colors.transparent,
-              width: 2.0,
-            )
+              borderRadius: BorderRadius.circular(buttonRadius),
+              side: BorderSide(
+                color: borderColor ?? Colors.transparent,
+                width: borderWidth ?? 2.0,
+              )
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (leftIcon != null)
               Padding(
@@ -79,6 +90,7 @@ class BuildButton extends StatelessWidget {
                   size: iconSize,
                 ),
               ),
+
             if (svg != null)
               Padding(
                 padding: EdgeInsets.only(right: paddingIconText ?? 24.0),
@@ -87,7 +99,8 @@ class BuildButton extends StatelessWidget {
                   height: svgHeight,
                 ),
               ),
-            Text(
+
+            AutoSizeText(
               buttonText,
               style: TextStyle(
                 overflow: TextOverflow.visible,
@@ -95,7 +108,20 @@ class BuildButton extends StatelessWidget {
                 fontSize: fontSize ?? 16.0,
                 color: textColor,
               ),
+              maxLines: 1,
+              minFontSize: 8,
+              overflow: TextOverflow.ellipsis,
             ),
+
+            if (rightIcon != null)
+              Padding(
+                padding: EdgeInsets.only(left: paddingIconText ?? 12.0),
+                child: Icon(
+                  rightIcon,
+                  color: rightIconColor ?? iconColor,
+                  size: rightIconSize ?? iconSize,
+                ),
+              ),
           ],
         ),
       ),

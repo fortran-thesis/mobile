@@ -1,0 +1,143 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:moldify/core/features/notification/service/notification_service.dart';
+import 'package:moldify/core/utils/logger.dart';
+
+/// Top-level handler for background/terminated messages.
+///
+/// Must be a **top-level function** (not a class method) so the Flutter
+/// engine can invoke it in a dedicated isolate.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  AppLogger.d(
+    'Background message received: ${message.messageId}',
+    tag: 'FCM',
+  );
+}
+
+/// Singleton service that manages the full FCM lifecycle:
+///   1. Request notification permission
+///   2. Obtain the device FCM token
+///   3. Register / refresh the token with the backend
+///   4. Listen for token-refresh events
+///   5. Surface foreground messages via a callback
+class FCMService {
+  FCMService._();
+  static final FCMService instance = FCMService._();
+
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final NotificationService _notificationService = NotificationService();
+
+  String? _currentToken;
+  String? get currentToken => _currentToken;
+
+  /// Initialise FCM — call once after [Firebase.initializeApp].
+  ///
+  /// * Registers the background handler.
+  /// * Requests permission on iOS / Android 13+.
+  /// * Fetches the FCM token and registers it with the API.
+  /// * Subscribes to token-refresh events.
+  Future<void> initialise({
+    String? sessionCookie,
+    void Function(RemoteMessage)? onForegroundMessage,
+  }) async {
+    // Background / terminated handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // Request permission (no-op on older Android; prompts on iOS & Android 13+)
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: false,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      AppLogger.w('Notification permission denied', tag: 'FCM');
+      return;
+    }
+
+    AppLogger.d(
+      'Notification permission: ${settings.authorizationStatus}',
+      tag: 'FCM',
+    );
+
+    // Obtain the token
+    await _fetchAndRegisterToken(sessionCookie: sessionCookie);
+
+    // Listen for token refresh
+    _messaging.onTokenRefresh.listen((newToken) {
+      AppLogger.d('FCM token refreshed', tag: 'FCM');
+      _registerToken(newToken, sessionCookie: sessionCookie);
+    });
+
+    // Foreground message handler
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      AppLogger.d(
+        'Foreground message: ${message.notification?.title}',
+        tag: 'FCM',
+      );
+      onForegroundMessage?.call(message);
+    });
+
+    // Handle notification taps (app was in background)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      AppLogger.d(
+        'Notification tap (background): ${message.data}',
+        tag: 'FCM',
+      );
+    });
+
+    // Check if the app was opened from a terminated state via a notification
+    final initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      AppLogger.d(
+        'App opened from terminated via notification: ${initialMessage.data}',
+        tag: 'FCM',
+      );
+    }
+  }
+
+  /// Get the current FCM token and register with backend.
+  Future<void> _fetchAndRegisterToken({String? sessionCookie}) async {
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) {
+        _currentToken = token;
+        await _registerToken(token, sessionCookie: sessionCookie);
+      }
+    } catch (e) {
+      AppLogger.e('Failed to get FCM token', tag: 'FCM', error: e);
+    }
+  }
+
+  /// Register a token with the backend API.
+  Future<void> _registerToken(String token, {String? sessionCookie}) async {
+    try {
+      _currentToken = token;
+      final platform = Platform.isIOS ? 'ios' : 'android';
+      await _notificationService.registerDeviceToken(
+        token: token,
+        platform: platform,
+        sessionCookie: sessionCookie,
+      );
+      AppLogger.d('Device token registered ($platform)', tag: 'FCM');
+    } catch (e) {
+      AppLogger.e('Failed to register device token', tag: 'FCM', error: e);
+    }
+  }
+
+  /// Remove the current device token from the backend (e.g. on logout).
+  Future<void> removeCurrentToken({String? sessionCookie}) async {
+    // The backend uses a token document ID — but we can also
+    // delete the messaging token locally.
+    try {
+      await _messaging.deleteToken();
+      _currentToken = null;
+      AppLogger.d('FCM token deleted locally', tag: 'FCM');
+    } catch (e) {
+      AppLogger.e('Failed to delete FCM token', tag: 'FCM', error: e);
+    }
+  }
+}
