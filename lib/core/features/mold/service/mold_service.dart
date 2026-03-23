@@ -111,6 +111,11 @@ class MoldService {
         cacheOptions: CacheConfig.staticData,
       );
 
+      if (response.statusCode == 404) {
+        // Staging may legitimately have no seeded molds yet.
+        return entries;
+      }
+
       if (response.statusCode != 200 && response.statusCode != 304) {
         throw Exception('Failed to fetch molds: HTTP ${response.statusCode}');
       }

@@ -51,6 +51,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _lookupTopMoldName = '';
   double? _lookupTopConfidence;
   String _lookupTopConfidenceDisplay = '';
+  Map<String, dynamic>? _latestMicroscopicSnapshot;
+  List<Map<String, dynamic>> _latestReportLookupResults = [];
 
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
@@ -423,6 +425,50 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return '${confidence.toStringAsFixed(1)}%';
   }
 
+  Map<String, dynamic>? _firstMapFromValue(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is List) {
+      for (final item in value) {
+        if (item is Map<String, dynamic>) return item;
+      }
+    }
+    return null;
+  }
+
+  bool _applyStoredPendingAnalysisFallback() {
+    Map<String, dynamic>? candidate;
+
+    if (_latestReportLookupResults.isNotEmpty) {
+      candidate = _latestReportLookupResults.first;
+    }
+
+    final snapshotTopPrediction =
+        _firstMapFromValue(_latestMicroscopicSnapshot?['top_predictions']);
+    candidate ??= snapshotTopPrediction;
+
+    if (candidate == null && _latestMicroscopicSnapshot != null) {
+      candidate = _latestMicroscopicSnapshot;
+    }
+
+    if (candidate == null) return false;
+
+    final moldId = _extractLookupMoldId(candidate);
+    final moldName = _extractLookupMoldName(candidate);
+    final confidence = _extractLookupConfidenceValue(candidate);
+    final confidenceText = _formatLookupConfidence(candidate);
+
+    if (moldId.isEmpty && moldName.isEmpty) return false;
+
+    if (!mounted) return true;
+    setState(() {
+      _lookupTopMoldId = moldId;
+      _lookupTopMoldName = moldName;
+      _lookupTopConfidence = confidence;
+      _lookupTopConfidenceDisplay = confidenceText;
+    });
+    return true;
+  }
+
   Future<void> _computePendingAnalysisFromCurrentCase() async {
     if (_case == null || _isRunningLookup) return;
 
@@ -433,6 +479,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         inputs['characteristics']!.length;
 
     if (totalInputCount == 0) {
+      final restored = _applyStoredPendingAnalysisFallback();
+      if (restored) return;
       if (!mounted) return;
       setState(() {
         _lookupTopMoldId = '';
@@ -477,13 +525,15 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       AppLogger.w(
         'ViewCase: lookup refresh failed, falling back to pending analysis',
       );
-      if (!mounted) return;
-      setState(() {
-        _lookupTopMoldId = '';
-        _lookupTopMoldName = '';
-        _lookupTopConfidence = null;
-        _lookupTopConfidenceDisplay = '';
-      });
+      final restored = _applyStoredPendingAnalysisFallback();
+      if (!restored && mounted) {
+        setState(() {
+          _lookupTopMoldId = '';
+          _lookupTopMoldName = '';
+          _lookupTopConfidence = null;
+          _lookupTopConfidenceDisplay = '';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isRunningLookup = false);
@@ -573,6 +623,14 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       final reportPayload = reportData['data'] is Map<String, dynamic>
           ? reportData['data'] as Map<String, dynamic>
           : reportData;
+
+        final lookupResultsRaw = reportPayload['lookup_results'];
+        final parsedLookupResults = (lookupResultsRaw is List)
+          ? lookupResultsRaw
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry))
+            .toList()
+          : <Map<String, dynamic>>[];
 
       String capitalizeStatus(String raw) {
         final normalized = raw.trim();
@@ -766,11 +824,15 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             cultivationDetails.initialMacroscopicImageUrl ?? '';
         _initIdentifiedMold = cultivationDetails.initialMicroscopic ?? '';
         final snapshot = cultivationDetails.microscopicAiSnapshot;
+        _latestMicroscopicSnapshot = snapshot;
         if (_initIdentifiedMold.trim().isEmpty && snapshot != null) {
           _initIdentifiedMold = snapshot['identified_mold']?.toString() ?? '';
         }
         _initConfidence = snapshot != null
-            ? (snapshot['confidence_display']?.toString() ?? '')
+            ? (snapshot['confidence_display']?.toString() ??
+                  (snapshot['confidence']?.toString().isNotEmpty == true
+                      ? '${snapshot['confidence']}%'
+                      : ''))
             : '';
         _initMacroColor = cultivationDetails.initialMacroscopicColor ?? '';
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
@@ -834,6 +896,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       setState(() {
         _case = moldCase;
+        _latestReportLookupResults = parsedLookupResults;
         _reportId = resolvedReportId; // Store report ID for status updates
         caseStatus = localReportStatus;
         reportStatus = localReportStatus;

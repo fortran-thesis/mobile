@@ -122,13 +122,21 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
           }
         }
 
+        if (_genusOptions.isEmpty) {
+          _moldOptionsError =
+              'No mold options available in this environment yet. Seed mold data first.';
+        }
+
         _isLoadingMoldOptions = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final errorText = e.toString().toLowerCase();
       setState(() {
         _isLoadingMoldOptions = false;
-        _moldOptionsError = 'Unable to load mold options right now.';
+        _moldOptionsError = errorText.contains('http 404')
+            ? 'No mold options found. Seed mold records in this environment first.'
+            : 'Unable to load mold options right now.';
       });
     }
   }
