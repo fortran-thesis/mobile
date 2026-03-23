@@ -58,7 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _loadDashboardData(String? sessionCookie, String userRole) async {
+  Future<void> _loadDashboardData(
+    String? sessionCookie,
+    String userRole,
+  ) async {
     AppLogger.d('_loadDashboardData called with role: $userRole');
 
     if (sessionCookie == null) {
@@ -75,7 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Fetch status counts using the dedicated API endpoint
-      final reportCounts = await _fetchReportStatusCounts(reportService, sessionCookie);
+      final reportCounts = await _fetchReportStatusCounts(
+        reportService,
+        sessionCookie,
+      );
 
       // Fetch role-specific data
       final assignedCases = await _fetchRoleSpecificData(
@@ -97,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoadingDashboard = false;
         });
       }
-
     } catch (e) {
       AppLogger.e('Dashboard load error', error: e);
     } finally {
@@ -111,9 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
     String sessionCookie,
   ) async {
     try {
-      final response = await reportService.getReportCounts(sessionCookie: sessionCookie);
+      final response = await reportService.getReportCounts(
+        sessionCookie: sessionCookie,
+      );
       // Response is already unwrapped by the service
-      
+
       return {
         'total': response['total'] ?? 0,
         'pending': response['pending'] ?? 0,
@@ -137,14 +144,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _normalizeMoldReport(Map<String, dynamic> report) {
     return {
       'id': report['id']?.toString() ?? '',
-      'mycologist_id': report['assigned_mycologist_id']?.toString() ?? report['mycologist_id']?.toString() ?? '',
-      'name': report['case_name']?.toString() ?? report['name']?.toString() ?? '',
+      'mycologist_id':
+          report['assigned_mycologist_id']?.toString() ??
+          report['mycologist_id']?.toString() ??
+          '',
+      'name':
+          report['case_name']?.toString() ?? report['name']?.toString() ?? '',
       // For /mold-case/assigned payloads, id is case id while mold_report_id is the report id.
       // Fall back to id only for legacy payloads that do not include mold_report_id.
-      'mold_report_id': report['mold_report_id']?.toString() ?? report['id']?.toString() ?? '',
+      'mold_report_id':
+          report['mold_report_id']?.toString() ??
+          report['id']?.toString() ??
+          '',
       'photo_url': report['cover_photo'] ?? report['photo_url'],
       'priority': report['priority']?.toString() ?? 'low',
-      'start_date': report['date_observed'] ?? report['created_at'] ?? DateTime.now().toIso8601String(),
+      'start_date':
+          report['date_observed'] ??
+          report['created_at'] ??
+          DateTime.now().toIso8601String(),
       'end_date': report['end_date'],
       'is_archived': report['is_archived'] ?? false,
     };
@@ -180,15 +197,19 @@ class _HomeScreenState extends State<HomeScreen> {
           final priorityOrder = {'low': 1, 'medium': 2, 'high': 3};
           final dedupedByReport = <String, MoldCase>{};
           for (final case_ in parsedCases) {
-            final key = case_.moldReportId.trim().isNotEmpty ? case_.moldReportId : case_.id;
+            final key = case_.moldReportId.trim().isNotEmpty
+                ? case_.moldReportId
+                : case_.id;
             final existing = dedupedByReport[key];
             if (existing == null) {
               dedupedByReport[key] = case_;
               continue;
             }
 
-            final existingRank = priorityOrder[existing.priority.toLowerCase()] ?? 0;
-            final currentRank = priorityOrder[case_.priority.toLowerCase()] ?? 0;
+            final existingRank =
+                priorityOrder[existing.priority.toLowerCase()] ?? 0;
+            final currentRank =
+                priorityOrder[case_.priority.toLowerCase()] ?? 0;
             if (currentRank > existingRank) {
               dedupedByReport[key] = case_;
             }
@@ -203,10 +224,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 case_.moldReportId,
                 sessionCookie: sessionCookie,
               );
-              final status = reportResponse['data']?['status'] as String? ?? 'unknown';
+              final status =
+                  reportResponse['data']?['status'] as String? ?? 'unknown';
               statusMap[case_.id] = status;
             } catch (e) {
-              AppLogger.e('Failed to fetch report for case ${case_.id}', error: e);
+              AppLogger.e(
+                'Failed to fetch report for case ${case_.id}',
+                error: e,
+              );
               statusMap[case_.id] = 'unknown';
             }
           }
@@ -223,7 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<WikiArticle>> _fetchWikiMoldArticles(String sessionCookie) async {
     try {
       final wikiService = WikiService();
-      final result = await wikiService.fetchMoldipedia(sessionCookie: sessionCookie);
+      final result = await wikiService.fetchMoldipedia(
+        sessionCookie: sessionCookie,
+      );
       return result['articles'] as List<WikiArticle>? ?? [];
     } catch (e) {
       AppLogger.e('Failed to fetch WikiMold articles', error: e);
@@ -246,13 +273,13 @@ class _HomeScreenState extends State<HomeScreen> {
       return [
         StatisticTile(
           icon: FontAwesomeIcons.hourglassHalf,
-          statusColor: MoldifyColors.MoldifyBlue, 
+          statusColor: MoldifyColors.MoldifyBlue,
           value: _statusCount('in_progress', padTwoDigits: true),
           label: l10n.statusLabelInProgress,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.solidCircleCheck,
-          statusColor: MoldifyColors.primaryColor, 
+          statusColor: MoldifyColors.primaryColor,
           value: _statusCount('resolved', padTwoDigits: true),
           label: l10n.statusLabelResolved,
         ),
@@ -261,25 +288,25 @@ class _HomeScreenState extends State<HomeScreen> {
       return [
         StatisticTile(
           icon: FontAwesomeIcons.solidClock,
-          statusColor: MoldifyColors.accentColor, 
+          statusColor: MoldifyColors.accentColor,
           value: _statusCount('pending', padTwoDigits: true),
           label: l10n.statusLabelPending,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.hourglassHalf,
-          statusColor: MoldifyColors.MoldifyBlue, 
+          statusColor: MoldifyColors.MoldifyBlue,
           value: _statusCount('in_progress', padTwoDigits: true),
           label: l10n.statusLabelInProgress,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.solidCircleCheck,
-          statusColor: MoldifyColors.primaryColor, 
+          statusColor: MoldifyColors.primaryColor,
           value: _statusCount('resolved', padTwoDigits: true),
           label: l10n.statusLabelResolved,
         ),
         StatisticTile(
           icon: FontAwesomeIcons.solidCircleXmark,
-          statusColor: MoldifyColors.MoldifyRed, 
+          statusColor: MoldifyColors.MoldifyRed,
           value: _statusCount('rejected', padTwoDigits: true),
           label: l10n.statusLabelRejected,
         ),
@@ -325,7 +352,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: double.infinity,
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15.0,
+                      vertical: 30.0,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -340,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _buildFarmerUI(l10n)
                         else
                           _buildUnrecognizedRoleState(l10n),
-                        const SizedBox(height: 70.0)
+                        const SizedBox(height: 70.0),
                       ],
                     ),
                   ),
@@ -360,9 +390,13 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (BuildContext newContext) {
             return IconButton(
               onPressed: () => Scaffold.of(newContext).openDrawer(),
-              icon: const Icon(FontAwesomeIcons.bars, color: MoldifyColors.primaryColor, size: 24.0)
+              icon: const Icon(
+                FontAwesomeIcons.bars,
+                color: MoldifyColors.primaryColor,
+                size: 24.0,
+              ),
             );
-          }
+          },
         ),
         const Spacer(),
         Stack(
@@ -371,14 +405,22 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 setState(() {});
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
                 );
               },
-              icon: const Icon(FontAwesomeIcons.solidBell, color: MoldifyColors.primaryColor, size: 24.0)
+              icon: const Icon(
+                FontAwesomeIcons.solidBell,
+                color: MoldifyColors.primaryColor,
+                size: 24.0,
+              ),
             ),
             BlocBuilder<NotificationBloc, NotificationState>(
               builder: (context, state) {
-                final count = state is NotificationLoaded ? state.unreadCount : 0;
+                final count = state is NotificationLoaded
+                    ? state.unreadCount
+                    : 0;
                 if (count == 0) return const SizedBox.shrink();
                 return Positioned(
                   right: 6,
@@ -389,7 +431,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: MoldifyColors.MoldifyRed,
                       shape: BoxShape.circle,
                     ),
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
                     child: Text(
                       count > 99 ? '99+' : '$count',
                       style: const TextStyle(
@@ -456,8 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
         subtitle: role.toLowerCase() == 'mycologist'
             ? 'Begin your mold journey now!'
             : l10n.protectYourCrops,
-        imagePath: role.toLowerCase() == 'mycologist' 
-            ? 'assets/images/mold_home_banner.png' 
+        imagePath: role.toLowerCase() == 'mycologist'
+            ? 'assets/images/mold_home_banner.png'
             : 'assets/images/farm_home_banner.png',
       ),
     );
@@ -501,34 +546,46 @@ class _HomeScreenState extends State<HomeScreen> {
             height: MediaQuery.of(context).size.height - 500,
           )
         else
-          ..._assignedCases.take(3).map((case_) => Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: MainCaseTile(
-              caseName: case_.name,
-              dateSubmitted: case_.startDate.toString().split(' ')[0],
-              priorityLevel: '${case_.priority[0].toUpperCase()}${case_.priority.substring(1)} Priority',
-              caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
-              imageHeight: 70.0,
-              imageWidth: 70.0,
-              onTap: () {
-                final reportId = case_.moldReportId.trim().isNotEmpty
-                    ? case_.moldReportId
-                    : case_.id;
-                Navigator.pushNamed(
-                  context,
-                  '/view-case',
-                  arguments: {'id': reportId},
-                );
-              },
-            ),
-          )),
+          ..._assignedCases
+              .take(3)
+              .map(
+                (case_) => Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: MainCaseTile(
+                    caseName: case_.name,
+                    dateSubmitted: case_.startDate.toString().split(' ')[0],
+                    priorityLevel:
+                        '${case_.priority[0].toUpperCase()}${case_.priority.substring(1)} Priority',
+                    caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
+                    imageHeight: 70.0,
+                    imageWidth: 70.0,
+                    onTap: () {
+                      final reportId = case_.moldReportId.trim().isNotEmpty
+                          ? case_.moldReportId
+                          : case_.id;
+                      Navigator.pushNamed(
+                        context,
+                        '/view-case',
+                        arguments: {'id': reportId},
+                      ).then((result) {
+                        if (result == true && mounted) {
+                          final authProvider = context.read<AppAuthProvider>();
+                          _loadDashboardData(authProvider.cookie, role);
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ),
         if (_assignedCases.length > 3)
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const MainMonitorScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const MainMonitorScreen(),
+                  ),
                 );
               },
               child: const Row(
@@ -543,7 +600,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   SizedBox(width: 6),
-                  Icon(Icons.chevron_right, size: 18, color: MoldifyColors.primaryColor),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: MoldifyColors.primaryColor,
+                  ),
                 ],
               ),
             ),
@@ -586,12 +647,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCaseStatusBreakdown(AppLocalizations l10n) {
     return _isLoadingDashboard
-        ? Center(child: CircularProgressIndicator(color: MoldifyColors.primaryColor))
+        ? Center(
+            child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
+          )
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               StatisticTile(
-                icon: FontAwesomeIcons.seedling, 
+                icon: FontAwesomeIcons.seedling,
                 statusColor: MoldifyColors.primaryColor,
                 value: _statusCount('total', padTwoDigits: true),
                 label: l10n.totalCasesReported,
@@ -641,7 +704,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: const Color(0xFFE8F0F7),
                 label: l10n.faq,
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const MainFAQSCreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const MainFAQSCreen(),
+                  ),
                 ),
               ),
             ),
@@ -650,7 +715,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ActionTile(
                 icon: FontAwesomeIcons.solidPaperPlane,
                 iconColor: MoldifyColors.primaryColor,
-                backgroundColor: MoldifyColors.primaryColor.withValues(alpha: 0.1),
+                backgroundColor: MoldifyColors.primaryColor.withValues(
+                  alpha: 0.1,
+                ),
                 label: l10n.submitReport,
                 onTap: () => Navigator.pushNamed(context, '/submit-report'),
               ),
@@ -660,7 +727,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ActionTile(
                 icon: FontAwesomeIcons.bookOpen,
                 iconColor: MoldifyColors.accentColor,
-                backgroundColor: MoldifyColors.accentColor.withValues(alpha: 0.1),
+                backgroundColor: MoldifyColors.accentColor.withValues(
+                  alpha: 0.1,
+                ),
                 label: l10n.wikiMold,
                 onTap: () => Navigator.push(
                   context,
@@ -694,60 +763,69 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(
       height: 163.0,
       child: _isLoadingDashboard
-          ? Center(child: CircularProgressIndicator(color: MoldifyColors.primaryColor))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: MoldifyColors.primaryColor,
+              ),
+            )
           : _moldipediaArticles.isEmpty
-              ? Center(
-                  child: Text(
-                    l10n.noArticlesAvailable,
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat-Regular',
-                      fontSize: 14,
-                      color: MoldifyColors.MoldifyGrey,
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 30),
-                  itemCount: _moldipediaArticles.length > 2 ? 3 : _moldipediaArticles.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 15),
-                  itemBuilder: (context, index) {
-                    if (index == 2 && _moldipediaArticles.length > 2) {
-                      return Center(
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 32,
-                            color: MoldifyColors.primaryColor,
+          ? Center(
+              child: Text(
+                l10n.noArticlesAvailable,
+                style: const TextStyle(
+                  fontFamily: 'Montserrat-Regular',
+                  fontSize: 14,
+                  color: MoldifyColors.MoldifyGrey,
+                ),
+              ),
+            )
+          : ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 30),
+              itemCount: _moldipediaArticles.length > 2
+                  ? 3
+                  : _moldipediaArticles.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 15),
+              itemBuilder: (context, index) {
+                if (index == 2 && _moldipediaArticles.length > 2) {
+                  return Center(
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 32,
+                        color: MoldifyColors.primaryColor,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MainWikiMoldScreen(),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const MainWikiMoldScreen()),
-                            );
-                          },
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                final article = _moldipediaArticles[index];
+                return SizedBox(
+                  width: tileWidth,
+                  child: WikiMoldTile(
+                    title: article.title,
+                    authorName: article.author,
+                    imageUrl: article.coverPhoto,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ViewWikiMoldScreen(articleId: article.id),
                         ),
                       );
-                    }
-
-                    final article = _moldipediaArticles[index];
-                    return SizedBox(
-                      width: tileWidth,
-                      child: WikiMoldTile(
-                        title: article.title,
-                        authorName: article.author,
-                        imageUrl: article.coverPhoto,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ViewWikiMoldScreen(articleId: article.id),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
 }
