@@ -6,6 +6,11 @@ class MoldCatalogEntry {
   final String id;
   final String name;
   final String description;
+  final String healthRisks;
+  final String affectedHosts;
+  final String symptomsAndSigns;
+  final String diseaseCycleSpreadImpact;
+  final String preventionSummary;
   final Map<String, String> additionalInfo;
   final Map<String, String> prevention;
 
@@ -13,6 +18,11 @@ class MoldCatalogEntry {
     required this.id,
     required this.name,
     required this.description,
+    required this.healthRisks,
+    required this.affectedHosts,
+    required this.symptomsAndSigns,
+    required this.diseaseCycleSpreadImpact,
+    required this.preventionSummary,
     required this.additionalInfo,
     required this.prevention,
   });
@@ -77,10 +87,21 @@ class MoldService {
       'Chemical Control': readControl(['chemicalControl', 'chemical_control']),
     };
 
+    final healthRisks = _readMapString(info, ['health_risks', 'healthRisks', 'health-risks']);
+    final affectedHosts = _readMapString(info, ['affected_hosts', 'affectedHosts', 'affected-hosts']);
+    final symptomsAndSigns = _readMapString(info, ['symptoms_and_signs', 'symptomsAndSigns', 'symptoms-signs']);
+    final diseaseCycleSpreadImpact = _readMapString(info, ['disease_cycle_spread_impact', 'diseaseCycleSpreadImpact', 'disease-cycle-spread-impact']);
+    final preventionSummary = _readMapString(info, ['prevention_summary', 'preventionSummary', 'prevention-summary']);
+
     return MoldCatalogEntry(
       id: id,
       name: name,
       description: description,
+      healthRisks: healthRisks,
+      affectedHosts: affectedHosts,
+      symptomsAndSigns: symptomsAndSigns,
+      diseaseCycleSpreadImpact: diseaseCycleSpreadImpact,
+      preventionSummary: preventionSummary,
       additionalInfo: additionalInfo,
       prevention: prevention,
     );

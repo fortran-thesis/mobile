@@ -45,12 +45,64 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
-  final String healthContent =
-    "Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.";
-  final String plantThreatContent =
-    "Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.";
+  late String healthContent;
+  late String plantThreatContent;
+  late String fullDescription;
 
-  final String fullDescription =
+  String _readStringOrFallback(dynamic value, String fallback) {
+    if (value == null) return fallback;
+    final text = value.toString().trim();
+    return text.isNotEmpty ? text : fallback;
+  }
+
+  String _readMoldDetailField(Map<String, dynamic>? details, String key, String fallback) {
+    final info = details?['mold_details'] is Map<String, dynamic>
+        ? details!['mold_details']['info'] as Map<String, dynamic>? 
+        : null;
+    if (info == null) return fallback;
+    final value = info[key] ?? info[key.replaceAll('_', '')] ?? info[key.replaceAll('_', '')];
+    return _readStringOrFallback(value, fallback);
+  }
+
+  String _readMoldDetailSymptoms(Map<String, dynamic>? details) {
+    final info = details?['mold_details'] is Map<String, dynamic>
+        ? details!['mold_details']['info'] as Map<String, dynamic>? 
+        : null;
+    if (info == null) return '';
+    final value = info['symptoms_and_signs'] ?? info['symptomsSigns'] ?? info['symptoms'] ?? info['signs'];
+    return _readStringOrFallback(value, 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.');
+  }
+
+  String _readMoldDetailSpread(Map<String, dynamic>? details) {
+    final info = details?['mold_details'] is Map<String, dynamic>
+        ? details!['mold_details']['info'] as Map<String, dynamic>? 
+        : null;
+    if (info == null) return '';
+    final value = info['disease_cycle_spread_impact'] ?? info['disease_cycle'] ?? info['diseaseCycle'] ?? info['spread'];
+    return _readStringOrFallback(value, 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.');
+  }
+
+  String _readMoldDetailImpact(Map<String, dynamic>? details) {
+    final info = details?['mold_details'] is Map<String, dynamic>
+        ? details!['mold_details']['info'] as Map<String, dynamic>? 
+        : null;
+    if (info == null) return '';
+    final value = info['impact'] ?? info['disease_cycle_spread_impact'] ?? info['impact_analysis'];
+    return _readStringOrFallback(value, 'Impact varies widely and can include reduced crop yields and human health risks.');
+  }
+
+  String _readMoldDetailPrevention(Map<String, dynamic>? details) {
+    final info = details?['mold_details'] is Map<String, dynamic>
+        ? details!['mold_details']['info'] as Map<String, dynamic>? 
+        : null;
+    if (info == null) return '';
+    final value = info['prevention_summary'] ?? info['preventionSummary'] ?? info['prevention'];
+    return _readStringOrFallback(value, 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.');
+  }
+
+  final String defaultDescription =
+    "Aspergillus is a genus of common molds that can be found in various environments, "
+    "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
     "Aspergillus is a genus of common molds that can be found in various environments, "
     "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
     "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
@@ -108,28 +160,54 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     if (widget.moldDetails != null && (widget.moldDetails?.isEmpty ?? true) == false) {
       AppLogger.d('MoldResult: Using moldDetails from API');
       AppLogger.d('MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}');
-      
+
       if (widget.moldDetails!.containsKey('error')) {
         AppLogger.e('MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}');
       } else {
         AppLogger.d('MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...');
       }
-      // TODO: Parse moldDetails and update the data variables
-      // This will be used to populate healthContent, plantThreatContent, fullDescription, taxonomy, fungicides, etc.
+
+      final details = widget.moldDetails;
+      healthContent = _readMoldDetailField(details, 'health_risks',
+          'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.');
+      plantThreatContent = _readMoldDetailField(details, 'affected_hosts',
+          'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.');
+      fullDescription = _readMoldDetailField(details, 'overview',
+          'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.');
+
+      final String symptoms = _readMoldDetailSymptoms(details);
+      final String spread = _readMoldDetailSpread(details);
+      final String impact = _readMoldDetailImpact(details);
+      final String prevention = _readMoldDetailPrevention(details);
+
+      _recommendationSections = {
+        'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+        'DESCRIPTION': fullDescription,
+        'HEALTH RISKS': healthContent,
+        'AFFECTED CROPS / HOSTS': plantThreatContent,
+        'SYMPTOMS & SIGNS': symptoms,
+        'DISEASE CYCLE / SPREAD': spread,
+        'IMPACT': impact,
+        'PREVENTION': prevention,
+      };
+
     } else {
       AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
-    }
+      healthContent = 'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.';
+      plantThreatContent = 'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.';
+      fullDescription = 'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.';
 
-    _recommendationSections = {
-      'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
-      'DESCRIPTION': fullDescription,
-      'HEALTH RISKS': healthContent,
-      'AFFECTED CROPS / HOSTS': plantThreatContent,
-      'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
-      'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
-      'IMPACT': '$healthContent\n\n$plantThreatContent',
-      'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
-    };
+      _recommendationSections = {
+        'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+        'DESCRIPTION': fullDescription,
+        'HEALTH RISKS': healthContent,
+        'AFFECTED CROPS / HOSTS': plantThreatContent,
+        'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+        'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+        'IMPACT': '$healthContent\n\n$plantThreatContent',
+        'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+      };
+    }
 
     _managementControls = _parseManagementControls(treatmentsContent);
   }
