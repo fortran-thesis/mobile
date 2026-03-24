@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/features/user/logic/user_bloc.dart';
 
@@ -257,7 +256,6 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                                   child: MainCaseTile(
                                       caseName: report.caseName.isEmpty ? 'Untitled Case' : report.caseName,
                                       dateSubmitted: formatDateTimeToDisplay(report.dateObserved),
-                                      priorityLevel: null,
                                       caseStatus: _toTitleCase(report.status),
                                       dateLabel: 'Date Observed',
                                       onTap: () {
@@ -286,31 +284,13 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                                         }
                                       },
                                       showPopupMenu: true,
-                                      popupMenuItems: ['Identification History', 'Treatment History', 'Export PDF'],
-                                      popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
+                                      popupMenuItems: ['Export PDF'],
+                                      popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
                                       onPopupMenuItemSelected: (index) {
                                         // Handle the selection based on the index
 
-                                        /// Identification History
-                                        if (index == 0) {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/identification-history',
-                                          );
-                                        }
-                                        /// End of Identification History
-
-                                        /// Treatment History
-                                        else if (index == 1) {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/treatment-history',
-                                          );
-                                        }
-                                        /// End of Treatment History
-
                                         /// Export PDF
-                                        else if (index == 2) {
+                                        if (index == 0) {
 
                                         }
                                         /// End of Export PDF

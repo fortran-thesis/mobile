@@ -400,207 +400,224 @@ class _AddLogScreenState extends State<AddLogScreen> {
       appBar: PrimaryAppBar(
         title: 'Add New Log',
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 30.0),
-          child: Stack(
-            children: [
-              /// 1. Image captured by the user
-              Image.file(
-                File(widget.imagePath),
-                height: MediaQuery.of(context).size.height * 0.4,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-
-              /// 2. Size, Color, and Notes Container
-              Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: MoldifyColors.backgroundColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
-                    ),
+      body: Stack(
+        children: [
+          // Main content
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 30.0),
+              child: Stack(
+                children: [
+                  /// 1. Image captured by the user
+                  Image.file(
+                    File(widget.imagePath),
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dateTime,
-                          style: TextStyle(
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            fontSize: 10,
-                            color: MoldifyColors.MoldifyGrey,
-                          ),
+
+                  /// 2. Size, Color, and Notes Container
+                  Padding(
+                    padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: MoldifyColors.backgroundColor,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20.0),
+                          topRight: Radius.circular(20.0),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox.shrink(),
-                          ],
-                        ),
-
-                        if (widget.includeSize) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                            child: Text(
-                              _sizeLabel,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                color: MoldifyColors.primaryColor,
-                              ),
-                            ),
-                          ),
-                          BuildTextBox(
-                            hintText: _sizeHint,
-                            controller: _sizeController,
-                            showPassword: false,
-                            keyboardType: TextInputType.number,
-                          ),
-                        ],
-
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                          child: Text(
-                            _colorLabel,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-SemiBold',
-                              color: MoldifyColors.primaryColor,
-                            ),
-                          ),
-                        ),
-                        BuildTextBox(
-                          hintText: _colorHint,
-                          controller: _colorController,
-                          showPassword: false,
-                        ),
-
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                          child: Text(
-                            _textureLabel,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Bricolage-Grotesque-SemiBold',
-                              color: MoldifyColors.primaryColor,
-                            ),
-                          ),
-                        ),
-                        BuildTextBox(
-                          hintText: _textureHint,
-                          controller: _textureController,
-                          showPassword: false,
-                        ),
-
-                        if (_isInitialMacroscopicMode) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                            child: const Text(
-                              'Symptoms',
+                            Text(
+                              dateTime,
                               style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                color: MoldifyColors.primaryColor,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                fontSize: 10,
+                                color: MoldifyColors.MoldifyGrey,
                               ),
                             ),
-                          ),
-                          BuildTextBox(
-                            hintText: 'Select symptom(s)',
-                            controller: _symptomsController,
-                            showPassword: false,
-                            isMultiline: true,
-                            readOnly: true,
-                            onTap: _pickSymptoms,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                            child: const Text(
-                              'Characteristics',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                color: MoldifyColors.primaryColor,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const SizedBox.shrink(),
+                              ],
                             ),
-                          ),
-                          BuildTextBox(
-                            hintText: 'Select characteristic(s)',
-                            controller: _characteristicsController,
-                            showPassword: false,
-                            isMultiline: true,
-                            readOnly: true,
-                            onTap: _pickCharacteristics,
-                          ),
-                        ] else ...[
-                          /// Additional Notes Label
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-                            child: const Text(
-                              'Additional Notes:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                color: MoldifyColors.primaryColor,
-                              ),
-                            ),
-                          ),
-                          /// Additional Notes TextBox
-                          BuildTextBox(
-                              hintText: 'Enter additional details about the log here...',
-                              controller: _logNotesController,
-                              isMultiline: true,
-                              showPassword: false
-                          ),
-                        ],
 
-                        /// Save Log Button
-                        Padding(
-                          padding: const EdgeInsets.only(top: 70.0),
-                          child: BuildButton(
-                              onPressed: _isSaving ? () {} : () {
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (BuildContext context) {
-                                    return BuildConfirmationDialog(
-                                      title: 'Save Log?',
-                                      subtitle: 'Are you sure you want to save log?',
-                                      onConfirm: () {
-                                        Navigator.of(context).pop();
-                                        _saveCultivationLog();
+                            if (widget.includeSize) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                                child: Text(
+                                  _sizeLabel,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              BuildTextBox(
+                                hintText: _sizeHint,
+                                controller: _sizeController,
+                                showPassword: false,
+                                keyboardType: TextInputType.number,
+                              ),
+                            ],
+
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                              child: Text(
+                                _colorLabel,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                            BuildTextBox(
+                              hintText: _colorHint,
+                              controller: _colorController,
+                              showPassword: false,
+                            ),
+
+                            Padding(
+                              padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                              child: Text(
+                                _textureLabel,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                            BuildTextBox(
+                              hintText: _textureHint,
+                              controller: _textureController,
+                              showPassword: false,
+                            ),
+
+                            if (_isInitialMacroscopicMode) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                child: const Text(
+                                  'Symptoms',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              BuildTextBox(
+                                hintText: 'Select symptom(s)',
+                                controller: _symptomsController,
+                                showPassword: false,
+                                isMultiline: true,
+                                readOnly: true,
+                                onTap: _pickSymptoms,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                child: const Text(
+                                  'Characteristics',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              BuildTextBox(
+                                hintText: 'Select characteristic(s)',
+                                controller: _characteristicsController,
+                                showPassword: false,
+                                isMultiline: true,
+                                readOnly: true,
+                                onTap: _pickCharacteristics,
+                              ),
+                            ] else ...[
+                              /// Additional Notes Label
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                child: const Text(
+                                  'Additional Notes:',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              /// Additional Notes TextBox
+                              BuildTextBox(
+                                  hintText: 'Enter additional details about the log here...',
+                                  controller: _logNotesController,
+                                  isMultiline: true,
+                                  showPassword: false
+                              ),
+                            ],
+
+                            /// Save Log Button
+                            Padding(
+                              padding: const EdgeInsets.only(top: 70.0),
+                              child: BuildButton(
+                                  onPressed: _isSaving ? () {} : () {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (BuildContext context) {
+                                        return BuildConfirmationDialog(
+                                          title: 'Save Log?',
+                                          subtitle: 'Are you sure you want to save log?',
+                                          onConfirm: () {
+                                            Navigator.of(context).pop();
+                                            _saveCultivationLog();
+                                          },
+                                          onCancel: (){
+                                            Navigator.of(context).pop();
+                                          },
+                                          cancelText: 'No',
+                                          confirmText: 'Yes',
+                                        );
                                       },
-                                      onCancel: (){
-                                        Navigator.of(context).pop();
-                                      },
-                                      cancelText: 'No',
-                                      confirmText: 'Yes',
                                     );
                                   },
-                                );
-                              },
-                              buttonText: _isSaving ? 'Saving...' : 'Save Log',
-                              backgroundColor: MoldifyColors.primaryColor,
-                              textColor: MoldifyColors.backgroundColor,
-                              buttonHeight: 45,
-                              buttonWidth: MediaQuery.of(context).size.width,
-                              buttonRadius: 10
-                          ),
+                                  buttonText: 'Save Log',
+                                  backgroundColor: MoldifyColors.primaryColor,
+                                  textColor: MoldifyColors.backgroundColor,
+                                  buttonHeight: 45,
+                                  buttonWidth: MediaQuery.of(context).size.width,
+                                  buttonRadius: 10
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Full-screen loading overlay
+          if (_isSaving)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: MoldifyColors.primaryColor,
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }

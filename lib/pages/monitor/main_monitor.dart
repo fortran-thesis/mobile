@@ -337,7 +337,6 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                       child: MainCaseTile(
                                           caseName: moldCase.name,
                                           dateSubmitted: DateFormat('MMMM dd, yyyy').format(moldCase.startDate),
-                                          priorityLevel: '${moldCase.priority[0].toUpperCase()}${moldCase.priority.substring(1)} Priority',
                                           caseStatus: 'In Progress',
                                           imageUrl: _resolveTileImageUrl(moldCase),
                                           onTap: () async {
@@ -355,8 +354,8 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                             }
                                           },
                                           showPopupMenu: true,
-                                          popupMenuItems: ['Set Monitoring Details', 'Identification History', 'Treatment History', 'Export PDF'],
-                                          popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.sprayCan, FontAwesomeIcons.solidFilePdf],
+                                          popupMenuItems: ['Set Monitoring Details', 'Export PDF'],
+                                          popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.solidFilePdf],
                                           onPopupMenuItemSelected: (menuIndex) async {
                                             if (menuIndex == 0) {
                                               final result = await Navigator.pushNamed(
@@ -369,16 +368,6 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                                 _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
                                               }
                                             } else if (menuIndex == 1) {
-                                              Navigator.pushNamed(
-                                                context,
-                                                '/identification-history',
-                                              );
-                                            } else if (menuIndex == 2) {
-                                              Navigator.pushNamed(
-                                                context,
-                                                '/treatment-history',
-                                              );
-                                            } else if (menuIndex == 3) {
                                               // Export PDF
                                             }
                                           }

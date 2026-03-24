@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/farmer/report/content_tab/prevention_tactics_content.dart';
+import 'package:moldify/pages/farmer/report/content_tab/report_case_details_tab.dart';
+import 'package:moldify/pages/farmer/report/content_tab/report_disease_cycle_impact_tab.dart';
+import 'package:moldify/pages/farmer/report/content_tab/report_hosts_symptoms_tab.dart';
+import 'package:moldify/pages/farmer/report/content_tab/report_overview_tab.dart';
+import 'package:moldify/pages/farmer/report/content_tab/report_resolved_actions_row.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,16 +20,15 @@ import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import 'report_view_parser.dart';
 
 // route names not used here
 import '../../misc/appbar/primary_app_bar.dart';
-import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
-import '../../misc/functions/tab_bar.dart';
+import '../../misc/functions/scrollable_tab_bar.dart';
 import '../../misc/images/cover_image.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/tiles/status_tile.dart';
-import '../../monitor/content_tab/case_details.dart';
 
 class ViewReportScreen extends StatefulWidget {
   const ViewReportScreen({super.key});
@@ -125,36 +129,104 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   String _finalVerdictConfidence = '';
   String _finalVerdictNotes = '';
   String _preventionTacticsContent = _defaultPreventionTacticsContent;
+  int _selectedTabIndex = 0;
 
-  String _formatConfidence(dynamic value) {
-    if (value == null) return '';
-    if (value is num) {
-      return '${value.toStringAsFixed(1)}%';
-    }
-    final parsed = double.tryParse(value.toString());
-    if (parsed == null) return '';
-    return '${parsed.toStringAsFixed(1)}%';
+  Future<void> _handleCloseCase() async {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return BuildConfirmationDialog(
+          title: l10n.confirmCloseTitle,
+          subtitle: l10n.confirmCloseSubtitle,
+          onConfirm: () async {
+            Navigator.of(dialogContext).pop();
+            try {
+              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+              final sessionCookie = authProvider.cookie;
+              final service = MoldReportService();
+              await service.deleteMoldReportSoft(
+                _report!.id,
+                sessionCookie: sessionCookie,
+              );
+              if (!mounted) return;
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.reportClosed)),
+              );
+            } catch (e) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
+              );
+            }
+          },
+          onCancel: () {
+            Navigator.of(dialogContext).pop();
+          },
+          cancelText: l10n.no,
+          confirmText: l10n.yes,
+        );
+      },
+    );
   }
 
-  String _buildPreventionContentFromMold(MoldCatalogEntry mold) {
-    final prevention = mold.prevention;
+  void _handleAddFollowUp() {
+    Navigator.pushNamed(
+      context,
+      '/add-follow-up',
+      arguments: {'id': _report?.id},
+    );
+  }
 
-    String segment(String type, String title, String key) {
-      final text = prevention[key]?.trim() ?? '';
-      if (text.isEmpty) return '';
-      return '$type::$title::$text';
+  Widget _buildCaseDetailsTab(BuildContext context) {
+    // derive display values from UserBloc when available, fall back to defaults
+    String displayFarmerName = farmerName;
+    String displayEmail = emailAddress;
+    String displayContact = contactNumber;
+
+    try {
+      final userState = BlocProvider.of<UserBloc>(context).state;
+      if (userState is UserProfileLoaded) {
+        final profile = userState.profile;
+        final fullName = ((profile.firstName.isNotEmpty || profile.lastName.isNotEmpty)
+                ? '${profile.firstName} ${profile.lastName}'.trim()
+                : profile.username);
+        displayFarmerName = fullName.isNotEmpty ? fullName : displayFarmerName;
+        displayEmail = profile.email.isNotEmpty ? profile.email : displayEmail;
+        displayContact = profile.phoneNumber.isNotEmpty ? profile.phoneNumber : displayContact;
+      }
+    } catch (_) {
+      // no UserBloc in context or other error; keep defaults
     }
 
-    final segments = <String>[
-      segment('MECHANICAL', 'Mechanical Control', 'Mechanical Control'),
-      segment('BIOLOGICAL', 'Biological Control', 'Biological Control'),
-      segment('CHEMICAL', 'Chemical Control', 'Chemical Control'),
-      segment('PHYSICAL', 'Physical Control', 'Physical Control'),
-      segment('CULTURAL', 'Cultural Control', 'Cultural Control'),
-    ].where((s) => s.isNotEmpty).toList();
+    String formattedObserved(DateTime? dt) {
+      if (dt == null) return dateFirstObserved;
+      try {
+        return DateFormat('MMMM d, yyyy').format(dt.toLocal());
+      } catch (_) {
+        return dateFirstObserved;
+      }
+    }
 
-    if (segments.isEmpty) return _defaultPreventionTacticsContent;
-    return segments.join('|');
+    final entries = _report != null
+        ? _report!.caseDetails
+            .map((d) => {
+                  'date': formattedObserved(_report!.dateObserved),
+                  'notes': d.description,
+                  'images': d.coverPhoto,
+                })
+            .toList()
+        : caseEntries;
+
+    return ReportCaseDetailsTab(
+      entries: entries,
+      farmerName: _report != null ? displayFarmerName : farmerName,
+      dateFirstObserved: _report != null ? formattedObserved(_report!.dateObserved) : dateFirstObserved,
+      emailAddress: displayEmail,
+      contactNumber: displayContact,
+    );
   }
 
   Future<void> _loadReportFromArgs() async {
@@ -230,7 +302,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         final finalVerdict = casePayload['final_verdict'];
         if (finalVerdict is Map<String, dynamic>) {
           localVerdictMoldName = finalVerdict['moldName']?.toString() ?? '';
-          localVerdictConfidence = _formatConfidence(finalVerdict['confidence']);
+          localVerdictConfidence = ReportViewParser.formatConfidence(finalVerdict['confidence']);
           localVerdictNotes = finalVerdict['mycologist_notes']?.toString() ?? '';
 
           final verdictMoldId =
@@ -245,7 +317,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
               sessionCookie: sessionCookie,
             );
             if (moldCatalog != null) {
-              localPreventionTacticsContent = _buildPreventionContentFromMold(moldCatalog);
+              localPreventionTacticsContent = ReportViewParser.buildPreventionContentFromMold(
+                moldCatalog,
+                _defaultPreventionTacticsContent,
+              );
             }
           }
         }
@@ -287,6 +362,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     if (_isLoading && _report == null && _error == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadReportFromArgs());
     }
+    final String observedDate = _report?.dateObserved != null
+        ? DateFormat('MMMM dd, yyyy').format(_report!.dateObserved!.toLocal())
+        : 'N/A';
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -358,104 +436,82 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
               ///2. Case details
               Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.23),
+                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: MoldifyColors.backgroundColor,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
+                      topLeft: Radius.circular(30.0),
+                      topRight: Radius.circular(30.0),
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(15.0, 15.0, 15.0, 20.0),
-                    child: Column(
+                    padding: const EdgeInsets.fromLTRB(25, 30, 25, 20),                    
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// Status and Priority Boxes
+                        /// Header row
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            StatusBox(status: caseStatus, fontSize: 11),
-                            const SizedBox(width: 8),
-                            StatusBox(
-                              status: AppLocalizations.of(context)!.unassigned,
-                              fontSize: 11,
+                            StatusBox(status: caseStatus, fontSize: 12),
+                            Text(
+                              'Date Observed: $observedDate'.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontFamily: 'Bricolage-Grotesque-Bold',
+                                color: MoldifyColors.primaryColor,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 15.0),
-                          child: Text(
-                            _report?.caseName ?? AppLocalizations.of(context)!.caseDetailsLabel,
-                            style: TextStyle(
-                              fontFamily: 'Montserrat-Black',
-                              fontSize: 24,
-                              color: MoldifyColors.primaryColor,
-                              height: 1.2,
-                            ),
+
+                        const SizedBox(height: 12),
+
+                        Text(
+                          _report?.caseName ?? AppLocalizations.of(context)!.caseDetailsLabel,
+                          style: const TextStyle(
+                            fontFamily: 'Montserrat-Black',
+                            fontSize: 32,
+                            color: MoldifyColors.primaryColor,
+                            height: 1.0,
+                            letterSpacing: -1.2,
                           ),
                         ),
-                        /// Crop Name
+
+                        const SizedBox(height: 10),
+
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: RichText(
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                text: TextSpan(
-                                  children: [
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Icon(
-                                        FontAwesomeIcons.seedling,
-                                        size: 16,
-                                        color: MoldifyColors.accentColor,
-                                      ),
-                                    ),
-                                      TextSpan(
-                                        text: '\t\t\t${_report?.host ?? AppLocalizations.of(context)!.unknownCrop}',
-                                        style: TextStyle(
-                                          color: MoldifyColors.primaryColor,
-                                          fontSize: 12,
-                                          fontFamily:
-                                          'Bricolage-Grotesque-Regular',
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                            Text(
+                              (_report?.host ?? AppLocalizations.of(context)!.unknownCrop)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Bricolage-Grotesque-Bold',
+                                color: MoldifyColors.accentColor,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: RichText(
-                                overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 15),
+                            const Text(
+                              '•',
+                              style: TextStyle(
+                                color: MoldifyColors.primaryColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Text(
+                                _report?.location ?? AppLocalizations.of(context)!.unknownLocation,
                                 maxLines: 1,
-                                text: TextSpan(
-                                  children: [
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Icon(
-                                        FontAwesomeIcons.locationDot,
-                                        size: 16,
-                                        color: MoldifyColors.accentColor,
-                                      ),
-                                    ),
-                                      TextSpan(
-                                        text: '\t\t\t${_report?.location ?? AppLocalizations.of(context)!.unknownLocation}',
-                                        style: TextStyle(
-                                          color: MoldifyColors.primaryColor,
-                                          fontSize: 12,
-                                          fontFamily:
-                                          'Bricolage-Grotesque-Regular',
-                                        ),
-                                      ),
-                                  ],
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.primaryColor,
                                 ),
                               ),
                             ),
@@ -464,213 +520,145 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
                         // Conditional UI based on case status
                         if (caseStatus == 'Resolved' || caseStatus == 'Closed')
-                          Column(
-                            children: [
-                              if (_finalVerdictMoldName.trim().isNotEmpty)
-                                Container(
-                                  width: double.infinity,
-                                  margin: const EdgeInsets.only(top: 14),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                          Builder(
+                            builder: (context) {
+                                final parsedSections = ReportViewParser.parseMycologistNoteSections(_finalVerdictNotes);
+                              final controlSections = parsedSections
+                                  .where((section) => ReportViewParser.isPreventionControlSectionTitle(section['title'] ?? ''))
+                                  .toList();
+                              final noteSections = parsedSections
+                                  .where((section) => !ReportViewParser.isPreventionControlSectionTitle(section['title'] ?? ''))
+                                  .toList();
+
+                              final preventionContent = controlSections.isNotEmpty
+                                  ? ReportViewParser.buildTreatmentsFromControlSections(controlSections)
+                                  : _preventionTacticsContent;
+
+                              final tabs = <String>[
+                                'Case Details',
+                                'Overview',
+                                'Hosts & Symptoms',
+                                'Disease Cycle & Impact',
+                                'Prevention & Control',
+                              ];
+
+                              final maxIndex = tabs.length - 1;
+                              final activeTabIndex = _selectedTabIndex.clamp(0, maxIndex).toInt();
+
+                              final tabContents = <Widget>[
+                                _buildCaseDetailsTab(context),
+                                ReportOverviewTab(
+                                  overview: ReportViewParser.findSectionContent(noteSections, ['overview']),
+                                  description: ReportViewParser.findSectionContent(noteSections, ['description', 'summary']),
+                                  healthRisk: ReportViewParser.findSectionContent(noteSections, ['health risk', 'human risk', 'risk']),
+                                ),
+                                ReportHostsSymptomsTab(
+                                  affectedHosts: ReportViewParser.findSectionContent(noteSections, ['affected crops', 'affected hosts', 'hosts', 'host range']),
+                                  symptomsSigns: ReportViewParser.findSectionContent(noteSections, ['symptoms signs', 'symptoms and signs', 'symptoms', 'signs']),
+                                  inOnions: ReportViewParser.findSectionContent(noteSections, ['in onions', 'onions']),
+                                  inPostharvestFruit: ReportViewParser.findSectionContent(noteSections, ['in postharvest fruit', 'postharvest fruit', 'postharvest']),
+                                ),
+                                ReportDiseaseCycleImpactTab(
+                                  diseaseCycleSpread: ReportViewParser.findSectionContent(noteSections, ['disease cycle', 'cycle', 'spread', 'transmission']),
+                                  infectionMechanism: ReportViewParser.findSectionContent(noteSections, ['infection mechanism', 'mechanism']),
+                                  soilInoculum: ReportViewParser.findSectionContent(noteSections, ['soil inoculum', 'inoculum']),
+                                  onPeanuts: ReportViewParser.findSectionContent(noteSections, ['on peanuts specifically', 'peanuts']),
+                                  mycotoxinRisk: ReportViewParser.findSectionContent(noteSections, ['mycotoxin risk', 'mycotoxin']),
+                                  impact: ReportViewParser.findSectionContent(noteSections, ['impact', 'consequence']),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                  child: PreventionTacticsContent(
+                                    treatmentsContent: preventionContent,
+                                  ),
+                                ),
+                              ];
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (_finalVerdictMoldName.trim().isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 18.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'IDENTIFIED GENUS',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              letterSpacing: 2.0,
+                                              fontFamily: 'Bricolage-Grotesque-Bold',
+                                              color: MoldifyColors.primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _finalVerdictMoldName,
+                                                  style: const TextStyle(
+                                                    fontSize: 24,
+                                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                                    color: MoldifyColors.primaryColor,
+                                                    height: 1.1,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (_finalVerdictConfidence.trim().isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                                                  child: Text(
+                                                    _finalVerdictConfidence.trim(),
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontFamily: 'Bricolage-Grotesque-Bold',
+                                                      color: MoldifyColors.accentColor,
+                                                      letterSpacing: 0.4,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ReportResolvedActionsRow(
+                                    visible: caseStatus == 'Resolved',
+                                    onCloseCase: _handleCloseCase,
+                                    onAddFollowUp: _handleAddFollowUp,
+                                    closeCaseLabel: AppLocalizations.of(context)!.closeCase,
+                                    addFollowUpLabel: AppLocalizations.of(context)!.addFollowUp,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      top: _finalVerdictMoldName.trim().isNotEmpty ? 14.0 : 18.0,
+                                    ),
+                                    child: ScrollableTabBar(
+                                      tabs: tabs,
+                                      currentIndex: activeTabIndex,
+                                      onTabSelected: (index) {
+                                        setState(() => _selectedTabIndex = index);
+                                      },
                                     ),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Final Diagnosis',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          letterSpacing: 1.1,
-                                          fontFamily: 'Bricolage-Grotesque-Bold',
-                                          color: MoldifyColors.primaryColor,
-                                        ),
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: SizedBox(
+                                      height: MediaQuery.of(context).size.height * 0.7,
+                                      child: IndexedStack(
+                                        index: activeTabIndex,
+                                        children: tabContents,
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        _finalVerdictConfidence.trim().isEmpty
-                                            ? _finalVerdictMoldName
-                                            : '$_finalVerdictMoldName (${_finalVerdictConfidence.trim()})',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontFamily: 'Montserrat-Black',
-                                          color: MoldifyColors.primaryColor,
-                                        ),
-                                      ),
-                                      if (_finalVerdictNotes.trim().isNotEmpty) ...[
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          _finalVerdictNotes,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontFamily: 'Bricolage-Grotesque-Regular',
-                                            color: MoldifyColors.MoldifyBlack,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              // Buttons are only visible if the case is 'Resolved'
-                              if (caseStatus == 'Resolved')
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 16.0),
-                                  child: Row (
-                                    children: [
-                                      /// Close Case Button
-                                      BuildButton(
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (BuildContext context) {
-                                              final l10n = AppLocalizations.of(context)!;
-                                              return BuildConfirmationDialog(
-                                                title: l10n.confirmCloseTitle,
-                                                subtitle: l10n.confirmCloseSubtitle,
-                                                onConfirm: () async {
-                                                  Navigator.of(context).pop();
-                                                  try {
-                                                    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                                    final sessionCookie = authProvider.cookie;
-                                                    final service = MoldReportService();
-                                                    await service.deleteMoldReportSoft(
-                                                      _report!.id,
-                                                      sessionCookie: sessionCookie,
-                                                    );
-                                                    if (!mounted) return;
-                                                    Navigator.of(context).pop();
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text(l10n.reportClosed)),
-                                                    );
-                                                  } catch (e) {
-                                                    if (!mounted) return;
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
-                                                    );
-                                                  }
-                                                },
-                                                onCancel: (){
-                                                  Navigator.of(context).pop();
-                                                },
-                                                cancelText: l10n.no,
-                                                confirmText: l10n.yes,
-                                              );
-                                            },
-                                          );
-                                        },
-                                        buttonText: AppLocalizations.of(context)!.closeCase,
-                                        fontSize: 12,
-                                        backgroundColor: MoldifyColors.primaryColor,
-                                        textColor: MoldifyColors.backgroundColor,
-                                        leftIcon: FontAwesomeIcons.solidCircleCheck,
-                                        iconSize: 12,
-                                        iconColor: MoldifyColors.backgroundColor,
-                                        paddingIconText: 10,
-                                        buttonHeight: 30,
-                                        buttonWidth: 120,
-                                        buttonRadius: 7,
-                                      ),
-                                      SizedBox(width: 5),
-
-                                      /// Create Follow-up Button
-                                      BuildButton(
-                                        onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/add-follow-up',
-                                            arguments: {'id': _report?.id},
-                                          );
-                                        },
-                                        buttonText: AppLocalizations.of(context)!.addFollowUp,
-                                        fontSize: 12,
-                                        backgroundColor: MoldifyColors.accentColor,
-                                        textColor: MoldifyColors.MoldifyBlack,
-                                        leftIcon: FontAwesomeIcons.plus,
-                                        iconSize: 12,
-                                        iconColor: MoldifyColors.MoldifyBlack,
-                                        paddingIconText: 10,
-                                        buttonHeight: 30,
-                                        buttonWidth: 120,
-                                        buttonRadius: 7,
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              Padding(
-                                // Add top padding if the buttons are hidden
-                                padding: EdgeInsets.only(top: caseStatus == 'Closed' ? 20.0 : 10.0),
-                                child: SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.7,
-                                  child: BuildTabBar(
-                                    tabs: ['Case Details', 'Prevention Tactics'],
-                                    tabContents: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                        child: Builder(builder: (ctx) {
-                                          // derive display values from UserBloc when available, fall back to defaults
-                                          String displayFarmerName = farmerName;
-                                          String displayEmail = emailAddress;
-                                          String displayContact = contactNumber;
-
-                                          try {
-                                            final userState = BlocProvider.of<UserBloc>(ctx).state;
-                                            if (userState is UserProfileLoaded) {
-                                              final profile = userState.profile;
-                                              final fullName = ((profile.firstName.isNotEmpty || profile.lastName.isNotEmpty)
-                                                      ? '${profile.firstName} ${profile.lastName}'.trim()
-                                                      : profile.username);
-                                              displayFarmerName = fullName.isNotEmpty ? fullName : displayFarmerName;
-                                              displayEmail = profile.email.isNotEmpty ? profile.email : displayEmail;
-                                              displayContact = profile.phoneNumber.isNotEmpty ? profile.phoneNumber : displayContact;
-                                            }
-                                          } catch (_) {
-                                            // no UserBloc in context or other error; keep defaults
-                                          }
-
-                                          // format dateObserved when available
-                                          String formattedObserved(DateTime? dt) {
-                                            if (dt == null) return dateFirstObserved;
-                                            try {
-                                              return DateFormat('MMMM d, yyyy').format(dt.toLocal());
-                                            } catch (_) {
-                                              return dateFirstObserved;
-                                            }
-                                          }
-
-                                          final entries = _report != null
-                                              ? _report!.caseDetails.map((d) => {
-                                                  'date': formattedObserved(_report!.dateObserved),
-                                                  'notes': d.description,
-                                                  'images': d.coverPhoto,
-                                                }).toList()
-                                              : caseEntries;
-
-                                          return CaseDetailsTab(
-                                            entries: entries,
-                                            farmerName: _report != null ? displayFarmerName : farmerName,
-                                            dateFirstObserved: _report != null ? formattedObserved(_report!.dateObserved) : dateFirstObserved,
-                                            emailAddress: displayEmail,
-                                            contactNumber: displayContact,
-                                          );
-                                        }),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                                        child: PreventionTacticsContent(
-                                          treatmentsContent: _preventionTacticsContent,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            ],
+                                ],
+                              );
+                            },
                           )
                         else
                           _buildStatusMessageWidget(caseStatus),

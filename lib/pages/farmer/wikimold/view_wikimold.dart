@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
@@ -39,6 +42,12 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   // Set to false when backend provides structured findings/treatments data
   static const bool _forceDummySectionContent = true;
 
+  static const List<String> _canonicalStageLabels = [
+    'Initial Observation',
+    'In Vivo',
+    'In Vitro',
+  ];
+
   WikiArticle? _article;
   bool _isLoading = true;
   String? _error;
@@ -46,6 +55,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   
   // Cached parsed data to avoid re-parsing on every build
   List<Map<String, String>> _cachedFindingStages = [];
+  List<Widget> _cachedHostImpactTiles = [];
   List<Widget> _cachedTreatmentTiles = [];
 
   @override
@@ -173,11 +183,62 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
           );
         },
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: GestureDetector(
+        onTap: () {
+          /// ADD EXPLORE SIMILAR CASES FUNCTIONALITY HERE
+          /// This could navigate to a new screen that lists similar WikiMold articles or related case
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              decoration: BoxDecoration(
+                color: MoldifyColors.primaryColor.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.travel_explore_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Explore Similar Cases'.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      fontSize: 11,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            // --- 1. HERO SECTION (UNTOUCHED LAYOUT) ---
+            // --- 1. HERO SECTION  ---
             Stack(
               children: [
                 SizedBox(
@@ -193,7 +254,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
                       stops: const [0.4, 1.0],
                     ),
                   ),
@@ -244,12 +305,17 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                       ),
                       const SizedBox(height: 30),
 
-                      // --- 3. TREATMENT SECTION WITH CONTROL MANAGEMENT TILES ---
+                      // --- 3. HOST & PATHOGEN IMPACT ---
+                      _buildSectionHeader('Host & Pathogen Impact'),
+                      ..._cachedHostImpactTiles,
+                      const SizedBox(height: 30),
+
+                      // --- 4. TREATMENT SECTION WITH CONTROL MANAGEMENT TILES ---
                       _buildSectionHeader('Treatment Recommendations'),
                       ..._cachedTreatmentTiles,
                       const SizedBox(height: 30),
 
-                      // --- 4. FINDINGS TABS ---
+                      // --- 5. FINDINGS TABS ---
                       _buildSectionHeader('Findings'),
                       Text(
                         article.title,
@@ -282,7 +348,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                 style: TextStyle(
                                   fontFamily: 'Montserrat-Black',
                                   fontSize: 60,
-                                  color: MoldifyColors.primaryColor.withOpacity(0.05),
+                                  color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
                                   height: 0.5,
                                 ),
                               ),
@@ -334,23 +400,102 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         ? article.treatments
         : (_forceDummySectionContent ? _dummyTreatmentsHtml : '');
 
+    final hostImpactData = article.hostPathogenImpact.isNotEmpty
+        ? article.hostPathogenImpact
+        : (_forceDummySectionContent ? _dummyHostPathogenImpact : <String, String>{});
+
     _cachedFindingStages = _parseFindings(findingsContent);
+    _cachedHostImpactTiles = _buildHostImpactTiles(hostImpactData);
     _cachedTreatmentTiles = _buildTreatmentTiles(treatmentsContent);
   }
 
   List<Map<String, String>> _parseFindings(String content) {
     if (!content.contains(_stagePrefix)) {
-      return [{'label': 'Info', 'title': 'Findings', 'content': content}];
+      final fallback = content.split(_stageDelimiter).where((s) => s.trim().isNotEmpty).toList();
+      if (fallback.length >= 3) {
+        return List.generate(3, (index) {
+          return {
+            'label': _canonicalStageLabels[index],
+            'title': _canonicalStageLabels[index],
+            'content': fallback[index],
+          };
+        });
+      }
+      return [{'label': 'Initial Observation', 'title': 'Initial Observation', 'content': content}];
     }
-    
-    return content.split(_stageDelimiter).map((s) {
+
+    final parsed = content.split(_stageDelimiter).where((s) => s.trim().isNotEmpty).map((s) {
       final parts = s.split(_fieldDelimiter);
       return {
-        'label': parts[0].replaceAll(_stagePrefix, 'Stage '),
+        'label': parts[0],
         'title': parts.length > 1 ? parts[1] : 'Analysis',
         'content': parts.length > 2 ? parts[2] : '',
       };
     }).toList();
+
+    final normalized = <Map<String, String>>[];
+    for (var index = 0; index < parsed.length; index++) {
+      final label = index < _canonicalStageLabels.length
+          ? _canonicalStageLabels[index]
+          : parsed[index]['label']!.replaceAll(_stagePrefix, 'Stage ');
+      normalized.add({
+        'label': label,
+        'title': label,
+        'content': parsed[index]['content'] ?? '',
+      });
+    }
+    return normalized;
+  }
+
+  List<Widget> _buildHostImpactTiles(Map<String, String> content) {
+    if (content.isEmpty) return const [];
+
+    String clean(String key) => (content[key] ?? '').replaceAll(RegExp(r'<[^>]*>'), '').trim();
+
+    final affectedHosts = clean('affected_hosts');
+    final symptomsSigns = clean('symptoms_signs');
+    final transmissionCycle = clean('transmission_cycle');
+    final impactAnalysis = clean('impact_analysis');
+
+    final tiles = <Widget>[];
+    if (affectedHosts.isNotEmpty) {
+      tiles.add(
+        ControlManagementTile(
+          title: 'Affected Hosts',
+          icon: Icons.grass_outlined,
+          description: affectedHosts,
+        ),
+      );
+    }
+    if (symptomsSigns.isNotEmpty) {
+      tiles.add(
+        ControlManagementTile(
+          title: 'Symptoms & Signs',
+          icon: Icons.coronavirus_outlined,
+          description: symptomsSigns,
+        ),
+      );
+    }
+    if (transmissionCycle.isNotEmpty) {
+      tiles.add(
+        ControlManagementTile(
+          title: 'Transmission Cycle',
+          icon: Icons.sync_alt,
+          description: transmissionCycle,
+        ),
+      );
+    }
+    if (impactAnalysis.isNotEmpty) {
+      tiles.add(
+        ControlManagementTile(
+          title: 'Impact Analysis',
+          icon: Icons.insights_outlined,
+          description: impactAnalysis,
+        ),
+      );
+    }
+
+    return tiles;
   }
 
   Widget _buildSectionHeader(String title) {
@@ -426,7 +571,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         if (parts.length >= 3) {
           final type = parts[0].toUpperCase();
           final title = parts[1];
-          final desc = parts[2];
+          final desc = parts[2].replaceAll(RegExp(r'<[^>]*>'), '').trim();
           final icon = _getIconForTreatmentType(type);
           
           widgets.add(
@@ -461,4 +606,11 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
       'MECHANICAL::Physical Removal::Remove visible mold using brushes and HEPA vacuum. Dispose contaminated materials in sealed bags. Wear protective gear during cleanup.|'
       'BIOLOGICAL::Natural Solutions::Apply beneficial microorganisms that compete with mold. Use vinegar or tea tree oil solutions for surface treatment.|'
       'CHEMICAL::Antimicrobial Treatment::Use EPA-approved fungicides for severe cases. Ensure proper ventilation during application. Follow manufacturer instructions carefully.';
+
+  static const Map<String, String> _dummyHostPathogenImpact = {
+    'affected_hosts': 'Tomato, eggplant, pepper, and selected cucurbit crops are commonly affected in humid field setups.',
+    'symptoms_signs': 'Leaf spotting, discoloration, lesion expansion, and visible fungal growth become more evident with prolonged moisture.',
+    'transmission_cycle': 'Spores spread through air flow, splashing water, and contaminated tools, then establish on susceptible host tissue.',
+    'impact_analysis': 'Unchecked progression can reduce yield quality, increase treatment costs, and trigger broader field-level contamination.',
+  };
 }

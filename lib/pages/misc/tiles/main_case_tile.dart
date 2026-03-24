@@ -52,10 +52,6 @@ class _MainCaseTileState extends State<MainCaseTile> {
     final bool isNetworkImage = caseImageUrl.startsWith('http');
     final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
 
-    final String priorityDisplay = (widget.priorityLevel == null || widget.priorityLevel!.isEmpty)
-        ? AppLocalizations.of(context)!.notAvailable
-        : widget.priorityLevel!;
-
     return GestureDetector(
       onTapDown: (_) => setState(() => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8)),
       onTapUp: (_) {
@@ -144,12 +140,10 @@ class _MainCaseTileState extends State<MainCaseTile> {
                         
                         const SizedBox(height: 12), // This creates the "Lift" for the tiles
 
-                        // 3. Status Tiles (Now sitting higher)
+                        // 3. Status Tile
                         Row(
                           children: [
-                            Expanded(child: StatusBox(status: priorityDisplay)),
-                            const SizedBox(width: 6),
-                            Expanded(child: StatusBox(status: widget.caseStatus)),
+                            StatusBox(status: widget.caseStatus),
                           ],
                         ),
                         

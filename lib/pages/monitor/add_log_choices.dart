@@ -19,7 +19,7 @@ class AddLogChoicesScreen extends StatefulWidget {
   final String? initialMacroCharacteristics;
   final VoidCallback onCaptureMicro;
   final VoidCallback onCaptureMacro;
-  final VoidCallback onSubmit;
+  final Future<void> Function() onSubmit;
 
   const AddLogChoicesScreen({
     super.key,
@@ -48,6 +48,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   final TextEditingController _macroTextureController = TextEditingController();
   final TextEditingController _macroSymptomsController = TextEditingController();
   final TextEditingController _macroCharacteristicsController = TextEditingController();
+  bool _isSaving = false;
 
     @override
     void initState() {
@@ -97,38 +98,55 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: const PrimaryAppBar(title: "Add Log Entry"),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPageHeader(),
-            const SizedBox(height: 50),
+      body: Stack(
+        children: [
+          // Main content
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPageHeader(),
+                const SizedBox(height: 50),
 
-            // --- MICROSCOPIC SECTION ---
-            _buildSectionHeader("MICROSCOPIC EVIDENCE"),
-            const SizedBox(height: 25),
-            _buildCaptureCard(
-              hasImage: hasMicro,
-              imagePath: widget.microscopicImagePath,
-              onTap: widget.onCaptureMicro,
-              statusText: _microAnalysisController.text.isEmpty 
-                  ? "Pending Analysis" 
-                  : _microAnalysisController.text,
-              emptyMsg: "Tap to capture microscopic view",
+                // --- MICROSCOPIC SECTION ---
+                _buildSectionHeader("MICROSCOPIC EVIDENCE"),
+                const SizedBox(height: 25),
+                _buildCaptureCard(
+                  hasImage: hasMicro,
+                  imagePath: widget.microscopicImagePath,
+                  onTap: _isSaving ? null : widget.onCaptureMicro,
+                  statusText: _microAnalysisController.text.isEmpty 
+                      ? "Pending Analysis" 
+                      : _microAnalysisController.text,
+                  emptyMsg: "Tap to capture microscopic view",
+                ),
+
+                const SizedBox(height: 60),
+
+                // --- MACROSCOPIC SECTION ---
+                _buildSectionHeader("MACROSCOPIC EVIDENCE"),
+                const SizedBox(height: 25),
+                _buildMacroscopicEvidenceBlock(hasMacro),
+
+                const SizedBox(height: 60),
+                _buildFooterActions(),
+              ],
             ),
-
-            const SizedBox(height: 60),
-
-            // --- MACROSCOPIC SECTION ---
-            _buildSectionHeader("MACROSCOPIC EVIDENCE"),
-            const SizedBox(height: 25),
-            _buildMacroscopicEvidenceBlock(hasMacro),
-
-            const SizedBox(height: 60),
-            _buildFooterActions(),
-          ],
-        ),
+          ),
+          // Full-screen loading overlay
+          if (_isSaving)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: MoldifyColors.primaryColor,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -181,7 +199,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   Widget _buildCaptureCard({
     required bool hasImage,
     String? imagePath,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     required String statusText,
     required String emptyMsg,
   }) {
@@ -231,7 +249,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
           _buildCaptureCard(
             hasImage: hasImage,
             imagePath: widget.macroscopicImagePath,
-            onTap: widget.onCaptureMacro,
+            onTap: _isSaving ? null : widget.onCaptureMacro,
             statusText: "Macroscopic Specimen",
             emptyMsg: "Tap to capture macroscopic view",
           ),
@@ -286,7 +304,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     );
   }
 
-  Widget _buildGlassRetake(VoidCallback onTap) {
+  Widget _buildGlassRetake(VoidCallback? onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
@@ -312,18 +330,29 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   }
 
   Widget _buildFooterActions() {
-    return SizedBox(
-      width: double.infinity,
-      child: BuildButton(
-        onPressed: widget.onSubmit,
-        buttonText: 'SAVE LOG CHANGES',
-        fontSize: 13,
-        backgroundColor: MoldifyColors.primaryColor,
-        textColor: Colors.white,
-        buttonHeight: 56,
-        buttonRadius: 12,
-      ),
+    return BuildButton(
+      buttonText: 'Save Log Changes',
+      onPressed: _isSaving ? () {} : _handleSubmit,
+      backgroundColor: MoldifyColors.primaryColor,
+      textColor: Colors.white,
+      buttonHeight: 56,
+      buttonRadius: 12,
+      buttonWidth: double.infinity,
+      fontSize: 13,
     );
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      await widget.onSubmit();
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   bool _isNotBlank(String? val) => val != null && val.trim().isNotEmpty;

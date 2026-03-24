@@ -11,6 +11,7 @@ class WikiArticle {
   final DateTime? updatedAt;
   final String? mycologistId;
   final DateTime? approvedAt;
+  final Map<String, String> hostPathogenImpact;
 
   WikiArticle({
     required this.id,
@@ -25,6 +26,7 @@ class WikiArticle {
     this.updatedAt,
     this.mycologistId,
     this.approvedAt,
+    required this.hostPathogenImpact,
   });
 
   factory WikiArticle.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class WikiArticle {
           'chemicalContent',
           'recommendations',
         ],
+        preferTreatmentControls: true,
       ),
       author: json['author']?.toString() ?? 'Unknown',
       coverPhoto: json['cover_photo']?.toString(),
@@ -74,7 +77,73 @@ class WikiArticle {
       updatedAt: _parseDate(metadata['updated_at']) ?? _parseDate(json['updated_at']),
       mycologistId: json['mycologist_id']?.toString() ?? metadata['mycologist_id']?.toString(),
       approvedAt: _parseDate(metadata['approved_at']) ?? _parseDate(json['approved_at']),
+      hostPathogenImpact: _extractHostPathogenImpact(json, metadata),
     );
+  }
+
+  static Map<String, String> _extractHostPathogenImpact(
+    Map<String, dynamic> json,
+    Map<String, dynamic> metadata,
+  ) {
+    final containers = <Map<String, dynamic>>[];
+
+    Map<String, dynamic>? asStringMap(dynamic raw) {
+      if (raw is Map<String, dynamic>) return raw;
+      if (raw is Map) return Map<String, dynamic>.from(raw);
+      return null;
+    }
+
+    final fromRoot = asStringMap(json['host_pathogen_impact']) ?? asStringMap(json['hostPathogenImpact']);
+    final fromMeta = asStringMap(metadata['host_pathogen_impact']) ?? asStringMap(metadata['hostPathogenImpact']);
+    if (fromRoot != null) containers.add(fromRoot);
+    if (fromMeta != null) containers.add(fromMeta);
+    containers.add(json);
+    containers.add(metadata);
+
+    String read(List<String> keys) {
+      for (final container in containers) {
+        for (final key in keys) {
+          final text = _normalizeContent(container[key]).replaceAll(RegExp(r'<[^>]*>'), '').trim();
+          if (text.isNotEmpty) return text;
+        }
+      }
+      return '';
+    }
+
+    final result = <String, String>{
+      'affected_hosts': read([
+        'affected_hosts',
+        'affectedHosts',
+        'hosts',
+        'host_range',
+        'hostRange',
+      ]),
+      'symptoms_signs': read([
+        'symptoms_signs',
+        'symptomsSigns',
+        'symptoms_and_signs',
+        'symptomsAndSigns',
+        'symptoms',
+        'signs',
+      ]),
+      'transmission_cycle': read([
+        'transmission_cycle',
+        'transmissionCycle',
+        'cycle_of_transmission',
+        'cycleOfTransmission',
+        'spread',
+      ]),
+      'impact_analysis': read([
+        'impact_analysis',
+        'impactAnalysis',
+        'impact',
+        'damage_analysis',
+        'damageAnalysis',
+      ]),
+    };
+
+    result.removeWhere((key, value) => value.isEmpty);
+    return result;
   }
 
   static List<String> _parseTags(dynamic raw) {
@@ -106,13 +175,78 @@ class WikiArticle {
     return null;
   }
 
-  static String _extractContent(Map<String, dynamic> json, List<String> keys) {
+  static String _extractContent(
+    Map<String, dynamic> json,
+    List<String> keys, {
+    bool preferTreatmentControls = false,
+  }) {
     for (final key in keys) {
       final raw = json[key];
+      if (preferTreatmentControls) {
+        final structured = _normalizeTreatments(raw);
+        if (structured.isNotEmpty) return structured;
+      }
       final parsed = _normalizeContent(raw);
       if (parsed.isNotEmpty) return parsed;
     }
     return '';
+  }
+
+  static String _normalizeTreatments(dynamic raw) {
+    if (raw is! Map) return '';
+
+    final map = Map<String, dynamic>.from(raw);
+
+    String read(List<String> keys) {
+      for (final key in keys) {
+        final value = map[key];
+        final text = _normalizeContent(value)
+            .replaceAll(RegExp(r'<[^>]*>'), '')
+            .trim();
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+
+    final segments = <String>[];
+    void addSegment(String type, String title, List<String> keys) {
+      final value = read(keys);
+      if (value.isEmpty) return;
+      segments.add('$type::$title::$value');
+    }
+
+    addSegment('MECHANICAL', 'Mechanical Control', [
+      'mechanical',
+      'mechanicalControl',
+      'mechanical_control',
+      'Mechanical Control',
+    ]);
+    addSegment('BIOLOGICAL', 'Biological Control', [
+      'biological',
+      'biologicalControl',
+      'biological_control',
+      'Biological Control',
+    ]);
+    addSegment('CHEMICAL', 'Chemical Control', [
+      'chemical',
+      'chemicalControl',
+      'chemical_control',
+      'Chemical Control',
+    ]);
+    addSegment('PHYSICAL', 'Physical Control', [
+      'physical',
+      'physicalControl',
+      'physical_control',
+      'Physical Control',
+    ]);
+    addSegment('CULTURAL', 'Cultural Control', [
+      'cultural',
+      'culturalControl',
+      'cultural_control',
+      'Cultural Control',
+    ]);
+
+    return segments.join('|').trim();
   }
 
   static String _normalizeContent(dynamic raw) {

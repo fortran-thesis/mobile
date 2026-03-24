@@ -333,23 +333,12 @@ class _MainReportScreenState extends State<MainReportScreen> {
                     ? DateFormat('MMMM d, yyyy').format(reportDate.toLocal())
                     : '-';
 
-                                    // Priority comes from the list response (report.priority),
-                                    // which the backend embeds from the linked mold case.
-                                    String? priorityLevel = report.priority;
-                                    if (priorityLevel != null && priorityLevel.isNotEmpty) {
-                                      priorityLevel = priorityLevel[0].toUpperCase() + priorityLevel.substring(1);
-                                      if (!priorityLevel.toLowerCase().contains('priority')) {
-                                        priorityLevel = '$priorityLevel Priority';
-                                      }
-                                    }
-
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 10.0),
                                       child: MainCaseTile(
                                         caseName: caseName,
                                         dateSubmitted: dateSubmitted,
                                         dateLabel: 'Date Submitted',
-                                        priorityLevel: priorityLevel,
                                         caseStatus: caseStatus,
                                         imageUrl: _resolveReportCoverPhoto(report),
                                         onTap: () async {
@@ -365,12 +354,10 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                           }
                                         },
                                         showPopupMenu: true,
-                                        popupMenuItems: ['Treatment History', 'Export PDF'],
-                                        popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
+                                        popupMenuItems: ['Export PDF'],
+                                        popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
                                         onPopupMenuItemSelected: (menuIndex) {
                                           if (menuIndex == 0) {
-                                            Navigator.pushNamed(context, '/treatment-history');
-                                          } else if (menuIndex == 1) {
                                             // export
                                           }
                                         },

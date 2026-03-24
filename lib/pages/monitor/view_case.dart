@@ -148,11 +148,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final characteristics = log.characteristics;
     final hasMicroData = _looksLikeMicroscopicLog(characteristics);
     final hasMacroData = _looksLikeMacroscopicLog(characteristics);
-    final size = _firstNonEmpty([
-      characteristics['size'],
-      characteristics['lesion_size'],
-      characteristics['colony_diameter'],
-    ]);
     final color = _firstNonEmpty([
       characteristics['color'],
       characteristics['lesion_color'],
@@ -194,7 +189,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       'microscopicImagePath': microscopicImage,
       'macroscopicImagePath': macroscopicImage,
       'microGenusName': microGenus,
-      'macroSize': size,
       'macroTexture': texture,
       'macroShape': color,
       'macroSymptoms': symptoms,
@@ -964,11 +958,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final bool isCaseClosed = caseStatus == 'Closed';
     final String identifiedFungi = _buildIdentifiedFungiLabel();
 
-    // Use API data if available, otherwise use fallback defaults
-    String priorityLevel = _case?.priority != null
-        ? '${_case!.priority[0].toUpperCase()}${_case!.priority.substring(1)} Priority'
-        : 'Low Priority';
-
     String endDate = _case?.endDate != null
         ? DateFormat('MMMM dd, yyyy').format(_case!.endDate!)
         : 'N/A';
@@ -977,16 +966,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final List<String> popupMenuItems = [
       if (!isCaseClosed) 'Set Monitoring Details',
       if (!isCaseClosed && !_hasGivenRecommendation) 'Give Recommendation',
-      'Identification History',
-      'Treatment History',
       'Export PDF',
     ];
 
     final List<IconData> popupMenuIcons = [
       if (!isCaseClosed) FontAwesomeIcons.circleInfo,
       if (!isCaseClosed && !_hasGivenRecommendation) Icons.recommend,
-      FontAwesomeIcons.clockRotateLeft,
-      FontAwesomeIcons.sprayCan,
       FontAwesomeIcons.solidFilePdf,
     ];
 
@@ -1018,10 +1003,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
               }
             } else if (selectedItem == 'Give Recommendation') {
               await _handleGiveRecommendation();
-            } else if (selectedItem == 'Identification History') {
-              Navigator.pushNamed(context, '/identification-history');
-            } else if (selectedItem == 'Treatment History') {
-              Navigator.pushNamed(context, '/treatment-history');
             } else if (selectedItem == 'Export PDF') {
               // Implement export PDF functionality here
             }
@@ -1086,7 +1067,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
                       Padding(
                         padding: EdgeInsets.only(
-                          top: MediaQuery.of(context).size.height * 0.23,
+                          top: MediaQuery.of(context).size.height * 0.35,
                         ),
                         child: Container(
                           width: double.infinity,
@@ -1111,13 +1092,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                     Row(
                                       children: [
                                         StatusBox(
-                                          status: priorityLevel,
-                                          fontSize: 8,
-                                        ),
-                                        const SizedBox(width: 5),
-                                        StatusBox(
                                           status: reportStatus,
-                                          fontSize: 8,
+                                          fontSize: 12,
                                         ),
                                       ],
                                     ),

@@ -554,8 +554,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: MainCaseTile(
                     caseName: case_.name,
                     dateSubmitted: case_.startDate.toString().split(' ')[0],
-                    priorityLevel:
-                        '${case_.priority[0].toUpperCase()}${case_.priority.substring(1)} Priority',
                     caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
                     imageHeight: 70.0,
                     imageWidth: 70.0,

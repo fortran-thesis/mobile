@@ -38,14 +38,12 @@ import 'initial_observation_components/observation_preview_image.dart';
 /// [macroscopicImagePath] — Local file path, asset path, or remote URL of the
 ///   macroscopic observation image.
 /// [macroShape] — Observed colony/lesion shape (e.g. "Circular").
-/// [macroSize]  — Observed colony/lesion size in mm (e.g. "12").
 /// [macroTexture] — Observed surface texture (e.g. "Powdery").
 /// [macroSymptoms] — Comma-separated symptoms (e.g. "Leaf spots, Wilting").
 /// [macroCharacteristics] — Comma-separated characteristic traits.
 ///
 /// **Context-sensitive labels** (supplied by the parent tab):
 /// [shapeLabel]   — e.g. "Colony Shape" (in-vitro) or "Lesion Shape" (in-vivo).
-/// [sizeLabel]    — e.g. "Colony Size"  or "Lesion Size".
 /// [textureLabel] — e.g. "Colony Texture" or "Lesion Texture".
 ///
 /// **General**
@@ -79,9 +77,6 @@ class ExperimentTimelineTile extends StatelessWidget {
   /// Observed colony/lesion shape.
   final String macroShape;
 
-  /// Observed colony/lesion size (in mm or descriptive).
-  final String macroSize;
-
   /// Observed surface texture.
   final String macroTexture;
 
@@ -95,9 +90,6 @@ class ExperimentTimelineTile extends StatelessWidget {
 
   /// "Colony Shape" for in-vitro, "Lesion Shape" for in-vivo.
   final String shapeLabel;
-
-  /// "Colony Size" for in-vitro, "Lesion Size" for in-vivo.
-  final String sizeLabel;
 
   /// "Colony Texture" for in-vitro, "Lesion Texture" for in-vivo.
   final String textureLabel;
@@ -134,13 +126,11 @@ class ExperimentTimelineTile extends StatelessWidget {
     // Macroscopic
     required this.macroscopicImagePath,
     required this.macroShape,
-    required this.macroSize,
     required this.macroTexture,
     required this.macroSymptoms,
     required this.macroCharacteristics,
     // Labels
     required this.shapeLabel,
-    required this.sizeLabel,
     required this.textureLabel,
     // General
     this.isFirst = false,
@@ -256,7 +246,6 @@ class ExperimentTimelineTile extends StatelessWidget {
     final hasMacroEvidence =
         hasMacro ||
         macroShape.trim().isNotEmpty ||
-        macroSize.trim().isNotEmpty ||
         macroTexture.trim().isNotEmpty ||
         macroSymptoms.trim().isNotEmpty ||
         macroCharacteristics.trim().isNotEmpty;
@@ -391,7 +380,7 @@ class ExperimentTimelineTile extends StatelessWidget {
             //
             // Taupe card:
             //   1. Full-bleed image header (tap to full-screen)
-            //   2. Three chips: shape | size | texture
+            //   2. Two chips: shape | texture
             //      (labels are context-driven by the parent tab)
             //   3. Two ObservationDataTile widgets: symptoms | characteristics
             // =================================================================
@@ -438,12 +427,10 @@ class ExperimentTimelineTile extends StatelessWidget {
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
                           children: [
-                            // Row 1: shape | size | texture chips
+                            // Row 1: shape | texture chips
                             Row(
                               children: [
                                 _chip(shapeLabel, macroShape),
-                                const SizedBox(width: 6),
-                                _chip(sizeLabel, macroSize),
                                 const SizedBox(width: 6),
                                 _chip(textureLabel, macroTexture),
                               ],
