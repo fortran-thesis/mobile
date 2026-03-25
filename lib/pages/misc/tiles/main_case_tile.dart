@@ -19,6 +19,8 @@ class MainCaseTile extends StatefulWidget {
   final List<IconData>? popupMenuIcons;
   final ValueChanged<int>? onPopupMenuItemSelected;
   final Widget? popupMenuIcon;
+  final IconData? rightActionIcon;
+  final VoidCallback? onRightActionPressed;
 
   const MainCaseTile({
     super.key,
@@ -33,6 +35,8 @@ class MainCaseTile extends StatefulWidget {
     this.popupMenuIcons,
     this.onPopupMenuItemSelected,
     this.popupMenuIcon,
+    this.rightActionIcon,
+    this.onRightActionPressed,
     this.imageWidth,
     this.imageHeight,
     this.dateLabel,
@@ -165,6 +169,27 @@ class _MainCaseTileState extends State<MainCaseTile> {
                   items: widget.popupMenuItems!,
                   icons: widget.popupMenuIcons,
                   onItemSelected: widget.onPopupMenuItemSelected!,
+                ),
+              ),
+
+            if (!widget.showPopupMenu &&
+                widget.rightActionIcon != null &&
+                widget.onRightActionPressed != null)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: IconButton(
+                  onPressed: widget.onRightActionPressed,
+                  icon: Icon(
+                    widget.rightActionIcon,
+                    size: 18,
+                    color: MoldifyColors.primaryColor,
+                  ),
+                  splashRadius: 18,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
                 ),
               ),
           ],

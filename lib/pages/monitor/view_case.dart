@@ -326,7 +326,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   }
 
   double? _extractLookupConfidenceValue(Map<String, dynamic> result) {
-    final confidenceRaw = result['confidence'];
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    var confidenceRaw = result['confidence'];
+    if (confidenceRaw == null) {
+      confidenceRaw = result['confidence_score'];
+    }
     if (confidenceRaw is num) return confidenceRaw.toDouble();
     return double.tryParse(confidenceRaw?.toString() ?? '');
   }
@@ -416,7 +420,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   }
 
   String _formatLookupConfidence(Map<String, dynamic> result) {
-    final confidenceRaw = result['confidence'];
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    var confidenceRaw = result['confidence'];
+    if (confidenceRaw == null) {
+      confidenceRaw = result['confidence_score'];
+    }
     final confidence = confidenceRaw is num
         ? confidenceRaw.toDouble()
         : double.tryParse(confidenceRaw?.toString() ?? '');

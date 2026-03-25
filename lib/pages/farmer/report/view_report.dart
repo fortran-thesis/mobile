@@ -374,32 +374,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
             title: AppLocalizations.of(context)!.viewReportTitle,
-            showPopupMenu: true,
-            popupMenuItems: [
-              AppLocalizations.of(context)!.treatmentHistory,
-              AppLocalizations.of(context)!.exportPdf
-            ],
-            popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
-            onPopupMenuItemSelected: (index) {
-              // Handle the selection based on the index
-
-              /// Treatment History
-              if (index == 0) {
-                Navigator.pushNamed(
-                  context,
-                  '/treatment-history',
-                );
-              }
-              /// End of Identification History
-
-              /// Export PDF
-              else if (index == 1) {
-                // Navigator.pushNamed(
-                //   context,
-                //   '/treatment-history',
-                // );
-              }
-              /// End of Treatment History
+            rightIcon: Icon(FontAwesomeIcons.solidFilePdf),
+            onRightIconPressed: () {
+              // Export PDF action
             }
         ),
         body: SingleChildScrollView(

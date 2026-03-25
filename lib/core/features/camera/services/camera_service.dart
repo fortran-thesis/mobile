@@ -281,7 +281,6 @@ class CameraService {
 
 		// New fusion responses return confidence as 0–1; some legacy payloads may return 0–100.
 		final double rawConfidence = ((result['confidence'] as num?) ?? 0.0).toDouble();
-		final double probability = rawConfidence > 1.0 ? (rawConfidence / 100.0) : rawConfidence;
 
 		final dynamic rawProbs = result['class_probabilities'] ?? result['probabilities'];
 		final Map<String, double> allProbabilities;
@@ -302,6 +301,16 @@ class CameraService {
 			}
 		} else {
 			allProbabilities = {};
+		}
+
+		// Calculate final probability: use confidence field if present, otherwise use max from probabilities
+		double probability = rawConfidence;
+		if (probability == 0.0 && allProbabilities.isNotEmpty) {
+			// Confidence field missing/zero; extract from max probability
+			probability = allProbabilities.values.reduce((a, b) => a > b ? a : b);
+		} else if (probability > 1.0) {
+			// Legacy format: confidence was 0-100, normalize to 0-1
+			probability = probability / 100.0;
 		}
 
 		return {

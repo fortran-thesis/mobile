@@ -63,7 +63,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
               fontSize: 18,
               fontFamily: 'Bricolage-Grotesque-Regular',
               color: hasData 
-                  ? MoldifyColors.MoldifyBlack.withOpacity(0.85) 
+                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85) 
                   : MoldifyColors.MoldifyGrey,
               height: 1.6,
             ),
@@ -72,7 +72,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
           // 3. Section Separation Line
           if (!isLast) ...[
             Divider(
-              color: MoldifyColors.taupe.withOpacity(0.2),
+              color: MoldifyColors.taupe.withValues(alpha: 0.2),
               thickness: 1,
             ),
           ],

@@ -24,37 +24,45 @@ class ReportResolvedActionsRow extends StatelessWidget {
     if (!visible) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(top: 14.0),
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Row(
         children: [
-          BuildButton(
-            onPressed: onCloseCase,
-            buttonText: closeCaseLabel,
-            fontSize: 12,
-            backgroundColor: MoldifyColors.primaryColor,
-            textColor: MoldifyColors.backgroundColor,
-            leftIcon: FontAwesomeIcons.solidCircleCheck,
-            iconSize: 12,
-            iconColor: MoldifyColors.backgroundColor,
-            paddingIconText: 10,
-            buttonHeight: 30,
-            buttonWidth: 120,
-            buttonRadius: 7,
+          // Subdued Primary Action
+          Expanded(
+            child: BuildButton(
+              onPressed: onCloseCase,
+              buttonText: closeCaseLabel,
+              fontSize: 11,
+              // Using a slightly desaturated version of primary for a subtle look
+              backgroundColor: MoldifyColors.primaryColor.withOpacity(0.08),
+              textColor: MoldifyColors.primaryColor,
+              leftIcon: FontAwesomeIcons.solidCircleCheck,
+              iconSize: 11,
+              iconColor: MoldifyColors.primaryColor,
+              paddingIconText: 6,
+              buttonHeight: 38, // Smaller and sleeker
+              buttonRadius: 8,  // Minimalist radius
+            ),
           ),
-          const SizedBox(width: 5),
-          BuildButton(
-            onPressed: onAddFollowUp,
-            buttonText: addFollowUpLabel,
-            fontSize: 12,
-            backgroundColor: MoldifyColors.accentColor,
-            textColor: MoldifyColors.MoldifyBlack,
-            leftIcon: FontAwesomeIcons.plus,
-            iconSize: 12,
-            iconColor: MoldifyColors.MoldifyBlack,
-            paddingIconText: 10,
-            buttonHeight: 30,
-            buttonWidth: 120,
-            buttonRadius: 7,
+          
+          const SizedBox(width: 8),
+
+          // Subdued Secondary Action
+          Expanded(
+            child: BuildButton(
+              onPressed: onAddFollowUp,
+              buttonText: addFollowUpLabel,
+              fontSize: 11,
+              // Soft accent tint
+              backgroundColor: MoldifyColors.accentColor.withOpacity(0.12),
+              textColor: MoldifyColors.primaryColor,
+              leftIcon: FontAwesomeIcons.plus,
+              iconSize: 11,
+              iconColor: MoldifyColors.primaryColor,
+              paddingIconText: 6,
+              buttonHeight: 38,
+              buttonRadius: 8,
+            ),
           ),
         ],
       ),
