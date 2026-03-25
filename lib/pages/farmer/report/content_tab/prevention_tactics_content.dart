@@ -46,7 +46,7 @@ class PreventionTacticsContent extends StatelessWidget {
       final desc = parts.sublist(2).join(_fieldDelimiter).trim();
       if (title.isEmpty || desc.isEmpty) continue;
 
-      final key = '${type}::${title.toLowerCase()}';
+      final key = '$type::${title.toLowerCase()}';
       if (!seenKeys.add(key)) continue;
 
       entries.add({

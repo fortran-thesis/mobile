@@ -2,18 +2,39 @@ import 'package:flutter/material.dart';
 import '../../../misc/colors.dart';
 
 class ReportHostsSymptomsTab extends StatelessWidget {
-  final String affectedHosts;
-  final String symptomsSigns;
-  final String inOnions;
-  final String inPostharvestFruit;
+  /// Parsed sections from mycologist notes: {title, content}
+  final List<Map<String, String>> sections;
+
+  /// Section aliases that this tab displays
+  static final Map<String, List<String>> _sectionAliases = {
+    'Affected Crops / Hosts': ['affected crops', 'affected hosts', 'hosts', 'host range', 'host'],
+    'Symptoms & Signs': ['symptoms signs', 'symptoms and signs', 'symptoms', 'signs'],
+    'Signs in Onions': ['in onions', 'onions', 'allium'],
+    'Signs in Postharvest Fruit': ['in postharvest fruit', 'postharvest fruit', 'postharvest'],
+  };
 
   const ReportHostsSymptomsTab({
     super.key,
-    required this.affectedHosts,
-    required this.symptomsSigns,
-    required this.inOnions,
-    required this.inPostharvestFruit,
+    required this.sections,
   });
+
+  /// Normalize text for case-insensitive matching
+  static String _normalizeKey(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  /// Find content for a section using alias matching
+  String _findSectionContent(String displayTitle, List<String> aliases) {
+    final normalizedAliases = aliases.map(_normalizeKey).toList();
+    
+    for (final section in sections) {
+      final title = section['title'] ?? '';
+      if (normalizedAliases.contains(_normalizeKey(title))) {
+        return section['content'] ?? '';
+      }
+    }
+    return '';
+  }
 
   Widget _buildSection({
     required String title,
@@ -79,30 +100,29 @@ class ReportHostsSymptomsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sectionTitles = _sectionAliases.keys.toList();
+    final displayedSections = <Widget>[];
+
+    for (int i = 0; i < sectionTitles.length; i++) {
+      final displayTitle = sectionTitles[i];
+      final aliases = _sectionAliases[displayTitle]!;
+      final content = _findSectionContent(displayTitle, aliases);
+
+      displayedSections.add(
+        _buildSection(
+          title: displayTitle,
+          content: content,
+          isLast: i == sectionTitles.length - 1,
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       // Consistent asymmetric padding
       padding: const EdgeInsets.fromLTRB(25.0, 30.0, 25.0, 60.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSection(
-            title: 'Affected Crops / Hosts', 
-            content: affectedHosts
-          ),
-          _buildSection(
-            title: 'Symptoms & Signs', 
-            content: symptomsSigns
-          ),
-          _buildSection(
-            title: 'Signs in Onions', 
-            content: inOnions
-          ),
-          _buildSection(
-            title: 'Postharvest Fruit Conditions', 
-            content: inPostharvestFruit, 
-            isLast: true
-          ),
-        ],
+        children: displayedSections,
       ),
     );
   }

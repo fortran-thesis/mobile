@@ -2,22 +2,41 @@ import 'package:flutter/material.dart';
 import '../../../misc/colors.dart';
 
 class ReportDiseaseCycleImpactTab extends StatelessWidget {
-  final String diseaseCycleSpread;
-  final String infectionMechanism;
-  final String soilInoculum;
-  final String onPeanuts;
-  final String mycotoxinRisk;
-  final String impact;
+  /// Parsed sections from mycologist notes: {title, content}
+  final List<Map<String, String>> sections;
+
+  /// Section aliases that this tab displays
+  static final Map<String, List<String>> _sectionAliases = {
+    'Disease Cycle / Spread': ['disease cycle', 'cycle', 'spread', 'transmission'],
+    'Infection Mechanism': ['infection mechanism', 'mechanism', 'infection'],
+    'Soil Inoculum Details': ['soil inoculum', 'inoculum', 'soil'],
+    'Peanut-Specific Impact': ['on peanuts specifically', 'peanuts', 'peanut'],
+    'Mycotoxin Risk Assessment': ['mycotoxin risk', 'mycotoxin', 'toxin'],
+    'Overall Impact': ['impact', 'consequence', 'implications'],
+  };
 
   const ReportDiseaseCycleImpactTab({
     super.key,
-    required this.diseaseCycleSpread,
-    required this.infectionMechanism,
-    required this.soilInoculum,
-    required this.onPeanuts,
-    required this.mycotoxinRisk,
-    required this.impact,
+    required this.sections,
   });
+
+  /// Normalize text for case-insensitive matching
+  static String _normalizeKey(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  /// Find content for a section using alias matching
+  String _findSectionContent(String displayTitle, List<String> aliases) {
+    final normalizedAliases = aliases.map(_normalizeKey).toList();
+    
+    for (final section in sections) {
+      final title = section['title'] ?? '';
+      if (normalizedAliases.contains(_normalizeKey(title))) {
+        return section['content'] ?? '';
+      }
+    }
+    return '';
+  }
 
   Widget _buildSection({
     required String title,
@@ -63,7 +82,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
               fontSize: 18,
               fontFamily: 'Bricolage-Grotesque-Regular',
               color: hasData 
-                  ? MoldifyColors.MoldifyBlack.withOpacity(0.85) 
+                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85) 
                   : MoldifyColors.MoldifyGrey,
               height: 1.6,
             ),
@@ -72,7 +91,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
           // 3. Section Separation Line
           if (!isLast) ...[
             Divider(
-              color: MoldifyColors.taupe.withOpacity(0.2),
+              color: MoldifyColors.taupe.withValues(alpha: 0.2),
               thickness: 1,
             ),
           ],
@@ -83,37 +102,28 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sectionTitles = _sectionAliases.keys.toList();
+    final displayedSections = <Widget>[];
+
+    for (int i = 0; i < sectionTitles.length; i++) {
+      final displayTitle = sectionTitles[i];
+      final aliases = _sectionAliases[displayTitle]!;
+      final content = _findSectionContent(displayTitle, aliases);
+
+      displayedSections.add(
+        _buildSection(
+          title: displayTitle,
+          content: content,
+          isLast: i == sectionTitles.length - 1,
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(25.0, 30.0, 25.0, 60.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSection(
-            title: 'Disease Cycle / Spread', 
-            content: diseaseCycleSpread
-          ),
-          _buildSection(
-            title: 'Infection Mechanism', 
-            content: infectionMechanism
-          ),
-          _buildSection(
-            title: 'Soil Inoculum Details', 
-            content: soilInoculum
-          ),
-          _buildSection(
-            title: 'Peanut-Specific Impact', 
-            content: onPeanuts
-          ),
-          _buildSection(
-            title: 'Mycotoxin Risk Assessment', 
-            content: mycotoxinRisk
-          ),
-          _buildSection(
-            title: 'Overall Impact', 
-            content: impact, 
-            isLast: true
-          ),
-        ],
+        children: displayedSections,
       ),
     );
   }

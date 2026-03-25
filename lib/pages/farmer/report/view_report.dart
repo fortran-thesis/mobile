@@ -548,23 +548,13 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                               final tabContents = <Widget>[
                                 _buildCaseDetailsTab(context),
                                 ReportOverviewTab(
-                                  overview: ReportViewParser.findSectionContent(noteSections, ['overview']),
-                                  description: ReportViewParser.findSectionContent(noteSections, ['description', 'summary']),
-                                  healthRisk: ReportViewParser.findSectionContent(noteSections, ['health risk', 'human risk', 'risk']),
+                                  sections: noteSections,
                                 ),
                                 ReportHostsSymptomsTab(
-                                  affectedHosts: ReportViewParser.findSectionContent(noteSections, ['affected crops', 'affected hosts', 'hosts', 'host range']),
-                                  symptomsSigns: ReportViewParser.findSectionContent(noteSections, ['symptoms signs', 'symptoms and signs', 'symptoms', 'signs']),
-                                  inOnions: ReportViewParser.findSectionContent(noteSections, ['in onions', 'onions']),
-                                  inPostharvestFruit: ReportViewParser.findSectionContent(noteSections, ['in postharvest fruit', 'postharvest fruit', 'postharvest']),
+                                  sections: noteSections,
                                 ),
                                 ReportDiseaseCycleImpactTab(
-                                  diseaseCycleSpread: ReportViewParser.findSectionContent(noteSections, ['disease cycle', 'cycle', 'spread', 'transmission']),
-                                  infectionMechanism: ReportViewParser.findSectionContent(noteSections, ['infection mechanism', 'mechanism']),
-                                  soilInoculum: ReportViewParser.findSectionContent(noteSections, ['soil inoculum', 'inoculum']),
-                                  onPeanuts: ReportViewParser.findSectionContent(noteSections, ['on peanuts specifically', 'peanuts']),
-                                  mycotoxinRisk: ReportViewParser.findSectionContent(noteSections, ['mycotoxin risk', 'mycotoxin']),
-                                  impact: ReportViewParser.findSectionContent(noteSections, ['impact', 'consequence']),
+                                  sections: noteSections,
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 5.0),
