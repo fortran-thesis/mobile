@@ -45,6 +45,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
+  bool _isMoldNotFound = false; // Flag to detect when mold not in database
   late String healthContent;
   late String plantThreatContent;
   late String fullDescription;
@@ -156,6 +157,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
     AppLogger.d('MoldResult: Predicted class: $predictedClass, Genus: $moldGenus');
     
+    // Detect if mold was found in database
+    _isMoldNotFound = widget.moldDetails == null || (widget.moldDetails?.isEmpty ?? true);
+    AppLogger.d('MoldResult: Mold found in database: ${!_isMoldNotFound}');
+    
     // Use moldDetails if available to populate data instead of hardcoded values
     if (widget.moldDetails != null && (widget.moldDetails?.isEmpty ?? true) == false) {
       AppLogger.d('MoldResult: Using moldDetails from API');
@@ -192,13 +197,18 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       };
 
     } else {
-      AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
+      AppLogger.d('MoldResult: Mold not found in database, using model result only');
       healthContent = 'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.';
       plantThreatContent = 'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.';
       fullDescription = 'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.';
 
+      // Update OVERVIEW to indicate mold not in database
+      final overviewText = _isMoldNotFound 
+          ? 'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database' 
+          : 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
+
       _recommendationSections = {
-        'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+        'OVERVIEW': overviewText,
         'DESCRIPTION': fullDescription,
         'HEALTH RISKS': healthContent,
         'AFFECTED CROPS / HOSTS': plantThreatContent,
@@ -525,6 +535,55 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         child: ResultActionSection(
                           onSave: () async {
                             if (_isSavingResult) return;
+                            
+                            // Show confirmation dialog if mold is not in database
+                            if (_isMoldNotFound) {
+                              final shouldProceed = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext dialogContext) {
+                                  return AlertDialog(
+                                    title: const Text(
+                                      'Mold Not in Database',
+                                      style: TextStyle(
+                                        fontFamily: 'Montserrat-Bold',
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    content: const Text(
+                                      'This mold is not in our database. Would you like to save this result and help us add it?',
+                                      style: TextStyle(
+                                        fontFamily: 'Bricolage-Grotesque-Regular',
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(dialogContext, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(dialogContext, true),
+                                        child: const Text(
+                                          'Save & Report',
+                                          style: TextStyle(
+                                            color: MoldifyColors.accentColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ) ?? false;
+
+                              if (!shouldProceed) {
+                                AppLogger.d('MoldResult: User cancelled save for unknown mold');
+                                return;
+                              }
+                              AppLogger.d('MoldResult: User confirmed save for unknown mold');
+                            }
+
                             setState(() => _isSavingResult = true);
                             final topPredictions = _buildTopPredictions();
                             final confidenceDecimal = (widget.modelResult?['probability'] as num?)?.toDouble() ?? 0.0;
@@ -546,6 +605,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               'sourceTab': widget.sourceTab,
                               'moldCaseId': widget.caseId,
                               'predictedClassName': predictedClassName,
+                              'isMoldNotFound': _isMoldNotFound, // Flag for backend tracking
                             };
 
                             try {

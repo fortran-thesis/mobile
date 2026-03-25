@@ -50,7 +50,7 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
   /// Helper method to handle async verdict submission
   void _submitVerdictAndNavigate() {
     final selectedResult = widget.lookupResults[_selectedIndex!];
-    final moldId = selectedResult['moldId']?.toString() ?? '';
+    final moldId = selectedResult['moldId']?.toString();
     final moldName = selectedResult['moldName']?.toString() ?? '';
     final confidence = (selectedResult['confidence'] as num?)?.toDouble() ?? 0.0;
 
@@ -59,7 +59,7 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
 
   /// Perform the async verdict submission
   Future<void> _performVerdictSubmission(
-    String moldId,
+    String? moldId,
     String moldName,
     double confidence,
   ) async {
@@ -75,6 +75,7 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
       AppLogger.d('[CaseVerdict] Submitting verdict: $moldName ($confidence%)');
 
       // Submit verdict to backend
+      // moldId is optional - will be null for verdicts from predicted classes not in database
       final result = await moldCaseService.submitVerdict(
         widget.caseId,
         moldId: moldId,
