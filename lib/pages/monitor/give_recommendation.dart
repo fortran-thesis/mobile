@@ -8,6 +8,8 @@ import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import 'package:provider/provider.dart';
 import '../../core/features/mold/service/mold_service.dart';
 import '../../core/features/mold_case/service/mold_case_service.dart';
+import '../../core/features/wikimold/models/wikimold.dart';
+import '../../core/features/wikimold/services/wikimold_services.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/route_names.dart';
 
@@ -15,7 +17,8 @@ class GiveRecommendationScreen extends StatefulWidget {
   const GiveRecommendationScreen({super.key});
 
   @override
-  State<GiveRecommendationScreen> createState() => _GiveRecommendationScreenState();
+  State<GiveRecommendationScreen> createState() =>
+      _GiveRecommendationScreenState();
 }
 
 class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
@@ -39,7 +42,8 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   final List<Map<String, String>> _baseManagementControls = [];
 
   final String _screenTitle = 'Give Recommendation';
-  final String _screenSubtitle = 'Finalize the entry and review the diagnostic overview';
+  final String _screenSubtitle =
+      'Finalize the entry and review the diagnostic overview';
 
   /// Standard sections including HEALTH RISKS
   final Map<String, String> _analysisSections = {
@@ -96,8 +100,10 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
         _genusOptions
           ..clear()
-          ..addAll(_moldCatalogByName.values.map((entry) => entry.name).toList()
-            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())))
+          ..addAll(
+            _moldCatalogByName.values.map((entry) => entry.name).toList()
+              ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+          )
           ..add('+ Add New Mold');
 
         if (_selectedGenus != null && !_genusOptions.contains(_selectedGenus)) {
@@ -118,7 +124,8 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         }
 
         if (_selectedGenus != null && _selectedGenus!.trim().isNotEmpty) {
-          final selected = _moldCatalogByName[_selectedGenus!.trim().toLowerCase()];
+          final selected =
+              _moldCatalogByName[_selectedGenus!.trim().toLowerCase()];
           if (selected != null) {
             _selectedMoldId = selected.id;
             _applyCatalogDetails(selected);
@@ -148,7 +155,10 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     return text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
   }
 
-  String _firstAdditionalInfoMatch(MoldCatalogEntry entry, List<String> aliases) {
+  String _firstAdditionalInfoMatch(
+    MoldCatalogEntry entry,
+    List<String> aliases,
+  ) {
     final normalizedAliases = aliases.map(_normalizeLabel).toList();
     for (final item in entry.additionalInfo.entries) {
       final normalizedTitle = _normalizeLabel(item.key);
@@ -169,8 +179,14 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     return [
       {'title': 'Physical Control', 'content': readControl('Physical Control')},
       {'title': 'Cultural Control', 'content': readControl('Cultural Control')},
-      {'title': 'Biological Control', 'content': readControl('Biological Control')},
-      {'title': 'Mechanical Control', 'content': readControl('Mechanical Control')},
+      {
+        'title': 'Biological Control',
+        'content': readControl('Biological Control'),
+      },
+      {
+        'title': 'Mechanical Control',
+        'content': readControl('Mechanical Control'),
+      },
       {'title': 'Chemical Control', 'content': readControl('Chemical Control')},
     ];
   }
@@ -182,14 +198,28 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         .map((control) => '${control['title']}: ${control['content']}')
         .join('\n\n');
 
-    _analysisSections['OVERVIEW'] = _firstAdditionalInfoMatch(entry, ['overview']);
-    _analysisSections['DESCRIPTION'] =
-        entry.description.trim().isNotEmpty ? entry.description.trim() : _firstAdditionalInfoMatch(entry, ['description']);
-    _analysisSections['HEALTH RISKS'] = _firstAdditionalInfoMatch(entry, ['health risks', 'risk']);
-    _analysisSections['AFFECTED CROPS / HOSTS'] =
-        _firstAdditionalInfoMatch(entry, ['affected crops', 'hosts', 'affected hosts']);
-    _analysisSections['SYMPTOMS & SIGNS'] = _firstAdditionalInfoMatch(entry, ['symptoms', 'signs']);
-    _analysisSections['DISEASE CYCLE / SPREAD'] = _firstAdditionalInfoMatch(entry, ['disease cycle', 'spread']);
+    _analysisSections['OVERVIEW'] = _firstAdditionalInfoMatch(entry, [
+      'overview',
+    ]);
+    _analysisSections['DESCRIPTION'] = entry.description.trim().isNotEmpty
+        ? entry.description.trim()
+        : _firstAdditionalInfoMatch(entry, ['description']);
+    _analysisSections['HEALTH RISKS'] = _firstAdditionalInfoMatch(entry, [
+      'health risks',
+      'risk',
+    ]);
+    _analysisSections['AFFECTED CROPS / HOSTS'] = _firstAdditionalInfoMatch(
+      entry,
+      ['affected crops', 'hosts', 'affected hosts'],
+    );
+    _analysisSections['SYMPTOMS & SIGNS'] = _firstAdditionalInfoMatch(entry, [
+      'symptoms',
+      'signs',
+    ]);
+    _analysisSections['DISEASE CYCLE / SPREAD'] = _firstAdditionalInfoMatch(
+      entry,
+      ['disease cycle', 'spread'],
+    );
     _analysisSections['IMPACT'] = _firstAdditionalInfoMatch(entry, ['impact']);
     _analysisSections['PREVENTION'] = preventionSummary;
 
@@ -251,8 +281,10 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
       _genusOptions
         ..clear()
-        ..addAll(_moldCatalogByName.values.map((e) => e.name).toList()
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())))
+        ..addAll(
+          _moldCatalogByName.values.map((e) => e.name).toList()
+            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+        )
         ..add('+ Add New Mold');
 
       _selectedGenus = entry.name;
@@ -273,7 +305,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       if (suggestedConfidenceRaw is num) {
         _suggestedConfidence = suggestedConfidenceRaw.toDouble();
       } else {
-        _suggestedConfidence = double.tryParse(suggestedConfidenceRaw?.toString() ?? '');
+        _suggestedConfidence = double.tryParse(
+          suggestedConfidenceRaw?.toString() ?? '',
+        );
       }
       _diseaseController.text = args['diseaseName']?.toString() ?? '';
       _selectedGenus = args['genus']?.toString();
@@ -285,20 +319,18 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         _selectedGenus = _suggestedMoldName!.trim();
       }
 
-      final Map<String, dynamic>? analysis = args['analysis'] as Map<String, dynamic>?;
-      
+      final Map<String, dynamic>? analysis =
+          args['analysis'] as Map<String, dynamic>?;
+
       if (analysis != null) {
         // Map all standard sections from the analysis payload
         for (final key in _analysisSections.keys) {
           _analysisSections[key] = analysis[key]?.toString() ?? '';
         }
-
-       
       }
 
-      
-
-      final List<dynamic>? controls = args['managementControls'] as List<dynamic>?;
+      final List<dynamic>? controls =
+          args['managementControls'] as List<dynamic>?;
       if (controls != null) {
         _managementControls
           ..clear()
@@ -329,7 +361,56 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
     _baseManagementControls
       ..clear()
-      ..addAll(_managementControls.map((entry) => Map<String, String>.from(entry)));
+      ..addAll(
+        _managementControls.map((entry) => Map<String, String>.from(entry)),
+      );
+  }
+
+  Future<String?> _resolveMoldipediaId(
+    String moldName,
+    String? sessionCookie,
+  ) async {
+    if (moldName.trim().isEmpty ||
+        sessionCookie == null ||
+        sessionCookie.isEmpty) {
+      return null;
+    }
+
+    try {
+      final wikiService = WikiService();
+      final result = await wikiService.searchMoldipedia(
+        search: moldName,
+        limit: 20,
+        sessionCookie: sessionCookie,
+      );
+
+      final rawArticles = result['articles'];
+      if (rawArticles is! List) return null;
+
+      final articles = rawArticles.whereType<WikiArticle>().toList();
+      if (articles.isEmpty) return null;
+
+      final target = _normalizeLabel(moldName);
+      final exactMatch = articles.where(
+        (article) => _normalizeLabel(article.title) == target,
+      );
+      if (exactMatch.isNotEmpty) return exactMatch.first.id;
+
+      final titleContains = articles.where(
+        (article) => _normalizeLabel(article.title).contains(target),
+      );
+      if (titleContains.isNotEmpty) return titleContains.first.id;
+
+      final tagMatch = articles.where(
+        (article) =>
+            article.tags.any((tag) => _normalizeLabel(tag).contains(target)),
+      );
+      if (tagMatch.isNotEmpty) return tagMatch.first.id;
+
+      return articles.first.id;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -354,7 +435,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 fontSize: 36,
                 fontFamily: 'Montserrat-Black',
                 color: MoldifyColors.primaryColor,
-              )
+              ),
             ),
             Text(
               _screenSubtitle,
@@ -362,7 +443,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 fontSize: 16,
                 fontFamily: 'Bricolage-Grotesque-Regular',
                 color: MoldifyColors.MoldifyBlack,
-              )
+              ),
             ),
             const SizedBox(height: 40),
 
@@ -424,29 +505,33 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               ),
 
             const SizedBox(height: 50),
-            
+
             _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
             const SizedBox(height: 30),
-            
+
             if (_isLoading)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
+                  child: CircularProgressIndicator(
+                    color: MoldifyColors.primaryColor,
+                  ),
                 ),
               )
             else
               ..._analysisSections.entries.map(
                 (entry) => _buildTextSection(
                   entry.key,
-                  entry.value.trim().isNotEmpty ? entry.value : 'No data available yet.',
+                  entry.value.trim().isNotEmpty
+                      ? entry.value
+                      : 'No data available yet.',
                   isWarning: entry.key == 'HEALTH RISKS',
                 ),
               ),
-            
+
             _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
             const SizedBox(height: 25),
-            
+
             _buildIPMControls(),
 
             const SizedBox(height: 60),
@@ -479,7 +564,8 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   Widget _buildIPMControls() {
     IconData iconForTitle(String title) {
       final normalized = title.toLowerCase();
-      if (normalized.contains('mechanical')) return Icons.settings_suggest_outlined;
+      if (normalized.contains('mechanical'))
+        return Icons.settings_suggest_outlined;
       if (normalized.contains('biological')) return Icons.biotech_outlined;
       if (normalized.contains('chemical')) return Icons.science_outlined;
       if (normalized.contains('physical')) return Icons.build_outlined;
@@ -501,8 +587,12 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     );
   }
 
-  Widget _buildTextSection(String label, String body, {bool isWarning = false}) {
-    // If the body is the fallback text, we don't want the "warning" color/icon 
+  Widget _buildTextSection(
+    String label,
+    String body, {
+    bool isWarning = false,
+  }) {
+    // If the body is the fallback text, we don't want the "warning" color/icon
     // because there isn't actually a risk identified yet.
     final bool showWarningStyle = isWarning && body != 'No data available yet.';
 
@@ -519,15 +609,19 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                   fontFamily: 'Bricolage-Grotesque-Bold',
                   fontSize: 12,
                   letterSpacing: 1.0,
-                  color: showWarningStyle 
-                    ? Colors.redAccent.withValues(alpha: 0.8) 
-                    : MoldifyColors.primaryColor.withValues(alpha: 0.7),
+                  color: showWarningStyle
+                      ? Colors.redAccent.withValues(alpha: 0.8)
+                      : MoldifyColors.primaryColor.withValues(alpha: 0.7),
                 ),
               ),
               if (showWarningStyle) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.redAccent),
-              ]
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 14,
+                  color: Colors.redAccent,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -562,41 +656,57 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       width: double.infinity,
       child: BuildButton(
         onPressed: () async {
-          final selectedEntry = (_selectedGenus == null || _selectedGenus!.trim().isEmpty)
+          final selectedEntry =
+              (_selectedGenus == null || _selectedGenus!.trim().isEmpty)
               ? null
               : _moldCatalogByName[_selectedGenus!.trim().toLowerCase()];
 
           final selectedMoldName =
-              (selectedEntry?.name ?? _selectedGenus ?? _diseaseController.text).trim();
+              (selectedEntry?.name ?? _selectedGenus ?? _diseaseController.text)
+                  .trim();
           if (selectedMoldName.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a mold genus before submitting.')),
+              const SnackBar(
+                content: Text('Please select a mold genus before submitting.'),
+              ),
             );
             return;
           }
 
           final selectedMoldId =
-              (selectedEntry?.id ?? _selectedMoldId ?? _suggestedMoldId ?? '').trim();
+              (selectedEntry?.id ?? _selectedMoldId ?? _suggestedMoldId ?? '')
+                  .trim();
           if (selectedMoldId.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please select a valid mold from the list before submitting.')),
+              const SnackBar(
+                content: Text(
+                  'Please select a valid mold from the list before submitting.',
+                ),
+              ),
             );
             return;
           }
 
           if (_caseId == null || _caseId!.trim().isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Cannot submit final verdict: missing case ID.')),
+              const SnackBar(
+                content: Text('Cannot submit final verdict: missing case ID.'),
+              ),
             );
             return;
           }
 
           setState(() => _isLoading = true);
           try {
-            final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+            final authProvider = Provider.of<AppAuthProvider>(
+              context,
+              listen: false,
+            );
             final service = MoldCaseService();
 
-            final confidence = (_suggestedConfidence ?? 0).clamp(0, 100).toDouble();
+            final confidence = (_suggestedConfidence ?? 0)
+                .clamp(0, 100)
+                .toDouble();
 
             final populatedSections = _analysisSections.entries
                 .where((entry) => entry.value.trim().isNotEmpty)
@@ -604,7 +714,10 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 .toList();
             final populatedControls = _managementControls
                 .where((entry) => (entry['content'] ?? '').trim().isNotEmpty)
-                .map((entry) => '${entry['title'] ?? 'Control'}: ${(entry['content'] ?? '').trim()}')
+                .map(
+                  (entry) =>
+                      '${entry['title'] ?? 'Control'}: ${(entry['content'] ?? '').trim()}',
+                )
                 .toList();
 
             final combinedNotes = [
@@ -612,9 +725,15 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               ...populatedControls,
             ].join('\n\n');
 
+            final moldipediaId = await _resolveMoldipediaId(
+              selectedMoldName,
+              authProvider.cookie,
+            );
+
             await service.submitVerdict(
               _caseId!.trim(),
               moldId: selectedMoldId,
+              moldipediaId: moldipediaId,
               moldName: selectedMoldName,
               confidence: confidence,
               notes: combinedNotes.isNotEmpty ? combinedNotes : null,

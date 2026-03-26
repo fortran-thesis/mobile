@@ -10,12 +10,12 @@ import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import 'package:moldify/pages/support/report_a_curator.dart';
 import 'package:provider/provider.dart';
+import 'package:moldify/pages/farmer/wikimold/similar_cases.dart';
 import '../../../core/features/wikimold/models/wikimold.dart';
 import '../../../core/features/wikimold/services/wikimold_services.dart';
 import '../../../providers/auth_provider.dart';
 import '../../misc/colors.dart';
 import 'package:moldify/core/utils/logger.dart';
-
 
 class ViewWikiMoldScreen extends StatefulWidget {
   final String articleId;
@@ -28,17 +28,17 @@ class ViewWikiMoldScreen extends StatefulWidget {
 
 class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   final WikiService _wikiService = WikiService();
-  
+
   // Parsing delimiters for structured data
   static const String _stageDelimiter = '|';
   static const String _fieldDelimiter = '::';
   static const String _stagePrefix = 'STAGE_';
-  
+
   // UI dimension constants
   static const double _heroImageHeight = 330.0;
   static const double _contentTopOffset = -40.0;
   static const double _contentBorderRadius = 40.0;
-  
+
   // Toggle to use dummy data when backend content is unavailable
   // Set to false when backend provides structured findings/treatments data
   static const bool _forceDummySectionContent = true;
@@ -53,7 +53,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   bool _isLoading = true;
   String? _error;
   int _selectedStageIndex = 0;
-  
+
   // Cached parsed data to avoid re-parsing on every build
   List<Map<String, String>> _cachedFindingStages = [];
   List<Widget> _cachedHostImpactTiles = [];
@@ -70,8 +70,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authProvider =
-      Provider.of<AppAuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final cookie = authProvider.cookie;
 
       if (cookie == null) {
@@ -94,7 +93,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         _article = article;
         _error = null;
         _isLoading = false;
-        
+
         // Parse and cache data once when article is loaded
         _updateCachedData(article);
       });
@@ -113,9 +112,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     if (_isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(
-            color: MoldifyColors.primaryColor,
-          ),
+          child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
         ),
       );
     }
@@ -123,10 +120,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     if (_error != null) {
       final l10n = AppLocalizations.of(context)!;
       return Scaffold(
-        appBar: PrimaryAppBar(
-          title: l10n.viewWikiMold,
-
-        ),
+        appBar: PrimaryAppBar(title: l10n.viewWikiMold),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -156,11 +150,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     final article = _article;
     if (article == null) {
       final l10n = AppLocalizations.of(context)!;
-      return Scaffold(
-        body: Center(
-          child: Text(l10n.articleDataUnavailable),
-        ),
-      );
+      return Scaffold(body: Center(child: Text(l10n.articleDataUnavailable)));
     }
 
     final l10n = AppLocalizations.of(context)!;
@@ -190,8 +180,14 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: GestureDetector(
         onTap: () {
-          /// ADD EXPLORE SIMILAR CASES FUNCTIONALITY HERE
-          /// This could navigate to a new screen that lists similar WikiMold articles or related case
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SimilarCasesScreen(
+                articleId: article.id,
+                articleTitle: article.title,
+              ),
+            ),
+          );
         },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(30),
@@ -248,7 +244,9 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                 SizedBox(
                   height: _heroImageHeight,
                   width: double.infinity,
-                  child: article.coverPhoto != null && article.coverPhoto!.isNotEmpty
+                  child:
+                      article.coverPhoto != null &&
+                          article.coverPhoto!.isNotEmpty
                       ? Image.network(article.coverPhoto!, fit: BoxFit.cover)
                       : Container(color: MoldifyColors.taupe),
                 ),
@@ -258,7 +256,10 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.85),
+                      ],
                       stops: const [0.4, 1.0],
                     ),
                   ),
@@ -284,14 +285,22 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   color: MoldifyColors.backgroundColor,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(_contentBorderRadius)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(_contentBorderRadius),
+                  ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 35),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 35,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAuthorRow(author: article.author, publishedDate: publishedDate),
+                      _buildAuthorRow(
+                        author: article.author,
+                        publishedDate: publishedDate,
+                      ),
                       const SizedBox(height: 35),
 
                       // DESCRIPTION
@@ -331,13 +340,16 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       ScrollableTabBar(
-                        tabs: _cachedFindingStages.map((s) => s['label']!).toList(),
+                        tabs: _cachedFindingStages
+                            .map((s) => s['label']!)
+                            .toList(),
                         currentIndex: _selectedStageIndex,
-                        onTabSelected: (index) => setState(() => _selectedStageIndex = index),
+                        onTabSelected: (index) =>
+                            setState(() => _selectedStageIndex = index),
                       ),
-                      
+
                       const SizedBox(height: 30),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 400),
@@ -352,12 +364,15 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                 style: TextStyle(
                                   fontFamily: 'Montserrat-Black',
                                   fontSize: 60,
-                                  color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
+                                  color: MoldifyColors.primaryColor.withValues(
+                                    alpha: 0.05,
+                                  ),
                                   height: 0.5,
                                 ),
                               ),
                               Text(
-                                _cachedFindingStages[_selectedStageIndex]['title']!.toUpperCase(),
+                                _cachedFindingStages[_selectedStageIndex]['title']!
+                                    .toUpperCase(),
                                 style: const TextStyle(
                                   fontFamily: 'Montserrat-Black',
                                   fontSize: 18,
@@ -392,7 +407,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   }
 
   // --- Helpers ---
-  
+
   /// Updates cached parsed data when article changes
   /// This prevents re-parsing on every build, improving performance
   void _updateCachedData(WikiArticle article) {
@@ -406,7 +421,9 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
     final hostImpactData = article.hostPathogenImpact.isNotEmpty
         ? article.hostPathogenImpact
-        : (_forceDummySectionContent ? _dummyHostPathogenImpact : <String, String>{});
+        : (_forceDummySectionContent
+              ? _dummyHostPathogenImpact
+              : <String, String>{});
 
     _cachedFindingStages = _parseFindings(findingsContent);
     _cachedHostImpactTiles = _buildHostImpactTiles(hostImpactData);
@@ -415,7 +432,10 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   List<Map<String, String>> _parseFindings(String content) {
     if (!content.contains(_stagePrefix)) {
-      final fallback = content.split(_stageDelimiter).where((s) => s.trim().isNotEmpty).toList();
+      final fallback = content
+          .split(_stageDelimiter)
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
       if (fallback.length >= 3) {
         return List.generate(3, (index) {
           return {
@@ -425,17 +445,27 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
           };
         });
       }
-      return [{'label': 'Initial Observation', 'title': 'Initial Observation', 'content': content}];
+      return [
+        {
+          'label': 'Initial Observation',
+          'title': 'Initial Observation',
+          'content': content,
+        },
+      ];
     }
 
-    final parsed = content.split(_stageDelimiter).where((s) => s.trim().isNotEmpty).map((s) {
-      final parts = s.split(_fieldDelimiter);
-      return {
-        'label': parts[0],
-        'title': parts.length > 1 ? parts[1] : 'Analysis',
-        'content': parts.length > 2 ? parts[2] : '',
-      };
-    }).toList();
+    final parsed = content
+        .split(_stageDelimiter)
+        .where((s) => s.trim().isNotEmpty)
+        .map((s) {
+          final parts = s.split(_fieldDelimiter);
+          return {
+            'label': parts[0],
+            'title': parts.length > 1 ? parts[1] : 'Analysis',
+            'content': parts.length > 2 ? parts[2] : '',
+          };
+        })
+        .toList();
 
     final normalized = <Map<String, String>>[];
     for (var index = 0; index < parsed.length; index++) {
@@ -454,7 +484,8 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   List<Widget> _buildHostImpactTiles(Map<String, String> content) {
     if (content.isEmpty) return const [];
 
-    String clean(String key) => (content[key] ?? '').replaceAll(RegExp(r'<[^>]*>'), '').trim();
+    String clean(String key) =>
+        (content[key] ?? '').replaceAll(RegExp(r'<[^>]*>'), '').trim();
 
     final affectedHosts = clean('affected_hosts');
     final symptomsSigns = clean('symptoms_signs');
@@ -517,13 +548,22 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     );
   }
 
-  Widget _buildAuthorRow({required String author, required String publishedDate}) {
+  Widget _buildAuthorRow({
+    required String author,
+    required String publishedDate,
+  }) {
     return Row(
       children: [
         CircleAvatar(
           radius: 20,
           backgroundColor: MoldifyColors.taupe,
-          child: Text(author.isNotEmpty ? author[0] : '?', style: const TextStyle(color: MoldifyColors.accentColor, fontWeight: FontWeight.bold)),
+          child: Text(
+            author.isNotEmpty ? author[0] : '?',
+            style: const TextStyle(
+              color: MoldifyColors.accentColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         const SizedBox(width: 12),
         Column(
@@ -531,7 +571,11 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
           children: [
             Text(
               'By $author',
-              style: const TextStyle(fontFamily: 'Bricolage-Grotesque-Extrabold', color: MoldifyColors.primaryColor, fontSize: 14),
+              style: const TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Extrabold',
+                color: MoldifyColors.primaryColor,
+                fontSize: 14,
+              ),
             ),
             Text(
               publishedDate,
@@ -561,14 +605,14 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   List<Widget> _buildTreatmentTiles(String content) {
     if (content.isEmpty) return [];
-    
+
     // Parse structured treatment format: TYPE::Title::Description|TYPE::...
     if (content.contains(_fieldDelimiter)) {
       final treatments = content
           .split(_stageDelimiter)
           .where((s) => s.trim().isNotEmpty)
           .toList();
-      
+
       final widgets = <Widget>[];
       for (final treatment in treatments) {
         final parts = treatment.split(_fieldDelimiter);
@@ -577,19 +621,15 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
           final title = parts[1];
           final desc = parts[2].replaceAll(RegExp(r'<[^>]*>'), '').trim();
           final icon = _getIconForTreatmentType(type);
-          
+
           widgets.add(
-            ControlManagementTile(
-              title: title,
-              icon: icon,
-              description: desc,
-            ),
+            ControlManagementTile(title: title, icon: icon, description: desc),
           );
         }
       }
       return widgets;
     }
-    
+
     // Fallback: render plain text as generic treatment card
     return [
       ControlManagementTile(
@@ -599,7 +639,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
       ),
     ];
   }
-  
+
   // Dummy data for development/testing
   static const String _dummyFindingsHtml =
       'STAGE_1::Early Detection::White cotton-like patches appear on damp surfaces. Musty odor detectable in enclosed spaces.|'
@@ -612,9 +652,13 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
       'CHEMICAL::Antimicrobial Treatment::Use EPA-approved fungicides for severe cases. Ensure proper ventilation during application. Follow manufacturer instructions carefully.';
 
   static const Map<String, String> _dummyHostPathogenImpact = {
-    'affected_hosts': 'Tomato, eggplant, pepper, and selected cucurbit crops are commonly affected in humid field setups.',
-    'symptoms_signs': 'Leaf spotting, discoloration, lesion expansion, and visible fungal growth become more evident with prolonged moisture.',
-    'transmission_cycle': 'Spores spread through air flow, splashing water, and contaminated tools, then establish on susceptible host tissue.',
-    'impact_analysis': 'Unchecked progression can reduce yield quality, increase treatment costs, and trigger broader field-level contamination.',
+    'affected_hosts':
+        'Tomato, eggplant, pepper, and selected cucurbit crops are commonly affected in humid field setups.',
+    'symptoms_signs':
+        'Leaf spotting, discoloration, lesion expansion, and visible fungal growth become more evident with prolonged moisture.',
+    'transmission_cycle':
+        'Spores spread through air flow, splashing water, and contaminated tools, then establish on susceptible host tissue.',
+    'impact_analysis':
+        'Unchecked progression can reduce yield quality, increase treatment costs, and trigger broader field-level contamination.',
   };
 }
