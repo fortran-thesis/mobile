@@ -37,6 +37,7 @@ class UserService {
     String? displayName,
     String? address,
     String? phoneNumber,
+    String? occupation,
     File? photoFile,
   }) async {
     try {
@@ -60,6 +61,9 @@ class UserService {
         }
         if (phoneNumber != null && phoneNumber.isNotEmpty) {
           details['phoneNumber'] = phoneNumber;
+        }
+        if (occupation != null && occupation.isNotEmpty) {
+          details['occupation'] = occupation;
         }
 
         final body = {
@@ -89,6 +93,7 @@ class UserService {
       if (displayName != null && displayName.isNotEmpty) details['displayName'] = displayName;
       if (address != null && address.isNotEmpty) details['address'] = address;
       if (phoneNumber != null && phoneNumber.isNotEmpty) details['phoneNumber'] = phoneNumber;
+      if (occupation != null && occupation.isNotEmpty) details['occupation'] = occupation;
 
       final response = await _apiService.patchMultipart(
         '/profile',

@@ -36,6 +36,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String fullName = '';
   String role = '';
+  String? occupation;
 
   // Dashboard data
   Map<String, dynamic> _reportCounts = {};
@@ -336,6 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
             role = profile.role.isNotEmpty
                 ? '${profile.role[0].toUpperCase()}${profile.role.substring(1).toLowerCase()}'
                 : '';
+            occupation = profile.occupation;
           });
 
           await _loadDashboardData(authProvider.cookie, profile.role);
@@ -475,7 +477,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 minFontSize: 12,
               ),
               AutoSizeText(
-                role,
+                role.toLowerCase() == 'farmer' && occupation != null && occupation!.isNotEmpty
+                    ? occupation!
+                    : role,
                 style: const TextStyle(
                   fontFamily: 'Bricolage-Grotesque-Regular',
                   fontSize: 12,

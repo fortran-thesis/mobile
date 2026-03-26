@@ -40,6 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController phoneNumController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController occupationController = TextEditingController();
 
   // late UserBloc _userBloc;
   // StreamSubscription? _userSub;
@@ -89,6 +90,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!isExpert) {
         phoneNumController.text = profile.phoneNumber;
         addressController.text = profile.address;
+        occupationController.text = profile.occupation ?? '';
       }
 
       _isLoading = false;
@@ -144,6 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final lastName = lnameController.text.trim();
       final address = addressController.text.trim();
       final phoneNumber = phoneNumController.text.trim();
+      final occupation = occupationController.text.trim();
 
       // Auto-generate displayName from firstName + lastName
       final displayName = '$firstName $lastName'.trim();
@@ -166,6 +169,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         address: _isExpert ? null : (address == _initialProfile?.address ? null : address),
         phoneNumber:
             _isExpert ? null : (phoneNumber == _initialProfile?.phoneNumber ? null : phoneNumber),
+        occupation: _isExpert ? null : (occupation == _initialProfile?.occupation ? null : occupation),
         photoFile: _selectedPhoto,
       );
 
@@ -215,6 +219,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     phoneNumController.dispose();
     addressController.dispose();
     emailController.dispose();
+    occupationController.dispose();
     super.dispose();
   }
   List<String> _getChangedFields() {
@@ -229,6 +234,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_isExpert) {
       if (phoneNumController.text.trim() != _initialProfile!.phoneNumber) changes.add(l10n.phoneNumber);
       if (addressController.text.trim() != _initialProfile!.address) changes.add(l10n.locationLabel);
+      if (occupationController.text.trim() != (_initialProfile!.occupation ?? '')) changes.add('Occupation');
     }
 
     if (_selectedPhoto != null) changes.add(l10n.uploadPhoto);
@@ -486,6 +492,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: BuildTextBox(
                         hintText: AppLocalizations.of(context)!.enterLocation,
                         controller: addressController,
+                        showPassword: false,
+                      ),
+                    ),
+
+                    /// Occupation TextBox (for farmers only)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: BuildTextBox(
+                        hintText: 'Enter Occupation',
+                        controller: occupationController,
                         showPassword: false,
                       ),
                     ),
