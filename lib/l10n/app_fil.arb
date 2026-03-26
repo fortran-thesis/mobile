@@ -136,7 +136,7 @@
   },
   "editProfileTitle": "I-edit ang Profile",
   "editProfileSubtitle": "I-edit ang mga field para ma-update ang iyong impormasyon.",
-  "username": "Username",
+  "username": "Pangalan ng Gumagamit",
   "enterUsername": "Ilagay ang Username",
   "firstName": "Pangalan",
   "enterFirstName": "Ilagay ang Pangalan",
@@ -195,5 +195,36 @@
         "type": "String"
       }
     }
-  }
+  },
+  "retry": "Subukan Muli",
+  "articleDataUnavailable": "Hindi available ang datos ng artikulo.",
+  "viewWikiMold": "Tingnan ang WikiMold",
+  "unknownDate": "Hindi kilalang petsa",
+  "errorLoadingArticles": "Nabigong mag-load ng mga artikulo: {error}",
+  "@errorLoadingArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingMoreArticles": "Nabigong mag-load ng mga karagdagang artikulo: {error}",
+  "@errorLoadingMoreArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "articleNotAvailableYet": "Hindi pa available ang artikulong ito.",
+  "controlTreatmentsLabel": "5 KONTROL NA PAGGAMOT",
+  "preventionTacticsTitle": "Mga Taktika sa Pag-iwas",
+  "preventionTacticsSubtitle": "Komprehensibong mga estratehiya sa kontrol ng amag.",
+  "noPreventionTacticsAvailable": "Walang available na mga taktika sa pag-iwas",
+  "treatmentRecommendations": "Mga Rekomendasyon sa Paggamot",
+  "informationUnavailable": "Hindi kasalukuyang available ang impormasyon.",
+  "observationDataPending": "Naghihintay ng datos ng obserbasyon...",
+  "scientificDataPending": "Naghihintay ng pagsusuri ng siyentipikong datos...",
+  "errorReportIdNotFound": "Error: Hindi nahanap ang ID ng ulat",
+  "photoUploadLimit": "Maaari ka lamang mag-upload ng hanggang 5 larawan."
 }

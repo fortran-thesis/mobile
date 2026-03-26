@@ -51,8 +51,9 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
 
       if (reportId == null || reportId.isEmpty) {
         if (!mounted) return;
+        final l10nLocal = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Report ID not found')),
+          SnackBar(content: Text(l10nLocal.errorReportIdNotFound)),
         );
         return;
       }

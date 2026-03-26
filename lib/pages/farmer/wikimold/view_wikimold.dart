@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
@@ -120,10 +121,11 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
     }
 
     if (_error != null) {
+      final l10n = AppLocalizations.of(context)!;
       return Scaffold(
         appBar: PrimaryAppBar(
-          title: 'View WikiMold',
-          
+          title: l10n.viewWikiMold,
+
         ),
         body: Center(
           child: Padding(
@@ -142,7 +144,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _loadArticle,
-                  child: const Text('Retry'),
+                  child: Text(l10n.retry),
                 ),
               ],
             ),
@@ -153,16 +155,18 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
     final article = _article;
     if (article == null) {
-      return const Scaffold(
+      final l10n = AppLocalizations.of(context)!;
+      return Scaffold(
         body: Center(
-          child: Text('Article data is unavailable.'),
+          child: Text(l10n.articleDataUnavailable),
         ),
       );
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final String publishedDate = article.createdAt != null
         ? DateFormat('MMMM d, yyyy').format(article.createdAt!.toLocal())
-        : 'Unknown date';
+        : l10n.unknownDate;
 
     // Use cached parsed data instead of parsing on every build
 

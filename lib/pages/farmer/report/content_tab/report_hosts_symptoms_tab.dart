@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../../../misc/colors.dart';
 
 class ReportHostsSymptomsTab extends StatelessWidget {
@@ -39,6 +40,7 @@ class ReportHostsSymptomsTab extends StatelessWidget {
   Widget _buildSection({
     required String title,
     required String content,
+    required AppLocalizations l10n,
     bool isLast = false,
   }) {
     final bool hasData = content.isNotEmpty;
@@ -71,21 +73,21 @@ class ReportHostsSymptomsTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // 2. High-Legibility Justified Body
           Text(
-            hasData ? content : 'Observation data pending...',
+            hasData ? content : l10n.observationDataPending,
             textAlign: TextAlign.justify,
             style: TextStyle(
               fontSize: 18,
               fontFamily: 'Bricolage-Grotesque-Regular',
-              color: hasData 
-                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85) 
+              color: hasData
+                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85)
                   : MoldifyColors.MoldifyGrey,
               height: 1.6,
             ),
           ),
-          
+
           // 3. Hairline Separation
           if (!isLast) ...[
             Divider(
@@ -100,6 +102,7 @@ class ReportHostsSymptomsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final sectionTitles = _sectionAliases.keys.toList();
     final displayedSections = <Widget>[];
 
@@ -112,6 +115,7 @@ class ReportHostsSymptomsTab extends StatelessWidget {
         _buildSection(
           title: displayTitle,
           content: content,
+          l10n: l10n,
           isLast: i == sectionTitles.length - 1,
         ),
       );
