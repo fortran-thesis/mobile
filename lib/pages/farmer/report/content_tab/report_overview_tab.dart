@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../../../misc/colors.dart';
 
 class ReportOverviewTab extends StatelessWidget {
@@ -38,6 +39,7 @@ class ReportOverviewTab extends StatelessWidget {
   Widget _buildSection({
     required String title,
     required String content,
+    required AppLocalizations l10n,
     bool isLast = false,
   }) {
     final bool hasData = content.isNotEmpty;
@@ -53,7 +55,7 @@ class ReportOverviewTab extends StatelessWidget {
               Container(
                 width: 40,
                 height: 2,
-                color: MoldifyColors.accentColor, 
+                color: MoldifyColors.accentColor,
               ),
               const SizedBox(width: 12),
               Text(
@@ -68,21 +70,21 @@ class ReportOverviewTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          
+
           // 2. Justified Body Text
           Text(
-            hasData ? content : 'Information currently unavailable.',
+            hasData ? content : l10n.informationUnavailable,
             textAlign: TextAlign.justify,
             style: TextStyle(
               fontSize: 18, // Large, clear, and professional
               fontFamily: 'Bricolage-Grotesque-Regular',
-              color: hasData 
-                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85) 
+              color: hasData
+                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85)
                   : MoldifyColors.MoldifyGrey,
               height: 1.6, // Spacious line height
             ),
           ),
-          
+
           // 3. Bottom Hairline Divider (except for the last section)
           if (!isLast) ...[
             Divider(
@@ -97,6 +99,7 @@ class ReportOverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final sectionTitles = _sectionAliases.keys.toList();
     final displayedSections = <Widget>[];
 
@@ -109,6 +112,7 @@ class ReportOverviewTab extends StatelessWidget {
         _buildSection(
           title: displayTitle,
           content: content,
+          l10n: l10n,
           isLast: i == sectionTitles.length - 1,
         ),
       );
