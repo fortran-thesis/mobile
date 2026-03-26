@@ -73,7 +73,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',
