@@ -801,15 +801,30 @@ class _SetMonitoringDetailsScreenState
   }
 
   /// Shows a date picker and writes the selected date into [targetController].
+  /// If selecting a start date, validates it does not exceed the end date.
   Future<void> _selectDate(
     BuildContext context,
     TextEditingController targetController,
   ) async {
+    // Determine if this is for start date or another date
+    final isStartDate = targetController == _startDateController;
+
+    // If setting start date and end date is set, use end date as the max
+    DateTime lastDateForPicker = DateTime(2101);
+    if (isStartDate && _endDateController.text.isNotEmpty) {
+      try {
+        final endDate = DateFormat('MMMM dd, yyyy').parse(_endDateController.text);
+        lastDateForPicker = endDate;
+      } catch (e) {
+        AppLogger.e('Failed to parse end date: $e');
+      }
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      firstDate: DateTime.now(),
+      lastDate: lastDateForPicker,
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',
       fieldHintText: 'Month/Day/Year',
