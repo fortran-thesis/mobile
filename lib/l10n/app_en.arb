@@ -195,5 +195,36 @@
         "type": "String"
       }
     }
-  }
+  },
+  "retry": "Retry",
+  "articleDataUnavailable": "Article data is unavailable.",
+  "viewWikiMold": "View WikiMold",
+  "unknownDate": "Unknown date",
+  "errorLoadingArticles": "Error loading articles: {error}",
+  "@errorLoadingArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingMoreArticles": "Error loading more articles: {error}",
+  "@errorLoadingMoreArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "articleNotAvailableYet": "This article is not available yet.",
+  "controlTreatmentsLabel": "5 CONTROL TREATMENTS",
+  "preventionTacticsTitle": "Prevention Tactics",
+  "preventionTacticsSubtitle": "Comprehensive mold control management strategies.",
+  "noPreventionTacticsAvailable": "No prevention tactics available",
+  "treatmentRecommendations": "Treatment Recommendations",
+  "informationUnavailable": "Information currently unavailable.",
+  "observationDataPending": "Observation data pending...",
+  "scientificDataPending": "Scientific data pending review...",
+  "errorReportIdNotFound": "Error: Report ID not found",
+  "photoUploadLimit": "You can only upload up to 5 photos."
 }
