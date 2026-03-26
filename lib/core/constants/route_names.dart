@@ -34,5 +34,6 @@ class RouteNames {
   /// for culture
   static const String cultureDashboard = '/culture-dashboard';
   static const String setCulture = '/set-culture';
+  static const String createMold = '/create-mold';
   // Add more route names as needed
 }

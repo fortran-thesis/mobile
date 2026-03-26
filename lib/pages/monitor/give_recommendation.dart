@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../core/features/mold/service/mold_service.dart';
 import '../../core/features/mold_case/service/mold_case_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../core/constants/route_names.dart';
 
 class GiveRecommendationScreen extends StatefulWidget {
   const GiveRecommendationScreen({super.key});
@@ -30,6 +31,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   String? _suggestedMoldName;
   double? _suggestedConfidence;
   String? _moldOptionsError;
+  int _dropdownKey = 0;
   final List<String> _genusOptions = [];
   final Map<String, MoldCatalogEntry> _moldCatalogByName = {};
   final Map<String, MoldCatalogEntry> _moldCatalogById = {};
@@ -95,7 +97,8 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         _genusOptions
           ..clear()
           ..addAll(_moldCatalogByName.values.map((entry) => entry.name).toList()
-            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())));
+            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())))
+          ..add('+ Add New Mold');
 
         if (_selectedGenus != null && !_genusOptions.contains(_selectedGenus)) {
           _selectedGenus = null;
@@ -206,6 +209,11 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   }
 
   void _handleMoldSelectionChanged(String? selectedName) {
+    if (selectedName == '+ Add New Mold') {
+      _navigateToCreateMold();
+      return;
+    }
+
     setState(() {
       _selectedGenus = selectedName;
 
@@ -224,6 +232,33 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
       _selectedMoldId = selected.id;
       _applyCatalogDetails(selected);
+    });
+  }
+
+  Future<void> _navigateToCreateMold() async {
+    // Reset dropdown so "+ Add New Mold" doesn't stay selected
+    setState(() => _dropdownKey++);
+
+    final result = await Navigator.of(context).pushNamed(RouteNames.createMold);
+    if (result is! MoldCatalogEntry || !mounted) return;
+
+    // Add to local catalog maps
+    setState(() {
+      final entry = result;
+      final key = entry.name.toLowerCase();
+      _moldCatalogByName[key] = entry;
+      if (entry.id.trim().isNotEmpty) _moldCatalogById[entry.id.trim()] = entry;
+
+      _genusOptions
+        ..clear()
+        ..addAll(_moldCatalogByName.values.map((e) => e.name).toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())))
+        ..add('+ Add New Mold');
+
+      _selectedGenus = entry.name;
+      _selectedMoldId = entry.id;
+      _dropdownKey++;
+      _applyCatalogDetails(entry);
     });
   }
 
@@ -381,6 +416,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
               )
             else
               BuildDropdown(
+                key: ValueKey(_dropdownKey),
                 hintText: "Select Genus",
                 items: _genusOptions,
                 initialValue: _selectedGenus,
