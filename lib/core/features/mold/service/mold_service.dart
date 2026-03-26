@@ -226,4 +226,37 @@ class MoldService {
     );
     return catalog.map((entry) => entry.name).toList();
   }
+
+  Future<MoldCatalogEntry?> createMold({
+    required String moldName,
+    Map<String, dynamic>? info,
+    Map<String, dynamic>? prevention,
+    String? sessionCookie,
+  }) async {
+    final body = <String, dynamic>{
+      'moldName': moldName,
+      if (info != null || prevention != null)
+        'details': {
+          if (info != null) 'info': info,
+          if (prevention != null) 'prevention': prevention,
+        },
+    };
+
+    final response = await _apiService.post(
+      '',
+      body: body,
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final payload = response.data;
+      final raw = payload is Map<String, dynamic>
+          ? (payload['data'] ?? payload)
+          : null;
+      if (raw is Map<String, dynamic>) {
+        return _parseCatalogEntry(raw);
+      }
+    }
+    return null;
+  }
 }

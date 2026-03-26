@@ -28,6 +28,7 @@ import '../pages/monitor/add_log.dart';
 import '../pages/monitor/add_log_instructions.dart';
 import '../pages/monitor/edit_log.dart';
 import '../pages/monitor/give_recommendation.dart';
+import '../pages/monitor/create_mold.dart';
 import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
@@ -235,6 +236,9 @@ class AppRoutes {
 
           case RouteNames.giveRecommendation:
             return const GiveRecommendationScreen();
+
+          case RouteNames.createMold:
+            return CreateMoldScreen();
 
           case RouteNames.identificationHistory:
             return IdentificationHistoryScreen();
