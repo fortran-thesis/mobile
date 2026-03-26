@@ -10,6 +10,8 @@ class MoldCaseService {
   // API clients: case endpoints and report endpoints
   // Case endpoints root: /api/v1/mold-case
   final ApiService _caseApi = ApiService(baseUrl: ApiUrl.moldCase);
+  // WikiMold endpoints root: /api/v1/moldipedia
+  final ApiService _moldipediaApi = ApiService(baseUrl: ApiUrl.moldipedia);
   // Report endpoints root: /api/v1/mold-report (used for assigned list and some analytics)
   final ApiService _reportApi = ApiService(baseUrl: ApiUrl.moldReport);
 
@@ -173,6 +175,73 @@ class MoldCaseService {
       } else {
         throw Exception(
           'Failed to fetch mold cases: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get mold cases linked to a WikiMold article.
+  /// Endpoint: GET /api/v1/moldipedia/:id/cases
+  Future<List<Map<String, dynamic>>> getMoldCasesByMoldipediaId(
+    String moldipediaId, {
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _moldipediaApi.get(
+        '/$moldipediaId/cases',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final success = responseBody['success'];
+        if (success == false) {
+          final error =
+              responseBody['error'] ?? 'Failed to fetch linked mold cases';
+          throw Exception(error);
+        }
+
+        final dynamic data = responseBody['data'] ?? responseBody;
+
+        if (data is List) {
+          return data
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList();
+        }
+
+        if (data is Map<String, dynamic>) {
+          final snapshot = data['snapshot'];
+          if (snapshot is List) {
+            return snapshot
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList();
+          }
+        }
+
+        return [];
+      } else if (response.statusCode == 404) {
+        return [];
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception(
+          'Failed to fetch linked mold cases: HTTP ${response.statusCode}',
         );
       }
     } catch (e) {
@@ -601,6 +670,7 @@ class MoldCaseService {
   ///
   /// [caseId] - ID of the mold case
   /// [moldId] - ID of the confirmed mold species
+  /// [moldipediaId] - Optional linked WikiMold article ID
   /// [moldName] - Name of the confirmed mold species
   /// [confidence] - Confidence score (0-100) from lookup algorithm
   /// [notes] - Optional mycologist notes on the verdict
@@ -608,6 +678,7 @@ class MoldCaseService {
   Future<Map<String, dynamic>> submitVerdict(
     String caseId, {
     String? moldId,
+    String? moldipediaId,
     required String moldName,
     required double confidence,
     String? notes,
@@ -617,6 +688,8 @@ class MoldCaseService {
       final body = {
         // moldId is optional - omit if null (for verdicts from predicted classes not in database)
         if (moldId != null && moldId.isNotEmpty) 'moldId': moldId,
+        if (moldipediaId != null && moldipediaId.isNotEmpty)
+          'moldipedia_id': moldipediaId,
         'moldName': moldName,
         'confidence': confidence,
         if (notes != null && notes.isNotEmpty) 'mycologist_notes': notes,
