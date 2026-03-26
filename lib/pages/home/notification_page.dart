@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/models/notification.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
@@ -49,6 +50,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
 
           if (state is NotificationError) {
+            final l10n = AppLocalizations.of(context)!;
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -68,7 +70,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         RefreshNotifications(sessionCookie: cookie),
                       );
                     },
-                    child: const Text('Retry'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
