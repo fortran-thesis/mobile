@@ -363,7 +363,7 @@ class AppLocalizationsFil extends AppLocalizations {
       'I-edit ang mga field para ma-update ang iyong impormasyon.';
 
   @override
-  String get username => 'Username';
+  String get username => 'Pangalan ng Gumagamit';
 
   @override
   String get enterUsername => 'Ilagay ang Username';
@@ -491,4 +491,64 @@ class AppLocalizationsFil extends AppLocalizations {
   String failedToChangePassword(String error) {
     return 'Nabigong palitan ang password: $error';
   }
+
+  @override
+  String get retry => 'Subukan Muli';
+
+  @override
+  String get articleDataUnavailable => 'Hindi available ang datos ng artikulo.';
+
+  @override
+  String get viewWikiMold => 'Tingnan ang WikiMold';
+
+  @override
+  String get unknownDate => 'Hindi kilalang petsa';
+
+  @override
+  String errorLoadingArticles(String error) {
+    return 'Nabigong mag-load ng mga artikulo: $error';
+  }
+
+  @override
+  String errorLoadingMoreArticles(String error) {
+    return 'Nabigong mag-load ng mga karagdagang artikulo: $error';
+  }
+
+  @override
+  String get articleNotAvailableYet => 'Hindi pa available ang artikulong ito.';
+
+  @override
+  String get controlTreatmentsLabel => '5 KONTROL NA PAGGAMOT';
+
+  @override
+  String get preventionTacticsTitle => 'Mga Taktika sa Pag-iwas';
+
+  @override
+  String get preventionTacticsSubtitle =>
+      'Komprehensibong mga estratehiya sa kontrol ng amag.';
+
+  @override
+  String get noPreventionTacticsAvailable =>
+      'Walang available na mga taktika sa pag-iwas';
+
+  @override
+  String get treatmentRecommendations => 'Mga Rekomendasyon sa Paggamot';
+
+  @override
+  String get informationUnavailable =>
+      'Hindi kasalukuyang available ang impormasyon.';
+
+  @override
+  String get observationDataPending => 'Naghihintay ng datos ng obserbasyon...';
+
+  @override
+  String get scientificDataPending =>
+      'Naghihintay ng pagsusuri ng siyentipikong datos...';
+
+  @override
+  String get errorReportIdNotFound => 'Error: Hindi nahanap ang ID ng ulat';
+
+  @override
+  String get photoUploadLimit =>
+      'Maaari ka lamang mag-upload ng hanggang 5 larawan.';
 }

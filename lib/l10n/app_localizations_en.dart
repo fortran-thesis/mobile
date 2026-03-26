@@ -482,4 +482,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String failedToChangePassword(String error) {
     return 'Failed to change password: $error';
   }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get articleDataUnavailable => 'Article data is unavailable.';
+
+  @override
+  String get viewWikiMold => 'View WikiMold';
+
+  @override
+  String get unknownDate => 'Unknown date';
+
+  @override
+  String errorLoadingArticles(String error) {
+    return 'Error loading articles: $error';
+  }
+
+  @override
+  String errorLoadingMoreArticles(String error) {
+    return 'Error loading more articles: $error';
+  }
+
+  @override
+  String get articleNotAvailableYet => 'This article is not available yet.';
+
+  @override
+  String get controlTreatmentsLabel => '5 CONTROL TREATMENTS';
+
+  @override
+  String get preventionTacticsTitle => 'Prevention Tactics';
+
+  @override
+  String get preventionTacticsSubtitle =>
+      'Comprehensive mold control management strategies.';
+
+  @override
+  String get noPreventionTacticsAvailable => 'No prevention tactics available';
+
+  @override
+  String get treatmentRecommendations => 'Treatment Recommendations';
+
+  @override
+  String get informationUnavailable => 'Information currently unavailable.';
+
+  @override
+  String get observationDataPending => 'Observation data pending...';
+
+  @override
+  String get scientificDataPending => 'Scientific data pending review...';
+
+  @override
+  String get errorReportIdNotFound => 'Error: Report ID not found';
+
+  @override
+  String get photoUploadLimit => 'You can only upload up to 5 photos.';
 }

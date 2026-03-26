@@ -985,6 +985,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to change password: {error}'**
   String failedToChangePassword(String error);
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @articleDataUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Article data is unavailable.'**
+  String get articleDataUnavailable;
+
+  /// No description provided for @viewWikiMold.
+  ///
+  /// In en, this message translates to:
+  /// **'View WikiMold'**
+  String get viewWikiMold;
+
+  /// No description provided for @unknownDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown date'**
+  String get unknownDate;
+
+  /// No description provided for @errorLoadingArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading articles: {error}'**
+  String errorLoadingArticles(String error);
+
+  /// No description provided for @errorLoadingMoreArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading more articles: {error}'**
+  String errorLoadingMoreArticles(String error);
+
+  /// No description provided for @articleNotAvailableYet.
+  ///
+  /// In en, this message translates to:
+  /// **'This article is not available yet.'**
+  String get articleNotAvailableYet;
+
+  /// No description provided for @controlTreatmentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'5 CONTROL TREATMENTS'**
+  String get controlTreatmentsLabel;
+
+  /// No description provided for @preventionTacticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prevention Tactics'**
+  String get preventionTacticsTitle;
+
+  /// No description provided for @preventionTacticsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comprehensive mold control management strategies.'**
+  String get preventionTacticsSubtitle;
+
+  /// No description provided for @noPreventionTacticsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No prevention tactics available'**
+  String get noPreventionTacticsAvailable;
+
+  /// No description provided for @treatmentRecommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment Recommendations'**
+  String get treatmentRecommendations;
+
+  /// No description provided for @informationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Information currently unavailable.'**
+  String get informationUnavailable;
+
+  /// No description provided for @observationDataPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation data pending...'**
+  String get observationDataPending;
+
+  /// No description provided for @scientificDataPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Scientific data pending review...'**
+  String get scientificDataPending;
+
+  /// No description provided for @errorReportIdNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Report ID not found'**
+  String get errorReportIdNotFound;
+
+  /// No description provided for @photoUploadLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only upload up to 5 photos.'**
+  String get photoUploadLimit;
 }
 
 class _AppLocalizationsDelegate
