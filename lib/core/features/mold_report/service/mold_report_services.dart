@@ -3,11 +3,28 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/services/api_service.dart';
-import 'package:moldify/core/utils/logger.dart';
 
 class MoldReportService {
   final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldReport);
+
+  void _emitInvalidation(
+    InvalidationEntity entity,
+    InvalidationOperation operation, {
+    String? id,
+    String? relatedId,
+  }) {
+    CacheInvalidationHub.instance.emit(
+      CacheInvalidationEvent(
+        entity: entity,
+        operation: operation,
+        id: id,
+        relatedId: relatedId,
+        occurredAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
 
   /// Create a new mold report using multipart/form-data.
   ///
@@ -71,6 +88,13 @@ class MoldReportService {
         return <String, dynamic>{};
       }
       final Map<String, dynamic> created = response.data as Map<String, dynamic>;
+      final createdId =
+          (created['id'] ?? created['_id'] ?? created['case_id'])?.toString();
+      _emitInvalidation(
+        InvalidationEntity.moldReport,
+        InvalidationOperation.create,
+        id: createdId,
+      );
 
       // Optionally poll for uploaded photos if requested and we have an id
       if (waitForPhotos) {
@@ -209,6 +233,16 @@ class MoldReportService {
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
+      _emitInvalidation(
+        InvalidationEntity.moldCase,
+        InvalidationOperation.create,
+        relatedId: reportId,
+      );
+      _emitInvalidation(
+        InvalidationEntity.moldReport,
+        InvalidationOperation.update,
+        id: reportId,
+      );
       return response.data as Map<String, dynamic>;
     }
     throw Exception(
@@ -243,6 +277,12 @@ class MoldReportService {
         'Failed to patch mold report $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldReport,
+      InvalidationOperation.update,
+      id: id,
+    );
   }
 
   /// Hard delete a mold report
@@ -256,6 +296,12 @@ class MoldReportService {
         'Failed to hard delete mold report $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldReport,
+      InvalidationOperation.delete,
+      id: id,
+    );
   }
 
   /// Soft delete a mold report
@@ -269,6 +315,12 @@ class MoldReportService {
         'Failed to soft delete mold report $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldReport,
+      InvalidationOperation.delete,
+      id: id,
+    );
   }
 
   /// Dashboard: Get report counts by status for mycologist dashboard

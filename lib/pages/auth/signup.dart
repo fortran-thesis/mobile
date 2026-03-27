@@ -65,6 +65,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final lnameController = TextEditingController();
 
   final addressController = TextEditingController();
+  final occupationController = TextEditingController();
   bool _agreedToTerms = false;
   bool isLoading = false;
   final phoneNumController = TextEditingController();
@@ -83,6 +84,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     lnameController.dispose();
     phoneNumController.dispose();
     addressController.dispose();
+    occupationController.dispose();
     super.dispose();
   }
 
@@ -174,7 +176,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         fnameController.text.isEmpty ||
         lnameController.text.isEmpty ||
         phoneNumController.text.isEmpty ||
-        addressController.text.isEmpty) {
+        addressController.text.isEmpty ||
+        occupationController.text.isEmpty) {
       _showErrorSnackBar('All fields are required.');
       return;
     }
@@ -218,6 +221,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       lnameController.text,
       addressController.text,
       '+63${phoneNumController.text.replaceAll('-', '')}',
+      occupationController.text,
     );
     setState(() => isLoading = false);
 
@@ -458,6 +462,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 minFontSize: 12,
                               ),
                             ),
+
+                          /// Occupation Label
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: AutoSizeText(
+                              'Occupation',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                              maxLines: 1,
+                              minFontSize: 12,
+                            ),
+                          ),
+
+                          /// Occupation TextBox
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: BuildTextBox(
+                              hintText: 'Enter occupation',
+                              controller: occupationController,
+                              showPassword: false,
+                            ),
+                          ),
 
                           /// Location Label
                           Padding(

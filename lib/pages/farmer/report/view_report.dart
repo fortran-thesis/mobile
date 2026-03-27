@@ -19,6 +19,7 @@ import '../../../core/features/mold/service/mold_service.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import 'report_view_parser.dart';
 
@@ -151,7 +152,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                 sessionCookie: sessionCookie,
               );
               if (!mounted) return;
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(
+                const MutationResult.changed(
+                  tags: [MutationTags.moldReport],
+                ).toMap(),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(l10n.reportClosed)),
               );
@@ -172,12 +177,15 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     );
   }
 
-  void _handleAddFollowUp() {
-    Navigator.pushNamed(
+  Future<void> _handleAddFollowUp() async {
+    final result = await pushNamedForMutationResult(
       context,
       '/add-follow-up',
       arguments: {'id': _report?.id},
     );
+
+    if (!mounted || !result.changed) return;
+    await _loadReportFromArgs();
   }
 
   Widget _buildCaseDetailsTab(BuildContext context) {
@@ -368,7 +376,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.of(context).pop(true);
+        if (!didPop) {
+          Navigator.of(context).pop(const MutationResult.unchanged().toMap());
+        }
       },
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
@@ -376,30 +386,18 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             title: AppLocalizations.of(context)!.viewReportTitle,
             showPopupMenu: true,
             popupMenuItems: [
-              AppLocalizations.of(context)!.treatmentHistory,
-              AppLocalizations.of(context)!.exportPdf
+              if (caseStatus.toLowerCase() == 'resolved') AppLocalizations.of(context)!.exportPdf
             ],
-            popupMenuIcons: [FontAwesomeIcons.clockRotateLeft, FontAwesomeIcons.solidFilePdf],
+            popupMenuIcons: [
+              if (caseStatus.toLowerCase() == 'resolved') FontAwesomeIcons.solidFilePdf
+            ],
             onPopupMenuItemSelected: (index) {
               // Handle the selection based on the index
 
-              /// Treatment History
-              if (index == 0) {
-                Navigator.pushNamed(
-                  context,
-                  '/treatment-history',
-                );
-              }
-              /// End of Identification History
-
               /// Export PDF
-              else if (index == 1) {
-                // Navigator.pushNamed(
-                //   context,
-                //   '/treatment-history',
-                // );
+              if (index == 0) {
+                // Export PDF functionality
               }
-              /// End of Treatment History
             }
         ),
         body: SingleChildScrollView(

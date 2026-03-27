@@ -14,6 +14,7 @@ import '../../misc/tiles/main_case_tile.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../core/features/mold_report/models/mold_report.dart';
 import '../../../core/features/mold_report/repository/mold_report_repository.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 
 class MainReportScreen extends StatefulWidget {
@@ -215,12 +216,12 @@ class _MainReportScreenState extends State<MainReportScreen> {
                             /// Submit Mold Report Button
                             TextButton(
                               onPressed: () async {
-                                final result = await Navigator.pushNamed(
+                                final result = await pushNamedForMutationResult(
                                   context,
                                   '/submit-report',
                                 );
                                 if (!mounted) return;
-                                if (result == true) {
+                                if (result.changed) {
                                   final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                   _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie, scope: _reportScope));
                                 }
@@ -342,13 +343,13 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                         caseStatus: caseStatus,
                                         imageUrl: _resolveReportCoverPhoto(report),
                                         onTap: () async {
-                                          final result = await Navigator.pushNamed(
+                                          final result = await pushNamedForMutationResult(
                                             context,
                                             '/view-report',
                                             arguments: {'id': report.id},
                                           );
                                           if (!mounted) return;
-                                          if (result == true) {
+                                          if (result.changed) {
                                             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                             _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
                                           }

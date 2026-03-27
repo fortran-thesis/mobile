@@ -4,6 +4,7 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/services/api_service.dart';
 
 class MoldCaseService {
@@ -14,6 +15,23 @@ class MoldCaseService {
   final ApiService _moldipediaApi = ApiService(baseUrl: ApiUrl.moldipedia);
   // Report endpoints root: /api/v1/mold-report (used for assigned list and some analytics)
   final ApiService _reportApi = ApiService(baseUrl: ApiUrl.moldReport);
+
+  void _emitInvalidation(
+    InvalidationEntity entity,
+    InvalidationOperation operation, {
+    String? id,
+    String? relatedId,
+  }) {
+    CacheInvalidationHub.instance.emit(
+      CacheInvalidationEvent(
+        entity: entity,
+        operation: operation,
+        id: id,
+        relatedId: relatedId,
+        occurredAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
 
   /// Fetch all assigned mold cases for the authenticated curator.
   /// Endpoint: GET /api/v1/mold-case/assigned
@@ -267,6 +285,12 @@ class MoldCaseService {
         'Failed to update mold case $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldCase,
+      InvalidationOperation.update,
+      id: id,
+    );
   }
 
   /// Delete a mold case by id.
@@ -281,6 +305,12 @@ class MoldCaseService {
         'Failed to delete mold case $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldCase,
+      InvalidationOperation.delete,
+      id: id,
+    );
   }
 
   /// Get all archived (closed) mold cases for the user.
@@ -474,6 +504,12 @@ class MoldCaseService {
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
+        _emitInvalidation(
+          InvalidationEntity.moldCase,
+          InvalidationOperation.update,
+          id: caseId,
+        );
+
         return {'success': success == false ? false : true, 'data': data};
       }
       throw Exception(
@@ -553,6 +589,11 @@ class MoldCaseService {
     );
 
     if (response.statusCode == 200) {
+      _emitInvalidation(
+        InvalidationEntity.moldCase,
+        InvalidationOperation.update,
+        id: caseId,
+      );
       return response.data as Map<String, dynamic>;
     }
     throw Exception(
@@ -720,6 +761,18 @@ class MoldCaseService {
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
+
+        await CacheConfig.clearAll();
+
+        _emitInvalidation(
+          InvalidationEntity.moldCase,
+          InvalidationOperation.update,
+          id: caseId,
+        );
+        _emitInvalidation(
+          InvalidationEntity.moldReport,
+          InvalidationOperation.update,
+        );
 
         return data;
       } else if (response.statusCode == 400) {

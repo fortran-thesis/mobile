@@ -23,6 +23,7 @@ import 'package:moldify/core/features/mold_report/service/mold_report_services.d
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/utils/logger.dart';
+import 'package:moldify/core/utils/mutation_result.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 
@@ -569,8 +570,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         context,
                         '/view-case',
                         arguments: {'id': reportId},
-                      ).then((result) {
-                        if (result == true && mounted) {
+                      ).then((value) {
+                        final result = MutationResult.fromAny(value);
+                        if (result.changed && mounted) {
                           final authProvider = context.read<AppAuthProvider>();
                           _loadDashboardData(authProvider.cookie, role);
                         }

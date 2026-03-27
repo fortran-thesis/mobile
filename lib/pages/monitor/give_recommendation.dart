@@ -12,6 +12,7 @@ import '../../core/features/wikimold/models/wikimold.dart';
 import '../../core/features/wikimold/services/wikimold_services.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/constants/route_names.dart';
+import '../../core/utils/mutation_result.dart';
 
 class GiveRecommendationScreen extends StatefulWidget {
   const GiveRecommendationScreen({super.key});
@@ -28,7 +29,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   bool _didInitialize = false;
   bool _isLoading = false;
   bool _isLoadingMoldOptions = false;
-  String? _reportId;
   String? _caseId;
   String? _suggestedMoldId;
   String? _suggestedMoldName;
@@ -198,30 +198,35 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         .map((control) => '${control['title']}: ${control['content']}')
         .join('\n\n');
 
-    _analysisSections['OVERVIEW'] = _firstAdditionalInfoMatch(entry, [
-      'overview',
-    ]);
+    _analysisSections['OVERVIEW'] = entry.overview.trim().isNotEmpty
+        ? entry.overview.trim()
+        : _firstAdditionalInfoMatch(entry, ['overview']);
     _analysisSections['DESCRIPTION'] = entry.description.trim().isNotEmpty
         ? entry.description.trim()
         : _firstAdditionalInfoMatch(entry, ['description']);
-    _analysisSections['HEALTH RISKS'] = _firstAdditionalInfoMatch(entry, [
-      'health risks',
-      'risk',
-    ]);
-    _analysisSections['AFFECTED CROPS / HOSTS'] = _firstAdditionalInfoMatch(
-      entry,
-      ['affected crops', 'hosts', 'affected hosts'],
-    );
-    _analysisSections['SYMPTOMS & SIGNS'] = _firstAdditionalInfoMatch(entry, [
-      'symptoms',
-      'signs',
-    ]);
-    _analysisSections['DISEASE CYCLE / SPREAD'] = _firstAdditionalInfoMatch(
-      entry,
-      ['disease cycle', 'spread'],
-    );
+    _analysisSections['HEALTH RISKS'] = entry.healthRisks.trim().isNotEmpty
+        ? entry.healthRisks.trim()
+        : _firstAdditionalInfoMatch(entry, ['health risks', 'risk']);
+    _analysisSections['AFFECTED CROPS / HOSTS'] =
+        entry.affectedHosts.trim().isNotEmpty
+        ? entry.affectedHosts.trim()
+        : _firstAdditionalInfoMatch(entry, [
+            'affected crops',
+            'hosts',
+            'affected hosts',
+          ]);
+    _analysisSections['SYMPTOMS & SIGNS'] =
+        entry.symptomsAndSigns.trim().isNotEmpty
+        ? entry.symptomsAndSigns.trim()
+        : _firstAdditionalInfoMatch(entry, ['symptoms', 'signs']);
+    _analysisSections['DISEASE CYCLE / SPREAD'] =
+        entry.diseaseCycleSpreadImpact.trim().isNotEmpty
+        ? entry.diseaseCycleSpreadImpact.trim()
+        : _firstAdditionalInfoMatch(entry, ['disease cycle', 'spread']);
     _analysisSections['IMPACT'] = _firstAdditionalInfoMatch(entry, ['impact']);
-    _analysisSections['PREVENTION'] = preventionSummary;
+    _analysisSections['PREVENTION'] = preventionSummary.isNotEmpty
+        ? preventionSummary
+        : entry.preventionSummary.trim();
 
     _managementControls
       ..clear()
@@ -297,7 +302,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   void _initializeFromArgs() {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) {
-      _reportId = args['reportId']?.toString();
       _caseId = args['caseId']?.toString();
       _suggestedMoldId = args['suggestedMoldId']?.toString();
       _suggestedMoldName = args['suggestedMoldName']?.toString();
@@ -741,7 +745,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             );
 
             if (!mounted) return;
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(
+              const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+            );
           } catch (e) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(

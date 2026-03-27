@@ -22,6 +22,7 @@ import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../core/features/lookup/service/lookup_service.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 
@@ -53,6 +54,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _lookupTopConfidenceDisplay = '';
   Map<String, dynamic>? _latestMicroscopicSnapshot;
   List<Map<String, dynamic>> _latestReportLookupResults = [];
+  String? _mycologistOccupation;
 
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
@@ -284,9 +286,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   /// Handles the temporary local "Give Recommendation" flow.
   ///
   /// Navigates to the dedicated recommendation page and only flips local state
-  /// when that page returns a successful submission (`true`).
+  /// when that page returns a successful mutation result.
   Future<void> _handleGiveRecommendation() async {
-    final result = await Navigator.pushNamed(
+    final result = await pushNamedForMutationResult(
       context,
       RouteNames.giveRecommendation,
       arguments: {
@@ -298,7 +300,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       },
     );
 
-    if (!mounted || result != true) return;
+    if (!mounted || !result.changed) return;
 
     await _refreshCaseAndPendingAnalysis(showLoader: false);
     if (!mounted) return;
@@ -966,19 +968,25 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final List<String> popupMenuItems = [
       if (!isCaseClosed) 'Set Monitoring Details',
       if (!isCaseClosed && !_hasGivenRecommendation) 'Give Recommendation',
-      'Export PDF',
+      if (isCaseClosed) 'Export PDF',
     ];
 
     final List<IconData> popupMenuIcons = [
       if (!isCaseClosed) FontAwesomeIcons.circleInfo,
       if (!isCaseClosed && !_hasGivenRecommendation) Icons.recommend,
-      FontAwesomeIcons.solidFilePdf,
+      if (isCaseClosed) FontAwesomeIcons.solidFilePdf,
     ];
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.of(context).pop(_mutationOccurred);
+        if (!didPop) {
+          final payload = MutationResult(
+            changed: _mutationOccurred,
+            tags: _mutationOccurred ? const [MutationTags.moldCase] : const [],
+          ).toMap();
+          Navigator.of(context).pop(payload);
+        }
       },
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
@@ -992,12 +1000,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             final selectedItem = popupMenuItems[index];
 
             if (selectedItem == 'Set Monitoring Details') {
-              final result = await Navigator.pushNamed(
+              final result = await pushNamedForMutationResult(
                 context,
                 '/set-monitoring-details',
                 arguments: {'moldCase': _case},
               );
-              if (result == true && mounted) {
+              if (result.changed && mounted) {
                 setState(() => _mutationOccurred = true);
                 _refreshCaseAndPendingAnalysis(showLoader: false);
               }
@@ -1208,6 +1216,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         dateFirstObserved: dateFirstObserved,
                                         emailAddress: emailAddress,
                                         contactNumber: contactNumber,
+                                        mycologistOccupation: _mycologistOccupation,
                                       ),
                                       InitialObservationTab(
                                         microscopicImagePath:

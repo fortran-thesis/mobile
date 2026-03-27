@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/services/api_service.dart';
 
 class UserService {
@@ -78,6 +79,15 @@ class UserService {
         );
 
         final jsonResponse = response.data as Map<String, dynamic>;
+        if (jsonResponse['success'] == true) {
+          CacheInvalidationHub.instance.emit(
+            CacheInvalidationEvent(
+              entity: InvalidationEntity.userProfile,
+              operation: InvalidationOperation.update,
+              occurredAt: DateTime.now().toUtc(),
+            ),
+          );
+        }
         return {
           'success': jsonResponse['success'] ?? false,
           'data': jsonResponse['data'],
@@ -105,6 +115,15 @@ class UserService {
       );
 
       final jsonResponse = response.data as Map<String, dynamic>;
+      if (jsonResponse['success'] == true) {
+        CacheInvalidationHub.instance.emit(
+          CacheInvalidationEvent(
+            entity: InvalidationEntity.userProfile,
+            operation: InvalidationOperation.update,
+            occurredAt: DateTime.now().toUtc(),
+          ),
+        );
+      }
       return {
         'success': jsonResponse['success'] ?? false,
         'data': jsonResponse['data'],

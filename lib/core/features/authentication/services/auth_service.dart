@@ -83,7 +83,7 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber) async {
+  Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber, String occupation) async {
     final response = await _apiService.post(
       '/register',
       headers: {'Content-Type': 'application/json'},
@@ -94,7 +94,8 @@ class AuthService {
         'firstName': firstName,
         'lastName': lastName,
         'address': address,
-        'phoneNumber': phoneNumber
+        'phoneNumber': phoneNumber,
+        'occupation': occupation
       },
     );
 

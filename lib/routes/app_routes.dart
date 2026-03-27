@@ -38,6 +38,44 @@ import '../pages/monitor/culture/set_timer.dart';
 import '../splash_screen.dart';
 
 class AppRoutes {
+  static Map<String, dynamic>? _mapArgs(RouteSettings settings) {
+    final args = settings.arguments;
+    if (args is Map<String, dynamic>) return args;
+    if (args is Map) {
+      return args.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return null;
+  }
+
+  static String? _stringArg(
+    Map<String, dynamic>? args,
+    String key, {
+    bool required = false,
+  }) {
+    final value = args?[key];
+    if (value == null) return required ? null : null;
+    final text = value.toString();
+    if (required && text.trim().isEmpty) return null;
+    return text;
+  }
+
+  static bool _boolArg(
+    Map<String, dynamic>? args,
+    String key, {
+    required bool fallback,
+  }) {
+    final value = args?[key];
+    if (value is bool) return value;
+    return fallback;
+  }
+
+  static Widget _routeArgError(String message) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Navigation Error')),
+      body: Center(child: Text(message)),
+    );
+  }
+
   static Route<dynamic> generateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings, // Pass settings so arguments are accessible
@@ -109,127 +147,74 @@ class AppRoutes {
             );
 
           case RouteNames.imagePreview:
-            if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('imagePath') &&
-                  args['imagePath'] is String) {
-                final String imagePath = args['imagePath'] as String;
-                final String? source = args['source'] as String?;
-                final String? sourceTab = args['sourceTab'] as String?;
-                final String? caseId = args['caseId'] as String?;
-                final String? sourceFlow = args['sourceFlow'] as String?;
-                final String? scanModality = args['scanModality'] as String?;
-                final bool includeSize = args['includeSize'] as bool? ?? true;
-                final bool returnResult =
-                    args['returnResult'] as bool? ?? false;
-                return ImagePreviewScreen(
-                  imagePath: imagePath,
-                  source: source,
-                  sourceTab: sourceTab,
-                  caseId: caseId,
-                  sourceFlow: sourceFlow,
-                  scanModality: scanModality,
-                  includeSize: includeSize,
-                  returnResult: returnResult,
-                );
-              } else {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Error')),
-                  body: const Center(child: Text('imagePath missing')),
-                );
-              }
-            } else {
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: const Center(
-                  child: Text('Invalid arguments for imagePreview'),
-                ),
-              );
+            final args = _mapArgs(settings);
+            final imagePath = _stringArg(args, 'imagePath', required: true);
+            if (imagePath == null) {
+              return _routeArgError('imagePreview requires imagePath');
             }
+            final source = _stringArg(args, 'source');
+            final sourceTab = _stringArg(args, 'sourceTab');
+            final caseId = _stringArg(args, 'caseId');
+            final sourceFlow = _stringArg(args, 'sourceFlow');
+            final scanModality = _stringArg(args, 'scanModality');
+            final includeSize = _boolArg(args, 'includeSize', fallback: true);
+            final returnResult =
+                _boolArg(args, 'returnResult', fallback: false);
+            return ImagePreviewScreen(
+              imagePath: imagePath,
+              source: source,
+              sourceTab: sourceTab,
+              caseId: caseId,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+              includeSize: includeSize,
+              returnResult: returnResult,
+            );
 
           case RouteNames.moldResult:
-            if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('croppedImagePath') &&
-                  args['croppedImagePath'] is String) {
-                final String croppedImagePath =
-                    args['croppedImagePath'] as String;
-                final Map<String, dynamic>? modelResult =
-                    args['modelResult'] as Map<String, dynamic>?;
-                final Map<String, dynamic>? moldDetails =
-                    args['moldDetails'] as Map<String, dynamic>?;
-                final String? sourceFlow = args['sourceFlow'] as String?;
-                final String? scanModality = args['scanModality'] as String?;
-                final String? sourceTab = args['sourceTab'] as String?;
-                final String? caseId = args['caseId'] as String?;
-                return MoldResultScreen(
-                  croppedImagePath: croppedImagePath,
-                  modelResult: modelResult,
-                  moldDetails: moldDetails,
-                  sourceFlow: sourceFlow,
-                  scanModality: scanModality,
-                  sourceTab: sourceTab,
-                  caseId: caseId,
-                );
-              } else {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Error')),
-                  body: const Center(child: Text('croppedImagePath missing')),
-                );
-              }
-            } else {
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: const Center(
-                  child: Text('Invalid arguments for moldResult'),
-                ),
-              );
+            final args = _mapArgs(settings);
+            final croppedImagePath = _stringArg(
+              args,
+              'croppedImagePath',
+              required: true,
+            );
+            if (croppedImagePath == null) {
+              return _routeArgError('moldResult requires croppedImagePath');
             }
+            final modelResult = args?['modelResult'] as Map<String, dynamic>?;
+            final moldDetails = args?['moldDetails'] as Map<String, dynamic>?;
+            final sourceFlow = _stringArg(args, 'sourceFlow');
+            final scanModality = _stringArg(args, 'scanModality');
+            final sourceTab = _stringArg(args, 'sourceTab');
+            final caseId = _stringArg(args, 'caseId');
+            return MoldResultScreen(
+              croppedImagePath: croppedImagePath,
+              modelResult: modelResult,
+              moldDetails: moldDetails,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+              sourceTab: sourceTab,
+              caseId: caseId,
+            );
 
           case RouteNames.setMonitoringDetails:
-            if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('moldCase')) {
-                final moldCase = args['moldCase'];
-                return SetMonitoringDetailsScreen(moldCase: moldCase);
-              } else {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Error')),
-                  body: const Center(child: Text('moldCase missing')),
-                );
-              }
-            } else {
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: const Center(
-                  child: Text('Invalid arguments for setMonitoringDetails'),
-                ),
-              );
+            final args = _mapArgs(settings);
+            final moldCase = args?['moldCase'];
+            if (moldCase == null) {
+              return _routeArgError('setMonitoringDetails requires moldCase');
             }
+            return SetMonitoringDetailsScreen(moldCase: moldCase);
 
           case RouteNames.viewCase:
             return ViewCaseScreen();
 
           case RouteNames.editLog:
-            if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('tabName') && args['tabName'] is String) {
-                final String tabName = args['tabName'] as String;
-                return EditLogScreen(tabName: tabName);
-              } else {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Error')),
-                  body: const Center(child: Text('tabName missing')),
-                );
-              }
-            } else {
-              return Scaffold(
-                appBar: AppBar(title: const Text('Error')),
-                body: const Center(
-                  child: Text('Invalid arguments for editLog'),
-                ),
-              );
+            final args = _mapArgs(settings);
+            final tabName = _stringArg(args, 'tabName', required: true);
+            if (tabName == null) {
+              return _routeArgError('editLog requires tabName');
             }
+            return EditLogScreen(tabName: tabName);
 
           case RouteNames.addTreatment:
             return AddTreatmentScreen();
@@ -268,48 +253,27 @@ class AppRoutes {
             );
 
           case RouteNames.addLog:
-            if (settings.arguments is Map<String, dynamic>) {
-              final args = settings.arguments as Map<String, dynamic>;
-              if (args.containsKey('imagePath') &&
-                  args['imagePath'] is String &&
-                  args.containsKey('sourceTab') &&
-                  args['sourceTab'] is String &&
-                  args.containsKey('caseId') &&
-                  args['caseId'] is String) {
-                final imagePath = args['imagePath'] as String;
-                final sourceTab = args['sourceTab'] as String;
-                final caseId = args['caseId'] as String;
-                final includeSize = args['includeSize'] as bool? ?? true;
-                final sourceFlow = args['sourceFlow'] as String?;
-                final scanModality = args['scanModality'] as String?;
-                return AddLogScreen(
-                  imagePath: imagePath,
-                  sourceTab: sourceTab,
-                  caseId: caseId,
-                  includeSize: includeSize,
-                  sourceFlow: sourceFlow,
-                  scanModality: scanModality,
-                );
-              } else {
-                return Scaffold(
-                  appBar: AppBar(title: const Text('Argument Error')),
-                  body: const Center(
-                    child: Text(
-                      'AddLog: imagePath, sourceTab, or caseId missing or invalid.',
-                    ),
-                  ),
-                );
-              }
-            } else {
-              return Scaffold(
-                appBar: AppBar(title: const Text('Navigation Error')),
-                body: Center(
-                  child: Text(
-                    'AddLog: Invalid argument type. Expected Map, got ${settings.arguments.runtimeType}.',
-                  ),
-                ),
+            final args = _mapArgs(settings);
+            final imagePath = _stringArg(args, 'imagePath', required: true);
+            final sourceTab = _stringArg(args, 'sourceTab', required: true);
+            final caseId = _stringArg(args, 'caseId', required: true);
+            if (imagePath == null || sourceTab == null || caseId == null) {
+              return _routeArgError(
+                'addLog requires imagePath, sourceTab, and caseId',
               );
             }
+
+            final includeSize = _boolArg(args, 'includeSize', fallback: true);
+            final sourceFlow = _stringArg(args, 'sourceFlow');
+            final scanModality = _stringArg(args, 'scanModality');
+            return AddLogScreen(
+              imagePath: imagePath,
+              sourceTab: sourceTab,
+              caseId: caseId,
+              includeSize: includeSize,
+              sourceFlow: sourceFlow,
+              scanModality: scanModality,
+            );
 
           case RouteNames.mainCamera:
             final args = settings.arguments as Map<String, dynamic>?;

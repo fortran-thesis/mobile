@@ -16,6 +16,7 @@ class CaseDetailsTab extends StatelessWidget {
   final String dateFirstObserved;
   final String emailAddress;
   final String contactNumber;
+  final String? mycologistOccupation;
 
   const CaseDetailsTab({
     super.key,
@@ -24,6 +25,7 @@ class CaseDetailsTab extends StatelessWidget {
     required this.dateFirstObserved,
     required this.emailAddress,
     required this.contactNumber,
+    this.mycologistOccupation,
   });
 
   @override
@@ -165,6 +167,32 @@ class CaseDetailsTab extends StatelessWidget {
               color: MoldifyColors.primaryColor,
             ),
           ),
+
+          /// Assigned Mycologist Occupation (if available)
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text(
+                "Assigned Mycologist:",
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 12,
+                  color: MoldifyColors.primaryColor,
+                ),
+              ),
+            ),
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            SizedBox(height: 4),
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            Text(
+              mycologistOccupation!,
+              style: TextStyle(
+                fontFamily: 'Montserrat-Black',
+                fontSize: 16,
+                color: MoldifyColors.primaryColor,
+              ),
+            ),
+
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Divider(),

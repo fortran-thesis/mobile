@@ -196,7 +196,53 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               },
                               child: BuildNotificationTile(
                                 onViewDetails: () {
-                                  AppLogger.d('View details of notification ${notif.id}');
+                                  AppLogger.d('View details of notification ${notif.id}: referenceType=${notif.referenceType}, referenceId=${notif.referenceId}');
+
+                                  // Mark as read
+                                  context.read<NotificationBloc>().add(
+                                    MarkNotificationRead(
+                                      notificationId: notif.id,
+                                      sessionCookie: cookie,
+                                    ),
+                                  );
+
+                                  // Navigate based on reference_type
+                                  if (notif.referenceId != null && notif.referenceType != null) {
+                                    switch (notif.referenceType) {
+                                      case 'mold_report':
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/view-case',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      case 'mold_case':
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/view-case',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      case 'flag_report':
+                                        // Navigate to flag report detail screen
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/flag-report-detail',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      case 'user':
+                                        // Navigate to user profile screen
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/user-profile',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      default:
+                                        AppLogger.w('Unknown notification reference_type: ${notif.referenceType}');
+                                    }
+                                  }
                                 },
                                 onMarkAsRead: () {
                                   context.read<NotificationBloc>().add(

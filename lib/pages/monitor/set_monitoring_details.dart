@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/functions/step_indicator.dart';
@@ -15,6 +17,7 @@ import 'set_monitor_details_tab/specimen_tab.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/overlays/modals/chip_selection_modal.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
+import '../../core/utils/mutation_result.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 class SetMonitoringDetailsScreen extends StatefulWidget {
@@ -81,7 +84,7 @@ class _SetMonitoringDetailsScreenState
     'Water sample',
   ];
 
-  final List<String> _initialSymptomsOptions = [
+  static const List<String> _defaultInitialSymptomsOptions = [
     'Leaf spots',
     'Wilting',
     'Yellowing leaves',
@@ -90,7 +93,7 @@ class _SetMonitoringDetailsScreenState
     'Stem lesions',
   ];
 
-  final List<String> _initialCharacteristicsOptions = [
+  static const List<String> _defaultInitialCharacteristicsOptions = [
     'Cottony',
     'Powdery',
     'Slimy',
@@ -98,6 +101,13 @@ class _SetMonitoringDetailsScreenState
     'Discolored',
     'Spreading rapidly',
   ];
+
+  final List<String> _initialSymptomsOptions = List<String>.from(
+    _defaultInitialSymptomsOptions,
+  );
+  final List<String> _initialCharacteristicsOptions = List<String>.from(
+    _defaultInitialCharacteristicsOptions,
+  );
 
   final MoldCaseService _service = MoldCaseService();
 
@@ -116,6 +126,8 @@ class _SetMonitoringDetailsScreenState
     super.initState();
     _initializeFields();
     _hydrateLatestAssignmentDates();
+    _hydrateCaseReportContext();
+    _loadInvestigationOptions();
   }
 
   Future<void> _hydrateLatestAssignmentDates() async {
@@ -162,6 +174,115 @@ class _SetMonitoringDetailsScreenState
         normalized.startsWith('/v0/b/');
   }
 
+  String _displayDate(String value) {
+    final parsed = _parseDateLike(value);
+    if (parsed == null) return value;
+    return DateFormat('MMMM dd, yyyy').format(parsed.toLocal());
+  }
+
+  String? _toIsoDateTime(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    final parsedUiDate = DateFormat('MMMM dd, yyyy').tryParseStrict(trimmed);
+    if (parsedUiDate != null) {
+      return DateTime(
+        parsedUiDate.year,
+        parsedUiDate.month,
+        parsedUiDate.day,
+      ).toUtc().toIso8601String();
+    }
+
+    final parsedIso = DateTime.tryParse(trimmed);
+    return parsedIso?.toUtc().toIso8601String();
+  }
+
+  List<String> _splitCatalogValues(String raw) {
+    return raw
+        .split(RegExp(r'[,;|\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> _loadInvestigationOptions() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final service = MoldService();
+      final catalog = await service.fetchAllMoldCatalog(
+        sessionCookie: authProvider.cookie,
+      );
+
+      final symptoms = <String>{..._defaultInitialSymptomsOptions};
+      final characteristics = <String>{
+        ..._defaultInitialCharacteristicsOptions,
+      };
+
+      for (final entry in catalog) {
+        symptoms.addAll(entry.symptoms);
+        symptoms.addAll(entry.signs);
+        symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        characteristics.addAll(entry.characteristics);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _initialSymptomsOptions
+          ..clear()
+          ..addAll(symptoms.toList()..sort((a, b) => a.compareTo(b)));
+        _initialCharacteristicsOptions
+          ..clear()
+          ..addAll(characteristics.toList()..sort((a, b) => a.compareTo(b)));
+      });
+    } catch (_) {
+      // Keep defaults if catalog options are unavailable.
+    }
+  }
+
+  Future<void> _hydrateCaseReportContext() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      if (sessionCookie == null || sessionCookie.isEmpty) return;
+
+      final reportId = widget.moldCase.moldReportId.trim().isNotEmpty
+          ? widget.moldCase.moldReportId.trim()
+          : widget.moldCase.id.trim();
+      if (reportId.isEmpty) return;
+
+      final reportService = MoldReportService();
+      final reportResponse = await reportService.getMoldReportById(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      final reportPayload = reportResponse['data'] is Map<String, dynamic>
+          ? reportResponse['data'] as Map<String, dynamic>
+          : reportResponse;
+
+      final host = reportPayload['host']?.toString().trim() ?? '';
+      final location = reportPayload['location']?.toString().trim() ?? '';
+      final observedDate =
+          reportPayload['date_observed']?.toString().trim() ?? '';
+
+      if (!mounted) return;
+      setState(() {
+        if (host.isNotEmpty) {
+          _cropNameController.text = host;
+        }
+        if (_locationController.text.trim().isEmpty && location.isNotEmpty) {
+          _locationController.text = location;
+        }
+        if (_dateOfObservationController.text.trim().isEmpty &&
+            observedDate.isNotEmpty) {
+          _dateOfObservationController.text = _displayDate(observedDate);
+        }
+      });
+    } catch (_) {
+      // Optional hydration only; keep current defaults if unavailable.
+    }
+  }
+
   void _initializeFields() {
     // Initialize with existing data if available
     final details = widget.moldCase.cultivationDetails;
@@ -169,7 +290,7 @@ class _SetMonitoringDetailsScreenState
     _startDateController.text = DateFormat(
       'MMMM dd, yyyy',
     ).format(widget.moldCase.startDate);
-    // Crop name comes from the mold case `name` field
+    // Temporary default; this is replaced with report host when available.
     _cropNameController.text = widget.moldCase.name;
 
     if (widget.moldCase.endDate != null) {
@@ -277,7 +398,9 @@ class _SetMonitoringDetailsScreenState
       }
       if (details.dateObservation != null &&
           details.dateObservation!.isNotEmpty) {
-        _dateOfObservationController.text = details.dateObservation!;
+        _dateOfObservationController.text = _displayDate(
+          details.dateObservation!,
+        );
       }
       if (details.scannedMicroscopicIds != null &&
           details.scannedMicroscopicIds!.isNotEmpty) {
@@ -412,9 +535,12 @@ class _SetMonitoringDetailsScreenState
             .trim();
       }
       if (_dateOfObservationController.text.trim().isNotEmpty) {
-        cultivationDetailsMap['date_observation'] = _dateOfObservationController
-            .text
-            .trim();
+        final isoObservationDate = _toIsoDateTime(
+          _dateOfObservationController.text,
+        );
+        if (isoObservationDate != null) {
+          cultivationDetailsMap['date_observation'] = isoObservationDate;
+        }
       }
       if (_microscopicAiSnapshot != null &&
           _microscopicAiSnapshot!.isNotEmpty) {
@@ -467,7 +593,9 @@ class _SetMonitoringDetailsScreenState
           content: Text('Monitoring details updated successfully'),
         ),
       );
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(
+        const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -813,7 +941,9 @@ class _SetMonitoringDetailsScreenState
     DateTime lastDateForPicker = DateTime(2101);
     if (isStartDate && _endDateController.text.isNotEmpty) {
       try {
-        final endDate = DateFormat('MMMM dd, yyyy').parse(_endDateController.text);
+        final endDate = DateFormat(
+          'MMMM dd, yyyy',
+        ).parse(_endDateController.text);
         lastDateForPicker = endDate;
       } catch (e) {
         AppLogger.e('Failed to parse end date: $e');

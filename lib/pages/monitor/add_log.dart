@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
@@ -44,13 +45,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final TextEditingController _textureController = TextEditingController();
   final TextEditingController _logNotesController = TextEditingController();
   final TextEditingController _symptomsController = TextEditingController();
-  final TextEditingController _characteristicsController = TextEditingController();
+  final TextEditingController _characteristicsController =
+      TextEditingController();
   bool _isSaving = false;
 
   final List<String> _selectedSymptoms = [];
   final List<String> _selectedCharacteristics = [];
 
-  static const List<String> _symptomOptions = [
+  static const List<String> _defaultSymptomOptions = [
     'Leaf spots',
     'Wilting',
     'Yellowing',
@@ -59,7 +61,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
     'Necrosis',
   ];
 
-  static const List<String> _characteristicOptions = [
+  static const List<String> _defaultCharacteristicOptions = [
     'Cottony',
     'Powdery',
     'Slimy',
@@ -67,6 +69,13 @@ class _AddLogScreenState extends State<AddLogScreen> {
     'Water-soaked',
     'Rapid spreading',
   ];
+
+  final List<String> _symptomOptions = List<String>.from(
+    _defaultSymptomOptions,
+  );
+  final List<String> _characteristicOptions = List<String>.from(
+    _defaultCharacteristicOptions,
+  );
 
   late final String _sizeLabel;
   late final String _sizeHint;
@@ -79,9 +88,50 @@ class _AddLogScreenState extends State<AddLogScreen> {
   // should apply to both in-vivo and in-vitro when includeSize is disabled.
   bool get _isInitialMacroscopicMode => !widget.includeSize;
 
+  List<String> _splitCatalogValues(String raw) {
+    return raw
+        .split(RegExp(r'[,;|\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> _loadInvestigationOptions() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final service = MoldService();
+      final catalog = await service.fetchAllMoldCatalog(
+        sessionCookie: authProvider.cookie,
+      );
+
+      final symptoms = <String>{..._defaultSymptomOptions};
+      final characteristics = <String>{..._defaultCharacteristicOptions};
+
+      for (final entry in catalog) {
+        symptoms.addAll(entry.symptoms);
+        symptoms.addAll(entry.signs);
+        symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        characteristics.addAll(entry.characteristics);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _symptomOptions
+          ..clear()
+          ..addAll(symptoms.toList()..sort((a, b) => a.compareTo(b)));
+        _characteristicOptions
+          ..clear()
+          ..addAll(characteristics.toList()..sort((a, b) => a.compareTo(b)));
+      });
+    } catch (_) {
+      // Keep defaults if catalog options are unavailable.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadInvestigationOptions();
 
     // Keep role-specific labels while making the values user-editable.
     if (widget.sourceTab == 'in-vivo') {
@@ -166,19 +216,22 @@ class _AddLogScreenState extends State<AddLogScreen> {
     try {
       setState(() => _isSaving = true);
 
-      final sourceFlow = widget.sourceFlow ?? (_isInitialMacroscopicMode ? 'monitoring_initial' : 'cultivation_log');
+      final sourceFlow =
+          widget.sourceFlow ??
+          (_isInitialMacroscopicMode
+              ? 'monitoring_initial'
+              : 'cultivation_log');
       final scanModality = widget.scanModality ?? 'macroscopic';
-      final scannedResults = {
-        'confidence_score': 0,
-        'flagged': false,
-      };
+      final scannedResults = {'confidence_score': 0, 'flagged': false};
       final cultivationType = _resolveCultivationType(widget.sourceTab);
 
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final cameraService = CameraService();
       final moldCaseService = MoldCaseService();
       final pathSegments = widget.imagePath.split('.');
-      final imageFormat = pathSegments.length > 1 ? pathSegments.last.toLowerCase() : 'png';
+      final imageFormat = pathSegments.length > 1
+          ? pathSegments.last.toLowerCase()
+          : 'png';
       final scanRes = await cameraService.createScannedMold(
         imagePath: widget.imagePath,
         imageFormat: imageFormat,
@@ -208,12 +261,15 @@ class _AddLogScreenState extends State<AddLogScreen> {
         result['symptoms'] = List<String>.from(_selectedSymptoms);
         result['characteristics'] = List<String>.from(_selectedCharacteristics);
         result['symptomsDisplay'] = _symptomsController.text.trim();
-        result['characteristicsDisplay'] = _characteristicsController.text.trim();
+        result['characteristicsDisplay'] = _characteristicsController.text
+            .trim();
       }
 
       if (scanRes['error'] != null) {
         result['scanSaveError'] = scanRes['error'];
-        AppLogger.e('AddLog: Failed to persist macroscopic scan: ${scanRes['error']}');
+        AppLogger.e(
+          'AddLog: Failed to persist macroscopic scan: ${scanRes['error']}',
+        );
       } else {
         final data = scanRes['data'];
         if (data is Map<String, dynamic>) {
@@ -300,9 +356,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to prepare log: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to prepare log: $e')));
     }
   }
 
@@ -325,7 +381,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
       'color': color,
       'texture': texture,
       'symptoms': symptoms.isNotEmpty ? symptoms : symptomsDisplay,
-      'characteristics': characteristics.isNotEmpty ? characteristics : characteristicsDisplay,
+      'characteristics': characteristics.isNotEmpty
+          ? characteristics
+          : characteristicsDisplay,
     };
 
     if (widget.sourceTab == 'in-vivo') {
@@ -362,12 +420,19 @@ class _AddLogScreenState extends State<AddLogScreen> {
       sessionCookie: sessionCookie,
     );
 
-    final existingDetails = (caseData['cultivation_details'] is Map<String, dynamic>)
-        ? Map<String, dynamic>.from(caseData['cultivation_details'] as Map<String, dynamic>)
+    final existingDetails =
+        (caseData['cultivation_details'] is Map<String, dynamic>)
+        ? Map<String, dynamic>.from(
+            caseData['cultivation_details'] as Map<String, dynamic>,
+          )
         : <String, dynamic>{};
 
-    final microscopicIds = _toStringList(existingDetails['scanned_microscopic_ids']);
-    final macroscopicIds = _toStringList(existingDetails['scanned_macroscopic_ids']);
+    final microscopicIds = _toStringList(
+      existingDetails['scanned_microscopic_ids'],
+    );
+    final macroscopicIds = _toStringList(
+      existingDetails['scanned_macroscopic_ids'],
+    );
 
     if (scanModality == 'microscopic') {
       if (!microscopicIds.contains(scanId)) microscopicIds.add(scanId);
@@ -378,11 +443,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
     existingDetails['scanned_microscopic_ids'] = microscopicIds;
     existingDetails['scanned_macroscopic_ids'] = macroscopicIds;
 
-    await moldCaseService.updateCultivationDetails(
-      widget.caseId,
-      {'cultivation_details': existingDetails},
-      sessionCookie: sessionCookie,
-    );
+    await moldCaseService.updateCultivationDetails(widget.caseId, {
+      'cultivation_details': existingDetails,
+    }, sessionCookie: sessionCookie);
 
     AppLogger.d(
       'AddLog: associated scanned mold id to case '
@@ -397,9 +460,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(
-        title: 'Add New Log',
-      ),
+      appBar: PrimaryAppBar(title: 'Add New Log'),
       body: Stack(
         children: [
           // Main content
@@ -418,7 +479,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
 
                   /// 2. Size, Color, and Notes Container
                   Padding(
-                    padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).size.height * 0.35,
+                    ),
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -429,7 +492,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 20.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15.0,
+                          vertical: 20.0,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -443,14 +509,15 @@ class _AddLogScreenState extends State<AddLogScreen> {
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const SizedBox.shrink(),
-                              ],
+                              children: [const SizedBox.shrink()],
                             ),
 
                             if (widget.includeSize) ...[
                               Padding(
-                                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                                padding: const EdgeInsets.only(
+                                  top: 8.0,
+                                  bottom: 8.0,
+                                ),
                                 child: Text(
                                   _sizeLabel,
                                   style: const TextStyle(
@@ -469,7 +536,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                             ],
 
                             Padding(
-                              padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                              padding: const EdgeInsets.only(
+                                top: 20.0,
+                                bottom: 8.0,
+                              ),
                               child: Text(
                                 _colorLabel,
                                 style: const TextStyle(
@@ -486,7 +556,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                             ),
 
                             Padding(
-                              padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                              padding: const EdgeInsets.only(
+                                top: 20.0,
+                                bottom: 8.0,
+                              ),
                               child: Text(
                                 _textureLabel,
                                 style: const TextStyle(
@@ -504,7 +577,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
 
                             if (_isInitialMacroscopicMode) ...[
                               Padding(
-                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                padding: const EdgeInsets.only(
+                                  top: 20.0,
+                                  bottom: 8.0,
+                                ),
                                 child: const Text(
                                   'Symptoms',
                                   style: TextStyle(
@@ -523,7 +599,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 onTap: _pickSymptoms,
                               ),
                               Padding(
-                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                padding: const EdgeInsets.only(
+                                  top: 20.0,
+                                  bottom: 8.0,
+                                ),
                                 child: const Text(
                                   'Characteristics',
                                   style: TextStyle(
@@ -544,7 +623,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                             ] else ...[
                               /// Additional Notes Label
                               Padding(
-                                padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+                                padding: const EdgeInsets.only(
+                                  top: 20.0,
+                                  bottom: 8.0,
+                                ),
                                 child: const Text(
                                   'Additional Notes:',
                                   style: TextStyle(
@@ -554,12 +636,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                   ),
                                 ),
                               ),
+
                               /// Additional Notes TextBox
                               BuildTextBox(
-                                  hintText: 'Enter additional details about the log here...',
-                                  controller: _logNotesController,
-                                  isMultiline: true,
-                                  showPassword: false
+                                hintText:
+                                    'Enter additional details about the log here...',
+                                controller: _logNotesController,
+                                isMultiline: true,
+                                showPassword: false,
                               ),
                             ],
 
@@ -567,33 +651,36 @@ class _AddLogScreenState extends State<AddLogScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 70.0),
                               child: BuildButton(
-                                  onPressed: _isSaving ? () {} : () {
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (BuildContext context) {
-                                        return BuildConfirmationDialog(
-                                          title: 'Save Log?',
-                                          subtitle: 'Are you sure you want to save log?',
-                                          onConfirm: () {
-                                            Navigator.of(context).pop();
-                                            _saveCultivationLog();
+                                onPressed: _isSaving
+                                    ? () {}
+                                    : () {
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (BuildContext context) {
+                                            return BuildConfirmationDialog(
+                                              title: 'Save Log?',
+                                              subtitle:
+                                                  'Are you sure you want to save log?',
+                                              onConfirm: () {
+                                                Navigator.of(context).pop();
+                                                _saveCultivationLog();
+                                              },
+                                              onCancel: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              cancelText: 'No',
+                                              confirmText: 'Yes',
+                                            );
                                           },
-                                          onCancel: (){
-                                            Navigator.of(context).pop();
-                                          },
-                                          cancelText: 'No',
-                                          confirmText: 'Yes',
                                         );
                                       },
-                                    );
-                                  },
-                                  buttonText: 'Save Log',
-                                  backgroundColor: MoldifyColors.primaryColor,
-                                  textColor: MoldifyColors.backgroundColor,
-                                  buttonHeight: 45,
-                                  buttonWidth: MediaQuery.of(context).size.width,
-                                  buttonRadius: 10
+                                buttonText: 'Save Log',
+                                backgroundColor: MoldifyColors.primaryColor,
+                                textColor: MoldifyColors.backgroundColor,
+                                buttonHeight: 45,
+                                buttonWidth: MediaQuery.of(context).size.width,
+                                buttonRadius: 10,
                               ),
                             ),
                           ],
