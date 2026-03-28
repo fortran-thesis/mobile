@@ -535,3 +535,295 @@ Future<List<String>?> showMultiChipSelectionModal({
     },
   );
 }
+
+/// Searchable selection modal for multi-select with high item count.
+/// Replaces chip-based modal when many items need to be searched.
+Future<List<String>?> showSearchableSelectionModal({
+  required BuildContext context,
+  required String title,
+  required List<String> options,
+  List<String>? currentSelections,
+  String searchHint = 'Search items...',
+  String confirmButtonText = 'Confirm',
+  String cancelButtonText = 'Cancel',
+}) async {
+  return await showDialog<List<String>>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return SearchableSelectionModal(
+        title: title,
+        options: options,
+        currentSelections: currentSelections ?? [],
+        searchHint: searchHint,
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: cancelButtonText,
+      );
+    },
+  );
+}
+
+/// Modal dialog with searchable multi-select functionality
+class SearchableSelectionModal extends StatefulWidget {
+  final String title;
+  final List<String> options;
+  final List<String> currentSelections;
+  final String searchHint;
+  final String confirmButtonText;
+  final String cancelButtonText;
+
+  const SearchableSelectionModal({
+    super.key,
+    required this.title,
+    required this.options,
+    required this.currentSelections,
+    this.searchHint = 'Search items...',
+    this.confirmButtonText = 'Confirm',
+    this.cancelButtonText = 'Cancel',
+  });
+
+  @override
+  State<SearchableSelectionModal> createState() =>
+      _SearchableSelectionModalState();
+}
+
+class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
+  late TextEditingController _searchController;
+  late Set<String> _selectedItems;
+  late List<String> _filteredItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _selectedItems = Set.from(widget.currentSelections);
+    _filteredItems = List.from(widget.options);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _updateFilter(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredItems = List.from(widget.options);
+      } else {
+        _filteredItems = widget.options
+            .where((item) =>
+                item.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _toggleSelection(String item) {
+    setState(() {
+      if (_selectedItems.contains(item)) {
+        _selectedItems.remove(item);
+      } else {
+        _selectedItems.add(item);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      fontSize: 18,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Search field
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _updateFilter,
+                    decoration: InputDecoration(
+                      hintText: widget.searchHint,
+                      hintStyle: TextStyle(
+                        color: MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: MoldifyColors.primaryColor
+                                    .withValues(alpha: 0.5),
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _updateFilter('');
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Selected: ${_selectedItems.length}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Items list
+            Expanded(
+              child: _filteredItems.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No items found',
+                        style: TextStyle(
+                          color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: List.generate(
+                          _filteredItems.length,
+                          (index) {
+                            final item = _filteredItems[index];
+                            final isSelected = _selectedItems.contains(item);
+                            return GestureDetector(
+                              onTap: () => _toggleSelection(item),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? MoldifyColors.primaryColor
+                                          .withValues(alpha: 0.05)
+                                      : Colors.transparent,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: MoldifyColors.primaryColor
+                                          .withValues(alpha: 0.05),
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged: (value) =>
+                                          _toggleSelection(item),
+                                      activeColor: MoldifyColors.primaryColor,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        item,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontFamily:
+                                              'Bricolage-Grotesque-Regular',
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+            ),
+            // Footer buttons
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color:
+                              MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        widget.cancelButtonText,
+                        style: TextStyle(
+                          color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _selectedItems.isEmpty
+                          ? null
+                          : () => Navigator.pop(
+                                context,
+                                _selectedItems.toList(),
+                              ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MoldifyColors.primaryColor,
+                        disabledBackgroundColor:
+                            MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                      ),
+                      child: Text(
+                        widget.confirmButtonText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

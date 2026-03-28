@@ -173,14 +173,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
   }
 
   Future<void> _pickSymptoms() async {
-    final selected = await showMultiChipSelectionModal(
+    final selected = await showSearchableSelectionModal(
       context: context,
       title: 'Select Symptoms',
       options: _symptomOptions,
       currentSelections: _selectedSymptoms,
-      customInputHint: 'Add custom symptom(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search symptoms...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selected == null || selected.isEmpty) return;
@@ -193,14 +193,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
   }
 
   Future<void> _pickCharacteristics() async {
-    final selected = await showMultiChipSelectionModal(
+    final selected = await showSearchableSelectionModal(
       context: context,
       title: 'Select Characteristics',
       options: _characteristicOptions,
       currentSelections: _selectedCharacteristics,
-      customInputHint: 'Add custom characteristic(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search characteristics...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selected == null || selected.isEmpty) return;

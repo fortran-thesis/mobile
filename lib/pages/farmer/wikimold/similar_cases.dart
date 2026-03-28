@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
-import 'package:moldify/pages/misc/tiles/main_case_tile.dart';
+import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +25,7 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
   bool _isLoading = true;
   String? _error;
   List<Map<String, dynamic>> _cases = const [];
+  final Set<String> _expandedCaseIds = <String>{};
 
   @override
   void initState() {
@@ -66,78 +66,150 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
     }
   }
 
-  DateTime? _parseTimestamp(dynamic raw) {
-    if (raw == null) return null;
-    if (raw is DateTime) return raw;
+  String _caseKey(Map<String, dynamic> caseData, int index) {
+    final id = (caseData['id'] ?? '').toString().trim();
+    if (id.isNotEmpty) return id;
+    final reportId = (caseData['mold_report_id'] ?? '').toString().trim();
+    if (reportId.isNotEmpty) return reportId;
+    return 'case_$index';
+  }
+
+  void _toggleCaseExpanded(String caseKey) {
+    setState(() {
+      if (_expandedCaseIds.contains(caseKey)) {
+        _expandedCaseIds.remove(caseKey);
+      } else {
+        _expandedCaseIds.add(caseKey);
+      }
+    });
+  }
+
+  String _asText(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value.trim();
+    if (value is num || value is bool) return value.toString();
+    if (value is List) {
+      return value
+          .map((item) => _asText(item))
+          .where((item) => item.isNotEmpty)
+          .join(', ');
+    }
+    return '';
+  }
+
+  List<String> _asTextList(dynamic value) {
+    if (value is List) {
+      return value
+          .map((item) => _asText(item))
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    final text = _asText(value);
+    return text.isEmpty ? <String>[] : <String>[text];
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((key, val) => MapEntry(key.toString(), val));
+    }
+    return <String, dynamic>{};
+  }
+
+  String _normalizeLogType(dynamic rawType) {
+    return _asText(rawType).toLowerCase().replaceAll(RegExp(r'[_\s-]+'), '');
+  }
+
+  int _timestampMillis(dynamic raw) {
+    if (raw == null) return 0;
     if (raw is String) {
-      return DateTime.tryParse(raw);
+      final parsed = DateTime.tryParse(raw);
+      return parsed?.millisecondsSinceEpoch ?? 0;
     }
     if (raw is Map) {
       final seconds = raw['_seconds'] ?? raw['seconds'];
-      if (seconds is int) {
-        return DateTime.fromMillisecondsSinceEpoch(
-          seconds * 1000,
-          isUtc: true,
-        ).toLocal();
-      }
+      if (seconds is int) return seconds * 1000;
     }
-    return null;
+    return 0;
   }
 
-  String _formatCaseDate(Map<String, dynamic> entry) {
-    final verdict = entry['final_verdict'];
-    final metadata = entry['metadata'];
+  Map<String, dynamic>? _latestLog(Map<String, dynamic> caseData, String type) {
+    final rawLogs = caseData['cultivation_logs'];
+    if (rawLogs is! List) return null;
 
-    final verdictTs = verdict is Map
-        ? _parseTimestamp(verdict['verdict_timestamp'])
-        : null;
-    final createdTs = metadata is Map
-        ? _parseTimestamp(metadata['created_at'])
-        : null;
-    final startTs = _parseTimestamp(entry['start_date']);
+    final filtered = rawLogs.whereType<Map>().map((item) => _asMap(item)).where(
+      (log) {
+        final normalized = _normalizeLogType(log['type']);
+        if (type == 'vivo') {
+          return normalized == 'vivo' || normalized == 'invivo';
+        }
+        return normalized == 'vitro' || normalized == 'invitro';
+      },
+    ).toList();
 
-    final selected = verdictTs ?? createdTs ?? startTs;
-    if (selected == null) return 'Unknown date';
-    return DateFormat('MMMM dd, yyyy').format(selected);
-  }
+    if (filtered.isEmpty) return null;
 
-  String _resolveStatus(Map<String, dynamic> entry) {
-    final isArchived = entry['is_archived'];
-    if (isArchived is bool && isArchived) {
-      return 'Resolved';
-    }
-    return 'In Progress';
-  }
-
-  String? _resolveImageUrl(Map<String, dynamic> entry) {
-    final raw = entry['photo_url'];
-    if (raw is String && raw.trim().isNotEmpty && raw.trim() != 'no_image') {
-      return raw.trim();
-    }
-    return null;
-  }
-
-  Future<void> _openCase(Map<String, dynamic> entry) async {
-    final reportId = (entry['mold_report_id'] ?? '').toString().trim();
-    final caseId = (entry['id'] ?? '').toString().trim();
-    final target = reportId.isNotEmpty ? reportId : caseId;
-
-    if (target.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open case details.')),
+    filtered.sort((a, b) {
+      final aTs = _timestampMillis(
+        a['created_at'] ?? _asMap(a['metadata'])['created_at'],
       );
-      return;
-    }
+      final bTs = _timestampMillis(
+        b['created_at'] ?? _asMap(b['metadata'])['created_at'],
+      );
+      return bTs.compareTo(aTs);
+    });
 
-    await Navigator.of(
-      context,
-    ).pushNamed('/view-case', arguments: {'id': target});
+    return filtered.first;
+  }
+
+  Widget _buildEvidencePanel({
+    required String title,
+    required String description,
+    bool isMuted = true,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isMuted
+            ? MoldifyColors.primaryColor.withValues(alpha: 0.05)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: MoldifyColors.primaryColor.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontFamily: 'Montserrat-Bold',
+              fontSize: 10,
+              letterSpacing: 0.8,
+              color: MoldifyColors.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 12,
+              color: MoldifyColors.MoldifyBlack,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PrimaryAppBar(title: 'Similar Cases'),
+      appBar: PrimaryAppBar(title: 'Field Evidence'),
       body: RefreshIndicator(onRefresh: _loadCases, child: _buildBody()),
     );
   }
@@ -177,13 +249,13 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
             child: Column(
               children: [
                 Text(
-                  'No linked cases yet for ${widget.articleTitle}.',
+                  'No linked field evidence yet for ${widget.articleTitle}.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 15),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Resolved cases will appear here once a verdict is linked to this WikiMold article.',
+                  'Resolved investigations will contribute evidence here once linked to this WikiMold article.',
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -199,13 +271,126 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
       itemCount: _cases.length,
       itemBuilder: (context, index) {
         final entry = _cases[index];
-        return MainCaseTile(
-          caseName: (entry['name'] ?? 'Unnamed Case').toString(),
-          dateSubmitted: _formatCaseDate(entry),
-          caseStatus: _resolveStatus(entry),
-          imageUrl: _resolveImageUrl(entry),
-          onTap: () => _openCase(entry),
-          showPopupMenu: false,
+        final caseKey = _caseKey(entry, index);
+        final isExpanded = _expandedCaseIds.contains(caseKey);
+
+        final details = _asMap(entry['cultivation_details']);
+        final initialMicroscopic = _asText(details['initial_microscopic']);
+        final initialMacroscopic = _asText(details['initial_macroscopic']);
+        final initialSymptoms = _asTextList(
+          details['initial_symptoms'] ?? details['initial_macroscopic_symptoms'],
+        );
+        final initialCharacteristics = _asTextList(
+          details['initial_characteristics'] ??
+              details['initial_macroscopic_characteristics'],
+        );
+
+        final inVivo = _latestLog(entry, 'vivo');
+        final inVitro = _latestLog(entry, 'vitro');
+        final inVivoCharacteristics = _asMap(inVivo?['characteristics']);
+        final inVitroCharacteristics = _asMap(inVitro?['characteristics']);
+
+        final inVivoSummary = _asText(
+          inVivoCharacteristics['symptoms'] ??
+              inVivoCharacteristics['characteristics'] ??
+              inVivoCharacteristics['lesion_color'] ??
+              inVivoCharacteristics['lesion_size'],
+        );
+        final inVitroSummary = _asText(
+          inVitroCharacteristics['characteristics'] ??
+              inVitroCharacteristics['colony_color'] ??
+              inVitroCharacteristics['colony_diameter'],
+        );
+        final initialDescription = initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
+            ? [initialMicroscopic, initialMacroscopic]
+                .where((t) => t.isNotEmpty)
+                .join(' | ')
+            : (initialSymptoms.isNotEmpty
+                ? initialSymptoms.join(', ')
+                : (initialCharacteristics.isNotEmpty
+                    ? initialCharacteristics.join(', ')
+                    : 'No initial observation evidence recorded.'));
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Observation #${index + 1}',
+                    style: const TextStyle(
+                      fontFamily: 'Montserrat-Bold',
+                      fontSize: 14,
+                      color: MoldifyColors.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _toggleCaseExpanded(caseKey),
+                    icon: Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      size: 16,
+                    ),
+                    label: Text(isExpanded ? 'Hide Evidence' : 'Show Evidence'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: MoldifyColors.primaryColor,
+                      side: BorderSide(
+                        color: MoldifyColors.primaryColor.withValues(alpha: 0.25),
+                      ),
+                      textStyle: const TextStyle(
+                        fontFamily: 'Montserrat-Bold',
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                  AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 220),
+                    crossFadeState: isExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildEvidencePanel(
+                            title: 'Initial Observation',
+                            description: initialDescription,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildEvidencePanel(
+                            title: 'In Vivo',
+                            description: inVivoSummary.isNotEmpty
+                                ? inVivoSummary
+                                : 'No in vivo evidence log available.',
+                          ),
+                          const SizedBox(height: 10),
+                          _buildEvidencePanel(
+                            title: 'In Vitro',
+                            description: inVitroSummary.isNotEmpty
+                                ? inVitroSummary
+                                : 'No in vitro evidence log available.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );

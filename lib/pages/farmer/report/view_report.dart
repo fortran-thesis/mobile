@@ -18,6 +18,7 @@ import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../core/features/mold/service/mold_service.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../services/api_service.dart';
+import '../../../core/constants/route_names.dart';
 import '../../../core/constants/api_url.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
@@ -136,6 +137,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   String _finalVerdictMoldName = '';
   String _finalVerdictConfidence = '';
   String _finalVerdictNotes = '';
+  String? _linkedMoldipediaId;
   String _preventionTacticsContent = _defaultPreventionTacticsContent;
   int _selectedTabIndex = 0;
 
@@ -339,6 +341,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
           );
           localVerdictNotes =
               finalVerdict['mycologist_notes']?.toString() ?? '';
+          final mid = finalVerdict['moldipedia_id']?.toString().trim() ?? '';
+          if (mid.isNotEmpty) {
+            setState(() => _linkedMoldipediaId = mid);
+          }
 
           final verdictMoldId =
               finalVerdict['moldId']?.toString().trim().isNotEmpty == true
@@ -759,6 +765,54 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             ],
                                           ),
                                         ],
+                                      ),
+                                    ),
+                                  if (_linkedMoldipediaId != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12.0),
+                                      child: GestureDetector(
+                                        onTap: () => Navigator.of(context).pushNamed(
+                                          RouteNames.viewWikiMold,
+                                          arguments: {'id': _linkedMoldipediaId},
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.menu_book_outlined,
+                                                size: 16,
+                                                color: MoldifyColors.primaryColor,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'View WikiMold Reference',
+                                                style: TextStyle(
+                                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                                  fontSize: 13,
+                                                  color: MoldifyColors.primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Icon(
+                                                Icons.arrow_forward_ios,
+                                                size: 11,
+                                                color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ReportResolvedActionsRow(

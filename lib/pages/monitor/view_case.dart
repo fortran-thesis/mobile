@@ -49,6 +49,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? _reportId; // Store the report ID for status updates
   bool _mutationOccurred = false; // Signal list refresh to caller on pop
   bool _hasGivenRecommendation = false;
+  String? _linkedMoldipediaId; // Set when the final verdict links to a WikiMold article.
   bool _isRunningLookup = false;
   String _lookupTopMoldId = '';
   String _lookupTopMoldName = '';
@@ -696,6 +697,24 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         if (moldCases.isNotEmpty) {
           moldCase = moldCases.first;
 
+          // Extract moldipedia_id from final_verdict (not stored on MoldCase model).
+          try {
+            final rawCase = await MoldCaseService().getMoldCaseById(
+              moldCase.id,
+              sessionCookie: sessionCookie,
+            );
+            final rawData = rawCase['data'] is Map ? rawCase['data'] as Map : rawCase;
+            final verdict = rawData['final_verdict'];
+            if (verdict is Map) {
+              final mid = verdict['moldipedia_id']?.toString().trim();
+              if (mid != null && mid.isNotEmpty) {
+                setState(() => _linkedMoldipediaId = mid);
+              }
+            }
+          } catch (_) {
+            // Non-critical: silently skip if raw case fetch fails.
+          }
+
           try {
             final moldCaseService = MoldCaseService();
             final logsResponse = await moldCaseService.getCultivationLogs(
@@ -1225,6 +1244,55 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                     height: 1.1,
                                   ),
                                 ),
+
+                                // WikiMold reference button (visible when verdict links an article).
+                                if (_linkedMoldipediaId != null) ...[
+                                  const SizedBox(height: 14),
+                                  GestureDetector(
+                                    onTap: () => Navigator.of(context).pushNamed(
+                                      RouteNames.viewWikiMold,
+                                      arguments: {'id': _linkedMoldipediaId},
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.menu_book_outlined,
+                                            size: 16,
+                                            color: MoldifyColors.primaryColor,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            'View WikiMold Reference',
+                                            style: TextStyle(
+                                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                              fontSize: 13,
+                                              color: MoldifyColors.primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 11,
+                                            color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
 
                                 const SizedBox(height: 30),
 

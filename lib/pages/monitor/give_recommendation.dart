@@ -745,9 +745,35 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             );
 
             if (!mounted) return;
-            Navigator.of(context).pop(
+
+            // If the verdict was linked to a WikiMold article, offer a shortcut.
+            // Capture the messenger and navigator before popping so they remain
+            // valid across the frame boundary.
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
+            final capturedMoldipediaId = moldipediaId;
+
+            navigator.pop(
               const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
             );
+
+            if (capturedMoldipediaId != null && capturedMoldipediaId.isNotEmpty) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: const Text('Verdict linked to a WikiMold article.'),
+                  action: SnackBarAction(
+                    label: 'View Article',
+                    onPressed: () {
+                      navigator.pushNamed(
+                        RouteNames.viewWikiMold,
+                        arguments: {'id': capturedMoldipediaId},
+                      );
+                    },
+                  ),
+                  duration: const Duration(seconds: 6),
+                ),
+              );
+            }
           } catch (e) {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(

@@ -35,5 +35,7 @@ class RouteNames {
   static const String cultureDashboard = '/culture-dashboard';
   static const String setCulture = '/set-culture';
   static const String createMold = '/create-mold';
+  // WikiMold article detail
+  static const String viewWikiMold = '/view-wikimold';
   // Add more route names as needed
 }

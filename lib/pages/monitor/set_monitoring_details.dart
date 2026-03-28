@@ -653,14 +653,14 @@ class _SetMonitoringDetailsScreenState
   }
 
   Future<void> _pickInitialSymptoms() async {
-    final selectedSymptoms = await showMultiChipSelectionModal(
+    final selectedSymptoms = await showSearchableSelectionModal(
       context: context,
       title: 'Select Initial Symptoms',
       options: _initialSymptomsOptions,
       currentSelections: _selectedInitialSymptoms,
-      customInputHint: 'Add custom symptom(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search symptoms...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selectedSymptoms != null && selectedSymptoms.isNotEmpty) {
@@ -674,14 +674,14 @@ class _SetMonitoringDetailsScreenState
   }
 
   Future<void> _pickInitialCharacteristics() async {
-    final selectedCharacteristics = await showMultiChipSelectionModal(
+    final selectedCharacteristics = await showSearchableSelectionModal(
       context: context,
       title: 'Select Initial Characteristics',
       options: _initialCharacteristicsOptions,
       currentSelections: _selectedInitialCharacteristics,
-      customInputHint: 'Add custom characteristic(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search characteristics...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selectedCharacteristics != null && selectedCharacteristics.isNotEmpty) {

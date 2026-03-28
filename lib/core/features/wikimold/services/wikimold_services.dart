@@ -5,9 +5,10 @@ import '../models/wikimold.dart';
 
 class WikiService {
   final ApiService _apiService = ApiService(baseUrl: ApiUrl.moldipedia);
+
   /// Fetch all moldipedia articles with cursor-based pagination
   /// Endpoint: GET /
-  /// 
+  ///
   /// [limit] - page size (defaults to 10)
   /// [pageToken] - cursor token for pagination
   /// [sessionCookie] - optional, not required for public access
@@ -19,7 +20,8 @@ class WikiService {
     try {
       final queryParams = <String, String>{
         'limit': limit.toString(),
-        if (pageToken != null && pageToken.trim().isNotEmpty) 'pageToken': pageToken.trim(),
+        if (pageToken != null && pageToken.trim().isNotEmpty)
+          'pageToken': pageToken.trim(),
       };
 
       final response = await _apiService.get(
@@ -37,9 +39,9 @@ class WikiService {
         }
 
         // Handle response structure: { success, data: { snapshot, nextPageToken } }
-        final Map<String, dynamic> responseBody = 
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         // Extract the data object from either direct response or wrapped in 'data' key
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
@@ -47,32 +49,38 @@ class WikiService {
 
         final snapshot = data['snapshot'];
         if (snapshot is! List) {
-          throw Exception('Invalid snapshot format: expected array but got ${snapshot.runtimeType}');
+          throw Exception(
+            'Invalid snapshot format: expected array but got ${snapshot.runtimeType}',
+          );
         }
 
         final List<WikiArticle> articles = snapshot
             .whereType<Map>()
-            .map((item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)))
+            .map(
+              (item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)),
+            )
             .where((article) => article.id.isNotEmpty)
             .toList();
 
         final nextTokenValue = data['nextPageToken'];
-        final String? nextToken = 
-            (nextTokenValue != null && nextTokenValue.toString().trim().isNotEmpty)
-                ? nextTokenValue.toString().trim()
-                : null;
+        final String? nextToken =
+            (nextTokenValue != null &&
+                nextTokenValue.toString().trim().isNotEmpty)
+            ? nextTokenValue.toString().trim()
+            : null;
 
-        return {
-          'articles': articles,
-          'nextPageToken': nextToken,
-        };
+        return {'articles': articles, 'nextPageToken': nextToken};
       } else if (response.statusCode == 404) {
         throw Exception('Moldipedia articles not found');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to fetch articles: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to fetch articles: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow; // Let the caller handle the detailed error
@@ -80,7 +88,7 @@ class WikiService {
   }
 
   /// Search moldipedia articles with optional query filter and pagination
-  /// 
+  ///
   /// [search] - search query for title/body
   /// [limit] - page size (defaults to 10)
   /// [pageToken] - cursor token for pagination
@@ -95,7 +103,8 @@ class WikiService {
       final queryParams = <String, String>{
         'limit': limit.toString(),
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        if (pageToken != null && pageToken.trim().isNotEmpty) 'pageToken': pageToken.trim(),
+        if (pageToken != null && pageToken.trim().isNotEmpty)
+          'pageToken': pageToken.trim(),
       };
 
       final response = await _apiService.get(
@@ -109,41 +118,47 @@ class WikiService {
         // 200 = fresh response, 304 = Not Modified (use cache)
         final responseData = response.data;
         if (responseData == null) throw Exception('Empty response from server');
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
         final snapshot = data['snapshot'];
-        if (snapshot is! List) 
-          throw Exception('Invalid snapshot format: expected array but got ${snapshot.runtimeType}');
+        if (snapshot is! List)
+          throw Exception(
+            'Invalid snapshot format: expected array but got ${snapshot.runtimeType}',
+          );
 
         final List<WikiArticle> articles = snapshot
             .whereType<Map>()
-            .map((item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)))
+            .map(
+              (item) => WikiArticle.fromJson(Map<String, dynamic>.from(item)),
+            )
             .where((article) => article.id.isNotEmpty)
             .toList();
 
         final nextTokenValue = data['nextPageToken'];
-        final String? nextToken = 
-            (nextTokenValue != null && nextTokenValue.toString().trim().isNotEmpty)
-                ? nextTokenValue.toString().trim()
-                : null;
+        final String? nextToken =
+            (nextTokenValue != null &&
+                nextTokenValue.toString().trim().isNotEmpty)
+            ? nextTokenValue.toString().trim()
+            : null;
 
-        return {
-          'articles': articles,
-          'nextPageToken': nextToken,
-        };
+        return {'articles': articles, 'nextPageToken': nextToken};
       } else if (response.statusCode == 404) {
         throw Exception('Moldipedia articles not found');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
-        throw Exception('Failed to search articles: HTTP ${response.statusCode}');
+        throw Exception(
+          'Failed to search articles: HTTP ${response.statusCode}',
+        );
       }
     } catch (e) {
       rethrow; // Preserve error chain
@@ -189,7 +204,9 @@ class WikiService {
       } else if (response.statusCode == 404) {
         throw Exception('Article not found: $articleId');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
         throw Exception('Failed to fetch article: HTTP ${response.statusCode}');
@@ -215,6 +232,7 @@ class WikiService {
       final moldCaseService = ApiService(baseUrl: ApiUrl.moldipedia);
       final response = await moldCaseService.get(
         '/$moldipediaId/cases',
+        queryParams: const {'includeEvidence': 'true'},
         sessionCookie: sessionCookie,
         cacheOptions: CacheConfig.volatileData,
       );
@@ -229,16 +247,16 @@ class WikiService {
         final casesList = responseBody['data'] is List
             ? responseBody['data'] as List
             : responseBody['snapshot'] is List
-                ? responseBody['snapshot'] as List
-                : <dynamic>[];
+            ? responseBody['snapshot'] as List
+            : <dynamic>[];
 
-        return casesList
-            .whereType<Map<String, dynamic>>()
-            .toList();
+        return casesList.whereType<Map<String, dynamic>>().toList();
       } else if (response.statusCode == 404) {
         throw Exception('Cases not found for moldipedia: $moldipediaId');
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
         throw Exception('Failed to fetch cases: HTTP ${response.statusCode}');
@@ -278,16 +296,16 @@ class WikiService {
         final logsList = responseBody['data'] is List
             ? responseBody['data'] as List
             : responseBody['snapshot'] is List
-                ? responseBody['snapshot'] as List
-                : <dynamic>[];
+            ? responseBody['snapshot'] as List
+            : <dynamic>[];
 
-        return logsList
-            .whereType<Map<String, dynamic>>()
-            .toList();
+        return logsList.whereType<Map<String, dynamic>>().toList();
       } else if (response.statusCode == 404) {
         return <Map<String, dynamic>>[]; // No logs found is not an error
       } else if (response.statusCode == 500) {
-        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
         throw Exception('Server error: $error');
       } else {
         throw Exception('Failed to fetch logs: HTTP ${response.statusCode}');
@@ -297,5 +315,3 @@ class WikiService {
     }
   }
 }
-
-

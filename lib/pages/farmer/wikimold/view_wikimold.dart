@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/l10n/app_localizations.dart';
-import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
@@ -63,6 +62,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   List<Map<String, dynamic>> _linkedCases = [];
   bool _casesLoading = false;
   String? _casesError;
+  final Set<String> _expandedCaseIds = <String>{};
 
   @override
   void initState() {
@@ -431,7 +431,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                           ),
                         ),
                       ),
-                      // --- SUPPORTING CASES SECTION ---
+                      // --- FIELD & LAB EVIDENCE SECTION ---
                       if (_linkedCases.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -440,7 +440,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                             children: [
                               const SizedBox(height: 60),
                               Text(
-                                'Supporting Cases'.toUpperCase(),
+                                'Field & Lab Evidence'.toUpperCase(),
                                 style: const TextStyle(
                                   fontFamily: 'Montserrat-Black',
                                   fontSize: 18,
@@ -448,9 +448,9 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                   color: MoldifyColors.primaryColor,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               Text(
-                                '${_linkedCases.length} case${_linkedCases.length == 1 ? '' : 's'} linked to this article',
+                                'Based on ${_linkedCases.length} linked investigation${_linkedCases.length == 1 ? '' : 's'}',
                                 style: const TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-Regular',
                                   fontSize: 14,
@@ -464,11 +464,44 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                 itemCount: _linkedCases.length,
                                 itemBuilder: (context, index) {
                                   final caseData = _linkedCases[index];
-                                  final caseName = caseData['name'] as String? ?? 'Unnamed Case';
-                                  final caseId = caseData['id'] as String?;
-                                  final priority = caseData['priority'] as String? ?? 'medium';
-                                  final verdict = caseData['final_verdict'] as Map?;
-                                  final moldName = verdict?['moldName'] as String? ?? 'Unknown';
+                                  final caseKey = _caseKey(caseData, index);
+                                  final isExpanded = _expandedCaseIds.contains(caseKey);
+
+                                  final details = _asMap(caseData['cultivation_details']);
+                                  final initialMicroscopic = _asText(details['initial_microscopic']);
+                                  final initialMacroscopic = _asText(details['initial_macroscopic']);
+                                  final initialSymptoms = _asTextList(
+                                    details['initial_symptoms'] ?? details['initial_macroscopic_symptoms'],
+                                  );
+                                  final initialCharacteristics = _asTextList(
+                                    details['initial_characteristics'] ?? details['initial_macroscopic_characteristics'],
+                                  );
+
+                                  final inVivo = _latestLog(caseData, 'vivo');
+                                  final inVitro = _latestLog(caseData, 'vitro');
+                                  final inVivoCharacteristics = _asMap(inVivo?['characteristics']);
+                                  final inVitroCharacteristics = _asMap(inVitro?['characteristics']);
+
+                                  final inVivoSummary = _asText(
+                                    inVivoCharacteristics['symptoms'] ??
+                                        inVivoCharacteristics['characteristics'] ??
+                                        inVivoCharacteristics['lesion_color'] ??
+                                        inVivoCharacteristics['lesion_size'],
+                                  );
+                                  final inVitroSummary = _asText(
+                                    inVitroCharacteristics['characteristics'] ??
+                                        inVitroCharacteristics['colony_color'] ??
+                                        inVitroCharacteristics['colony_diameter'],
+                                  );
+                                  final initialDescription = initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
+                                      ? [initialMicroscopic, initialMacroscopic]
+                                          .where((t) => t.isNotEmpty)
+                                          .join(' | ')
+                                      : (initialSymptoms.isNotEmpty
+                                          ? initialSymptoms.join(', ')
+                                          : (initialCharacteristics.isNotEmpty
+                                              ? initialCharacteristics.join(', ')
+                                              : 'No initial observation evidence recorded.'));
 
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 16),
@@ -486,71 +519,66 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    caseName,
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Montserrat-Bold',
-                                                      fontSize: 14,
-                                                      color: MoldifyColors.primaryColor,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: _priorityColor(priority).withValues(alpha: 0.2),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: Text(
-                                                    priority.toUpperCase(),
-                                                    style: TextStyle(
-                                                      fontFamily: 'Montserrat-Bold',
-                                                      fontSize: 10,
-                                                      color: _priorityColor(priority),
-                                                      letterSpacing: 0.5,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 8),
                                             Text(
-                                              'Verdict: $moldName',
+                                              'Observation #${index + 1}',
                                               style: const TextStyle(
-                                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                                fontSize: 12,
-                                                color: MoldifyColors.MoldifyBlack,
+                                                fontFamily: 'Montserrat-Bold',
+                                                fontSize: 14,
+                                                color: MoldifyColors.primaryColor,
                                               ),
                                             ),
                                             const SizedBox(height: 12),
-                                            if (caseId != null)
-                                              SizedBox(
-                                                width: double.infinity,
-                                                child: ElevatedButton.icon(
-                                                  icon: const Icon(Icons.open_in_new, size: 14),
-                                                  label: const Text('View Case Details'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: MoldifyColors.primaryColor,
-                                                    foregroundColor: Colors.white,
-                                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                                  ),
-                                                  onPressed: () {
-                                                    // Navigate to full case details
-                                                    // For now, just show a message - implement full navigation later
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(content: Text('View case: $caseId')),
-                                                    );
-                                                  },
+                                            OutlinedButton.icon(
+                                              onPressed: () => _toggleCaseExpanded(caseKey),
+                                              icon: Icon(
+                                                isExpanded ? Icons.expand_less : Icons.expand_more,
+                                                size: 16,
+                                              ),
+                                              label: Text(isExpanded ? 'Hide Evidence' : 'Show Evidence'),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: MoldifyColors.primaryColor,
+                                                side: BorderSide(
+                                                  color: MoldifyColors.primaryColor.withValues(alpha: 0.25),
+                                                ),
+                                                textStyle: const TextStyle(
+                                                  fontFamily: 'Montserrat-Bold',
+                                                  fontSize: 11,
                                                 ),
                                               ),
+                                            ),
+                                            AnimatedCrossFade(
+                                              duration: const Duration(milliseconds: 220),
+                                              crossFadeState: isExpanded
+                                                  ? CrossFadeState.showSecond
+                                                  : CrossFadeState.showFirst,
+                                              firstChild: const SizedBox.shrink(),
+                                              secondChild: Padding(
+                                                padding: const EdgeInsets.only(top: 14),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    _buildEvidencePanel(
+                                                      title: 'Initial Observation',
+                                                      description: initialDescription,
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    _buildEvidencePanel(
+                                                      title: 'In Vivo',
+                                                      description: inVivoSummary.isNotEmpty
+                                                          ? inVivoSummary
+                                                          : 'No in vivo evidence log available.',
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    _buildEvidencePanel(
+                                                      title: 'In Vitro',
+                                                      description: inVitroSummary.isNotEmpty
+                                                          ? inVitroSummary
+                                                          : 'No in vitro evidence log available.',
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -575,16 +603,143 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   // --- Helpers ---
 
-  Color _priorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return const Color(0xFFDC2626);
-      case 'medium':
-        return const Color(0xFFF59E0B);
-      case 'low':
-      default:
-        return const Color(0xFF10B981);
+  String _caseKey(Map<String, dynamic> caseData, int index) {
+    final id = (caseData['id'] ?? '').toString().trim();
+    if (id.isNotEmpty) return id;
+    final reportId = (caseData['mold_report_id'] ?? '').toString().trim();
+    if (reportId.isNotEmpty) return reportId;
+    return 'case_$index';
+  }
+
+  void _toggleCaseExpanded(String caseKey) {
+    setState(() {
+      if (_expandedCaseIds.contains(caseKey)) {
+        _expandedCaseIds.remove(caseKey);
+      } else {
+        _expandedCaseIds.add(caseKey);
+      }
+    });
+  }
+
+String _asText(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value.trim();
+    if (value is num || value is bool) return value.toString();
+    if (value is List) {
+      return value
+          .map((item) => _asText(item))
+          .where((item) => item.isNotEmpty)
+          .join(', ');
     }
+    return '';
+  }
+
+  List<String> _asTextList(dynamic value) {
+    if (value is List) {
+      return value
+          .map((item) => _asText(item))
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    final text = _asText(value);
+    return text.isEmpty ? <String>[] : <String>[text];
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((key, val) => MapEntry(key.toString(), val));
+    }
+    return <String, dynamic>{};
+  }
+
+  String _normalizeLogType(dynamic rawType) {
+    return _asText(rawType).toLowerCase().replaceAll(RegExp(r'[_\s-]+'), '');
+  }
+
+  int _timestampMillis(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is String) {
+      final parsed = DateTime.tryParse(raw);
+      return parsed?.millisecondsSinceEpoch ?? 0;
+    }
+    if (raw is Map) {
+      final seconds = raw['_seconds'] ?? raw['seconds'];
+      if (seconds is int) return seconds * 1000;
+    }
+    return 0;
+  }
+
+  Map<String, dynamic>? _latestLog(Map<String, dynamic> caseData, String type) {
+    final rawLogs = caseData['cultivation_logs'];
+    if (rawLogs is! List) return null;
+
+    final filtered = rawLogs.whereType<Map>().map((item) => _asMap(item)).where(
+      (log) {
+        final normalized = _normalizeLogType(log['type']);
+        if (type == 'vivo')
+          return normalized == 'vivo' || normalized == 'invivo';
+        return normalized == 'vitro' || normalized == 'invitro';
+      },
+    ).toList();
+
+    if (filtered.isEmpty) return null;
+
+    filtered.sort((a, b) {
+      final aTs = _timestampMillis(
+        a['created_at'] ?? _asMap(a['metadata'])['created_at'],
+      );
+      final bTs = _timestampMillis(
+        b['created_at'] ?? _asMap(b['metadata'])['created_at'],
+      );
+      return bTs.compareTo(aTs);
+    });
+
+    return filtered.first;
+  }
+
+  Widget _buildEvidencePanel({
+    required String title,
+    required String description,
+    bool isMuted = true,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isMuted
+            ? MoldifyColors.primaryColor.withValues(alpha: 0.05)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: MoldifyColors.primaryColor.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontFamily: 'Montserrat-Bold',
+              fontSize: 10,
+              letterSpacing: 0.8,
+              color: MoldifyColors.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 12,
+              color: MoldifyColors.MoldifyBlack,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Updates cached parsed data when article changes
@@ -610,6 +765,16 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   }
 
   List<Map<String, String>> _parseFindings(String content) {
+    if (content.trim().isEmpty) {
+      return List.generate(_canonicalStageLabels.length, (index) {
+        return {
+          'label': _canonicalStageLabels[index],
+          'title': _canonicalStageLabels[index],
+          'content': 'No data available yet.',
+        };
+      });
+    }
+
     if (!content.contains(_stagePrefix)) {
       final fallback = content
           .split(_stageDelimiter)

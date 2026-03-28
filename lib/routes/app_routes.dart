@@ -33,6 +33,7 @@ import '../pages/monitor/identification_history.dart';
 import '../pages/monitor/set_monitoring_details.dart';
 import '../pages/monitor/treatment_history.dart';
 import '../pages/monitor/view_case.dart';
+import '../pages/farmer/wikimold/view_wikimold.dart';
 import '../pages/monitor/culture/view_timers.dart';
 import '../pages/monitor/culture/set_timer.dart';
 import '../splash_screen.dart';
@@ -626,6 +627,11 @@ class AppRoutes {
                 });
               },
             );
+
+          case RouteNames.viewWikiMold:
+            final args = _mapArgs(settings);
+            final articleId = _stringArg(args, 'id') ?? '';
+            return ViewWikiMoldScreen(articleId: articleId);
 
           case RouteNames.cultureDashboard:
             return const CultureDashboard();
