@@ -21,6 +21,8 @@ import '../../../core/features/mold_case/repository/mold_case_repository.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../core/features/lookup/service/lookup_service.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../services/api_service.dart';
+import '../../../core/constants/api_url.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
@@ -58,6 +60,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
+  String? farmerOccupation;
   String dateFirstObserved = 'October 30, 2025';
   String emailAddress = 'juan.delacruz@example.com';
   String contactNumber = '+63 917 123 4567';
@@ -730,6 +733,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       // Fetch farmer details from the mold report
       String localFarmerName = 'Juan Dela Cruz';
+      String localFarmerOccupation = '';
       String localDateFirstObserved = 'October 30, 2025';
       String localEmailAddress = 'juan.delacruz@example.com';
       String localContactNumber = '+63 917 123 4567';
@@ -748,6 +752,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           localFarmerName =
               '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'
                   .trim();
+          localFarmerOccupation = user['occupation']?.toString() ?? '';
         }
         if (details != null) {
           localEmailAddress = details['email']?.toString() ?? localEmailAddress;
@@ -902,6 +907,36 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         }
       }
 
+      // Fetch mycologist occupation if assigned
+      String localMycologistOccupation = '';
+      final assignedMycologistId = reportPayload['assigned_mycologist_id']
+          ?.toString();
+      if (assignedMycologistId != null && assignedMycologistId.isNotEmpty) {
+        try {
+          final authProvider = Provider.of<AppAuthProvider>(
+            context,
+            listen: false,
+          );
+          final sessionCookie = authProvider.cookie;
+          final apiService = ApiService(baseUrl: ApiUrl.user);
+          final response = await apiService.get(
+            '/$assignedMycologistId',
+            sessionCookie: sessionCookie,
+          );
+          if (response.data is Map<String, dynamic>) {
+            final responseData = response.data as Map<String, dynamic>;
+            final userData = responseData['data'] as Map<String, dynamic>?;
+            if (userData != null) {
+              final userObj = userData['user'] as Map<String, dynamic>?;
+              localMycologistOccupation =
+                  userObj?['occupation']?.toString() ?? '';
+            }
+          }
+        } catch (e) {
+          AppLogger.w('ViewCase: Failed to fetch mycologist occupation: $e');
+        }
+      }
+
       setState(() {
         _case = moldCase;
         _latestReportLookupResults = parsedLookupResults;
@@ -910,11 +945,15 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         reportStatus = localReportStatus;
         caseImageUrl = _case!.photoUrl ?? caseImageUrl;
         farmerName = localFarmerName;
+        farmerOccupation = localFarmerOccupation.isNotEmpty
+            ? localFarmerOccupation
+            : null;
         dateFirstObserved = localDateFirstObserved;
         emailAddress = localEmailAddress;
         contactNumber = localContactNumber;
         location = localLocation;
         caseEntries = localCaseEntries;
+        _mycologistOccupation = localMycologistOccupation;
         inVitroDateTime = localInVitroDateTime;
         inVitroGrowthMedium = localInVitroGrowthMedium;
         inVitroIncubationTemperature = localInVitroIncubationTemperature;
@@ -1213,10 +1252,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                       CaseDetailsTab(
                                         entries: caseEntries,
                                         farmerName: farmerName,
+                                        farmerOccupation: farmerOccupation,
                                         dateFirstObserved: dateFirstObserved,
                                         emailAddress: emailAddress,
                                         contactNumber: contactNumber,
-                                        mycologistOccupation: _mycologistOccupation,
+                                        mycologistOccupation:
+                                            _mycologistOccupation,
                                       ),
                                       InitialObservationTab(
                                         microscopicImagePath:

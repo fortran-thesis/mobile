@@ -46,7 +46,7 @@ class WikiArticle {
           'content',
         ],
       ),
-      findings: _extractContent(
+      findings: _normalizeFindings(json['findings']) ?? _extractContent(
         json,
         const [
           'findings',
@@ -247,6 +247,25 @@ class WikiArticle {
     ]);
 
     return segments.join('|').trim();
+  }
+
+  static String? _normalizeFindings(dynamic raw) {
+    // Handle array of {title, content} objects from API
+    if (raw is List) {
+      final segments = <String>[];
+      for (int i = 0; i < raw.length; i++) {
+        final item = raw[i];
+        if (item is Map<String, dynamic>) {
+          final title = item['title']?.toString() ?? '';
+          final content = item['content']?.toString() ?? '';
+          if (title.isNotEmpty || content.isNotEmpty) {
+            segments.add('STAGE_${i + 1}::$title::$content');
+          }
+        }
+      }
+      return segments.isNotEmpty ? segments.join('|') : null;
+    }
+    return null;
   }
 
   static String _normalizeContent(dynamic raw) {

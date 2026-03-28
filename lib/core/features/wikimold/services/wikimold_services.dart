@@ -151,7 +151,7 @@ class WikiService {
   }
 
   /// Fetch a single moldipedia article by ID
-  /// 
+  ///
   /// [articleId] - the ID of the article to fetch
   /// [sessionCookie] - session cookie for authentication (optional)
   Future<WikiArticle> fetchWikiArticleById({
@@ -174,15 +174,15 @@ class WikiService {
         // 200 = fresh response, 304 = Not Modified (use cache)
         final responseData = response.data;
         if (responseData == null) throw Exception('Empty response from server');
-        
-        final Map<String, dynamic> responseBody = 
+
+        final Map<String, dynamic> responseBody =
             (responseData is Map<String, dynamic>) ? responseData : {};
-        
+
         final articleData = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
-        if (articleData.isEmpty) 
+        if (articleData.isEmpty)
           throw Exception('Invalid article data structure from server');
 
         return WikiArticle.fromJson(articleData);
@@ -196,6 +196,104 @@ class WikiService {
       }
     } catch (e) {
       rethrow; // Preserve error chain
+    }
+  }
+
+  /// Fetch mold cases linked to a moldipedia article
+  ///
+  /// [moldipediaId] - the ID of the moldipedia article
+  /// [sessionCookie] - session cookie for authentication (optional)
+  Future<List<Map<String, dynamic>>> fetchMoldipediaCases({
+    required String moldipediaId,
+    String? sessionCookie,
+  }) async {
+    if (moldipediaId.isEmpty) {
+      throw Exception('Invalid moldipedia ID: cannot be empty');
+    }
+
+    try {
+      final moldCaseService = ApiService(baseUrl: ApiUrl.moldipedia);
+      final response = await moldCaseService.get(
+        '/$moldipediaId/cases',
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) throw Exception('Empty response from server');
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final casesList = responseBody['data'] is List
+            ? responseBody['data'] as List
+            : responseBody['snapshot'] is List
+                ? responseBody['snapshot'] as List
+                : <dynamic>[];
+
+        return casesList
+            .whereType<Map<String, dynamic>>()
+            .toList();
+      } else if (response.statusCode == 404) {
+        throw Exception('Cases not found for moldipedia: $moldipediaId');
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch cases: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Fetch cultivation logs for a mold case
+  ///
+  /// [caseId] - the ID of the mold case
+  /// [sessionCookie] - session cookie for authentication (optional)
+  Future<List<Map<String, dynamic>>> fetchCaseLogs({
+    required String caseId,
+    String? sessionCookie,
+  }) async {
+    if (caseId.isEmpty) {
+      throw Exception('Invalid case ID: cannot be empty');
+    }
+
+    try {
+      final moldCaseService = ApiService(baseUrl: '${ApiUrl.baseUrl}/api/v1');
+      final response = await moldCaseService.get(
+        '/mold-case/$caseId/logs',
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) throw Exception('Empty response from server');
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final logsList = responseBody['data'] is List
+            ? responseBody['data'] as List
+            : responseBody['snapshot'] is List
+                ? responseBody['snapshot'] as List
+                : <dynamic>[];
+
+        return logsList
+            .whereType<Map<String, dynamic>>()
+            .toList();
+      } else if (response.statusCode == 404) {
+        return <Map<String, dynamic>>[]; // No logs found is not an error
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map ? response.data['error'] : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception('Failed to fetch logs: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 }

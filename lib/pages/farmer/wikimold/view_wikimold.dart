@@ -41,7 +41,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   // Toggle to use dummy data when backend content is unavailable
   // Set to false when backend provides structured findings/treatments data
-  static const bool _forceDummySectionContent = true;
+  static const bool _forceDummySectionContent = false;
 
   static const List<String> _canonicalStageLabels = [
     'Initial Observation',
@@ -58,6 +58,11 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   List<Map<String, String>> _cachedFindingStages = [];
   List<Widget> _cachedHostImpactTiles = [];
   List<Widget> _cachedTreatmentTiles = [];
+
+  // Supporting cases
+  List<Map<String, dynamic>> _linkedCases = [];
+  bool _casesLoading = false;
+  String? _casesError;
 
   @override
   void initState() {
@@ -97,12 +102,44 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
         // Parse and cache data once when article is loaded
         _updateCachedData(article);
       });
+
+      // Load linked cases in background
+      _loadLinkedCases(article.id);
     } catch (e) {
       AppLogger.e('Error loading article', error: e);
       if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLinkedCases(String moldipediaId) async {
+    if (!mounted) return;
+    setState(() => _casesLoading = true);
+
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cookie = authProvider.cookie;
+
+      final cases = await _wikiService.fetchMoldipediaCases(
+        moldipediaId: moldipediaId,
+        sessionCookie: cookie,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _linkedCases = cases;
+        _casesError = null;
+        _casesLoading = false;
+      });
+    } catch (e) {
+      AppLogger.e('Error loading linked cases', error: e);
+      if (!mounted) return;
+      setState(() {
+        _casesError = e.toString();
+        _casesLoading = false;
       });
     }
   }
@@ -394,6 +431,136 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
                           ),
                         ),
                       ),
+                      // --- SUPPORTING CASES SECTION ---
+                      if (_linkedCases.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 60),
+                              Text(
+                                'Supporting Cases'.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: 'Montserrat-Black',
+                                  fontSize: 18,
+                                  letterSpacing: 0.5,
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                '${_linkedCases.length} case${_linkedCases.length == 1 ? '' : 's'} linked to this article',
+                                style: const TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  fontSize: 14,
+                                  color: MoldifyColors.MoldifyBlack,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _linkedCases.length,
+                                itemBuilder: (context, index) {
+                                  final caseData = _linkedCases[index];
+                                  final caseName = caseData['name'] as String? ?? 'Unnamed Case';
+                                  final caseId = caseData['id'] as String?;
+                                  final priority = caseData['priority'] as String? ?? 'medium';
+                                  final verdict = caseData['final_verdict'] as Map?;
+                                  final moldName = verdict?['moldName'] as String? ?? 'Unknown';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                          width: 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        color: Colors.white,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    caseName,
+                                                    style: const TextStyle(
+                                                      fontFamily: 'Montserrat-Bold',
+                                                      fontSize: 14,
+                                                      color: MoldifyColors.primaryColor,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: _priorityColor(priority).withValues(alpha: 0.2),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    priority.toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontFamily: 'Montserrat-Bold',
+                                                      fontSize: 10,
+                                                      color: _priorityColor(priority),
+                                                      letterSpacing: 0.5,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Verdict: $moldName',
+                                              style: const TextStyle(
+                                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                                fontSize: 12,
+                                                color: MoldifyColors.MoldifyBlack,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            if (caseId != null)
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: ElevatedButton.icon(
+                                                  icon: const Icon(Icons.open_in_new, size: 14),
+                                                  label: const Text('View Case Details'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: MoldifyColors.primaryColor,
+                                                    foregroundColor: Colors.white,
+                                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                                  ),
+                                                  onPressed: () {
+                                                    // Navigate to full case details
+                                                    // For now, just show a message - implement full navigation later
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('View case: $caseId')),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 100), // Bottom padding
                     ],
                   ),
@@ -407,6 +574,18 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   }
 
   // --- Helpers ---
+
+  Color _priorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return const Color(0xFFDC2626);
+      case 'medium':
+        return const Color(0xFFF59E0B);
+      case 'low':
+      default:
+        return const Color(0xFF10B981);
+    }
+  }
 
   /// Updates cached parsed data when article changes
   /// This prevents re-parsing on every build, improving performance
