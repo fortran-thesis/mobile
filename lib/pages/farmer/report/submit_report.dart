@@ -644,18 +644,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                         // Show success message
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Your report has been submitted successfully.',
-                              style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  color: MoldifyColors.backgroundColor
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Your report has been submitted successfully.',
+                                style: TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    color: MoldifyColors.backgroundColor
+                                ),
                               ),
+                              backgroundColor: MoldifyColors.primaryColor,
                             ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                          );
+                        }
 
                         // If lookup results found, navigate to results screen; otherwise pop screen
                         await Future.delayed(const Duration(milliseconds: 300));
@@ -715,18 +717,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                         // Show error
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
                                 'Failed to submit report: $e',
                                 style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.backgroundColor
+                                ),
+                              ),
+                              backgroundColor: MoldifyColors.primaryColor,
                             ),
-                          ),
-                          backgroundColor: MoldifyColors.primaryColor,
-                        ),
-                        );
+                          );
+                        }
                       } finally {
                         // Ensure loading dialog is dismissed even if we returned early
                         try {

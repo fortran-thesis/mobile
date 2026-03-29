@@ -132,7 +132,9 @@ class _CreateMoldScreenState extends State<CreateMoldScreen> {
       AppLogger.d('CreateMold: Success! Created mold=${entry.name} id=${entry.id}');
 
       if (!mounted) return;
-      Navigator.of(context).pop(entry);
+      if (mounted) {
+        Navigator.of(context).pop(entry);
+      }
     } catch (e, s) {
       AppLogger.e('CreateMold: Exception', error: e, stackTrace: s);
       if (mounted) {

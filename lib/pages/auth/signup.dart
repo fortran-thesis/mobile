@@ -90,34 +90,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _showErrorSnackBar(String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 14,
+              color: MoldifyColors.backgroundColor,
+            ),
           ),
+          backgroundColor: MoldifyColors.MoldifyRed,
         ),
-        backgroundColor: MoldifyColors.MoldifyRed,
-      ),
-    );
+      );
+    }
   }
 
   void _showSuccessSnackBar(String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 14,
+              color: MoldifyColors.backgroundColor,
+            ),
           ),
+          backgroundColor: MoldifyColors.primaryColor,
         ),
-        backgroundColor: MoldifyColors.primaryColor,
-      ),
-    );
+      );
+    }
   }
 
   /// Validates password meets all requirements
@@ -231,7 +235,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Wait for a moment before navigating to give user time to see the message
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(RouteNames.login);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(RouteNames.login);
+      }
     } else {
       final error = result['error'];
       if (error != null) {

@@ -231,12 +231,13 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       if (modelResult.containsKey('error')) {
         AppLogger.e('❌ InputCharacteristics: API error: ${modelResult['error']}');
         if (!mounted) return;
-        Navigator.of(context).pop(); // Dismiss loading
-        if (!mounted) return;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Prediction failed: ${modelResult['error']}')),
-        );
+        if (mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Prediction failed: ${modelResult['error']}')),
+          );
+        }
         return;
       }
 
@@ -262,40 +263,40 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
 
       // Dismiss loading
       if (!mounted) return;
-      Navigator.of(context).pop();
-      if (!mounted) return;
+      if (mounted) {
+        Navigator.of(context).pop();
 
-      AppLogger.d('🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics');
-      final result = await Navigator.of(context).pushNamed(
-        '/mold_result',
-        arguments: {
-          'croppedImagePath': croppedImagePath,
-          'modelResult': modelResult,
-          'moldDetails': moldDetails,
-          'characteristics': apiCharacteristics,
-          'sourceFlow': sourceFlow,
-          'scanModality': scanModality,
-          'sourceTab': sourceTab,
-          'caseId': caseId,
-        },
-      );
+        AppLogger.d('🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics');
+        final result = await Navigator.of(context).pushNamed(
+          '/mold_result',
+          arguments: {
+            'croppedImagePath': croppedImagePath,
+            'modelResult': modelResult,
+            'moldDetails': moldDetails,
+            'characteristics': apiCharacteristics,
+            'sourceFlow': sourceFlow,
+            'scanModality': scanModality,
+            'sourceTab': sourceTab,
+            'caseId': caseId,
+          },
+        );
 
-      if (!mounted) return;
-      if (result != null) {
-        Navigator.of(context).pop(result);
+        if (result != null) {
+          Navigator.of(context).pop(result);
+        }
       }
     } catch (e, stackTrace) {
       AppLogger.e('❌ InputCharacteristics: EXCEPTION during submit', error: e, stackTrace: stackTrace);
 
       // Dismiss loading
       if (!mounted) return;
-      Navigator.of(context).pop();
-      if (!mounted) return;
-
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to process: $e')),
-      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process: $e')),
+        );
+      }
     }
   }
 

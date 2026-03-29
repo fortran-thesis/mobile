@@ -587,23 +587,27 @@ class _SetMonitoringDetailsScreenState
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Show success and pop
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Monitoring details updated successfully'),
-        ),
-      );
-      Navigator.of(context).pop(
-        const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
-      );
+      // Show success and pop only if widget is still mounted
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Monitoring details updated successfully'),
+          ),
+        );
+        Navigator.of(context).pop(
+          const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       AppLogger.e('Error updating mold case', error: e);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
     }
   }
 

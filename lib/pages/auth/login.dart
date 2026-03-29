@@ -47,19 +47,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showErrorSnackBar(String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 14,
+              color: MoldifyColors.backgroundColor,
+            ),
           ),
+          backgroundColor: MoldifyColors.MoldifyRed,
         ),
-        backgroundColor: MoldifyColors.MoldifyRed,
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _handleUsernamePasswordSignIn() async {

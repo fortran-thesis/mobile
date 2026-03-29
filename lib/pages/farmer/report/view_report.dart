@@ -164,19 +164,23 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                 sessionCookie: sessionCookie,
               );
               if (!mounted) return;
-              Navigator.of(context).pop(
-                const MutationResult.changed(
-                  tags: [MutationTags.moldReport],
-                ).toMap(),
-              );
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(l10n.reportClosed)));
+              if (mounted) {
+                Navigator.of(context).pop(
+                  const MutationResult.changed(
+                    tags: [MutationTags.moldReport],
+                  ).toMap(),
+                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.reportClosed)));
+              }
             } catch (e) {
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
+                );
+              }
             }
           },
           onCancel: () {

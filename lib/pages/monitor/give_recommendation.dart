@@ -776,9 +776,11 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             }
           } catch (e) {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to submit final verdict: $e')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to submit final verdict: $e')),
+              );
+            }
           } finally {
             if (mounted) {
               setState(() => _isLoading = false);

@@ -52,10 +52,12 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
 
       if (reportId == null || reportId.isEmpty) {
         if (!mounted) return;
-        final l10nLocal = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10nLocal.errorReportIdNotFound)),
-        );
+        if (mounted) {
+          final l10nLocal = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10nLocal.errorReportIdNotFound)),
+          );
+        }
         return;
       }
 
@@ -84,22 +86,26 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.followUpSubmitted)),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.followUpSubmitted)),
+        );
 
-      // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
-      // Pass a typed mutation result on the second pop so callers can detect refresh intent.
-      Navigator.of(context).pop();
-      Navigator.of(context).pop(
-        const MutationResult.changed(tags: [MutationTags.moldReport]).toMap(),
-      );
+        // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
+        // Pass a typed mutation result on the second pop so callers can detect refresh intent.
+        Navigator.of(context).pop();
+        Navigator.of(context).pop(
+          const MutationResult.changed(tags: [MutationTags.moldReport]).toMap(),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToSubmitFollowUp(e.toString()))),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.failedToSubmitFollowUp(e.toString()))),
+        );
+      }
     }
   }
 

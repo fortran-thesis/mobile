@@ -765,7 +765,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             }
 
                             if (!context.mounted) return;
-                            Navigator.of(context).pop(savePayload);
+                            if (context.mounted) {
+                              Navigator.of(context).pop(savePayload);
+                            }
                           },
                         ),
                       ),

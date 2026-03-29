@@ -183,12 +183,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         await Future.delayed(const Duration(milliseconds: 500));
         // Refresh profile
         if (!mounted) return;
-        context.read<UserBloc>().add(
-          FetchUserProfile(sessionCookie: sessionCookie),
-        );
+        if (mounted) {
+          context.read<UserBloc>().add(
+            FetchUserProfile(sessionCookie: sessionCookie),
+          );
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) Navigator.pop(context, true);
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) Navigator.pop(context, true);
+        }
       } else {
         AppLogger.e('❌ Failed: ${result['error']}');
         _showSnackBar(result['error'] != null ? l10n.failedToUpdateProfile(result['error']) : l10n.somethingWentWrong);
@@ -204,9 +206,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
   @override
   void dispose() {

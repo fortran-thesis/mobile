@@ -341,9 +341,11 @@ class _AddLogScreenState extends State<AddLogScreen> {
 
           if (!mounted) return;
           setState(() => _isSaving = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save cultivation log: $e')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to save cultivation log: $e')),
+            );
+          }
           return;
         }
       }
@@ -356,9 +358,11 @@ class _AddLogScreenState extends State<AddLogScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to prepare log: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to prepare log: $e')),
+        );
+      }
     }
   }
 

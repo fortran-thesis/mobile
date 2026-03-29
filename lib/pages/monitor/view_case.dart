@@ -248,30 +248,32 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     setState(() => _mutationOccurred = true);
 
-    if (macro?['scanSaveError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Log saved but scan evidence failed: ${macro!['scanSaveError']}',
+    if (mounted) {
+      if (macro?['scanSaveError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Log saved but scan evidence failed: ${macro!['scanSaveError']}',
+            ),
           ),
-        ),
-      );
-    } else if (macro?['scanAssociationError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Log saved, but failed to associate scan to case: ${macro!['scanAssociationError']}',
+        );
+      } else if (macro?['scanAssociationError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Log saved, but failed to associate scan to case: ${macro!['scanAssociationError']}',
+            ),
           ),
-        ),
-      );
-    } else if (payload['microLogSaveError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Microscopic log save failed: ${payload['microLogSaveError']}',
+        );
+      } else if (payload['microLogSaveError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Microscopic log save failed: ${payload['microLogSaveError']}',
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
