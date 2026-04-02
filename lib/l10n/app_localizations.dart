@@ -1087,6 +1087,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can only upload up to 5 photos.'**
   String get photoUploadLimit;
+
+  /// No description provided for @welcomeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome To'**
+  String get welcomeTo;
+
+  /// No description provided for @welcomeAppSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A Mold Investigation System for Agriculture'**
+  String get welcomeAppSubtitle;
+
+  /// No description provided for @onboarding1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Mold Cases with '**
+  String get onboarding1Title;
+
+  /// No description provided for @onboarding1Highlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Ease'**
+  String get onboarding1Highlight;
+
+  /// No description provided for @onboarding1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.'**
+  String get onboarding1Subtitle;
+
+  /// No description provided for @onboarding2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Expert Review by '**
+  String get onboarding2Title;
+
+  /// No description provided for @onboarding2Highlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Mycologists'**
+  String get onboarding2Highlight;
+
+  /// No description provided for @onboarding2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.'**
+  String get onboarding2Subtitle;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @continueToApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue To App'**
+  String get continueToApp;
+
+  /// No description provided for @chooseRole.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE ROLE'**
+  String get chooseRole;
+
+  /// No description provided for @chooseRoleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your role to proceed to login'**
+  String get chooseRoleSubtitle;
+
+  /// No description provided for @farmer.
+  ///
+  /// In en, this message translates to:
+  /// **'Farmer'**
+  String get farmer;
+
+  /// No description provided for @mycologist.
+  ///
+  /// In en, this message translates to:
+  /// **'Mycologist'**
+  String get mycologist;
+
+  /// No description provided for @logIn.
+  ///
+  /// In en, this message translates to:
+  /// **'LOG IN'**
+  String get logIn;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter username and password.'**
+  String get loginSubtitle;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @enterPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Password'**
+  String get enterPasswordHint;
+
+  /// No description provided for @forgotUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Username?'**
+  String get forgotUsername;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get dontHaveAccount;
+
+  /// No description provided for @signUpLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
+  String get signUpLink;
+
+  /// No description provided for @loginTermsText.
+  ///
+  /// In en, this message translates to:
+  /// **'By proceeding you acknowledge that you have read, understood and agree to our '**
+  String get loginTermsText;
+
+  /// No description provided for @signUp.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN UP'**
+  String get signUp;
+
+  /// No description provided for @signUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter details to create an account.'**
+  String get signUpSubtitle;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Email'**
+  String get enterEmail;
+
+  /// No description provided for @occupation.
+  ///
+  /// In en, this message translates to:
+  /// **'Occupation'**
+  String get occupation;
+
+  /// No description provided for @enterOccupation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter occupation'**
+  String get enterOccupation;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPassword;
+
+  /// No description provided for @enterConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Confirm Password'**
+  String get enterConfirmPassword;
+
+  /// No description provided for @signUpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
+  String get signUpButton;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? '**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @logInLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Log In'**
+  String get logInLink;
+
+  /// No description provided for @signUpTermsText.
+  ///
+  /// In en, this message translates to:
+  /// **'I acknowledged that I have read, understood and agree to our '**
+  String get signUpTermsText;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/models/notification.dart';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -210,11 +211,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   if (notif.referenceId != null && notif.referenceType != null) {
                                     switch (notif.referenceType) {
                                       case 'mold_report':
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/view-case',
-                                          arguments: {'id': notif.referenceId},
-                                        );
+                                        // Route based on user role: farmers view their report, others view the case
+                                        final userState = context.read<UserBloc>().state;
+                                        final userRole = (userState is UserProfileLoaded) ? userState.profile.role : null;
+
+                                        if (userRole == 'farmer') {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-report',
+                                            arguments: {'id': notif.referenceId},
+                                          );
+                                        } else {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-case',
+                                            arguments: {'id': notif.referenceId},
+                                          );
+                                        }
                                         break;
                                       case 'mold_case':
                                         Navigator.pushNamed(

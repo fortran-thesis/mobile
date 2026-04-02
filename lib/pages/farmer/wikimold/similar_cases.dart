@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -206,6 +207,192 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
     );
   }
 
+  Widget _buildVerdictSection({
+    required Map<String, dynamic> verdict,
+    required String? moldipediaId,
+  }) {
+    final moldName = _asText(verdict['moldName'] ?? verdict['mold_name']);
+    final confidence = verdict['confidence'];
+    final notes = _asText(verdict['mycologist_notes'] ?? '');
+    final verdictTs = verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
+
+    String verdictDateStr = '';
+    if (verdictTs != null) {
+      try {
+        late DateTime verdictDate;
+        if (verdictTs is String) {
+          verdictDate = DateTime.parse(verdictTs);
+        } else if (verdictTs is Map) {
+          final seconds = verdictTs['_seconds'] ?? verdictTs['seconds'];
+          if (seconds is int) {
+            verdictDate = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+          }
+        }
+        verdictDateStr = '${verdictDate.month}/${verdictDate.day}/${verdictDate.year}';
+      } catch (e) {
+        // Ignore date parsing errors
+      }
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: MoldifyColors.primaryColor.withValues(alpha: 0.16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'FINAL VERDICT',
+            style: const TextStyle(
+              fontFamily: 'Montserrat-Bold',
+              fontSize: 10,
+              letterSpacing: 0.8,
+              color: MoldifyColors.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (moldName.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Identified Mold',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 11,
+                    color: MoldifyColors.MoldifyGrey,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  moldName,
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat-Bold',
+                    fontSize: 13,
+                    color: MoldifyColors.MoldifyBlack,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Pending identification',
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 12,
+                  color: MoldifyColors.MoldifyGrey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          if (confidence != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Confidence',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 11,
+                    color: MoldifyColors.MoldifyGrey,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${(confidence * 100).toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat-Bold',
+                    fontSize: 13,
+                    color: MoldifyColors.MoldifyBlack,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          if (verdictDateStr.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Verdict Date',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 11,
+                    color: MoldifyColors.MoldifyGrey,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  verdictDateStr,
+                  style: const TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 12,
+                    color: MoldifyColors.MoldifyBlack,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          if (notes.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mycologist Notes',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 11,
+                    color: MoldifyColors.MoldifyGrey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  notes,
+                  style: const TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 12,
+                    color: MoldifyColors.MoldifyBlack,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          if (moldipediaId != null && moldipediaId.isNotEmpty)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.viewWikiMold,
+                  arguments: {'id': moldipediaId},
+                );
+              },
+              icon: const Icon(Icons.description, size: 16),
+              label: const Text('View Article'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MoldifyColors.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                textStyle: const TextStyle(
+                  fontFamily: 'Montserrat-Bold',
+                  fontSize: 11,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -311,6 +498,9 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                     ? initialCharacteristics.join(', ')
                     : 'No initial observation evidence recorded.'));
 
+        final finalVerdictMap = _asMap(entry['final_verdict']);
+        final hasFinalVerdict = finalVerdictMap.isNotEmpty;
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Container(
@@ -383,6 +573,13 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                                 ? inVitroSummary
                                 : 'No in vitro evidence log available.',
                           ),
+                          if (hasFinalVerdict) ...[
+                            const SizedBox(height: 10),
+                            _buildVerdictSection(
+                              verdict: finalVerdictMap,
+                              moldipediaId: _asText(finalVerdictMap['moldipedia_id'] ?? ''),
+                            ),
+                          ],
                         ],
                       ),
                     ),

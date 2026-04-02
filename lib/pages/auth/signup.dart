@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/pages/misc/language_toggle.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -255,6 +257,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       @override
       Widget build(BuildContext context) {
+        final l10n = AppLocalizations.of(context)!;
+
         return Scaffold(
           backgroundColor: MoldifyColors.backgroundColor,
           body: Stack(
@@ -297,9 +301,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       height: 1,
                                     ),
                                     children: [
-                                      const TextSpan(text: 'SIGN UP\n'),
+                                      TextSpan(text: '${l10n.signUp}\n'),
                                       TextSpan(
-                                        text: 'Please enter details to create an account.',
+                                        text: l10n.signUpSubtitle,
                                         style: TextStyle(
                                           fontFamily: 'Bricolage-Grotesque-Regular',
                                           fontSize: 14,
@@ -311,6 +315,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   textAlign: TextAlign.start,
                                 )
                             ),
+                          ),
+                        ),
+                        /// Language Toggle (Top Right of header)
+                        Positioned(
+                          top: 10,
+                          right: 15,
+                          child: LanguageToggle(
+                            color: MoldifyColors.backgroundColor,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -328,7 +341,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 30.0),
                             child: AutoSizeText(
-                              'Username',
+                              l10n.username,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -343,7 +356,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter Username',
+                              hintText: l10n.enterUsername,
                               controller: usernameController,
                               showPassword: false,
                             ),
@@ -353,7 +366,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'First Name',
+                              l10n.firstName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -368,7 +381,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter first name',
+                              hintText: l10n.enterFirstName,
                               controller: fnameController,
                               showPassword: false,
                             ),
@@ -378,7 +391,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Last Name',
+                              l10n.lastName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -393,7 +406,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter last name',
+                              hintText: l10n.enterLastName,
                               controller: lnameController,
                               showPassword: false,
                             ),
@@ -403,7 +416,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Email',
+                              l10n.email,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -418,7 +431,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter Email',
+                              hintText: l10n.enterEmail,
                               controller: emailController,
                               showPassword: false,
                               keyboardType: TextInputType.emailAddress,
@@ -473,7 +486,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Occupation',
+                              l10n.occupation,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -488,7 +501,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter occupation',
+                              hintText: l10n.enterOccupation,
                               controller: occupationController,
                               showPassword: false,
                             ),
@@ -498,7 +511,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Location(City/Province)',
+                              l10n.locationLabel,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -523,7 +536,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Password',
+                              l10n.passwordLabel,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -563,7 +576,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Confirm Password',
+                              l10n.confirmPassword,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -589,7 +602,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             padding: const EdgeInsets.only(
                                 top: 50.0, bottom: 3.0),
                             child: BuildButton(
-                                buttonText: 'Sign Up',
+                                buttonText: l10n.signUpButton,
                                 onPressed: _onSignUpPressed,
                                 backgroundColor: isLoading ? MoldifyColors
                                     .MoldifyGrey : MoldifyColors.primaryColor,
@@ -612,7 +625,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 AutoSizeText (
-                                  'Already have an account? ',
+                                  l10n.alreadyHaveAccount,
                                   style: TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 14,
@@ -637,11 +650,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       .withValues(alpha: 0.2),
                                   highlightColor: MoldifyColors.accentColor
                                       .withValues(alpha: 0.2),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.symmetric(
                                         vertical: 4, horizontal: 4),
                                     child: AutoSizeText(
-                                      'Log In',
+                                      l10n.logInLink,
                                       style: TextStyle(
                                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                                         fontSize: 14,
@@ -726,11 +739,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           color: MoldifyColors.MoldifyBlack,
                                         ),
                                         children: [
-                                          const TextSpan(
-                                            text: 'I acknowledged that I have read, understood and agree to our ',
+                                          TextSpan(
+                                            text: l10n.signUpTermsText,
                                           ),
                                           TextSpan(
-                                            text: 'Terms of Agreement',
+                                            text: l10n.termsOfAgreement,
                                             style: const TextStyle(
                                               fontFamily: 'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
@@ -746,7 +759,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           ),
                                           const TextSpan(text: ' and '),
                                           TextSpan(
-                                            text: 'Privacy Policy',
+                                            text: l10n.privacyPolicy,
                                             style: const TextStyle(
                                               fontFamily: 'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
