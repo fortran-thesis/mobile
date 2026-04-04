@@ -9,6 +9,8 @@ import 'package:moldify/pages/misc/language_toggle.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
 import '../../core/utils/auth_navigation.dart';
@@ -47,58 +49,70 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showErrorSnackBar(String message) {
-    if (!context.mounted) return;
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            style: const TextStyle(
-              fontFamily: 'Bricolage-Grotesque-Regular',
-              fontSize: 14,
-              color: MoldifyColors.backgroundColor,
-            ),
-          ),
-          backgroundColor: MoldifyColors.MoldifyRed,
-        ),
-      );
+  String _normalizeLoginError(dynamic rawError) {
+    final message = rawError?.toString().trim().toLowerCase() ?? '';
+
+    if (message.isEmpty) {
+      return 'Invalid username or password.';
     }
+
+    if (message.contains('invalid credential') ||
+        message.contains('invalid username') ||
+        message.contains('invalid password') ||
+        message.contains('unauthorized') ||
+        message.contains('incorrect') ||
+        message.contains('password too long')) {
+      return 'Invalid username or password.';
+    }
+
+    if (message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('timeout') ||
+        message.contains('connection')) {
+      return 'Unable to connect. Please check your internet and try again.';
+    }
+
+    return 'Login failed. Please try again.';
+  }
+
+  void _showUnifiedLoginError(dynamic rawError) {
+    AppFeedback.showError(context, _normalizeLoginError(rawError));
   }
 
   Future<void> _handleUsernamePasswordSignIn() async {
     if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      _showErrorSnackBar('Please enter your username and password.');
+      AppFeedback.showError(context, 'Username and password are required.');
       return;
     }
 
-    setState(() => isLoading = true);
-    final result = await _loginBloc.loginWithUsernamePassword(
-      usernameController.text,
-      passwordController.text,
-    );
-    setState(() => isLoading = false);
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final result = await _loginBloc.loginWithUsernamePassword(
+        usernameController.text,
+        passwordController.text,
+      );
 
-    if (!result['success']) {
-      _showErrorSnackBar('Invalid username or password.');
-      return;
-    }
-
-    if (!result['success']) {
-      final error = result['error'];
-      if (error != null) {
-        _showErrorSnackBar(error);
+      if (!result['success']) {
+        _showUnifiedLoginError(result['error']);
+        return;
       }
-      return;
-    }
 
-    if (!mounted) return;
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    if (result['sessionValue'] != null) {
-      await authProvider.saveCookie(result['sessionValue']);
+      if (!mounted) return;
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      if (result['sessionValue'] != null) {
+        await authProvider.saveCookie(result['sessionValue']);
+      }
+      if (!mounted) return;
+      AuthNavigation.resetToMainFromContext(context);
+    } catch (e) {
+      _showUnifiedLoginError(e);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
-    if (!mounted) return;
-    AuthNavigation.resetToMainFromContext(context);
   }
 
   // Wrapper function to handle button press and loading state
@@ -501,15 +515,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           if (isLoading)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    MoldifyColors.backgroundColor,
-                  ),
-                ),
-              ),
+            const AppLoadingOverlay(
+              message: 'Logging you in...',
             ),
         ],
       ),

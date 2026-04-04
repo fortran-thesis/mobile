@@ -3,9 +3,24 @@ import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+/// Full-screen list of investigations linked to a WikiMold article.
+///
+/// Purpose:
+/// - Gives users a dedicated screen to browse linked cases in detail.
+/// - Reuses the same evidence semantics shown in the embedded Field Evidence
+///   section, but with an independent full-screen experience.
+///
+/// Parameters:
+/// - [articleId]: WikiMold article ID used for backend linked-case queries.
+/// - [articleTitle]: Human-readable article title for empty-state messaging.
+///
+/// Relation to `wikimold_field_evidence_section.dart`:
+/// - The embedded section is a child widget rendered inside `view_wikimold`.
+/// - This file is a standalone route/screen opened via FAB.
 class SimilarCasesScreen extends StatefulWidget {
   final String articleId;
   final String articleTitle;
@@ -396,14 +411,14 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PrimaryAppBar(title: 'Field Evidence'),
+      appBar: PrimaryAppBar(title: 'Similar Cases'),
       body: RefreshIndicator(onRefresh: _loadCases, child: _buildBody()),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppLoadingSpinner());
     }
 
     if (_error != null) {

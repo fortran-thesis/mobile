@@ -4,6 +4,8 @@ import 'package:moldify/pages/misc/appbar/secondary_appbar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/functions/step_indicator.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
@@ -24,6 +26,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   final newPasswordController = TextEditingController();
   final confirmNewPasswordController = TextEditingController();
   final AuthBloc _authBloc = AuthBloc(AuthService());
+  bool _isLoading = false;
 
   /// currentStep keeps track of the current step in the recovery process.
   int currentStep = 2;
@@ -40,83 +43,54 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   }
 
   Future<void> _handleChangePassword() async {
+    if (_isLoading) return;
+
     final newPassword = newPasswordController.text;
     final confirmPassword = confirmNewPasswordController.text;
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Passwords do not match'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Passwords do not match');
       return;
     }
     // Validate password complexity (must match server PasswordSchema)
     if (newPassword.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must be at least 8 characters long'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Password must be at least 8 characters long');
       return;
     }
     if (!RegExp(r'[a-z]').hasMatch(newPassword)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must contain at least one lowercase letter'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Password must contain at least one lowercase letter');
       return;
     }
     if (!RegExp(r'[A-Z]').hasMatch(newPassword)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must contain at least one uppercase letter'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Password must contain at least one uppercase letter');
       return;
     }
     if (!RegExp(r'[0-9]').hasMatch(newPassword)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must contain at least one number'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Password must contain at least one number');
       return;
     }
     if (!RegExp(r'[^a-zA-Z0-9]').hasMatch(newPassword)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must contain at least one special character'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.showError(context, 'Password must contain at least one special character');
       return;
     }
+
+    setState(() => _isLoading = true);
+
     final result = await _authBloc.verifiedForgotPassword(
       widget.token,
       newPassword,
     );
     if (!mounted) return;
-    if (!result['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['error'] ?? 'Failed to reset password'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password changed successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      AuthNavigation.resetToLoginFromContext(context);
+    try {
+      if (!result['success']) {
+        AppFeedback.showError(context, result['error'] ?? 'Failed to reset password');
+      } else {
+        AppFeedback.showSuccess(context, 'Password changed successfully!');
+        AuthNavigation.resetToLoginFromContext(context);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -129,29 +103,31 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
         color: MoldifyColors.primaryColor,
       ),
       body: SingleChildScrollView(
-        child: Column(
+        child: Stack(
           children: [
-            /// -------- New Password Header Image --------
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: SvgPicture.asset(
-                'assets/images/new_password_curve.svg',
-                width: MediaQuery.of(context).size.width,
-                fit: BoxFit.cover,
-              ),
-            ),
+            Column(
+              children: [
+                /// -------- New Password Header Image --------
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
+                  child: SvgPicture.asset(
+                    'assets/images/new_password_curve.svg',
+                    width: MediaQuery.of(context).size.width,
+                    fit: BoxFit.cover,
+                  ),
+                ),
 
-            /// -------- New Password Header Image --------
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 15.0,
-                right: 15.0,
-                bottom: 30.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 20.0),
+                /// -------- New Password Header Image --------
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 15.0,
+                    right: 15.0,
+                    bottom: 30.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 20.0),
 
                   /// Step Indicator
                   /// This widget displays the current step in the recovery process
@@ -232,21 +208,27 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   ),
 
                   /// Verify Code Button
-                  Padding(
-                    padding: const EdgeInsets.only(top: 50.0),
-                    child: BuildButton(
-                      onPressed: _handleChangePassword,
-                      buttonText: 'Change Password',
-                      backgroundColor: MoldifyColors.primaryColor,
-                      textColor: MoldifyColors.backgroundColor,
-                      buttonHeight: 45,
-                      buttonWidth: MediaQuery.of(context).size.width,
-                      buttonRadius: 10,
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 50.0),
+                        child: BuildButton(
+                          onPressed: _handleChangePassword,
+                          buttonText: 'Change Password',
+                          backgroundColor: MoldifyColors.primaryColor,
+                          textColor: MoldifyColors.backgroundColor,
+                          buttonHeight: 45,
+                          buttonWidth: MediaQuery.of(context).size.width,
+                          buttonRadius: 10,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (_isLoading)
+              const AppLoadingOverlay(
+                message: 'Resetting password...',
+              ),
           ],
         ),
       ),

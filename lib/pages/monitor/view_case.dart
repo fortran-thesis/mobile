@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/images/cover_image.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/tiles/status_tile.dart';
 import '../../../core/features/mold_case/models/mold_case.dart';
 import '../../../core/features/mold_case/repository/mold_case_repository.dart';
@@ -1085,11 +1086,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           },
         ),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: MoldifyColors.primaryColor,
-                ),
-              )
+            ? const Center(child: AppLoadingSpinner())
             : _error != null
             ? Center(
                 child: Padding(

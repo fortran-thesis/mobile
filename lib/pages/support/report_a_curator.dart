@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/radio_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/app_feedback.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:provider/provider.dart';
 
@@ -247,20 +248,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                     onPressed: () {
                       if (selectedRadio == -1 ) {
                         // Show a snackbar if no option is selected
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Please select a reason for reporting.'),
-                            duration: const Duration(seconds: 3),
-                            action: SnackBarAction(
-                              label: 'OK',
-                              textColor: MoldifyColors.backgroundColor,
-                              onPressed: () {
-                                // Dismiss the snackbar when "OK" is pressed
-                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                              },
-                            ),
-                          ),
-                        );
+                        AppFeedback.showError(context, 'Please select a reason for reporting.');
                         return;
                       }
                       showDialog(
@@ -304,12 +292,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                 // Show success message
                                 if (!mounted) return;
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Report submitted successfully.'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
+                                  AppFeedback.showSuccess(context, 'Report submitted successfully.');
                                   Navigator.of(context).pop(); // Go back after submission
                                 }
                               } catch (e) {
@@ -317,12 +300,7 @@ class _ReportACuratorScreenState extends State<ReportACuratorScreen> {
                                 if (!mounted) return;
                                 if (mounted) {
                                   // ignore: use_build_context_synchronously
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Failed to submit report: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                  AppFeedback.showError(context, 'Failed to submit report: $e');
                                 }
                               }
                             },

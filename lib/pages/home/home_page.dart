@@ -5,6 +5,7 @@ import 'package:moldify/pages/farmer/wikimold/main_wikimold.dart';
 import 'package:moldify/pages/home/notification_page.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/tiles/stat_tile.dart';
 import 'package:moldify/pages/monitor/main_monitor.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -517,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return const Padding(
       padding: EdgeInsets.only(top: 20.0),
       child: Center(
-        child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
+        child: AppLoadingSpinner(),
       ),
     );
   }
@@ -651,9 +652,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCaseStatusBreakdown(AppLocalizations l10n) {
     return _isLoadingDashboard
-        ? Center(
-            child: CircularProgressIndicator(color: MoldifyColors.primaryColor),
-          )
+        ? const Center(child: AppLoadingSpinner())
         : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -723,7 +722,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   alpha: 0.1,
                 ),
                 label: l10n.submitReport,
-                onTap: () => Navigator.pushNamed(context, '/submit-report'),
+                onTap: () {
+                  Navigator.pushNamed(context, '/submit-report').then((value) {
+                    final result = MutationResult.fromAny(value);
+                    if (result.changed && mounted) {
+                      final authProvider = context.read<AppAuthProvider>();
+                      _loadDashboardData(authProvider.cookie, role);
+                    }
+                  });
+                },
               ),
             ),
             const SizedBox(width: 8),
@@ -767,11 +774,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(
       height: 163.0,
       child: _isLoadingDashboard
-          ? Center(
-              child: CircularProgressIndicator(
-                color: MoldifyColors.primaryColor,
-              ),
-            )
+          ? const Center(child: AppLoadingSpinner())
           : _moldipediaArticles.isEmpty
           ? Center(
               child: Text(

@@ -3,11 +3,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/auth/login.dart';
 import 'package:moldify/pages/misc/language_toggle.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
+import '../misc/overlays/modals/chip_selection_modal.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
@@ -71,6 +75,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _agreedToTerms = false;
   bool isLoading = false;
   final phoneNumController = TextEditingController();
+  String? _formErrorText;
+
+  final List<String> _occupationOptions = [
+    'Farmer',
+    'Horticulturist',
+    'Student',
+    'Agricultural Worker',
+    'Business Owner',
+  ];
 
   String? _passwordErrorText;
   String? _phoneErrorText;
@@ -91,38 +104,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    if (!context.mounted) return;
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message,
-            style: const TextStyle(
-              fontFamily: 'Bricolage-Grotesque-Regular',
-              fontSize: 14,
-              color: MoldifyColors.backgroundColor,
-            ),
-          ),
-          backgroundColor: MoldifyColors.MoldifyRed,
-        ),
-      );
-    }
+    AppFeedback.showError(context, message);
   }
 
   void _showSuccessSnackBar(String message) {
-    if (!context.mounted) return;
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message,
-            style: const TextStyle(
-              fontFamily: 'Bricolage-Grotesque-Regular',
-              fontSize: 14,
-              color: MoldifyColors.backgroundColor,
-            ),
-          ),
-          backgroundColor: MoldifyColors.primaryColor,
-        ),
-      );
+    AppFeedback.showSuccess(context, message);
+  }
+
+  Future<void> _selectOccupation() async {
+    final l10n = AppLocalizations.of(context)!;
+    final selectedOccupation = await showChipSelectionModal(
+      context: context,
+      title: 'Select Occupation',
+      options: _occupationOptions,
+      currentSelection: occupationController.text,
+      customInputHint: 'Enter your occupation',
+      othersLabel: l10n.othersLabel,
+      isMultiLine: false,
+    );
+
+    if (selectedOccupation != null && selectedOccupation.isNotEmpty) {
+      setState(() {
+        occupationController.text = selectedOccupation;
+      });
     }
   }
 
@@ -166,10 +170,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() {
       _passwordErrorText = null;
       _phoneErrorText = null;
+      _formErrorText = null;
     });
 
     // Check terms & conditions FIRST before any other validation
     if (!_agreedToTerms) {
+      setState(() {
+        _formErrorText = 'You must agree to the terms and privacy policy.';
+      });
       _showErrorSnackBar('You must agree to the terms and privacy policy.');
       return;
     }
@@ -184,6 +192,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         phoneNumController.text.isEmpty ||
         addressController.text.isEmpty ||
         occupationController.text.isEmpty) {
+      setState(() {
+        _formErrorText = 'Please fill in all required fields.';
+      });
       _showErrorSnackBar('All fields are required.');
       return;
     }
@@ -501,9 +512,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: l10n.enterOccupation,
+                              hintText: 'Select occupation',
                               controller: occupationController,
                               showPassword: false,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              rightIconColor: MoldifyColors.accentColor,
+                              readOnly: true,
+                              onTap: _selectOccupation,
                             ),
                           ),
 
@@ -598,6 +613,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
 
                           /// Signup Button
+                          if (_formErrorText != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: MoldifyColors.MoldifyRed.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: MoldifyColors.MoldifyRed.withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Text(
+                                  _formErrorText!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    fontSize: 13,
+                                    color: MoldifyColors.MoldifyRed,
+                                  ),
+                                ),
+                              ),
+                            ),
+
                           Padding(
                             padding: const EdgeInsets.only(
                                 top: 50.0, bottom: 3.0),
@@ -789,12 +828,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               if (isLoading)
-                Container(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
+                const AppLoadingOverlay(),
             ],
           ),
         );

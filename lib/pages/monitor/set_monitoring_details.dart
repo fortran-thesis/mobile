@@ -938,6 +938,9 @@ class _SetMonitoringDetailsScreenState
     BuildContext context,
     TextEditingController targetController,
   ) async {
+    final today = DateTime.now();
+    final todayDateOnly = DateTime(today.year, today.month, today.day);
+
     // Determine if this is for start date or another date
     final isStartDate = targetController == _startDateController;
 
@@ -954,10 +957,18 @@ class _SetMonitoringDetailsScreenState
       }
     }
 
+    final DateTime firstDateForPicker =
+        isStartDate ? todayDateOnly : DateTime(2000);
+
+    final DateTime initialDateForPicker =
+        todayDateOnly.isAfter(lastDateForPicker)
+            ? lastDateForPicker
+            : todayDateOnly;
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initialDateForPicker,
+      firstDate: firstDateForPicker,
       lastDate: lastDateForPicker,
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',

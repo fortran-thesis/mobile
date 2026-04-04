@@ -6,6 +6,7 @@ import 'package:moldify/core/features/user/logic/user_bloc.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:provider/provider.dart';
@@ -43,11 +44,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: MoldifyColors.primaryColor,
-              ),
-            );
+            return const Center(child: AppLoadingSpinner());
           }
 
           if (state is NotificationError) {

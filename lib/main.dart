@@ -122,7 +122,20 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           title: 'Moldify',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(),
+          theme: ThemeData(
+            snackBarTheme: SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: MoldifyColors.primaryColor,
+              contentTextStyle: const TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                fontSize: 14,
+                color: MoldifyColors.backgroundColor,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
           locale: langProvider.effectiveLocale,
           localizationsDelegates: [
             AppLocalizations.delegate,
@@ -221,8 +234,9 @@ class _MainPageState extends State<MainPage> {
           _handleNativeBack();
         },
         child: Scaffold(
+          backgroundColor: Colors.transparent,
           resizeToAvoidBottomInset: false,
-            extendBody: false,
+            extendBody: true,
           drawer: showNavChrome && selectedPosition == 0 ? const AppDrawer() : null,
           body: IndexedStack(
             index: selectedPosition,
@@ -286,40 +300,59 @@ class _MainPageState extends State<MainPage> {
   /// - Monitor icon that navigates to the MainMonitorScreen when tapped.
   /// The selected icon is highlighted based on the selectedPosition.
   Widget _buildBottomNavigationBar() {
+    final mediaQuery = MediaQuery.of(context);
+    final safeBottom = mediaQuery.viewPadding.bottom;
+    final screenWidth = mediaQuery.size.width;
+    final isNarrowPhone = mediaQuery.size.width < 360;
+    final iconSize = isNarrowPhone ? 18.0 : 21.0;
+    final tabHorizontalPadding = isNarrowPhone ? 10.0 : 16.0;
+    final baseFabGap = screenWidth * (isNarrowPhone ? 0.30 : 0.36);
+    final fabGap = baseFabGap.clamp(112.0, 170.0);
+    const navContentHeight = 56.0;
+
     return SizedBox(
-      height: 52.0,
+      height: navContentHeight + safeBottom,
       child: BottomAppBar(
         color: MoldifyColors.primaryColor,
         shape: const CircularNotchedRectangle(),
         notchMargin: 5.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.max,
-          children: _isExpert
-              ? [
-                  _tabItem(
-                    icon: FontAwesomeIcons.house,
-                    isSelected: selectedPosition == 0,
-                    onTap: () => setState(() => selectedPosition = 0),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: safeBottom),
+          child: SizedBox(
+            height: navContentHeight,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _tabItem(
+                      icon: FontAwesomeIcons.house,
+                      isSelected: selectedPosition == 0,
+                      onTap: () => setState(() => selectedPosition = 0),
+                      iconSize: iconSize,
+                      horizontalPadding: tabHorizontalPadding,
+                    ),
                   ),
-                  _tabItem(
-                    icon: FontAwesomeIcons.seedling,
-                    isSelected: selectedPosition == 1,
-                    onTap: () => setState(() => selectedPosition = 1),
+                ),
+                SizedBox(width: fabGap),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _tabItem(
+                      icon: FontAwesomeIcons.seedling,
+                      isSelected: selectedPosition == 1,
+                      onTap: () => setState(() => selectedPosition = 1),
+                      iconSize: iconSize,
+                      horizontalPadding: tabHorizontalPadding,
+                    ),
                   ),
-                ]
-              : [
-                  _tabItem(
-                    icon: FontAwesomeIcons.house,
-                    isSelected: selectedPosition == 0,
-                    onTap: () => setState(() => selectedPosition = 0),
-                  ),
-                  _tabItem(
-                    icon: FontAwesomeIcons.seedling,
-                    isSelected: selectedPosition == 1,
-                    onTap: () => setState(() => selectedPosition = 1),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -332,24 +365,28 @@ class _MainPageState extends State<MainPage> {
     required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
+    required double iconSize,
+    required double horizontalPadding,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.0),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
+      radius: 22,
+      splashColor: MoldifyColors.accentColor.withValues(alpha: 0.18),
+      highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.10),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Center(
+            child: Icon(
               icon,
               color: isSelected
                   ? MoldifyColors.accentColor
                   : MoldifyColors.backgroundColor,
-              size: 20.0,
+              size: iconSize,
             ),
-          ],
+          ),
         ),
       ),
     );

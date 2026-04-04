@@ -43,6 +43,9 @@ class ChipSelectionModal extends StatefulWidget {
   /// Label for the "Others" option
   final String othersLabel;
 
+  /// Whether to show the built-in "Others" chip and custom input field.
+  final bool showOthersOption;
+
   final bool isMultiLine;
   final bool allowMultiSelect;
 
@@ -54,6 +57,7 @@ class ChipSelectionModal extends StatefulWidget {
     this.currentSelections,
     this.customInputHint = 'Type your answer here',
     this.othersLabel = 'Others/Iba pa', 
+    this.showOthersOption = true,
     required this.isMultiLine,
     this.allowMultiSelect = false,
   });
@@ -341,23 +345,25 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
 
                           const SizedBox(height: 12),
 
-                          /// "Others/Iba pa" chip
-                          _buildChip(
-                            label: widget.othersLabel,
-                            isSelected: _isCustomInputSelected,
-                            onTap: _onOthersSelected,
-                            isOthersOption: true,
-                          ),
+                          if (widget.showOthersOption) ...[
+                            /// "Others/Iba pa" chip
+                            _buildChip(
+                              label: widget.othersLabel,
+                              isSelected: _isCustomInputSelected,
+                              onTap: _onOthersSelected,
+                              isOthersOption: true,
+                            ),
 
-                          /// Custom input field (shown when "Others" is selected)
-                          if (_isCustomInputSelected) ...[
-                            const SizedBox(height: 15),
-                            BuildTextBox(
-                              hintText: widget.customInputHint, 
-                              controller: _customInputController, 
-                              showPassword: false,
-                              isMultiline: widget.isMultiLine,
-                              )
+                            /// Custom input field (shown when "Others" is selected)
+                            if (_isCustomInputSelected) ...[
+                              const SizedBox(height: 15),
+                              BuildTextBox(
+                                hintText: widget.customInputHint,
+                                controller: _customInputController,
+                                showPassword: false,
+                                isMultiline: widget.isMultiLine,
+                              ),
+                            ],
                           ],
                         ],
                       ),
@@ -492,6 +498,7 @@ Future<String?> showChipSelectionModal({
   String? currentSelection,
   String customInputHint = 'Type your answer here',
   String othersLabel = 'Others/Iba pa',
+  bool showOthersOption = true,
   required bool isMultiLine,
 }) async {
   return await showDialog<String>(
@@ -504,6 +511,7 @@ Future<String?> showChipSelectionModal({
         currentSelection: currentSelection,
         customInputHint: customInputHint,
         othersLabel: othersLabel,
+        showOthersOption: showOthersOption,
         isMultiLine: isMultiLine,
       );
     },
@@ -517,6 +525,7 @@ Future<List<String>?> showMultiChipSelectionModal({
   List<String>? currentSelections,
   String customInputHint = 'Type your answer here',
   String othersLabel = 'Others/Iba pa',
+  bool showOthersOption = true,
   required bool isMultiLine,
 }) async {
   return await showDialog<List<String>>(
@@ -529,6 +538,7 @@ Future<List<String>?> showMultiChipSelectionModal({
         currentSelections: currentSelections,
         customInputHint: customInputHint,
         othersLabel: othersLabel,
+        showOthersOption: showOthersOption,
         isMultiLine: isMultiLine,
         allowMultiSelect: true,
       );

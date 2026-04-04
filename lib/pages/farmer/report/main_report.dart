@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../misc/buttons/popmenu_button.dart';
 import '../../misc/colors.dart';
 import '../../misc/functions/empty_state.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/main_case_tile.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
@@ -325,11 +326,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           child: BlocBuilder<MoldReportBloc, MoldReportState>(
                             builder: (context, state) {
                               if (state is MoldReportLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                );
+                                return const Center(child: AppLoadingSpinner());
                               }
                               if (state is MoldReportError) {
                                 return EmptyState(message: state.message, height: MediaQuery.of(context).size.height - 300);
@@ -356,9 +353,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                       return const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12.0),
                                         child: Center(
-                                          child: CircularProgressIndicator(
-                                            color: MoldifyColors.primaryColor,
-                                          ),
+                                          child: AppLoadingSpinner(),
                                         ),
                                       );
                                     }

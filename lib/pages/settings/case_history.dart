@@ -11,6 +11,7 @@ import '../../../core/utils/date_utils.dart';
 import '../../../providers/auth_provider.dart';
 import '../misc/colors.dart';
 import '../misc/functions/empty_state.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../misc/tiles/main_case_tile.dart';
 
@@ -220,11 +221,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
 
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: MoldifyColors.primaryColor,
-                      )
-                    )
+                  ? const Center(child: AppLoadingSpinner())
                   : _error != null
                       ? EmptyState(
                           message: _error!,
@@ -243,9 +240,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                                   return const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 20.0),
                                     child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: MoldifyColors.primaryColor,
-                                      ),
+                                      child: AppLoadingSpinner(),
                                     ),
                                   );
                                 }

@@ -73,8 +73,13 @@ class MoldReportService {
       '',
       data: formData,
       options: Options(
-        headers:
-            sessionCookie != null ? {'Cookie': 'session=$sessionCookie'} : null,
+        headers: sessionCookie != null && sessionCookie.trim().isNotEmpty
+            ? {
+                'Cookie': sessionCookie.trim().startsWith('session=')
+                    ? sessionCookie.trim()
+                    : 'session=${sessionCookie.trim()}',
+              }
+            : null,
         validateStatus: (_) => true,
       ),
     );

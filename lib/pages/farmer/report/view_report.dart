@@ -31,6 +31,7 @@ import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/colors.dart';
 import '../../misc/functions/scrollable_tab_bar.dart';
 import '../../misc/images/cover_image.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/tiles/status_tile.dart';
 
@@ -486,11 +487,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
               if (_isLoading)
                 SizedBox(
                   height: 220,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: MoldifyColors.primaryColor,
-                    ),
-                  ),
+                  child: const Center(child: AppLoadingSpinner()),
                 )
               else if (_error != null)
                 SizedBox(

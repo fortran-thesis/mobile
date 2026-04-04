@@ -19,6 +19,8 @@ import 'package:intl/intl.dart';
 import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
+import '../../misc/overlays/app_feedback.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/overlays/modals/chip_selection_modal.dart';
 import '../../misc/textboxes/textboxes.dart';
@@ -70,11 +72,12 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   ];
 
   Future<void> _selectDate(BuildContext context) async {
+    final today = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: today,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      lastDate: DateTime(today.year, today.month, today.day),
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',
       fieldHintText: 'Month/Day/Year',
@@ -196,15 +199,17 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(title: l10n.submitReport),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15.0,
-              vertical: 30.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15.0,
+                  vertical: 30.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 /// ----------- Submit Report Header -----------
                 Builder(builder: (_) {
                   return Column(
@@ -233,7 +238,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
                   child: Text(
-                    l10n.cropName,
+                    'Host Plant Affected',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -247,6 +252,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   hintText: l10n.enterCropName,
                   controller: _cropNameController,
                   showPassword: false,
+                  rightIcon: FontAwesomeIcons.angleRight,
+                  rightIconColor: MoldifyColors.accentColor,
                   readOnly: true,
                   onTap: () async {
                     final selectedCrop = await showChipSelectionModal(
@@ -356,6 +363,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   controller: _probDescController,
                   showPassword: false,
                   isMultiline: true,
+                  rightIcon: FontAwesomeIcons.angleRight,
+                  rightIconColor: MoldifyColors.accentColor,
                   readOnly: true,
                   onTap: () async {
                     final selectedProblems = await showMultiChipSelectionModal(
@@ -391,66 +400,22 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                       // Validate required fields
                       if (_cropNameController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.cropNameRequired,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor,
-                              ),
-                            ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                        AppFeedback.showError(context, l10n.cropNameRequired);
                         return;
                       }
 
                       if (_addressController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.locationRequired,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor,
-                              ),
-                            ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                        AppFeedback.showError(context, l10n.locationRequired);
                         return;
                       }
 
                       if (_dateFirstObservedController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.dateFirstObservedRequired,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor,
-                              ),
-                            ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                        AppFeedback.showError(context, l10n.dateFirstObservedRequired);
                         return;
                       }
 
                       if (_selectedProblemDescriptions.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.problemDescriptionRequired,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor,
-                              ),
-                            ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                        AppFeedback.showError(context, l10n.problemDescriptionRequired);
                         return;
                       }
 
@@ -479,46 +444,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       setState(() {
                         _isSubmitting = true;
                       });
-
-                      // Show loading dialog and capture its BuildContext so we
-                      // can reliably dismiss it even if this widget unmounts.
-                      BuildContext? _loadingDialogContext;
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext dialogContext) {
-                          _loadingDialogContext = dialogContext;
-                          return PopScope(
-                            canPop: false,
-                            child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(20.0),
-                                decoration: BoxDecoration(
-                                  color: MoldifyColors.backgroundColor,
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: const [
-                                    CircularProgressIndicator(
-                                      color: MoldifyColors.primaryColor,
-                                    ),
-                                    SizedBox(height: 20),
-                                    Text(
-                                      'Submitting your report...',
-                                      style: TextStyle(
-                                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                        fontSize: 16,
-                                        color: MoldifyColors.primaryColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
 
                       try {
                         final authProvider = Provider.of<AppAuthProvider>(
@@ -580,6 +505,8 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           if (currentUserId != null) 'user_id': currentUserId,
                           // backend expects snake_case keys
                           'host': _cropNameController.text.trim(),
+                          // Temporary workaround: backend currently requires case_name.
+                          'case_name': _cropNameController.text.trim(),
                           if (isoDateObserved != null) 'date_observed': isoDateObserved,
                           // include description as a top-level field (cover_photo is sent
                           // separately as the multipart file). Keep the joined
@@ -631,31 +558,12 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           AppLogger.w('⚠️ Lookup failed (non-blocking): $lookupError');
                         }
 
-                        // Close loading dialog using captured dialog context
-                        try {
-                          if (_loadingDialogContext != null) {
-                            Navigator.of(_loadingDialogContext!).pop();
-                          } else if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        } catch (_) {
-                          // ignore — dialog may already be dismissed
-                        }
-
                         // Show success message
                         if (!context.mounted) return;
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Your report has been submitted successfully.',
-                                style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                    color: MoldifyColors.backgroundColor
-                                ),
-                              ),
-                              backgroundColor: MoldifyColors.primaryColor,
-                            ),
+                          AppFeedback.showSuccess(
+                            context,
+                            'Your report has been submitted successfully.',
                           );
                         }
 
@@ -672,17 +580,9 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                                 onSelectMold: (moldId, moldName, confidence) {
                                   // After farmer selects a mold, return to main flow
                                   Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Selected: $moldName (${confidence.toStringAsFixed(0)}% match)',
-                                        style: const TextStyle(
-                                          fontFamily: 'Bricolage-Grotesque-Regular',
-                                          color: MoldifyColors.backgroundColor,
-                                        ),
-                                      ),
-                                      backgroundColor: MoldifyColors.primaryColor,
-                                    ),
+                                  AppFeedback.showInfo(
+                                    context,
+                                    'Selected: $moldName (${confidence.toStringAsFixed(0)}% match)',
                                   );
                                 },
                                 onBack: () {
@@ -704,45 +604,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                           );
                         }
                       } catch (e) {
-                        // Close loading dialog using captured dialog context
-                        try {
-                          if (_loadingDialogContext != null) {
-                            Navigator.of(_loadingDialogContext!).pop();
-                          } else if (context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        } catch (_) {
-                          // ignore — dialog may already be dismissed
-                        }
-
                         // Show error
                         if (!context.mounted) return;
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Failed to submit report: $e',
-                                style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  color: MoldifyColors.backgroundColor
-                                ),
-                              ),
-                              backgroundColor: MoldifyColors.primaryColor,
-                            ),
+                          AppFeedback.showError(
+                            context,
+                            'Failed to submit report: $e',
                           );
                         }
                       } finally {
-                        // Ensure loading dialog is dismissed even if we returned early
-                        try {
-                          if (_loadingDialogContext != null) {
-                            Navigator.of(_loadingDialogContext!).pop();
-                          } else if (mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        } catch (_) {
-                          // ignore - dialog may already be dismissed
-                        }
-
                         if (mounted) {
                           setState(() {
                             _isSubmitting = false;
@@ -758,9 +628,15 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                     buttonRadius: 10,
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (_isSubmitting)
+              const AppLoadingOverlay(
+                message: 'Submitting your report...',
+              ),
+          ],
         ),
       ),
     );

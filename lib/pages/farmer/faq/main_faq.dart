@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../misc/colors.dart';
 import '../../misc/functions/empty_state.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/expansion_tile.dart';
 import '../../../core/features/faq/models/faq.dart';
@@ -106,11 +107,7 @@ class _MainFAQSCreenState extends State<MainFAQSCreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(title: l10n.faq),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: MoldifyColors.primaryColor,
-              ),
-            )
+          ? const Center(child: AppLoadingSpinner())
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),

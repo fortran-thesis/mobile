@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 import '../misc/colors.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/tiles/account_settings_tiles.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
@@ -133,9 +134,7 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                         Align(
                           alignment: Alignment.center,
                           child: state is UserProfileLoading
-                              ? CircularProgressIndicator(
-                                  color: MoldifyColors.primaryColor,
-                                )
+                              ? const AppLoadingSpinner()
                               : Text(
                             username,
                             style: TextStyle(

@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
 
 /// ReportBugScreen is a screen that allows users to report bugs in the application.
 
@@ -19,9 +20,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        AppFeedback.showError(context, 'Could not open link');
       }
     }
   }

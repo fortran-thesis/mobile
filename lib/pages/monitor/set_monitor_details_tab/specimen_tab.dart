@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../../misc/colors.dart';
@@ -58,7 +59,7 @@ class SpecimenTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Crop Name',
+          'Host Plant Affected',
           style: TextStyle(
             fontSize: 16,
             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -67,7 +68,7 @@ class SpecimenTab extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         BuildTextBox(
-          hintText: 'Enter crop name',
+          hintText: 'Enter host plant affected (e.g. tomato, mango)',
           controller: cropNameController,
           showPassword: false,
         ),
@@ -90,6 +91,8 @@ class SpecimenTab extends StatelessWidget {
                 hintText: 'Select type(s) of specimen',
                 controller: typeController,
                 showPassword: false,
+                rightIcon: FontAwesomeIcons.angleRight,
+                rightIconColor: MoldifyColors.accentColor,
                 readOnly: true,
                 onTap: onPickType,
               ),
