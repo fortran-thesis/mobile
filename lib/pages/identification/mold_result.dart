@@ -10,12 +10,12 @@ import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/features/mold/service/mold_detail_adapter.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
 import 'package:moldify/core/utils/logger.dart';
-
 
 class MoldResultScreen extends StatefulWidget {
   final String croppedImagePath;
@@ -45,79 +45,116 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
+  bool _isMoldNotFound = false; // Flag to detect when mold not in database
   late String healthContent;
   late String plantThreatContent;
   late String fullDescription;
 
-  String _readStringOrFallback(dynamic value, String fallback) {
-    if (value == null) return fallback;
-    final text = value.toString().trim();
-    return text.isNotEmpty ? text : fallback;
-  }
-
-  String _readMoldDetailField(Map<String, dynamic>? details, String key, String fallback) {
-    final info = details?['mold_details'] is Map<String, dynamic>
-        ? details!['mold_details']['info'] as Map<String, dynamic>? 
-        : null;
-    if (info == null) return fallback;
-    final value = info[key] ?? info[key.replaceAll('_', '')] ?? info[key.replaceAll('_', '')];
-    return _readStringOrFallback(value, fallback);
+  String _readMoldDetailField(
+    Map<String, dynamic>? details,
+    String key,
+    String fallback,
+  ) {
+    return MoldDetailAdapter.readField(details, key, fallback: fallback);
   }
 
   String _readMoldDetailSymptoms(Map<String, dynamic>? details) {
-    final info = details?['mold_details'] is Map<String, dynamic>
-        ? details!['mold_details']['info'] as Map<String, dynamic>? 
-        : null;
-    if (info == null) return '';
-    final value = info['symptoms_and_signs'] ?? info['symptomsSigns'] ?? info['symptoms'] ?? info['signs'];
-    return _readStringOrFallback(value, 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.');
+    return _readMoldDetailField(
+      details,
+      'symptoms_and_signs',
+      'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+    );
   }
 
   String _readMoldDetailSpread(Map<String, dynamic>? details) {
-    final info = details?['mold_details'] is Map<String, dynamic>
-        ? details!['mold_details']['info'] as Map<String, dynamic>? 
-        : null;
-    if (info == null) return '';
-    final value = info['disease_cycle_spread_impact'] ?? info['disease_cycle'] ?? info['diseaseCycle'] ?? info['spread'];
-    return _readStringOrFallback(value, 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.');
+    return _readMoldDetailField(
+      details,
+      'disease_cycle_spread_impact',
+      'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+    );
   }
 
   String _readMoldDetailImpact(Map<String, dynamic>? details) {
-    final info = details?['mold_details'] is Map<String, dynamic>
-        ? details!['mold_details']['info'] as Map<String, dynamic>? 
-        : null;
-    if (info == null) return '';
-    final value = info['impact'] ?? info['disease_cycle_spread_impact'] ?? info['impact_analysis'];
-    return _readStringOrFallback(value, 'Impact varies widely and can include reduced crop yields and human health risks.');
+    final spread = _readMoldDetailField(
+      details,
+      'disease_cycle_spread_impact',
+      '',
+    );
+    if (spread.isNotEmpty) return spread;
+    return 'Impact varies widely and can include reduced crop yields and human health risks.';
   }
 
   String _readMoldDetailPrevention(Map<String, dynamic>? details) {
-    final info = details?['mold_details'] is Map<String, dynamic>
-        ? details!['mold_details']['info'] as Map<String, dynamic>? 
-        : null;
-    if (info == null) return '';
-    final value = info['prevention_summary'] ?? info['preventionSummary'] ?? info['prevention'];
-    return _readStringOrFallback(value, 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.');
+    return _readMoldDetailField(
+      details,
+      'prevention_summary',
+      'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+    );
+  }
+
+  String _buildTreatmentsContent(Map<String, dynamic>? details) {
+    final prevention = MoldDetailAdapter.extractPrevention(details);
+    if (prevention.isEmpty) return _fallbackTreatmentsContent;
+
+    String read(List<String> keys) {
+      for (final key in keys) {
+        final text = (prevention[key] ?? '').toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+
+    final segments = <String>[];
+    void push(String type, String title, List<String> keys) {
+      final content = read(keys);
+      if (content.isEmpty) return;
+      segments.add('$type::$title::$content');
+    }
+
+    push('MECHANICAL', 'Mechanical Control', [
+      'mechanicalControl',
+      'mechanical_control',
+    ]);
+    push('BIOLOGICAL', 'Biological Control', [
+      'biologicalControl',
+      'biological_control',
+    ]);
+    push('CHEMICAL', 'Chemical Control', [
+      'chemicalControl',
+      'chemical_control',
+    ]);
+    push('PHYSICAL', 'Physical Control', [
+      'physicalControl',
+      'physical_control',
+    ]);
+    push('CULTURAL', 'Cultural Control', [
+      'culturalControl',
+      'cultural_control',
+    ]);
+
+    return segments.isNotEmpty
+        ? segments.join('|')
+        : _fallbackTreatmentsContent;
   }
 
   final String defaultDescription =
-    "Aspergillus is a genus of common molds that can be found in various environments, "
-    "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
-    "Aspergillus is a genus of common molds that can be found in various environments, "
-    "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
-    "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
-    "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
-    "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
-    "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
-    "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
-    "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
-    "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
-    "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
-    "are also used commercially for the production of citric acid and other enzymes, highlighting "
-    "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
+      "Aspergillus is a genus of common molds that can be found in various environments, "
+      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
+      "Aspergillus is a genus of common molds that can be found in various environments, "
+      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
+      "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
+      "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
+      "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
+      "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
+      "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
+      "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
+      "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
+      "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
+      "are also used commercially for the production of citric acid and other enzymes, highlighting "
+      "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
 
   // Prevention tactics using structured format (pipe-delimited)
-  final String treatmentsContent = 
+  final String _fallbackTreatmentsContent =
       'MECHANICAL::Mechanical Control::Remove infected plant debris promptly using sterilized tools. Prune affected areas and ensure proper disposal of contaminated materials in sealed bags. Clean and dry surfaces thoroughly to prevent mold spread.|'
       'BIOLOGICAL::Biological Control::Apply beneficial microorganisms that compete with mold growth. Use natural antifungal agents like vinegar, hydrogen peroxide, or neem oil for surface treatment. UV light treatment can also help control surface mold.|'
       'CHEMICAL::Chemical Control::Recommended fungicides: Chlorothalonil, Mancozeb, and Copper-based fungicides. Rotate products with different active ingredients to prevent resistance. Always follow label recommendations for dosage and application frequency.|'
@@ -127,14 +164,13 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   late final Map<String, String> _recommendationSections;
   late final List<Map<String, String>> _managementControls;
 
-
   @override
   void initState() {
     super.initState();
     AppLogger.d('MoldResult: initState called');
     AppLogger.d('MoldResult: modelResult = ${widget.modelResult}');
     AppLogger.d('MoldResult: moldDetails = ${widget.moldDetails}');
-    
+
     // Initialize from modelResult argument
     // Convert probability from decimal to percentage string
     final prob = widget.modelResult?['probability'];
@@ -152,28 +188,54 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       AppLogger.d('MoldResult: No probability found in modelResult');
     }
     // Extract only the genus from 'genus_spp' format
-    final predictedClass = widget.modelResult?['predicted_class']?.toString() ?? '';
-    moldGenus = predictedClass.contains('_') ? predictedClass.split('_')[0] : predictedClass;
-    AppLogger.d('MoldResult: Predicted class: $predictedClass, Genus: $moldGenus');
-    
+    final predictedClass =
+        widget.modelResult?['predicted_class']?.toString() ?? '';
+    moldGenus = predictedClass.contains('_')
+        ? predictedClass.split('_')[0]
+        : predictedClass;
+    AppLogger.d(
+      'MoldResult: Predicted class: $predictedClass, Genus: $moldGenus',
+    );
+
+    // Detect if mold was found in database
+    final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
+    _isMoldNotFound =
+        resolvedDetails.isEmpty || resolvedDetails.containsKey('error');
+    AppLogger.d('MoldResult: Mold found in database: ${!_isMoldNotFound}');
+
     // Use moldDetails if available to populate data instead of hardcoded values
-    if (widget.moldDetails != null && (widget.moldDetails?.isEmpty ?? true) == false) {
+    if (!_isMoldNotFound) {
       AppLogger.d('MoldResult: Using moldDetails from API');
-      AppLogger.d('MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}');
+      AppLogger.d(
+        'MoldResult: moldDetails keys: ${widget.moldDetails!.keys.toList()}',
+      );
 
       if (widget.moldDetails!.containsKey('error')) {
-        AppLogger.e('MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}');
+        AppLogger.e(
+          'MoldResult: ERROR in moldDetails: ${widget.moldDetails!['error']}',
+        );
       } else {
-        AppLogger.d('MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...');
+        AppLogger.d(
+          'MoldResult: moldDetails data structure: ${widget.moldDetails.toString().substring(0, widget.moldDetails.toString().length > 300 ? 300 : widget.moldDetails.toString().length)}...',
+        );
       }
 
-      final details = widget.moldDetails;
-      healthContent = _readMoldDetailField(details, 'health_risks',
-          'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.');
-      plantThreatContent = _readMoldDetailField(details, 'affected_hosts',
-          'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.');
-      fullDescription = _readMoldDetailField(details, 'overview',
-          'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.');
+      final details = resolvedDetails;
+      healthContent = _readMoldDetailField(
+        details,
+        'health_risks',
+        'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.',
+      );
+      plantThreatContent = _readMoldDetailField(
+        details,
+        'affected_hosts',
+        'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.',
+      );
+      fullDescription = _readMoldDetailField(
+        details,
+        'overview',
+        'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.',
+      );
 
       final String symptoms = _readMoldDetailSymptoms(details);
       final String spread = _readMoldDetailSpread(details);
@@ -181,7 +243,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       final String prevention = _readMoldDetailPrevention(details);
 
       _recommendationSections = {
-        'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+        'OVERVIEW':
+            'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
         'DESCRIPTION': fullDescription,
         'HEALTH RISKS': healthContent,
         'AFFECTED CROPS / HOSTS': plantThreatContent,
@@ -190,26 +253,40 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         'IMPACT': impact,
         'PREVENTION': prevention,
       };
-
     } else {
-      AppLogger.d('MoldResult: No moldDetails provided, using hardcoded fallback data');
-      healthContent = 'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.';
-      plantThreatContent = 'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.';
-      fullDescription = 'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.';
+      AppLogger.d(
+        'MoldResult: Mold not found in database, using model result only',
+      );
+      healthContent =
+          'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.';
+      plantThreatContent =
+          'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.';
+      fullDescription =
+          'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.';
+
+      // Update OVERVIEW to indicate mold not in database
+      final overviewText = _isMoldNotFound
+          ? 'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database'
+          : 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
 
       _recommendationSections = {
-        'OVERVIEW': 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.',
+        'OVERVIEW': overviewText,
         'DESCRIPTION': fullDescription,
         'HEALTH RISKS': healthContent,
         'AFFECTED CROPS / HOSTS': plantThreatContent,
-        'SYMPTOMS & SIGNS': 'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
-        'DISEASE CYCLE / SPREAD': 'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+        'SYMPTOMS & SIGNS':
+            'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+        'DISEASE CYCLE / SPREAD':
+            'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
         'IMPACT': '$healthContent\n\n$plantThreatContent',
-        'PREVENTION': 'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+        'PREVENTION':
+            'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
       };
     }
 
-    _managementControls = _parseManagementControls(treatmentsContent);
+    _managementControls = _parseManagementControls(
+      _buildTreatmentsContent(resolvedDetails),
+    );
   }
 
   List<Map<String, dynamic>> _buildTopPredictions() {
@@ -221,19 +298,21 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       if (key == null) return;
       final className = key.toString();
       final probability = (value as num?)?.toDouble() ?? 0.0;
-      entries.add({
-        'class': className,
-        'probability': probability,
-      });
+      entries.add({'class': className, 'probability': probability});
     });
 
-    entries.sort((a, b) => ((b['probability'] as double).compareTo(a['probability'] as double)));
+    entries.sort(
+      (a, b) =>
+          ((b['probability'] as double).compareTo(a['probability'] as double)),
+    );
     return entries.take(3).toList();
   }
 
   String _inferImageFormat(String path) {
     final dotIndex = path.lastIndexOf('.');
-    final extension = dotIndex >= 0 ? path.substring(dotIndex + 1).toLowerCase() : '';
+    final extension = dotIndex >= 0
+        ? path.substring(dotIndex + 1).toLowerCase()
+        : '';
     if (extension.isNotEmpty) return extension;
     return 'png';
   }
@@ -341,18 +420,16 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   Widget build(BuildContext context) {
     final String today = DateFormat('MMMM d, y').format(DateTime.now());
 
-    final TextEditingController correctedGenusController = TextEditingController();
+    final TextEditingController correctedGenusController =
+        TextEditingController();
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
         title: 'Mold Result',
-        rightIcon: Icon(
-          Icons.flag,
-        ),
+        rightIcon: Icon(Icons.flag),
         rightIconColor: MoldifyColors.MoldifyRed,
         onRightIconPressed: () {
-
           // Define the save logic here so it can be referenced by both onSave and onConfirm
           void onSave(String correctedText) {
             // Add your save logic here
@@ -369,7 +446,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
             builder: (context) {
               return Padding(
                 // Add padding to account for the keyboard
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
                 child: BuildBottomSheet(
                   child: CorrectionBottomSheetContent(
                     correctedGenusController: correctedGenusController,
@@ -388,7 +467,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
                     /// This is the confirm action for the pop up dialog
                     onConfirm: () {
-                      onSave(correctedGenusController.text);                    },
+                      onSave(correctedGenusController.text);
+                    },
                   ),
                 ),
               );
@@ -406,10 +486,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-      
+
             /// 2. The content container, padded from the top to create the overlap.
             Padding(
-              padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.35,
+              ),
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -435,9 +517,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                           ),
                           maxLines: 1,
                           minFontSize: 10,
-                        )
+                        ),
                       ),
-              
+
                       /// This is the Mold Genus Name
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -452,11 +534,13 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                           minFontSize: 24,
                         ),
                       ),
-              
+
                       /// Date and Confidence Level
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            vertical: 15.0, horizontal: 15.0),
+                          vertical: 15.0,
+                          horizontal: 15.0,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -481,7 +565,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                 ),
                               ],
                             ),
-              
+
                             /// Confidence Level
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -516,20 +600,88 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                       ),
 
                       _buildSectionHeader('TREATMENT MANAGEMENT CONTROLS'),
-                      _buildSectionBody(
-                        _buildManagementControls(),
-                      ),
+                      _buildSectionBody(_buildManagementControls()),
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: ResultActionSection(
                           onSave: () async {
                             if (_isSavingResult) return;
+
+                            // Show confirmation dialog if mold is not in database
+                            if (_isMoldNotFound) {
+                              final shouldProceed =
+                                  await showDialog<bool>(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (BuildContext dialogContext) {
+                                      return AlertDialog(
+                                        title: const Text(
+                                          'Mold Not in Database',
+                                          style: TextStyle(
+                                            fontFamily: 'Montserrat-Bold',
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                        content: const Text(
+                                          'This mold is not in our database. Would you like to save this result and help us add it?',
+                                          style: TextStyle(
+                                            fontFamily:
+                                                'Bricolage-Grotesque-Regular',
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                              dialogContext,
+                                              false,
+                                            ),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                              dialogContext,
+                                              true,
+                                            ),
+                                            child: const Text(
+                                              'Save & Report',
+                                              style: TextStyle(
+                                                color:
+                                                    MoldifyColors.accentColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ) ??
+                                  false;
+
+                              if (!shouldProceed) {
+                                AppLogger.d(
+                                  'MoldResult: User cancelled save for unknown mold',
+                                );
+                                return;
+                              }
+                              AppLogger.d(
+                                'MoldResult: User confirmed save for unknown mold',
+                              );
+                            }
+
                             setState(() => _isSavingResult = true);
                             final topPredictions = _buildTopPredictions();
-                            final confidenceDecimal = (widget.modelResult?['probability'] as num?)?.toDouble() ?? 0.0;
-                            final predictedClassName = widget.modelResult?['predicted_class']?.toString();
-                            final nowIso = DateTime.now().toUtc().toIso8601String();
+                            final confidenceDecimal =
+                                (widget.modelResult?['probability'] as num?)
+                                    ?.toDouble() ??
+                                0.0;
+                            final predictedClassName = widget
+                                .modelResult?['predicted_class']
+                                ?.toString();
+                            final nowIso = DateTime.now()
+                                .toUtc()
+                                .toIso8601String();
 
                             final savePayload = <String, dynamic>{
                               'imagePath': widget.croppedImagePath,
@@ -538,48 +690,70 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               // Backward-compatible additions for mycologist decision support
                               'confidenceDecimal': confidenceDecimal,
                               'topPredictions': topPredictions,
-                              'modelSource': widget.modelResult?['model_source'],
-                              'usedFusion': widget.modelResult?['used_fusion'] ?? false,
-                              'usedAnn': widget.modelResult?['used_ann'] ?? false,
-                              'scanModality': widget.scanModality ?? 'microscopic',
-                              'sourceFlow': widget.sourceFlow ?? 'identification',
+                              'modelSource':
+                                  widget.modelResult?['model_source'],
+                              'usedFusion':
+                                  widget.modelResult?['used_fusion'] ?? false,
+                              'usedAnn':
+                                  widget.modelResult?['used_ann'] ?? false,
+                              'scanModality':
+                                  widget.scanModality ?? 'microscopic',
+                              'sourceFlow':
+                                  widget.sourceFlow ?? 'identification',
                               'sourceTab': widget.sourceTab,
                               'moldCaseId': widget.caseId,
                               'predictedClassName': predictedClassName,
+                              'isMoldNotFound':
+                                  _isMoldNotFound, // Flag for backend tracking
                             };
 
                             try {
-                              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+                              final authProvider = Provider.of<AppAuthProvider>(
+                                context,
+                                listen: false,
+                              );
                               final cameraService = CameraService();
 
-                              final scanRes = await cameraService.createScannedMold(
-                                imagePath: widget.croppedImagePath,
-                                imageFormat: _inferImageFormat(widget.croppedImagePath),
-                                scanModality: (widget.scanModality ?? 'microscopic'),
-                                sourceFlow: (widget.sourceFlow ?? 'identification'),
-                                sourceTab: widget.sourceTab,
-                                moldCaseId: widget.caseId,
-                                predictedClassName: predictedClassName,
-                                capturedAt: nowIso,
-                                scannedResults: {
-                                  'confidence_score': confidenceDecimal,
-                                  'flagged': confidenceDecimal < 0.70,
-                                },
-                                sessionCookie: authProvider.cookie,
-                              );
+                              final scanRes = await cameraService
+                                  .createScannedMold(
+                                    imagePath: widget.croppedImagePath,
+                                    imageFormat: _inferImageFormat(
+                                      widget.croppedImagePath,
+                                    ),
+                                    scanModality:
+                                        (widget.scanModality ?? 'microscopic'),
+                                    sourceFlow:
+                                        (widget.sourceFlow ?? 'identification'),
+                                    sourceTab: widget.sourceTab,
+                                    moldCaseId: widget.caseId,
+                                    predictedClassName: predictedClassName,
+                                    capturedAt: nowIso,
+                                    scannedResults: {
+                                      'confidence_score': confidenceDecimal,
+                                      'flagged': confidenceDecimal < 0.70,
+                                    },
+                                    sessionCookie: authProvider.cookie,
+                                  );
 
                               if (scanRes['error'] != null) {
-                                AppLogger.e('MoldResult: Failed to persist scan: ${scanRes['error']}');
+                                AppLogger.e(
+                                  'MoldResult: Failed to persist scan: ${scanRes['error']}',
+                                );
                                 savePayload['scanSaveError'] = scanRes['error'];
                               } else {
                                 final data = scanRes['data'];
                                 if (data is Map<String, dynamic>) {
-                                  savePayload['scanId'] = data['id']?.toString();
+                                  savePayload['scanId'] = data['id']
+                                      ?.toString();
                                   savePayload['savedScan'] = data;
                                 }
                               }
                             } catch (e, s) {
-                              AppLogger.e('MoldResult: Exception while persisting scan', error: e, stackTrace: s);
+                              AppLogger.e(
+                                'MoldResult: Exception while persisting scan',
+                                error: e,
+                                stackTrace: s,
+                              );
                               savePayload['scanSaveError'] = e.toString();
                             } finally {
                               if (mounted) {

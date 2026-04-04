@@ -414,6 +414,44 @@ class CultivationLog {
       return null;
     }
 
+    String parseAdditionalInfo(dynamic raw) {
+      if (raw == null) return '';
+      if (raw is String) return raw.trim();
+
+      if (raw is List) {
+        final parts = <String>[];
+        for (final item in raw) {
+          if (item is Map<String, dynamic>) {
+            final title = item['title']?.toString().trim() ?? '';
+            final description =
+                (item['description'] ?? item['content'])?.toString().trim() ??
+                '';
+            if (title.isNotEmpty && description.isNotEmpty) {
+              parts.add('$title: $description');
+            } else if (description.isNotEmpty) {
+              parts.add(description);
+            }
+          } else if (item != null) {
+            final text = item.toString().trim();
+            if (text.isNotEmpty) parts.add(text);
+          }
+        }
+        return parts.join('\n\n');
+      }
+
+      if (raw is Map<String, dynamic>) {
+        final title = raw['title']?.toString().trim() ?? '';
+        final description =
+            (raw['description'] ?? raw['content'])?.toString().trim() ?? '';
+        if (title.isNotEmpty && description.isNotEmpty) {
+          return '$title: $description';
+        }
+        if (description.isNotEmpty) return description;
+      }
+
+      return raw.toString().trim();
+    }
+
     final metadata = (json['metadata'] is Map<String, dynamic>)
         ? json['metadata'] as Map<String, dynamic>
         : null;
@@ -422,7 +460,7 @@ class CultivationLog {
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? 'vivo',
       characteristics: parseCharacteristics(json['characteristics']),
-      additionalInfo: json['additional_info']?.toString() ?? '',
+      additionalInfo: parseAdditionalInfo(json['additional_info']),
       imageUrl: json['image_url']?.toString() ?? '',
       createdAt:
           parseDate(json['created_at']) ?? parseDate(metadata?['created_at']),

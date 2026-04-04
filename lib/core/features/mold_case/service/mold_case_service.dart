@@ -607,7 +607,7 @@ class MoldCaseService {
   /// [sessionCookie] - required for authentication
   Future<Map<String, dynamic>> submitVerdict(
     String caseId, {
-    required String moldId,
+    String? moldId,
     required String moldName,
     required double confidence,
     String? notes,
@@ -615,7 +615,8 @@ class MoldCaseService {
   }) async {
     try {
       final body = {
-        'moldId': moldId,
+        // moldId is optional - omit if null (for verdicts from predicted classes not in database)
+        if (moldId != null && moldId.isNotEmpty) 'moldId': moldId,
         'moldName': moldName,
         'confidence': confidence,
         if (notes != null && notes.isNotEmpty) 'mycologist_notes': notes,
