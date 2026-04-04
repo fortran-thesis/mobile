@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/user/models/user_profile.dart';
 import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:equatable/equatable.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 // Events
@@ -41,11 +44,20 @@ class UserProfileError extends UserState {
 // Bloc
 class UserBloc extends Bloc<UserEvent, UserState> {
   final UserService userService;
+  String? _lastSessionCookie;
+  late final StreamSubscription<CacheInvalidationEvent> _invalidationSub;
+
   UserBloc({required this.userService}) : super(UserProfileInitial()) {
     on<FetchUserProfile>(_onFetchUserProfile);
+
+    _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      if (event.entity != InvalidationEntity.userProfile) return;
+      add(FetchUserProfile(sessionCookie: _lastSessionCookie));
+    });
   }
 
   Future<void> _onFetchUserProfile(FetchUserProfile event, Emitter<UserState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
     AppLogger.d('UserBloc: FetchUserProfile with sessionCookie: ${event.sessionCookie}');
     emit(UserProfileLoading());
     try {
@@ -61,5 +73,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     } catch (e) {
       emit(UserProfileError(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _invalidationSub.cancel();
+    return super.close();
   }
 }

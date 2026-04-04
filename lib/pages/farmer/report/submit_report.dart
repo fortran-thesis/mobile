@@ -10,6 +10,7 @@ import '../../../core/features/user/logic/user_bloc.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import '../../../core/features/user/services/user_services.dart';
 import '../../../core/features/lookup/service/lookup_service.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../core/utils/logger.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -32,7 +33,6 @@ class SubmitReportScreen extends StatefulWidget {
 }
 
 class _SubmitReportScreenState extends State<SubmitReportScreen> {
-  final TextEditingController _caseNameController = TextEditingController();
   final TextEditingController _cropNameController = TextEditingController();
   final TextEditingController _dateFirstObservedController =
       TextEditingController();
@@ -142,8 +142,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
   }
 
   bool _hasUnsavedChanges() {
-    return _caseNameController.text.isNotEmpty ||
-        _cropNameController.text.isNotEmpty ||
+    return _cropNameController.text.isNotEmpty ||
         _dateFirstObservedController.text.isNotEmpty ||
       _selectedProblemDescriptions.isNotEmpty ||
       _probDescController.text.isNotEmpty ||
@@ -187,11 +186,11 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
           if (!context.mounted) return;
           //If the user confirmed, pop the current route
           if (shouldPop != null && shouldPop) {
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(const MutationResult.unchanged().toMap());
           }
         } else {
           //No unsaved changes, allow pop without confirmation
-          Navigator.of(context).pop(true);
+          Navigator.of(context).pop(const MutationResult.unchanged().toMap());
         }
       },
       child: Scaffold(
@@ -229,26 +228,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 ),
 
                 /// ----------- End of Submit Report Header -----------
-
-                /// Case Name Label
-                Padding(
-                  padding: const EdgeInsets.only(top: 30.0, bottom: 8.0),
-                  child: Text(
-                    l10n.caseName,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: 'Bricolage-Grotesque-SemiBold',
-                      color: MoldifyColors.primaryColor,
-                    ),
-                  ),
-                ),
-
-                /// Case Name Textbox
-                BuildTextBox(
-                  hintText: l10n.enterCaseName,
-                  controller: _caseNameController,
-                  showPassword: false,
-                ),
 
                 /// Crop Name Label
                 Padding(
@@ -411,22 +390,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                       if (_isSubmitting) return;
 
                       // Validate required fields
-                      if (_caseNameController.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.caseNameRequired,
-                              style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor,
-                              ),
-                            ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
-                        return;
-                      }
-
                       if (_cropNameController.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -616,7 +579,6 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         final Map<String, dynamic> reportPayload = {
                           if (currentUserId != null) 'user_id': currentUserId,
                           // backend expects snake_case keys
-                          'case_name': _caseNameController.text.trim(),
                           'host': _cropNameController.text.trim(),
                           if (isoDateObserved != null) 'date_observed': isoDateObserved,
                           // include description as a top-level field (cover_photo is sent
@@ -682,18 +644,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                         // Show success message
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Your report has been submitted successfully.',
-                              style: TextStyle(
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  color: MoldifyColors.backgroundColor
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Your report has been submitted successfully.',
+                                style: TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    color: MoldifyColors.backgroundColor
+                                ),
                               ),
+                              backgroundColor: MoldifyColors.primaryColor,
                             ),
-                            backgroundColor: MoldifyColors.primaryColor,
-                          ),
-                        );
+                          );
+                        }
 
                         // If lookup results found, navigate to results screen; otherwise pop screen
                         await Future.delayed(const Duration(milliseconds: 300));
@@ -722,14 +686,22 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                                   );
                                 },
                                 onBack: () {
-                                  Navigator.of(context).pop(true); // Signal success and return
+                                  Navigator.of(context).pop(
+                                    const MutationResult.changed(
+                                      tags: [MutationTags.moldReport],
+                                    ).toMap(),
+                                  );
                                 },
                               ),
                             ),
                           );
                         } else {
                           // No lookup results — just return from this screen
-                          Navigator.of(context).pop(true); // Signal success so caller can refresh
+                          Navigator.of(context).pop(
+                            const MutationResult.changed(
+                              tags: [MutationTags.moldReport],
+                            ).toMap(),
+                          );
                         }
                       } catch (e) {
                         // Close loading dialog using captured dialog context
@@ -745,18 +717,20 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
 
                         // Show error
                         if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
                                 'Failed to submit report: $e',
                                 style: TextStyle(
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.backgroundColor
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.backgroundColor
+                                ),
+                              ),
+                              backgroundColor: MoldifyColors.primaryColor,
                             ),
-                          ),
-                          backgroundColor: MoldifyColors.primaryColor,
-                        ),
-                        );
+                          );
+                        }
                       } finally {
                         // Ensure loading dialog is dismissed even if we returned early
                         try {

@@ -13,6 +13,7 @@ import 'package:moldify/pages/support/terms_of_agreement.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
+import 'package:moldify/providers/language_provider.dart';
 import 'package:moldify/core/utils/auth_navigation.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 
@@ -349,7 +350,12 @@ class _AppDrawerState extends State<AppDrawer> {
                       context,
                       listen: false,
                     );
+                    final languageProvider = Provider.of<LanguageProvider>(
+                      context,
+                      listen: false,
+                    );
                     await authProvider.logout();
+                    languageProvider.resetRole();
                     if (context.mounted) {
                       AuthNavigation.resetToLoginFromContext(context);
                     }

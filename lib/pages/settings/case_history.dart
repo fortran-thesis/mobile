@@ -198,7 +198,7 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                 )
             ),
             Text(
-              'View records of rejected mold reports.',
+              'View records of closed, resolved, and rejected mold reports.',
                 style: TextStyle(
                   fontSize: 16,
                   fontFamily: 'Bricolage-Grotesque-Regular',

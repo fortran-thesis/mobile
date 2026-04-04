@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/services/api_service.dart';
 
 class UserService {
@@ -37,6 +38,7 @@ class UserService {
     String? displayName,
     String? address,
     String? phoneNumber,
+    String? occupation,
     File? photoFile,
   }) async {
     try {
@@ -61,6 +63,9 @@ class UserService {
         if (phoneNumber != null && phoneNumber.isNotEmpty) {
           details['phoneNumber'] = phoneNumber;
         }
+        if (occupation != null && occupation.isNotEmpty) {
+          details['occupation'] = occupation;
+        }
 
         final body = {
           'details': details,
@@ -74,6 +79,15 @@ class UserService {
         );
 
         final jsonResponse = response.data as Map<String, dynamic>;
+        if (jsonResponse['success'] == true) {
+          CacheInvalidationHub.instance.emit(
+            CacheInvalidationEvent(
+              entity: InvalidationEntity.userProfile,
+              operation: InvalidationOperation.update,
+              occurredAt: DateTime.now().toUtc(),
+            ),
+          );
+        }
         return {
           'success': jsonResponse['success'] ?? false,
           'data': jsonResponse['data'],
@@ -89,6 +103,7 @@ class UserService {
       if (displayName != null && displayName.isNotEmpty) details['displayName'] = displayName;
       if (address != null && address.isNotEmpty) details['address'] = address;
       if (phoneNumber != null && phoneNumber.isNotEmpty) details['phoneNumber'] = phoneNumber;
+      if (occupation != null && occupation.isNotEmpty) details['occupation'] = occupation;
 
       final response = await _apiService.patchMultipart(
         '/profile',
@@ -100,6 +115,15 @@ class UserService {
       );
 
       final jsonResponse = response.data as Map<String, dynamic>;
+      if (jsonResponse['success'] == true) {
+        CacheInvalidationHub.instance.emit(
+          CacheInvalidationEvent(
+            entity: InvalidationEntity.userProfile,
+            operation: InvalidationOperation.update,
+            occurredAt: DateTime.now().toUtc(),
+          ),
+        );
+      }
       return {
         'success': jsonResponse['success'] ?? false,
         'data': jsonResponse['data'],

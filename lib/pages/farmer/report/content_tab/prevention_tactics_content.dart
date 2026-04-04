@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../../../misc/colors.dart';
 import '../../../misc/tiles/control_management_tile.dart';
 
@@ -59,8 +60,10 @@ class PreventionTacticsContent extends StatelessWidget {
   }
 
   /// Parse structured treatment format: TYPE::Title::Description|TYPE::...
-  List<Widget> _buildTreatmentTiles(String content) {
+  List<Widget> _buildTreatmentTiles(String content, BuildContext context) {
     if (content.isEmpty) return [];
+
+    final l10n = AppLocalizations.of(context)!;
 
     final structured = _parseStructuredTreatments(content);
     if (structured.isNotEmpty) {
@@ -97,9 +100,9 @@ class PreventionTacticsContent extends StatelessWidget {
       if (controlsByType.isNotEmpty) {
         widgets.add(const SizedBox(height: 14));
         widgets.add(
-          const Text(
-            '5 CONTROL TREATMENTS',
-            style: TextStyle(
+          Text(
+            l10n.controlTreatmentsLabel,
+            style: const TextStyle(
               fontFamily: 'Bricolage-Grotesque-Bold',
               fontSize: 10,
               letterSpacing: 1.4,
@@ -128,7 +131,7 @@ class PreventionTacticsContent extends StatelessWidget {
     // Fallback: render plain text as generic treatment card
     return [
       ControlManagementTile(
-        title: 'Treatment Recommendations',
+        title: l10n.treatmentRecommendations,
         icon: Icons.medical_services_outlined,
         description: content.replaceAll(RegExp(r'<[^>]*>'), ''),
       ),
@@ -137,7 +140,8 @@ class PreventionTacticsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controlMethods = _buildTreatmentTiles(treatmentsContent);
+    final l10n = AppLocalizations.of(context)!;
+    final controlMethods = _buildTreatmentTiles(treatmentsContent, context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -145,17 +149,17 @@ class PreventionTacticsContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Header
-          const Text(
-            'Prevention Tactics',
-            style: TextStyle(
+          Text(
+            l10n.preventionTacticsTitle,
+            style: const TextStyle(
               fontFamily: 'Montserrat-Black',
               fontSize: 20,
               color: MoldifyColors.primaryColor,
             ),
           ),
-          const Text(
-            'Comprehensive mold control management strategies.',
-            style: TextStyle(
+          Text(
+            l10n.preventionTacticsSubtitle,
+            style: const TextStyle(
               fontFamily: 'Bricolage-Grotesque-Regular',
               fontSize: 12,
               color: MoldifyColors.MoldifyGrey,
@@ -165,12 +169,12 @@ class PreventionTacticsContent extends StatelessWidget {
 
           /// Control Management Tiles
           if (controlMethods.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
                 child: Text(
-                  'No prevention tactics available',
-                  style: TextStyle(
+                  l10n.noPreventionTacticsAvailable,
+                  style: const TextStyle(
                     fontFamily: 'Bricolage-Grotesque-Regular',
                     fontSize: 14,
                     color: MoldifyColors.MoldifyGrey,

@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/repository/mold_case_repository.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 // Events
@@ -66,15 +67,32 @@ class MoldCaseError extends MoldCaseState {
 class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   final MoldCaseRepository repository;
   final int pageSize;
+  static const Duration _invalidationCooldown = Duration(milliseconds: 500);
   
   // Track pages ourselves now that repository is simplified
   final List<MoldCase> _allCases = [];
   String? _nextPageToken;
+  String? _lastSessionCookie;
+  DateTime _lastInvalidationAt = DateTime.fromMillisecondsSinceEpoch(0);
+  late final StreamSubscription<CacheInvalidationEvent> _invalidationSub;
 
   MoldCaseBloc({required this.repository, this.pageSize = 20}) : super(MoldCaseInitial()) {
     on<FetchMoldCases>(_onFetch);
     on<RefreshMoldCases>(_onRefresh);
     on<SearchMoldCases>(_onSearch);
+
+    _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      final shouldRefresh =
+          event.entity == InvalidationEntity.moldCase ||
+          event.entity == InvalidationEntity.moldReport;
+      if (!shouldRefresh) return;
+
+      final now = DateTime.now().toUtc();
+      if (now.difference(_lastInvalidationAt) < _invalidationCooldown) return;
+      _lastInvalidationAt = now;
+
+      add(RefreshMoldCases(sessionCookie: _lastSessionCookie));
+    });
   }
 
   List<MoldCase> _dedupeByReportIdPreferHigherPriority(List<MoldCase> cases) {
@@ -102,6 +120,7 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   }
 
   Future<void> _onFetch(FetchMoldCases event, Emitter<MoldCaseState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
     try {
       if (event.pageToken == null) {
         emit(MoldCaseLoading());
@@ -137,6 +156,7 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   }
 
   Future<void> _onRefresh(RefreshMoldCases event, Emitter<MoldCaseState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
     try {
       emit(MoldCaseLoading());
       _allCases.clear();
@@ -163,6 +183,7 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
   }
 
   Future<void> _onSearch(SearchMoldCases event, Emitter<MoldCaseState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
     try {
       emit(MoldCaseLoading());
       _allCases.clear();
@@ -187,5 +208,11 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
     } catch (e) {
       emit(MoldCaseError(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _invalidationSub.cancel();
+    return super.close();
   }
 }

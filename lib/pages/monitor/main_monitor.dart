@@ -14,6 +14,7 @@ import '../misc/tiles/main_case_tile.dart';
 import '../../core/features/mold_case/logic/mold_case_bloc.dart';
 import '../../core/features/mold_case/models/mold_case.dart';
 import '../../core/features/mold_case/repository/mold_case_repository.dart';
+import '../../core/utils/mutation_result.dart';
 import '../../providers/auth_provider.dart';
 
 class MainMonitorScreen extends StatefulWidget {
@@ -40,6 +41,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
   
   // Client-side filter state
   String? _activePriorityFilter;
+  String _sortOrder = 'desc'; // 'desc' = newest first, 'asc' = oldest first
   Timer? _searchDebounce;
 
   @override
@@ -96,34 +98,44 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
   }
 
   /// Client-side filtering: applies search and priority filter locally
-  /// without making additional API calls
+  /// without making additional API calls, then sorts by date
   List<MoldCase> _applyClientFilters(List<MoldCase> cases) {
     if (cases.isEmpty) return cases;
-    
+
     final searchText = searchController.text.trim().toLowerCase();
     final hasSearch = searchText.isNotEmpty;
     final hasFilter = _activePriorityFilter != null;
-    
-    // If no filters active, return all cases
-    if (!hasSearch && !hasFilter) return cases;
-    
-    return cases.where((moldCase) {
-      // Apply search filter: match case name
-      bool matchesSearch = true;
-      if (hasSearch) {
-        matchesSearch = moldCase.name.toLowerCase().contains(searchText);
-      }
-      
-      // Apply priority filter
-      bool matchesPriority = true;
-      if (hasFilter) {
-        final casePriority = _normalizePriority(moldCase.priority);
-        final activePriority = _normalizePriority(_activePriorityFilter!);
-        matchesPriority = casePriority == activePriority;
-      }
-      
-      return matchesSearch && matchesPriority;
-    }).toList();
+
+    // Filter cases
+    List<MoldCase> filtered = cases;
+    if (hasSearch || hasFilter) {
+      filtered = cases.where((moldCase) {
+        // Apply search filter: match case name
+        bool matchesSearch = true;
+        if (hasSearch) {
+          matchesSearch = moldCase.name.toLowerCase().contains(searchText);
+        }
+
+        // Apply priority filter
+        bool matchesPriority = true;
+        if (hasFilter) {
+          final casePriority = _normalizePriority(moldCase.priority);
+          final activePriority = _normalizePriority(_activePriorityFilter!);
+          matchesPriority = casePriority == activePriority;
+        }
+
+        return matchesSearch && matchesPriority;
+      }).toList();
+    }
+
+    // Sort by date
+    filtered.sort((a, b) {
+      final dateA = a.startDate.millisecondsSinceEpoch;
+      final dateB = b.startDate.millisecondsSinceEpoch;
+      return _sortOrder == 'desc' ? dateB.compareTo(dateA) : dateA.compareTo(dateB);
+    });
+
+    return filtered;
   }
 
   String? _extractPhotoUrl(dynamic raw) {
@@ -168,7 +180,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
 
   void _onPriorityFilterChanged(int index) {
     String? selectedPriority;
-    
+
     // Map menu index to priority value
     switch (index) {
       case 0: // "All"
@@ -184,9 +196,15 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
         selectedPriority = 'high';
         break;
     }
-    
+
     setState(() {
       _activePriorityFilter = selectedPriority;
+    });
+  }
+
+  void _onSortOrderChanged(int index) {
+    setState(() {
+      _sortOrder = index == 0 ? 'desc' : 'asc';
     });
   }
 
@@ -236,20 +254,32 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                           )),
                       /// ----------- End of Header -----------
       
-                      /// Filter button
+                      /// Filter and Sort buttons
                       Padding(
                         padding: const EdgeInsets.only(top: 20.0),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: PopupMenu(
-                            popMenuIcon: Icon(
-                              FontAwesomeIcons.filter,
-                              color: MoldifyColors.accentColor,
-                              size: 20.0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            PopupMenu(
+                              popMenuIcon: Icon(
+                                FontAwesomeIcons.sort,
+                                color: MoldifyColors.accentColor,
+                                size: 20.0,
+                              ),
+                              items: ['Newest First', 'Oldest First'],
+                              onItemSelected: _onSortOrderChanged,
                             ),
-                            items: ['All', 'Low', 'Medium', 'High'],
-                            onItemSelected: _onPriorityFilterChanged,
-                          ),
+                            SizedBox(width: 10.0),
+                            PopupMenu(
+                              popMenuIcon: Icon(
+                                FontAwesomeIcons.filter,
+                                color: MoldifyColors.accentColor,
+                                size: 20.0,
+                              ),
+                              items: ['All', 'Low', 'Medium', 'High'],
+                              onItemSelected: _onPriorityFilterChanged,
+                            ),
+                          ],
                         ),
                       ),
       
@@ -343,12 +373,12 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                             final reportId = moldCase.moldReportId.trim().isNotEmpty
                                                 ? moldCase.moldReportId
                                                 : moldCase.id;
-                                            final result = await Navigator.pushNamed(
+                                            final result = await pushNamedForMutationResult(
                                               context,
                                               '/view-case',
                                               arguments: {'id': reportId},
                                             );
-                                            if (result == true && mounted) {
+                                            if (result.changed && mounted) {
                                               final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                               _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
                                             }
@@ -358,12 +388,12 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                           popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.solidFilePdf],
                                           onPopupMenuItemSelected: (menuIndex) async {
                                             if (menuIndex == 0) {
-                                              final result = await Navigator.pushNamed(
+                                              final result = await pushNamedForMutationResult(
                                                 context,
                                                 '/set-monitoring-details',
                                                 arguments: {'moldCase': moldCase},
                                               );
-                                              if (result == true && mounted) {
+                                              if (result.changed && mounted) {
                                                 final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                                 _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
                                               }

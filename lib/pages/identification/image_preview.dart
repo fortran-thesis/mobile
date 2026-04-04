@@ -453,29 +453,30 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
       if (!context.mounted) return;
       
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to process image: $e')),
-      );
-      
-      // Navigate anyway with error data
-      final result = await Navigator.of(context).pushNamed(
-        '/mold_result',
-        arguments: {
-          'croppedImagePath': imagePath,
-          'modelResult': {'error': e.toString()},
-          'moldDetails': {'error': e.toString()},
-          'sourceFlow': widget.sourceFlow,
-          'scanModality': widget.scanModality,
-          'sourceTab': widget.sourceTab,
-          'caseId': widget.caseId,
-        },
-      );
+      if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process image: $e')),
+        );
+        
+        // Navigate anyway with error data
+        final result = await Navigator.of(context).pushNamed(
+          '/mold_result',
+          arguments: {
+            'croppedImagePath': imagePath,
+            'modelResult': {'error': e.toString()},
+            'moldDetails': {'error': e.toString()},
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
+            'sourceTab': widget.sourceTab,
+            'caseId': widget.caseId,
+          },
+        );
 
-      if (!context.mounted) return;
-      if (result != null) {
-        Navigator.of(context).pop(result);
-        return;
+        if (result != null) {
+          Navigator.of(context).pop(result);
+          return;
+        }
       }
     } finally {
       if (mounted) {

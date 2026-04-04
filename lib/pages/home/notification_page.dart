@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/models/notification.dart';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
@@ -49,6 +51,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
 
           if (state is NotificationError) {
+            final l10n = AppLocalizations.of(context)!;
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -68,7 +71,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         RefreshNotifications(sessionCookie: cookie),
                       );
                     },
-                    child: const Text('Retry'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
@@ -194,7 +197,65 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               },
                               child: BuildNotificationTile(
                                 onViewDetails: () {
-                                  AppLogger.d('View details of notification ${notif.id}');
+                                  AppLogger.d('View details of notification ${notif.id}: referenceType=${notif.referenceType}, referenceId=${notif.referenceId}');
+
+                                  // Mark as read
+                                  context.read<NotificationBloc>().add(
+                                    MarkNotificationRead(
+                                      notificationId: notif.id,
+                                      sessionCookie: cookie,
+                                    ),
+                                  );
+
+                                  // Navigate based on reference_type
+                                  if (notif.referenceId != null && notif.referenceType != null) {
+                                    switch (notif.referenceType) {
+                                      case 'mold_report':
+                                        // Route based on user role: farmers view their report, others view the case
+                                        final userState = context.read<UserBloc>().state;
+                                        final userRole = (userState is UserProfileLoaded) ? userState.profile.role : null;
+
+                                        if (userRole == 'farmer') {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-report',
+                                            arguments: {'id': notif.referenceId},
+                                          );
+                                        } else {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/view-case',
+                                            arguments: {'id': notif.referenceId},
+                                          );
+                                        }
+                                        break;
+                                      case 'mold_case':
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/view-case',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      case 'flag_report':
+                                        // Navigate to flag report detail screen
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/flag-report-detail',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      case 'user':
+                                        // Navigate to user profile screen
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/user-profile',
+                                          arguments: {'id': notif.referenceId},
+                                        );
+                                        break;
+                                      default:
+                                        AppLogger.w('Unknown notification reference_type: ${notif.referenceType}');
+                                    }
+                                  }
                                 },
                                 onMarkAsRead: () {
                                   context.read<NotificationBloc>().add(

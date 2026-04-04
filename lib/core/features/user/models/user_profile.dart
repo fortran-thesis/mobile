@@ -12,6 +12,7 @@ class UserProfile {
   final String email;
   final String photoUrl;
   final bool disabled;
+  final String? occupation;
 
   UserProfile({
     required this.id,
@@ -25,6 +26,7 @@ class UserProfile {
     required this.email,
     required this.photoUrl,
     required this.disabled,
+    this.occupation,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class UserProfile {
       lastName: safeString(user['last_name']),
       address: safeString(user['address']),
       phoneNumber: safeString(details?['phone_number']),
+      occupation: user['occupation'] != null ? safeString(user['occupation']) : null,
     );
   }
 }

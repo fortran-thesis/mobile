@@ -112,26 +112,27 @@ class _CameraScreenState extends State<CameraScreen> {
 
         // Navigate to the image preview screen and pass relevant data (like image path and source info)
         if (!mounted) return;
-        final result = await Navigator.pushNamed(
-          context,
-          '/image_preview',
-          arguments: {
-            'imagePath': imageFile.path,
-            'source': widget.source,
-            'sourceTab': widget.sourceTab,
-            'caseId': widget.caseId,
-            'sourceFlow': widget.sourceFlow,
-            'scanModality': widget.scanModality,
-            'includeSize': widget.includeSize,
-            'returnResult': widget.returnResult,
-          },
-        );
+        if (mounted) {
+          final result = await Navigator.pushNamed(
+            context,
+            '/image_preview',
+            arguments: {
+              'imagePath': imageFile.path,
+              'source': widget.source,
+              'sourceTab': widget.sourceTab,
+              'caseId': widget.caseId,
+              'sourceFlow': widget.sourceFlow,
+              'scanModality': widget.scanModality,
+              'includeSize': widget.includeSize,
+              'returnResult': widget.returnResult,
+            },
+          );
 
-        // Bubble the result to the previous route when this camera flow is used for logs.
-        if (!mounted) return;
-        if (result != null) {
-          Navigator.of(context).pop(result);
-          return;
+          // Bubble the result to the previous route when this camera flow is used for logs.
+          if (result != null) {
+            Navigator.of(context).pop(result);
+            return;
+          }
         }
       }
     } on CameraException catch (e) {

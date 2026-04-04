@@ -5,24 +5,32 @@ import 'package:moldify/services/api_service.dart';
 class MoldCatalogEntry {
   final String id;
   final String name;
+  final String overview;
   final String description;
   final String healthRisks;
   final String affectedHosts;
   final String symptomsAndSigns;
   final String diseaseCycleSpreadImpact;
   final String preventionSummary;
+  final List<String> symptoms;
+  final List<String> signs;
+  final List<String> characteristics;
   final Map<String, String> additionalInfo;
   final Map<String, String> prevention;
 
   const MoldCatalogEntry({
     required this.id,
     required this.name,
+    required this.overview,
     required this.description,
     required this.healthRisks,
     required this.affectedHosts,
     required this.symptomsAndSigns,
     required this.diseaseCycleSpreadImpact,
     required this.preventionSummary,
+    required this.symptoms,
+    required this.signs,
+    required this.characteristics,
     required this.additionalInfo,
     required this.prevention,
   });
@@ -32,6 +40,24 @@ class MoldService {
   final ApiService _apiService = ApiService(baseUrl: ApiUrl.mold);
 
   String _readString(dynamic value) => value?.toString().trim() ?? '';
+
+  List<String> _readStringList(dynamic value) {
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    return <String>[];
+  }
+
+  List<String> _splitCsvValues(String raw) {
+    return raw
+        .split(RegExp(r'[,;|\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
 
   String _readMapString(Map<String, dynamic> source, List<String> keys) {
     for (final key in keys) {
@@ -62,6 +88,7 @@ class MoldService {
         ? _readMapString(raw, ['name', 'moldName'])
         : _readMapString(taxonomy, ['genus']);
 
+    final overview = _readMapString(info, ['overview']);
     final description = _readMapString(info, ['description', 'overview']);
 
     final additionalInfo = <String, String>{};
@@ -70,38 +97,87 @@ class MoldService {
       for (final item in additionalInfoRaw.whereType<Map>()) {
         final infoMap = Map<String, dynamic>.from(item);
         final title = _readMapString(infoMap, ['title', 'name']);
-        final content = _readMapString(infoMap, ['description', 'content', 'value']);
+        final content = _readMapString(infoMap, [
+          'description',
+          'content',
+          'value',
+        ]);
         if (title.isNotEmpty && content.isNotEmpty) {
           additionalInfo[title] = content;
         }
       }
     }
 
-    String readControl(List<String> keys) => _readMapString(preventionRaw, keys);
+    String readControl(List<String> keys) =>
+        _readMapString(preventionRaw, keys);
 
     final prevention = <String, String>{
       'Physical Control': readControl(['physicalControl', 'physical_control']),
-      'Mechanical Control': readControl(['mechanicalControl', 'mechanical_control']),
+      'Mechanical Control': readControl([
+        'mechanicalControl',
+        'mechanical_control',
+      ]),
       'Cultural Control': readControl(['culturalControl', 'cultural_control']),
-      'Biological Control': readControl(['biologicalControl', 'biological_control']),
+      'Biological Control': readControl([
+        'biologicalControl',
+        'biological_control',
+      ]),
       'Chemical Control': readControl(['chemicalControl', 'chemical_control']),
     };
 
-    final healthRisks = _readMapString(info, ['health_risks', 'healthRisks', 'health-risks']);
-    final affectedHosts = _readMapString(info, ['affected_hosts', 'affectedHosts', 'affected-hosts']);
-    final symptomsAndSigns = _readMapString(info, ['symptoms_and_signs', 'symptomsAndSigns', 'symptoms-signs']);
-    final diseaseCycleSpreadImpact = _readMapString(info, ['disease_cycle_spread_impact', 'diseaseCycleSpreadImpact', 'disease-cycle-spread-impact']);
-    final preventionSummary = _readMapString(info, ['prevention_summary', 'preventionSummary', 'prevention-summary']);
+    final healthRisks = _readMapString(info, [
+      'health_risks',
+      'healthRisks',
+      'health-risks',
+    ]);
+    final affectedHosts = _readMapString(info, [
+      'affected_hosts',
+      'affectedHosts',
+      'affected-hosts',
+    ]);
+    final symptomsAndSigns = _readMapString(info, [
+      'symptoms_and_signs',
+      'symptomsAndSigns',
+      'symptoms-signs',
+    ]);
+    final diseaseCycleSpreadImpact = _readMapString(info, [
+      'disease_cycle_spread_impact',
+      'diseaseCycleSpreadImpact',
+      'disease-cycle-spread-impact',
+    ]);
+    final preventionSummary = _readMapString(info, [
+      'prevention_summary',
+      'preventionSummary',
+      'prevention-summary',
+    ]);
+    final symptoms = <String>{
+      ..._readStringList(raw['symptoms']),
+      ..._splitCsvValues(_readMapString(raw, ['symptoms_csv', 'symptomsCsv'])),
+    }.toList();
+    final signs = <String>{
+      ..._readStringList(raw['signs']),
+      ..._splitCsvValues(_readMapString(raw, ['signs_csv', 'signsCsv'])),
+    }.toList();
+    final characteristics = <String>{
+      ..._readStringList(raw['characteristics']),
+      ..._splitCsvValues(
+        _readMapString(raw, ['characteristics_csv', 'characteristicsCsv']),
+      ),
+    }.toList();
 
     return MoldCatalogEntry(
       id: id,
       name: name,
+      overview: overview,
       description: description,
       healthRisks: healthRisks,
       affectedHosts: affectedHosts,
       symptomsAndSigns: symptomsAndSigns,
       diseaseCycleSpreadImpact: diseaseCycleSpreadImpact,
       preventionSummary: preventionSummary,
+      symptoms: symptoms,
+      signs: signs,
+      characteristics: characteristics,
       additionalInfo: additionalInfo,
       prevention: prevention,
     );
@@ -180,7 +256,9 @@ class MoldService {
       pageCount += 1;
     }
 
-    entries.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    entries.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
     return entries;
   }
 
@@ -199,7 +277,9 @@ class MoldService {
 
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200 && response.statusCode != 304) {
-      throw Exception('Failed to fetch mold by id: HTTP ${response.statusCode}');
+      throw Exception(
+        'Failed to fetch mold by id: HTTP ${response.statusCode}',
+      );
     }
 
     final responseBody = response.data is Map<String, dynamic>
@@ -225,5 +305,38 @@ class MoldService {
       maxPages: maxPages,
     );
     return catalog.map((entry) => entry.name).toList();
+  }
+
+  Future<MoldCatalogEntry?> createMold({
+    required String moldName,
+    Map<String, dynamic>? info,
+    Map<String, dynamic>? prevention,
+    String? sessionCookie,
+  }) async {
+    final body = <String, dynamic>{
+      'moldName': moldName,
+      if (info != null || prevention != null)
+        'details': {
+          if (info != null) 'info': info,
+          if (prevention != null) 'prevention': prevention,
+        },
+    };
+
+    final response = await _apiService.post(
+      '',
+      body: body,
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final payload = response.data;
+      final raw = payload is Map<String, dynamic>
+          ? (payload['data'] ?? payload)
+          : null;
+      if (raw is Map<String, dynamic>) {
+        return _parseCatalogEntry(raw);
+      }
+    }
+    return null;
   }
 }

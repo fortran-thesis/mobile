@@ -4,14 +4,34 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/constants/api_url.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/services/api_service.dart';
 
 class MoldCaseService {
   // API clients: case endpoints and report endpoints
   // Case endpoints root: /api/v1/mold-case
   final ApiService _caseApi = ApiService(baseUrl: ApiUrl.moldCase);
+  // WikiMold endpoints root: /api/v1/moldipedia
+  final ApiService _moldipediaApi = ApiService(baseUrl: ApiUrl.moldipedia);
   // Report endpoints root: /api/v1/mold-report (used for assigned list and some analytics)
   final ApiService _reportApi = ApiService(baseUrl: ApiUrl.moldReport);
+
+  void _emitInvalidation(
+    InvalidationEntity entity,
+    InvalidationOperation operation, {
+    String? id,
+    String? relatedId,
+  }) {
+    CacheInvalidationHub.instance.emit(
+      CacheInvalidationEvent(
+        entity: entity,
+        operation: operation,
+        id: id,
+        relatedId: relatedId,
+        occurredAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
 
   /// Fetch all assigned mold cases for the authenticated curator.
   /// Endpoint: GET /api/v1/mold-case/assigned
@@ -180,6 +200,73 @@ class MoldCaseService {
     }
   }
 
+  /// Get mold cases linked to a WikiMold article.
+  /// Endpoint: GET /api/v1/moldipedia/:id/cases
+  Future<List<Map<String, dynamic>>> getMoldCasesByMoldipediaId(
+    String moldipediaId, {
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _moldipediaApi.get(
+        '/$moldipediaId/cases',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.volatileData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 304) {
+        final responseData = response.data;
+        if (responseData == null) {
+          throw Exception('Empty response from server');
+        }
+
+        final Map<String, dynamic> responseBody =
+            (responseData is Map<String, dynamic>) ? responseData : {};
+
+        final success = responseBody['success'];
+        if (success == false) {
+          final error =
+              responseBody['error'] ?? 'Failed to fetch linked mold cases';
+          throw Exception(error);
+        }
+
+        final dynamic data = responseBody['data'] ?? responseBody;
+
+        if (data is List) {
+          return data
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList();
+        }
+
+        if (data is Map<String, dynamic>) {
+          final snapshot = data['snapshot'];
+          if (snapshot is List) {
+            return snapshot
+                .whereType<Map>()
+                .map((entry) => Map<String, dynamic>.from(entry))
+                .toList();
+          }
+        }
+
+        return [];
+      } else if (response.statusCode == 404) {
+        return [];
+      } else if (response.statusCode == 500) {
+        final error = response.data is Map
+            ? response.data['error']
+            : 'Unknown error';
+        throw Exception('Server error: $error');
+      } else {
+        throw Exception(
+          'Failed to fetch linked mold cases: HTTP ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Update a mold case by id.
   Future<void> updateMoldCase(
     String id,
@@ -198,6 +285,12 @@ class MoldCaseService {
         'Failed to update mold case $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldCase,
+      InvalidationOperation.update,
+      id: id,
+    );
   }
 
   /// Delete a mold case by id.
@@ -212,6 +305,12 @@ class MoldCaseService {
         'Failed to delete mold case $id: ${response.statusCode} ${response.data}',
       );
     }
+
+    _emitInvalidation(
+      InvalidationEntity.moldCase,
+      InvalidationOperation.delete,
+      id: id,
+    );
   }
 
   /// Get all archived (closed) mold cases for the user.
@@ -405,6 +504,12 @@ class MoldCaseService {
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
+        _emitInvalidation(
+          InvalidationEntity.moldCase,
+          InvalidationOperation.update,
+          id: caseId,
+        );
+
         return {'success': success == false ? false : true, 'data': data};
       }
       throw Exception(
@@ -484,6 +589,11 @@ class MoldCaseService {
     );
 
     if (response.statusCode == 200) {
+      _emitInvalidation(
+        InvalidationEntity.moldCase,
+        InvalidationOperation.update,
+        id: caseId,
+      );
       return response.data as Map<String, dynamic>;
     }
     throw Exception(
@@ -601,6 +711,7 @@ class MoldCaseService {
   ///
   /// [caseId] - ID of the mold case
   /// [moldId] - ID of the confirmed mold species
+  /// [moldipediaId] - Optional linked WikiMold article ID
   /// [moldName] - Name of the confirmed mold species
   /// [confidence] - Confidence score (0-100) from lookup algorithm
   /// [notes] - Optional mycologist notes on the verdict
@@ -608,6 +719,7 @@ class MoldCaseService {
   Future<Map<String, dynamic>> submitVerdict(
     String caseId, {
     String? moldId,
+    String? moldipediaId,
     required String moldName,
     required double confidence,
     String? notes,
@@ -617,6 +729,8 @@ class MoldCaseService {
       final body = {
         // moldId is optional - omit if null (for verdicts from predicted classes not in database)
         if (moldId != null && moldId.isNotEmpty) 'moldId': moldId,
+        if (moldipediaId != null && moldipediaId.isNotEmpty)
+          'moldipedia_id': moldipediaId,
         'moldName': moldName,
         'confidence': confidence,
         if (notes != null && notes.isNotEmpty) 'mycologist_notes': notes,
@@ -647,6 +761,18 @@ class MoldCaseService {
         final data = responseBody['data'] is Map<String, dynamic>
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
+
+        await CacheConfig.clearAll();
+
+        _emitInvalidation(
+          InvalidationEntity.moldCase,
+          InvalidationOperation.update,
+          id: caseId,
+        );
+        _emitInvalidation(
+          InvalidationEntity.moldReport,
+          InvalidationOperation.update,
+        );
 
         return data;
       } else if (response.statusCode == 400) {

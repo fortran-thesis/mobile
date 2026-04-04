@@ -89,8 +89,9 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading articles: $e')),
+          SnackBar(content: Text(l10n.errorLoadingArticles(e.toString()))),
         );
       }
     }
@@ -118,8 +119,9 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingMore = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading more articles: $e')),
+          SnackBar(content: Text(l10n.errorLoadingMoreArticles(e.toString()))),
         );
       }
     }
@@ -212,9 +214,10 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                             ),
                           );
                         } else {
+                          final l10n = AppLocalizations.of(context)!;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This article is not available yet.'),
+                            SnackBar(
+                              content: Text(l10n.articleNotAvailableYet),
                             ),
                           );
                         }

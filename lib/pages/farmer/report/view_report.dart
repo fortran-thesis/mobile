@@ -17,8 +17,12 @@ import '../../../core/features/mold_report/repository/mold_report_repository.dar
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../core/features/mold/service/mold_service.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
+import '../../../services/api_service.dart';
+import '../../../core/constants/route_names.dart';
+import '../../../core/constants/api_url.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
 import 'report_view_parser.dart';
 
@@ -64,25 +68,25 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         message = l10n.statusRejected;
         break;
       default:
-      // Return an empty widget if the status is not one of the above.
+        // Return an empty widget if the status is not one of the above.
         return const SizedBox.shrink();
     }
 
     return Center(
       child: SizedBox(
-          height: MediaQuery.of(context).size.height - 400,
-          child: Center(
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                color: MoldifyColors.MoldifyGrey,
-                height: 1.5,
-              ),
+        height: MediaQuery.of(context).size.height - 400,
+        child: Center(
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              color: MoldifyColors.MoldifyGrey,
+              height: 1.5,
             ),
-          )
+          ),
+        ),
       ),
     );
   }
@@ -95,7 +99,8 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   final List<Map<String, dynamic>> caseEntries = [
     {
       'date': 'October 30, 2025',
-      'notes': 'Initial report. Small, dark spots observed on the lower leaves of several tomato plants. The area is humid and has poor air circulation.',
+      'notes':
+          'Initial report. Small, dark spots observed on the lower leaves of several tomato plants. The area is humid and has poor air circulation.',
       'images': [
         'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
         'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
@@ -103,14 +108,16 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     },
     {
       'date': 'November 2, 2025',
-      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'notes':
+          'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
       'images': [
         'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
       ],
     },
     {
       'date': 'November 2, 2025',
-      'notes': 'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
+      'notes':
+          'Follow-up. The spots have enlarged and now have a dark border with a lighter tan center. Some lower leaves are starting to turn yellow and drop.',
       'images': [
         'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
         'https://worldofplants.ai/wp-content/uploads/2024/03/word-image-81042-3.jpeg',
@@ -125,9 +132,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   bool _isLoading = true;
   String? _error;
   MoldReport? _report;
+  String _mycologistName = '';
+  String? _mycologistOccupation;
   String _finalVerdictMoldName = '';
   String _finalVerdictConfidence = '';
   String _finalVerdictNotes = '';
+  String? _linkedMoldipediaId;
   String _preventionTacticsContent = _defaultPreventionTacticsContent;
   int _selectedTabIndex = 0;
 
@@ -143,7 +153,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
           onConfirm: () async {
             Navigator.of(dialogContext).pop();
             try {
-              final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+              final authProvider = Provider.of<AppAuthProvider>(
+                context,
+                listen: false,
+              );
               final sessionCookie = authProvider.cookie;
               final service = MoldReportService();
               await service.deleteMoldReportSoft(
@@ -151,15 +164,23 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                 sessionCookie: sessionCookie,
               );
               if (!mounted) return;
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.reportClosed)),
-              );
+              if (mounted) {
+                Navigator.of(context).pop(
+                  const MutationResult.changed(
+                    tags: [MutationTags.moldReport],
+                  ).toMap(),
+                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.reportClosed)));
+              }
             } catch (e) {
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.failedToCloseReport(e.toString()))),
+                );
+              }
             }
           },
           onCancel: () {
@@ -172,12 +193,15 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     );
   }
 
-  void _handleAddFollowUp() {
-    Navigator.pushNamed(
+  Future<void> _handleAddFollowUp() async {
+    final result = await pushNamedForMutationResult(
       context,
       '/add-follow-up',
       arguments: {'id': _report?.id},
     );
+
+    if (!mounted || !result.changed) return;
+    await _loadReportFromArgs();
   }
 
   Widget _buildCaseDetailsTab(BuildContext context) {
@@ -190,12 +214,15 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       final userState = BlocProvider.of<UserBloc>(context).state;
       if (userState is UserProfileLoaded) {
         final profile = userState.profile;
-        final fullName = ((profile.firstName.isNotEmpty || profile.lastName.isNotEmpty)
-                ? '${profile.firstName} ${profile.lastName}'.trim()
-                : profile.username);
+        final fullName =
+            ((profile.firstName.isNotEmpty || profile.lastName.isNotEmpty)
+            ? '${profile.firstName} ${profile.lastName}'.trim()
+            : profile.username);
         displayFarmerName = fullName.isNotEmpty ? fullName : displayFarmerName;
         displayEmail = profile.email.isNotEmpty ? profile.email : displayEmail;
-        displayContact = profile.phoneNumber.isNotEmpty ? profile.phoneNumber : displayContact;
+        displayContact = profile.phoneNumber.isNotEmpty
+            ? profile.phoneNumber
+            : displayContact;
       }
     } catch (_) {
       // no UserBloc in context or other error; keep defaults
@@ -212,18 +239,22 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
     final entries = _report != null
         ? _report!.caseDetails
-            .map((d) => {
+              .map(
+                (d) => {
                   'date': formattedObserved(_report!.dateObserved),
                   'notes': d.description,
                   'images': d.coverPhoto,
-                })
-            .toList()
+                },
+              )
+              .toList()
         : caseEntries;
 
     return ReportCaseDetailsTab(
       entries: entries,
       farmerName: _report != null ? displayFarmerName : farmerName,
-      dateFirstObserved: _report != null ? formattedObserved(_report!.dateObserved) : dateFirstObserved,
+      dateFirstObserved: _report != null
+          ? formattedObserved(_report!.dateObserved)
+          : dateFirstObserved,
       emailAddress: displayEmail,
       contactNumber: displayContact,
     );
@@ -252,7 +283,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
-      AppLogger.d('ViewReport: sessionCookie = ${sessionCookie?.substring(0, 20)}...');
+      AppLogger.d(
+        'ViewReport: sessionCookie = ${sessionCookie?.substring(0, 20)}...',
+      );
 
       // Prefer existing repository from a surrounding MoldReportBloc if available
       MoldReportRepository repo;
@@ -267,9 +300,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       }
 
       AppLogger.d('ViewReport: calling getReportById($id)');
-      final MoldReport? report = await repo.getReportById(id, sessionCookie: sessionCookie);
+      final MoldReport? report = await repo.getReportById(
+        id,
+        sessionCookie: sessionCookie,
+      );
       AppLogger.d('ViewReport: getReportById returned: $report');
-      
+
       if (report == null) {
         setState(() {
           _error = 'Report not found';
@@ -282,7 +318,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       AppLogger.d('ViewReport: report.caseName = ${report.caseName}');
       AppLogger.d('ViewReport: report.host = ${report.host}');
       AppLogger.d('ViewReport: report.status = ${report.status}');
-      AppLogger.d('ViewReport: report.caseDetails.length = ${report.caseDetails.length}');
+      AppLogger.d(
+        'ViewReport: report.caseDetails.length = ${report.caseDetails.length}',
+      );
 
       String localVerdictMoldName = '';
       String localVerdictConfidence = '';
@@ -302,13 +340,20 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         final finalVerdict = casePayload['final_verdict'];
         if (finalVerdict is Map<String, dynamic>) {
           localVerdictMoldName = finalVerdict['moldName']?.toString() ?? '';
-          localVerdictConfidence = ReportViewParser.formatConfidence(finalVerdict['confidence']);
-          localVerdictNotes = finalVerdict['mycologist_notes']?.toString() ?? '';
+          localVerdictConfidence = ReportViewParser.formatConfidence(
+            finalVerdict['confidence'],
+          );
+          localVerdictNotes =
+              finalVerdict['mycologist_notes']?.toString() ?? '';
+          final mid = finalVerdict['moldipedia_id']?.toString().trim() ?? '';
+          if (mid.isNotEmpty) {
+            setState(() => _linkedMoldipediaId = mid);
+          }
 
           final verdictMoldId =
               finalVerdict['moldId']?.toString().trim().isNotEmpty == true
-                  ? finalVerdict['moldId'].toString().trim()
-                  : (finalVerdict['mold_id']?.toString().trim() ?? '');
+              ? finalVerdict['moldId'].toString().trim()
+              : (finalVerdict['mold_id']?.toString().trim() ?? '');
 
           if (verdictMoldId.isNotEmpty) {
             final moldService = MoldService();
@@ -317,33 +362,72 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
               sessionCookie: sessionCookie,
             );
             if (moldCatalog != null) {
-              localPreventionTacticsContent = ReportViewParser.buildPreventionContentFromMold(
-                moldCatalog,
-                _defaultPreventionTacticsContent,
-              );
+              localPreventionTacticsContent =
+                  ReportViewParser.buildPreventionContentFromMold(
+                    moldCatalog,
+                    _defaultPreventionTacticsContent,
+                  );
             }
           }
         }
       } catch (e) {
-        AppLogger.w('ViewReport: no final verdict enrichment found for report=${report.id}: $e');
+        AppLogger.w(
+          'ViewReport: no final verdict enrichment found for report=${report.id}: $e',
+        );
+      }
+
+      // Fetch mycologist information if assigned
+      String localMycologistName = '';
+      String? localMycologistOccupation;
+      if (report.assignedMycologistId != null &&
+          report.assignedMycologistId!.isNotEmpty) {
+        try {
+          final apiService = ApiService(baseUrl: ApiUrl.user);
+          final response = await apiService.get(
+            '/${report.assignedMycologistId!}',
+            sessionCookie: sessionCookie,
+          );
+          if (response.data is Map<String, dynamic>) {
+            final responseData = response.data as Map<String, dynamic>;
+            final userData = responseData['data'] as Map<String, dynamic>?;
+            if (userData != null) {
+              final userObj = userData['user'] as Map<String, dynamic>?;
+              if (userObj != null) {
+                final firstName =
+                    userObj['first_name']?.toString().trim() ?? '';
+                final lastName = userObj['last_name']?.toString().trim() ?? '';
+                localMycologistName = '$firstName $lastName'.trim();
+                localMycologistOccupation = userObj['occupation']?.toString();
+              }
+            }
+          }
+        } catch (e) {
+          AppLogger.w('ViewReport: Failed to fetch mycologist information: $e');
+        }
       }
 
       setState(() {
         _report = report;
+        _mycologistName = localMycologistName;
+        _mycologistOccupation = localMycologistOccupation;
         // Capitalize the first letter of status
         String status = report.status.isNotEmpty ? report.status : 'Pending';
         if (status.isNotEmpty) {
           status = status[0].toUpperCase() + status.substring(1);
         }
         caseStatus = status;
-        caseImageUrl = report.caseDetails.isNotEmpty && report.caseDetails.first.coverPhoto.isNotEmpty
+        caseImageUrl =
+            report.caseDetails.isNotEmpty &&
+                report.caseDetails.first.coverPhoto.isNotEmpty
             ? report.caseDetails.first.coverPhoto.first
             : null;
         _finalVerdictMoldName = localVerdictMoldName;
         _finalVerdictConfidence = localVerdictConfidence;
         _finalVerdictNotes = localVerdictNotes;
         _preventionTacticsContent = localPreventionTacticsContent;
-        AppLogger.d('ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl');
+        AppLogger.d(
+          'ViewReport: setState - caseStatus = $caseStatus, caseImageUrl = $caseImageUrl',
+        );
         _isLoading = false;
       });
     } catch (e, stackTrace) {
@@ -355,12 +439,13 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     // trigger loading once after the first frame when arguments are available
     if (_isLoading && _report == null && _error == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadReportFromArgs());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _loadReportFromArgs(),
+      );
     }
     final String observedDate = _report?.dateObserved != null
         ? DateFormat('MMMM dd, yyyy').format(_report!.dateObserved!.toLocal())
@@ -368,21 +453,35 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.of(context).pop(true);
+        if (!didPop) {
+          Navigator.of(context).pop(const MutationResult.unchanged().toMap());
+        }
       },
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
         appBar: PrimaryAppBar(
-            title: AppLocalizations.of(context)!.viewReportTitle,
-            rightIcon: Icon(FontAwesomeIcons.solidFilePdf),
-            onRightIconPressed: () {
-              // Export PDF action
+          title: AppLocalizations.of(context)!.viewReportTitle,
+          showPopupMenu: true,
+          popupMenuItems: [
+            if (caseStatus.toLowerCase() == 'resolved')
+              AppLocalizations.of(context)!.exportPdf,
+          ],
+          popupMenuIcons: [
+            if (caseStatus.toLowerCase() == 'resolved')
+              FontAwesomeIcons.solidFilePdf,
+          ],
+          onPopupMenuItemSelected: (index) {
+            // Handle the selection based on the index
+
+            /// Export PDF
+            if (index == 0) {
+              // Export PDF functionality
             }
+          },
         ),
         body: SingleChildScrollView(
           child: Stack(
             children: [
-
               ///1. Cover image for the case
               if (_isLoading)
                 SizedBox(
@@ -413,7 +512,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
               ///2. Case details
               Padding(
-                padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.35),
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).size.height * 0.35,
+                ),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -424,8 +525,8 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(25, 30, 25, 20),                    
-                      child: Column(
+                    padding: const EdgeInsets.fromLTRB(25, 30, 25, 20),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         /// Header row
@@ -448,7 +549,8 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                         const SizedBox(height: 12),
 
                         Text(
-                          _report?.caseName ?? AppLocalizations.of(context)!.caseDetailsLabel,
+                          _report?.caseName ??
+                              AppLocalizations.of(context)!.caseDetailsLabel,
                           style: const TextStyle(
                             fontFamily: 'Montserrat-Black',
                             fontSize: 32,
@@ -463,7 +565,8 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                         Row(
                           children: [
                             Text(
-                              (_report?.host ?? AppLocalizations.of(context)!.unknownCrop)
+                              (_report?.host ??
+                                      AppLocalizations.of(context)!.unknownCrop)
                                   .toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 12,
@@ -482,7 +585,10 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                             const SizedBox(width: 15),
                             Expanded(
                               child: Text(
-                                _report?.location ?? AppLocalizations.of(context)!.unknownLocation,
+                                _report?.location ??
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.unknownLocation,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -495,20 +601,77 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                           ],
                         ),
 
+                        /// Assigned Mycologist (if available)
+                        if (_mycologistName.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Assigned Mycologist'.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontFamily: 'Bricolage-Grotesque-Bold',
+                                    color: MoldifyColors.primaryColor,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _mycologistName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Montserrat-Black',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                                if (_mycologistOccupation != null &&
+                                    _mycologistOccupation!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _mycologistOccupation!,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontFamily: 'Bricolage-Grotesque-Regular',
+                                      color: MoldifyColors.MoldifyGrey,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+
                         // Conditional UI based on case status
                         if (caseStatus == 'Resolved' || caseStatus == 'Closed')
                           Builder(
                             builder: (context) {
-                                final parsedSections = ReportViewParser.parseMycologistNoteSections(_finalVerdictNotes);
+                              final parsedSections =
+                                  ReportViewParser.parseMycologistNoteSections(
+                                    _finalVerdictNotes,
+                                  );
                               final controlSections = parsedSections
-                                  .where((section) => ReportViewParser.isPreventionControlSectionTitle(section['title'] ?? ''))
+                                  .where(
+                                    (section) =>
+                                        ReportViewParser.isPreventionControlSectionTitle(
+                                          section['title'] ?? '',
+                                        ),
+                                  )
                                   .toList();
                               final noteSections = parsedSections
-                                  .where((section) => !ReportViewParser.isPreventionControlSectionTitle(section['title'] ?? ''))
+                                  .where(
+                                    (section) =>
+                                        !ReportViewParser.isPreventionControlSectionTitle(
+                                          section['title'] ?? '',
+                                        ),
+                                  )
                                   .toList();
 
-                              final preventionContent = controlSections.isNotEmpty
-                                  ? ReportViewParser.buildTreatmentsFromControlSections(controlSections)
+                              final preventionContent =
+                                  controlSections.isNotEmpty
+                                  ? ReportViewParser.buildTreatmentsFromControlSections(
+                                      controlSections,
+                                    )
                                   : _preventionTacticsContent;
 
                               final tabs = <String>[
@@ -520,21 +683,21 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                               ];
 
                               final maxIndex = tabs.length - 1;
-                              final activeTabIndex = _selectedTabIndex.clamp(0, maxIndex).toInt();
+                              final activeTabIndex = _selectedTabIndex
+                                  .clamp(0, maxIndex)
+                                  .toInt();
 
                               final tabContents = <Widget>[
                                 _buildCaseDetailsTab(context),
-                                ReportOverviewTab(
-                                  sections: noteSections,
-                                ),
-                                ReportHostsSymptomsTab(
-                                  sections: noteSections,
-                                ),
+                                ReportOverviewTab(sections: noteSections),
+                                ReportHostsSymptomsTab(sections: noteSections),
                                 ReportDiseaseCycleImpactTab(
                                   sections: noteSections,
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5.0,
+                                  ),
                                   child: PreventionTacticsContent(
                                     treatmentsContent: preventionContent,
                                   ),
@@ -548,42 +711,57 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                     Padding(
                                       padding: const EdgeInsets.only(top: 18.0),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'IDENTIFIED GENUS',
                                             style: TextStyle(
                                               fontSize: 9,
                                               letterSpacing: 2.0,
-                                              fontFamily: 'Bricolage-Grotesque-Bold',
+                                              fontFamily:
+                                                  'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Expanded(
                                                 child: Text(
                                                   _finalVerdictMoldName,
                                                   style: const TextStyle(
                                                     fontSize: 24,
-                                                    fontFamily: 'Bricolage-Grotesque-Bold',
-                                                    color: MoldifyColors.primaryColor,
+                                                    fontFamily:
+                                                        'Bricolage-Grotesque-Bold',
+                                                    color: MoldifyColors
+                                                        .primaryColor,
                                                     height: 1.1,
                                                   ),
                                                 ),
                                               ),
-                                              if (_finalVerdictConfidence.trim().isNotEmpty)
+                                              if (_finalVerdictConfidence
+                                                  .trim()
+                                                  .isNotEmpty)
                                                 Padding(
-                                                  padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 12.0,
+                                                        top: 4.0,
+                                                      ),
                                                   child: Text(
-                                                    _finalVerdictConfidence.trim(),
+                                                    _finalVerdictConfidence
+                                                        .trim(),
                                                     style: const TextStyle(
                                                       fontSize: 14,
-                                                      fontFamily: 'Bricolage-Grotesque-Bold',
-                                                      color: MoldifyColors.accentColor,
+                                                      fontFamily:
+                                                          'Bricolage-Grotesque-Bold',
+                                                      color: MoldifyColors
+                                                          .accentColor,
                                                       letterSpacing: 0.4,
                                                     ),
                                                   ),
@@ -593,22 +771,81 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                         ],
                                       ),
                                     ),
+                                  if (_linkedMoldipediaId != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12.0),
+                                      child: GestureDetector(
+                                        onTap: () => Navigator.of(context).pushNamed(
+                                          RouteNames.viewWikiMold,
+                                          arguments: {'id': _linkedMoldipediaId},
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.menu_book_outlined,
+                                                size: 16,
+                                                color: MoldifyColors.primaryColor,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'View WikiMold Reference',
+                                                style: TextStyle(
+                                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                                  fontSize: 13,
+                                                  color: MoldifyColors.primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Icon(
+                                                Icons.arrow_forward_ios,
+                                                size: 11,
+                                                color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ReportResolvedActionsRow(
                                     visible: caseStatus == 'Resolved',
                                     onCloseCase: _handleCloseCase,
                                     onAddFollowUp: _handleAddFollowUp,
-                                    closeCaseLabel: AppLocalizations.of(context)!.closeCase,
-                                    addFollowUpLabel: AppLocalizations.of(context)!.addFollowUp,
+                                    closeCaseLabel: AppLocalizations.of(
+                                      context,
+                                    )!.closeCase,
+                                    addFollowUpLabel: AppLocalizations.of(
+                                      context,
+                                    )!.addFollowUp,
                                   ),
                                   Padding(
                                     padding: EdgeInsets.only(
-                                      top: _finalVerdictMoldName.trim().isNotEmpty ? 14.0 : 18.0,
+                                      top:
+                                          _finalVerdictMoldName
+                                              .trim()
+                                              .isNotEmpty
+                                          ? 14.0
+                                          : 18.0,
                                     ),
                                     child: ScrollableTabBar(
                                       tabs: tabs,
                                       currentIndex: activeTabIndex,
                                       onTabSelected: (index) {
-                                        setState(() => _selectedTabIndex = index);
+                                        setState(
+                                          () => _selectedTabIndex = index,
+                                        );
                                       },
                                     ),
                                   ),
@@ -616,7 +853,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
                                     child: SizedBox(
-                                      height: MediaQuery.of(context).size.height * 0.7,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                          0.7,
                                       child: IndexedStack(
                                         index: activeTabIndex,
                                         children: tabContents,
@@ -634,10 +873,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                   ),
                 ),
               ),
-
             ],
           ),
-        )
+        ),
       ),
     );
   }

@@ -199,9 +199,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
     // Detect if mold was found in database
     final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
+    final moldStatus = resolvedDetails['status']?.toString();
     _isMoldNotFound =
-        resolvedDetails.isEmpty || resolvedDetails.containsKey('error');
-    AppLogger.d('MoldResult: Mold found in database: ${!_isMoldNotFound}');
+        resolvedDetails.isEmpty ||
+        resolvedDetails.containsKey('error') ||
+        moldStatus == 'draft';
+    AppLogger.d('MoldResult: Mold found/reviewed: ${!_isMoldNotFound} (status: $moldStatus)');
 
     // Use moldDetails if available to populate data instead of hardcoded values
     if (!_isMoldNotFound) {
@@ -762,7 +765,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             }
 
                             if (!context.mounted) return;
-                            Navigator.of(context).pop(savePayload);
+                            if (context.mounted) {
+                              Navigator.of(context).pop(savePayload);
+                            }
                           },
                         ),
                       ),

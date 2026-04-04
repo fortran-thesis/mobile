@@ -23,6 +23,8 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/repository/notification_repository.dart';
 import 'package:moldify/core/services/fcm_service.dart';
+import 'package:moldify/core/services/cache_sync_service.dart';
+import 'package:moldify/core/utils/route_observer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +37,9 @@ void main() async {
 
   // Initialise FCM (request permission, get token, register with backend)
   await FCMService.instance.initialise(sessionCookie: authProvider.cookie);
+
+  // Initialize cache sync service to listen for invalidation events
+  CacheSyncService.instance.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   final languageProvider = LanguageProvider(prefs);
@@ -67,11 +72,15 @@ class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
   late final AppAuthProvider _authProvider;
+  late final AppRouteObserver _routeObserver;
   bool _wasAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
+    // Initialize route observer for back-navigation refresh support
+    _routeObserver = AppRouteObserver();
+
     // Listen to auth changes once and only redirect when session transitions
     // from authenticated -> unauthenticated.
     _authProvider = Provider.of<AppAuthProvider>(context, listen: false);
@@ -83,6 +92,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _authProvider.removeListener(_onAuthStateChanged);
+    _routeObserver.dispose();
     super.dispose();
   }
 
@@ -127,6 +137,7 @@ class _MyAppState extends State<MyApp> {
           initialRoute: RouteNames.splash,
           onGenerateRoute: AppRoutes.generateRoute,
           navigatorKey: _rootNavigatorKey,
+          navigatorObservers: [_routeObserver],
         );
       },
     );

@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/language_toggle.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../misc/colors.dart';
 import '../misc/textboxes/textboxes.dart';
@@ -47,19 +49,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showErrorSnackBar(String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontFamily: 'Bricolage-Grotesque-Regular',
+              fontSize: 14,
+              color: MoldifyColors.backgroundColor,
+            ),
           ),
+          backgroundColor: MoldifyColors.MoldifyRed,
         ),
-        backgroundColor: MoldifyColors.MoldifyRed,
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _handleUsernamePasswordSignIn() async {
@@ -107,6 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isMycologist = widget.userRole?.toLowerCase() == 'mycologist';
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       body: Stack(
@@ -142,9 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 height: 1,
                               ),
                               children: [
-                                const TextSpan(text: 'LOG IN\n'),
+                                TextSpan(text: '${l10n.logIn}\n'),
                                 TextSpan(
-                                  text: 'Please enter username and password.',
+                                  text: l10n.loginSubtitle,
                                   style: TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 14,
@@ -160,6 +166,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             softWrap: true,
                           ),
                         ),
+                      ),
+                    ),
+                    /// Language Toggle (Top Right of header)
+                    Positioned(
+                      top: 10,
+                      right: 15,
+                      child: LanguageToggle(
+                        color: MoldifyColors.backgroundColor,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -178,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 30.0),
                         child: AutoSizeText(
-                          'Username',
+                          l10n.username,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -193,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 3.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Username',
+                          hintText: l10n.enterUsername,
                           controller: usernameController,
                           showPassword: false,
                         ),
@@ -206,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': 'Forgot Username'},
+                            arguments: {'pageTitle': l10n.forgotUsername},
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -215,13 +230,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           highlightColor: MoldifyColors.primaryColor.withValues(
                             alpha: 0.2,
                           ),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               vertical: 4,
                               horizontal: 6,
                             ),
                             child: AutoSizeText(
-                              'Forgot Username?',
+                              l10n.forgotUsername,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 12,
@@ -237,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 20.0),
                         child: AutoSizeText(
-                          'Password',
+                          l10n.passwordLabel,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -252,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 3.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Password',
+                          hintText: l10n.enterPasswordHint,
                           controller: passwordController,
                           showPassword: true,
                         ),
@@ -265,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': 'Forgot Password'},
+                            arguments: {'pageTitle': l10n.forgotPassword},
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -274,13 +289,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           highlightColor: MoldifyColors.primaryColor.withValues(
                             alpha: 0.2,
                           ),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               vertical: 4,
                               horizontal: 6,
                             ),
                             child: AutoSizeText(
-                              'Forgot Password?',
+                              l10n.forgotPassword,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 12,
@@ -297,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                         child: BuildButton(
-                          buttonText: 'Log In',
+                          buttonText: l10n.logIn,
                           onPressed: _onLoginPressed,
                           backgroundColor: MoldifyColors.primaryColor,
                           textColor: MoldifyColors.backgroundColor,
@@ -314,8 +329,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const AutoSizeText(
-                                'Don\'t have an account?',
+                              AutoSizeText(
+                                l10n.dontHaveAccount,
                                 style: TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-Regular',
                                   fontSize: 14,
@@ -334,13 +349,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     .withValues(alpha: 0.2),
                                 highlightColor: MoldifyColors.accentColor
                                     .withValues(alpha: 0.2),
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     vertical: 4,
                                     horizontal: 6,
                                   ),
                                   child: AutoSizeText(
-                                    'Sign Up',
+                                    l10n.signUpLink,
                                     style: TextStyle(
                                       fontFamily: 'Bricolage-Grotesque-Bold',
                                       fontSize: 14,
@@ -438,12 +453,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: MoldifyColors.MoldifyBlack,
                               ),
                               children: [
-                                const TextSpan(
-                                  text:
-                                      'By proceeding you acknowledge that you have read, understood and agree to our ',
+                                TextSpan(
+                                  text: l10n.loginTermsText,
                                 ),
                                 TextSpan(
-                                  text: 'Terms of Agreement',
+                                  text: l10n.termsOfAgreement,
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
@@ -458,7 +472,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const TextSpan(text: ' and '),
                                 TextSpan(
-                                  text: 'Privacy Policy',
+                                  text: l10n.privacyPolicy,
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
