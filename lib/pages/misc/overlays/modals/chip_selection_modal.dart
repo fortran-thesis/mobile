@@ -77,6 +77,8 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
   
   /// Controller for custom input text field
   final TextEditingController _customInputController = TextEditingController();
+  final ScrollController _optionsScrollController = ScrollController();
+  final FocusNode _customInputFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -121,7 +123,23 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
   @override
   void dispose() {
     _customInputController.dispose();
+    _optionsScrollController.dispose();
+    _customInputFocusNode.dispose();
     super.dispose();
+  }
+
+  void _focusCustomInput() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_optionsScrollController.hasClients) {
+        _optionsScrollController.animateTo(
+          _optionsScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        );
+      }
+      _customInputFocusNode.requestFocus();
+    });
   }
 
   /// Handle chip selection
@@ -151,10 +169,13 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
         _isCustomInputSelected = !_isCustomInputSelected;
         if (!_isCustomInputSelected) {
           _customInputController.clear();
+        } else {
+          _focusCustomInput();
         }
       } else {
         _selectedOption = null;
         _isCustomInputSelected = true;
+        _focusCustomInput();
       }
     });
   }
@@ -322,6 +343,7 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
                 /// Chip options in a scrollable area
                 Flexible(
                   child: SingleChildScrollView(
+                    controller: _optionsScrollController,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15.0),
                       child: Column(
@@ -362,6 +384,7 @@ class _ChipSelectionModalState extends State<ChipSelectionModal> {
                                 controller: _customInputController,
                                 showPassword: false,
                                 isMultiline: widget.isMultiLine,
+                                focusNode: _customInputFocusNode,
                               ),
                             ],
                           ],
@@ -556,6 +579,9 @@ Future<List<String>?> showSearchableSelectionModal({
   String searchHint = 'Search items...',
   String confirmButtonText = 'Confirm',
   String cancelButtonText = 'Cancel',
+  bool allowCustomOption = false,
+  bool multiSelect = true,
+  String addCustomLabel = 'Add',
 }) async {
   return await showDialog<List<String>>(
     context: context,
@@ -568,9 +594,45 @@ Future<List<String>?> showSearchableSelectionModal({
         searchHint: searchHint,
         confirmButtonText: confirmButtonText,
         cancelButtonText: cancelButtonText,
+        allowCustomOption: allowCustomOption,
+        multiSelect: multiSelect,
+        addCustomLabel: addCustomLabel,
       );
     },
   );
+}
+
+Future<String?> showSearchableSingleSelectionModal({
+  required BuildContext context,
+  required String title,
+  required List<String> options,
+  String? currentSelection,
+  String searchHint = 'Search items...',
+  String confirmButtonText = 'Confirm',
+  String cancelButtonText = 'Cancel',
+  bool allowCustomOption = false,
+  String addCustomLabel = 'Add',
+}) async {
+  final selected = await showSearchableSelectionModal(
+    context: context,
+    title: title,
+    options: options,
+    currentSelections: currentSelection == null || currentSelection.isEmpty
+        ? []
+        : [currentSelection],
+    searchHint: searchHint,
+    confirmButtonText: confirmButtonText,
+    cancelButtonText: cancelButtonText,
+    allowCustomOption: allowCustomOption,
+    multiSelect: false,
+    addCustomLabel: addCustomLabel,
+  );
+
+  if (selected == null || selected.isEmpty) {
+    return null;
+  }
+
+  return selected.first;
 }
 
 /// Modal dialog with searchable multi-select functionality
@@ -581,6 +643,9 @@ class SearchableSelectionModal extends StatefulWidget {
   final String searchHint;
   final String confirmButtonText;
   final String cancelButtonText;
+  final bool allowCustomOption;
+  final bool multiSelect;
+  final String addCustomLabel;
 
   const SearchableSelectionModal({
     super.key,
@@ -590,6 +655,9 @@ class SearchableSelectionModal extends StatefulWidget {
     this.searchHint = 'Search items...',
     this.confirmButtonText = 'Confirm',
     this.cancelButtonText = 'Cancel',
+    this.allowCustomOption = false,
+    this.multiSelect = true,
+    this.addCustomLabel = 'Add',
   });
 
   @override
@@ -600,14 +668,23 @@ class SearchableSelectionModal extends StatefulWidget {
 class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
   late TextEditingController _searchController;
   late Set<String> _selectedItems;
+  late List<String> _allItems;
   late List<String> _filteredItems;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _allItems = List.from(widget.options);
     _selectedItems = Set.from(widget.currentSelections);
-    _filteredItems = List.from(widget.options);
+    _filteredItems = List.from(_allItems);
+
+    for (final selected in widget.currentSelections) {
+      if (!_allItems.contains(selected)) {
+        _allItems.add(selected);
+      }
+    }
+    _updateFilter('');
   }
 
   @override
@@ -619,9 +696,9 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
   void _updateFilter(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredItems = List.from(widget.options);
+        _filteredItems = List.from(_allItems);
       } else {
-        _filteredItems = widget.options
+        _filteredItems = _allItems
             .where((item) =>
                 item.toLowerCase().contains(query.toLowerCase()))
             .toList();
@@ -631,11 +708,43 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
 
   void _toggleSelection(String item) {
     setState(() {
+      if (!widget.multiSelect) {
+        _selectedItems
+          ..clear()
+          ..add(item);
+        return;
+      }
+
       if (_selectedItems.contains(item)) {
         _selectedItems.remove(item);
       } else {
         _selectedItems.add(item);
       }
+    });
+  }
+
+  bool get _canCreateCustomOption {
+    if (!widget.allowCustomOption) return false;
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return false;
+    return !_allItems.any((item) => item.toLowerCase() == query.toLowerCase());
+  }
+
+  void _createAndSelectCustomOption() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
+
+    setState(() {
+      _allItems.add(query);
+      if (!widget.multiSelect) {
+        _selectedItems
+          ..clear()
+          ..add(query);
+      } else {
+        _selectedItems.add(query);
+      }
+      _searchController.clear();
+      _filteredItems = List.from(_allItems);
     });
   }
 
@@ -719,69 +828,97 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
             ),
             // Items list
             Expanded(
-              child: _filteredItems.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No items found',
-                        style: TextStyle(
-                          color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    if (_filteredItems.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'No items found',
+                          style: TextStyle(
+                            color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                          ),
                         ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: Column(
-                        children: List.generate(
-                          _filteredItems.length,
-                          (index) {
-                            final item = _filteredItems[index];
-                            final isSelected = _selectedItems.contains(item);
-                            return GestureDetector(
-                              onTap: () => _toggleSelection(item),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? MoldifyColors.primaryColor
-                                          .withValues(alpha: 0.05)
-                                      : Colors.transparent,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: MoldifyColors.primaryColor
-                                          .withValues(alpha: 0.05),
-                                    ),
+                      )
+                    else
+                      ...List.generate(
+                        _filteredItems.length,
+                        (index) {
+                          final item = _filteredItems[index];
+                          final isSelected = _selectedItems.contains(item);
+                          return GestureDetector(
+                            onTap: () => _toggleSelection(item),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? MoldifyColors.primaryColor.withValues(alpha: 0.05)
+                                    : Colors.transparent,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: isSelected,
-                                      onChanged: (value) =>
-                                          _toggleSelection(item),
-                                      activeColor: MoldifyColors.primaryColor,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        item,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontFamily:
-                                              'Bricolage-Grotesque-Regular',
-                                          color: Colors.black87,
+                              ),
+                              child: Row(
+                                children: [
+                                  widget.multiSelect
+                                      ? Checkbox(
+                                          value: isSelected,
+                                          onChanged: (value) => _toggleSelection(item),
+                                          activeColor: MoldifyColors.primaryColor,
+                                        )
+                                      : Radio<bool>(
+                                          value: true,
+                                          groupValue: isSelected,
+                                          onChanged: (_) => _toggleSelection(item),
+                                          activeColor: MoldifyColors.primaryColor,
                                         ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      item,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontFamily: 'Bricolage-Grotesque-Regular',
+                                        color: Colors.black87,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
+                            ),
+                          );
+                        },
+                      ),
+                    if (_canCreateCustomOption)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: OutlinedButton.icon(
+                          onPressed: _createAndSelectCustomOption,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(
+                            '${widget.addCustomLabel} "${_searchController.text.trim()}"',
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(44),
+                            side: BorderSide(
+                              color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
+                            ),
+                            foregroundColor: MoldifyColors.primaryColor,
+                          ),
                         ),
                       ),
-                    ),
+                  ],
+                ),
+              ),
             ),
             // Footer buttons
             Padding(
