@@ -256,14 +256,14 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   rightIconColor: MoldifyColors.accentColor,
                   readOnly: true,
                   onTap: () async {
-                    final selectedCrop = await showChipSelectionModal(
+                    final selectedCrop = await showSearchableSingleSelectionModal(
                       context: context,
                       title: l10n.selectCropName,
                       options: _cropOptions,
                       currentSelection: _cropNameController.text,
-                      customInputHint: l10n.customCropInputHint,
-                      othersLabel: l10n.othersLabel,
-                      isMultiLine: false,
+                      searchHint: 'Search crop name...',
+                      allowCustomOption: true,
+                      addCustomLabel: 'Add crop',
                     );
 
                     if (selectedCrop != null && selectedCrop.isNotEmpty) {
@@ -367,14 +367,14 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                   rightIconColor: MoldifyColors.accentColor,
                   readOnly: true,
                   onTap: () async {
-                    final selectedProblems = await showMultiChipSelectionModal(
+                    final selectedProblems = await showSearchableSelectionModal(
                       context: context,
                       title: l10n.selectProblemDescription,
                       options: _problemDescriptionOptions,
                       currentSelections: _selectedProblemDescriptions,
-                      customInputHint: l10n.customProblemInputHint,
-                      othersLabel: l10n.othersLabel,
-                      isMultiLine: true,
+                      searchHint: 'Search symptom or issue...',
+                      allowCustomOption: true,
+                      addCustomLabel: 'Add issue',
                     );
 
                     if (selectedProblems != null && selectedProblems.isNotEmpty) {
