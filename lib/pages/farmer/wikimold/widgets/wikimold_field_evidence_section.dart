@@ -260,6 +260,8 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
     final cropName = _asText(
       caseData['crop_name'] ?? caseData['cropName'] ?? caseData['crop'],
     );
+    final reportId = _asText(caseData['mold_report_id'] ?? caseData['id']);
+    final caseImageUrl = _extractCaseImageUrl(caseData);
 
     const Color primaryGreen = MoldifyColors.primaryColor;
     const Color orangeAccent = MoldifyColors.accentColor;
@@ -290,68 +292,108 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: Column(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'CROP NAME',
-                                  style: TextStyle(
-                                    fontFamily: 'Bricolage-Grotesque',
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.5,
-                                    color: orangeAccent,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        cropName.isNotEmpty ? cropName.toUpperCase() : 'UNKNOWN',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                _CaseImagePreview(imageUrl: caseImageUrl),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'CROP NAME',
                                         style: TextStyle(
-                                          fontFamily: 'Montserrat-Black',
-                                          fontSize: 22,
-                                          color: primaryGreen,
-                                          letterSpacing: -0.5,
+                                          fontFamily: 'Bricolage-Grotesque',
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.5,
+                                          color: orangeAccent,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              cropName.isNotEmpty ? cropName.toUpperCase() : 'UNKNOWN',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontFamily: 'Montserrat-Black',
+                                                fontSize: 22,
+                                                color: primaryGreen,
+                                                letterSpacing: -0.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => _toggleCaseExpanded(caseKey),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isExpanded ? orangeAccent : Colors.transparent,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: isExpanded
-                                      ? orangeAccent
-                                      : primaryGreen.withValues(alpha: 0.2),
+                          Column(
+                            children: [
+                              if (reportId.isNotEmpty)
+                                OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      RouteNames.viewCase,
+                                      arguments: {'id': reportId},
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: primaryGreen,
+                                    side: BorderSide(
+                                      color: primaryGreen.withValues(alpha: 0.25),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontFamily: 'Montserrat-Bold',
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                  child: const Text('OPEN CASE'),
+                                ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () => _toggleCaseExpanded(caseKey),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isExpanded ? orangeAccent : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                      color: isExpanded
+                                          ? orangeAccent
+                                          : primaryGreen.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isExpanded ? 'HIDE NOTES' : 'QUICK NOTES',
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat-Bold',
+                                      fontSize: 10,
+                                      letterSpacing: 0.5,
+                                      color: isExpanded ? Colors.white : primaryGreen,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                isExpanded ? 'CLOSE CASE' : 'VIEW CASE',
-                                style: TextStyle(
-                                  fontFamily: 'Montserrat-Bold',
-                                  fontSize: 10,
-                                  letterSpacing: 0.5,
-                                  color: isExpanded ? Colors.white : primaryGreen,
-                                ),
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -511,6 +553,24 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
     return filtered.first;
   }
 
+  String _extractCaseImageUrl(Map<String, dynamic> caseData) {
+    final details = _asMap(caseData['cultivation_details']);
+    final dynamic coverPhoto = caseData['cover_photo'] ?? caseData['report_cover_photo'];
+
+    final candidates = <String>[
+      _asText(details['initial_macroscopic_image_url']),
+      _asText(details['initial_microscopic_image_url']),
+    ];
+
+    if (coverPhoto is List && coverPhoto.isNotEmpty) {
+      candidates.add(_asText(coverPhoto.first));
+    } else {
+      candidates.add(_asText(coverPhoto));
+    }
+
+    return candidates.firstWhere((item) => item.isNotEmpty, orElse: () => '');
+  }
+
   Widget _buildEvidencePanel({
     required String phase,
     required String title,
@@ -630,6 +690,41 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
           ),
         ],
       ],
+    );
+  }
+}
+
+class _CaseImagePreview extends StatelessWidget {
+  const _CaseImagePreview({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 64,
+        height: 64,
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.08),
+        child: imageUrl.isEmpty
+            ? Icon(
+                Icons.image_not_supported_outlined,
+                color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                size: 20,
+              )
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.image_not_supported_outlined,
+                    color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                    size: 20,
+                  );
+                },
+              ),
+      ),
     );
   }
 }
