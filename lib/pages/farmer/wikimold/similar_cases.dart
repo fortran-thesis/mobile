@@ -178,6 +178,24 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
     return filtered.first;
   }
 
+  String _extractCaseImageUrl(Map<String, dynamic> caseData) {
+    final details = _asMap(caseData['cultivation_details']);
+    final dynamic coverPhoto = caseData['cover_photo'] ?? caseData['report_cover_photo'];
+
+    final candidates = <String>[
+      _asText(details['initial_macroscopic_image_url']),
+      _asText(details['initial_microscopic_image_url']),
+    ];
+
+    if (coverPhoto is List && coverPhoto.isNotEmpty) {
+      candidates.add(_asText(coverPhoto.first));
+    } else {
+      candidates.add(_asText(coverPhoto));
+    }
+
+    return candidates.firstWhere((item) => item.isNotEmpty, orElse: () => '');
+  }
+
   Widget _buildEvidencePanel({
     required String title,
     required String description,
@@ -475,6 +493,8 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
         final entry = _cases[index];
         final caseKey = _caseKey(entry, index);
         final isExpanded = _expandedCaseIds.contains(caseKey);
+        final reportId = _asText(entry['mold_report_id'] ?? entry['id']);
+        final caseImageUrl = _extractCaseImageUrl(entry);
 
         final details = _asMap(entry['cultivation_details']);
         final initialMicroscopic = _asText(details['initial_microscopic']);
@@ -532,13 +552,50 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Observation #${index + 1}',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat-Bold',
-                      fontSize: 14,
-                      color: MoldifyColors.primaryColor,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CaseImagePreview(imageUrl: caseImageUrl),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Observation #${index + 1}',
+                              style: const TextStyle(
+                                fontFamily: 'Montserrat-Bold',
+                                fontSize: 14,
+                                color: MoldifyColors.primaryColor,
+                              ),
+                            ),
+                            if (reportId.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              OutlinedButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    RouteNames.viewCase,
+                                    arguments: {'id': reportId},
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: MoldifyColors.primaryColor,
+                                  side: BorderSide(
+                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.25),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontFamily: 'Montserrat-Bold',
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                child: const Text('Open Case'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -605,6 +662,41 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _CaseImagePreview extends StatelessWidget {
+  const _CaseImagePreview({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 64,
+        height: 64,
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.08),
+        child: imageUrl.isEmpty
+            ? Icon(
+                Icons.image_not_supported_outlined,
+                color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                size: 20,
+              )
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.image_not_supported_outlined,
+                    color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+                    size: 20,
+                  );
+                },
+              ),
+      ),
     );
   }
 }
