@@ -68,7 +68,11 @@ class CultureSession {
 
   bool get isAvailableForLogs {
     if (isAvailableForLogsFromApi != null) return isAvailableForLogsFromApi!;
-    return !isEndedEarly && isTimerElapsed;
+    final normalized = (status ?? '').trim().toLowerCase();
+    if (normalized == 'available' || normalized == 'ended_early' || isEndedEarly) {
+      return true;
+    }
+    return isTimerElapsed;
   }
 
   String get availabilityLabel {
@@ -256,7 +260,7 @@ class CultureSessionService {
       _fallbackSessions[index] = _fallbackSessions[index].copyWith(
         endedAt: DateTime.now().toUtc(),
         status: 'ended_early',
-        isAvailableForLogsFromApi: false,
+        isAvailableForLogsFromApi: true,
       );
       return true;
     }

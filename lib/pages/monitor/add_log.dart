@@ -634,7 +634,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
                                 key: ValueKey(_selectedCultureId ?? '_none'),
-                                initialValue: _selectedCultureId,
+                                value: _selectedCultureId,
                                 items: _availableCultures
                                     .map(
                                       (culture) => DropdownMenuItem<String>(

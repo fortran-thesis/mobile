@@ -39,62 +39,66 @@ class InVivoTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-        padding: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
-              width: 1,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
             ),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  'IN VIVO',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat-Black',
-                    fontSize: 18,
-                    letterSpacing: -0.5,
-                    color: MoldifyColors.primaryColor,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'IN VIVO',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 18,
+                        letterSpacing: -0.5,
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                    Text(
+                      inVivoEntries.isEmpty
+                          ? 'NO ENTRIES FOUND'
+                          : dateTime.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: 'Bricolage-Grotesque-Bold',
+                        fontSize: 8,
+                        letterSpacing: 1.0,
+                        color: MoldifyColors.primaryColor.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  inVivoEntries.isEmpty ? 'NO ENTRIES FOUND' : dateTime.toUpperCase(),
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Bold',
-                    fontSize: 8,
-                    letterSpacing: 1.0,
-                    color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
 
-            // --- ACTION BUTTONS ---
-            if (!isCaseClosed)
-              Row(
-                children: [
-                  BuildButton(
-                    buttonText: 'CULTURE',
-                    onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => BuildBottomSheet(
-                            showDragHandle: true,
-                            child: CultureHubBottomSheetContent(
+                // --- ACTION BUTTONS ---
+                if (!isCaseClosed)
+                  Row(
+                    children: [
+                      BuildButton(
+                        buttonText: 'CULTURE',
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => BuildBottomSheet(
+                              showDragHandle: true,
+                              child: CultureHubBottomSheetContent(
                                 onCreateNew: () {
                                   Navigator.of(context).pop();
                                   Navigator.pushNamed(
@@ -103,116 +107,134 @@ class InVivoTab extends StatelessWidget {
                                     arguments: {'caseId': caseId},
                                   ).then((result) {
                                     if (result is! Map<String, dynamic>) return;
-                                    final cultureName = result['name']?.toString().trim();
-                                    if (cultureName == null || cultureName.isEmpty) return;
+                                    final cultureName = result['name']
+                                        ?.toString()
+                                        .trim();
+                                    if (cultureName == null ||
+                                        cultureName.isEmpty) {
+                                      return;
+                                    }
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Culture "$cultureName" initialized.')),
+                                      SnackBar(
+                                        content: Text(
+                                          'Culture "$cultureName" initialized.',
+                                        ),
+                                      ),
                                     );
                                   });
-                              },
-                              onViewActive: () {
+                                },
+                                onViewActive: () {
                                   Navigator.of(context).pop();
                                   Navigator.pushNamed(
                                     context,
                                     RouteNames.cultureDashboard,
                                     arguments: {'caseId': caseId},
                                   );
-                              },
+                                },
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    backgroundColor: Colors.transparent,
-                    textColor: MoldifyColors.primaryColor.withValues(alpha: 0.6),
-                    buttonHeight: 30,
-                    buttonRadius: 0,
-                    fontSize: 12,
-                  ),
-                  const SizedBox(width: 4),
-                  const Text("|", style: TextStyle(color: Colors.black12)), 
-                  const SizedBox(width: 4),
-                  BuildButton(
-                    buttonText: 'ADD LOG',
-                    onPressed: () async {
-                        final result = await Navigator.pushNamed(
-                          context,
-                          RouteNames.addLogChoices,
-                          arguments: {
-                            'sourceTab': 'in-vivo',
-                            'caseId': caseId,
-                            'includeSize': false,
-                            'initialMicroIdentifiedMold': initialMicroIdentifiedMold,
-                            'initialMacroColor': initialMacroColor,
-                            'initialMacroTexture': initialMacroTexture,
-                            'initialMacroSymptoms': initialMacroSymptoms,
-                            'initialMacroCharacteristics': initialMacroCharacteristics,
-                          },
-                        );
+                          );
+                        },
+                        backgroundColor: Colors.transparent,
+                        textColor: MoldifyColors.primaryColor.withValues(
+                          alpha: 0.6,
+                        ),
+                        buttonHeight: 30,
+                        buttonRadius: 0,
+                        fontSize: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      const Text("|", style: TextStyle(color: Colors.black12)),
+                      const SizedBox(width: 4),
+                      BuildButton(
+                        buttonText: 'ADD LOG',
+                        onPressed: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            RouteNames.addLogChoices,
+                            arguments: {
+                              'sourceTab': 'in-vivo',
+                              'caseId': caseId,
+                              'includeSize': false,
+                              'initialMicroIdentifiedMold':
+                                  initialMicroIdentifiedMold,
+                              'initialMacroColor': initialMacroColor,
+                              'initialMacroTexture': initialMacroTexture,
+                              'initialMacroSymptoms': initialMacroSymptoms,
+                              'initialMacroCharacteristics':
+                                  initialMacroCharacteristics,
+                            },
+                          );
 
-                        if (result is Map && onLogSaved != null) {
-                          onLogSaved!(Map<String, dynamic>.from(result));
+                          if (result is Map && onLogSaved != null) {
+                            onLogSaved!(Map<String, dynamic>.from(result));
+                          }
+                        },
+                        backgroundColor: Colors.transparent,
+                        textColor: MoldifyColors.primaryColor,
+                        leftIcon: FontAwesomeIcons.plus,
+                        iconColor: MoldifyColors.primaryColor,
+                        iconSize: 10,
+                        paddingIconText: 6,
+                        buttonHeight: 30,
+                        buttonRadius: 0,
+                        fontSize: 12,
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          if (inVivoEntries.isEmpty)
+            EmptyState(
+              message: 'No entries made yet.',
+              icon: FontAwesomeIcons.leaf,
+              height: MediaQuery.of(context).size.height - 400,
+            )
+          else
+            ...List.generate(inVivoEntries.length, (index) {
+              final entry = inVivoEntries[index];
+              return ExperimentTimelineTile(
+                dateTime: entry['date'] ?? '',
+                microscopicImagePath: entry['microscopicImagePath'] ?? '',
+                microGenusName: entry['microGenusName'] ?? '',
+                macroscopicImagePath: entry['macroscopicImagePath'] ?? '',
+                macroShape: entry['macroShape'] ?? '',
+                macroTexture: entry['macroTexture'] ?? '',
+                shapeLabel: 'Lesion Shape',
+                textureLabel: 'Lesion Texture',
+                macroSymptoms: entry['macroSymptoms'] ?? '',
+                macroSigns: entry['macroSigns'] ?? '',
+                macroCharacteristics: entry['macroCharacteristics'] ?? '',
+                cultureName: entry['cultureName'] ?? '',
+                isFirst: index == 0,
+                isLast: index == inVivoEntries.length - 1,
+                // Hide popup menu when the case is closed
+                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
+                popupMenuIcons: isCaseClosed
+                    ? []
+                    : [FontAwesomeIcons.pen, FontAwesomeIcons.trash],
+                onPopupMenuItemSelected: isCaseClosed
+                    ? null
+                    : (selectedIndex) {
+                        if (selectedIndex == 0) {
+                          Navigator.pushNamed(
+                            context,
+                            RouteNames.editLog,
+                            arguments: {'tabName': 'In Vivo'},
+                          );
+                        } else if (selectedIndex == 1) {
+                          // TODO: Handle delete
                         }
                       },
-                    backgroundColor: Colors.transparent,
-                    textColor: MoldifyColors.primaryColor,
-                    leftIcon: FontAwesomeIcons.plus,
-                    iconColor: MoldifyColors.primaryColor,
-                    iconSize: 10,
-                    paddingIconText: 6,
-                    buttonHeight: 30,
-                    buttonRadius: 0,
-                    fontSize: 12,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-  
-            SizedBox(height: 12),
-
-            if (inVivoEntries.isEmpty)
-              EmptyState(
-                message: 'No entries made yet.',
-                icon: FontAwesomeIcons.leaf,
-                height: MediaQuery.of(context).size.height - 400,
-              )
-            else
-              ...List.generate(inVivoEntries.length, (index) {
-                final entry = inVivoEntries[index];
-                return ExperimentTimelineTile(
-                  dateTime: entry['date'] ?? '',
-                  microscopicImagePath: entry['microscopicImagePath'] ?? '',
-                  microGenusName: entry['microGenusName'] ?? '',
-                  macroscopicImagePath: entry['macroscopicImagePath'] ?? '',
-                  macroShape: entry['macroShape'] ?? '',
-                  macroTexture: entry['macroTexture'] ?? '',
-                  shapeLabel: 'Lesion Shape',
-                  textureLabel: 'Lesion Texture',
-                  macroSymptoms: entry['macroSymptoms'] ?? '',
-                  macroCharacteristics: entry['macroCharacteristics'] ?? '',
-                  cultureName: entry['cultureName'] ?? '',
-                  isFirst: index == 0,
-                  isLast: index == inVivoEntries.length - 1,
-                  // Hide popup menu when the case is closed
-                  popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
-                  popupMenuIcons: isCaseClosed ? [] : [FontAwesomeIcons.pen, FontAwesomeIcons.trash],
-                  onPopupMenuItemSelected: isCaseClosed ? null : (selectedIndex) {
-                    if (selectedIndex == 0) {
-                      Navigator.pushNamed(
-                        context,
-                        RouteNames.editLog,
-                        arguments: {'tabName': 'In Vivo'},
-                      );
-                    } else if (selectedIndex == 1) {
-                      // TODO: Handle delete
-                    }
-                  },
-                );
-              }),
-          ],
-        )
+              );
+            }),
+        ],
+      ),
     );
   }
 }

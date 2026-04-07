@@ -50,7 +50,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? _reportId; // Store the report ID for status updates
   bool _mutationOccurred = false; // Signal list refresh to caller on pop
   bool _hasGivenRecommendation = false;
-  String? _linkedMoldipediaId; // Set when the final verdict links to a WikiMold article.
+  String?
+  _linkedMoldipediaId; // Set when the final verdict links to a WikiMold article.
   bool _isRunningLookup = false;
   String _lookupTopMoldId = '';
   String _lookupTopMoldName = '';
@@ -171,6 +172,13 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       characteristics['symptoms'],
       characteristics['symptomsDisplay'],
     ]);
+    final signs = _firstNonEmpty([
+      characteristics['signs'],
+      characteristics['signsDisplay'],
+      characteristics['initial_signs'],
+      characteristics['symptoms_signs'],
+      characteristics['symptomsSigns'],
+    ]);
     final trait = _firstNonEmpty([
       characteristics['characteristics'],
       characteristics['characteristicsDisplay'],
@@ -203,6 +211,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       'macroTexture': texture,
       'macroShape': color,
       'macroSymptoms': symptoms,
+      'macroSigns': signs,
       'macroCharacteristics': trait,
       'cultureName': cultureName,
       'notes': log.additionalInfo,
@@ -727,7 +736,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
               moldCase.id,
               sessionCookie: sessionCookie,
             );
-            final rawData = rawCase['data'] is Map ? rawCase['data'] as Map : rawCase;
+            final rawData = rawCase['data'] is Map
+                ? rawCase['data'] as Map
+                : rawCase;
             final verdict = rawData['final_verdict'];
             if (verdict is Map) {
               final mid = verdict['moldipedia_id']?.toString().trim();
@@ -1258,20 +1269,25 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                 if (_linkedMoldipediaId != null) ...[
                                   const SizedBox(height: 14),
                                   GestureDetector(
-                                    onTap: () => Navigator.of(context).pushNamed(
-                                      RouteNames.viewWikiMold,
-                                      arguments: {'id': _linkedMoldipediaId},
-                                    ),
+                                    onTap: () =>
+                                        Navigator.of(context).pushNamed(
+                                          RouteNames.viewWikiMold,
+                                          arguments: {
+                                            'id': _linkedMoldipediaId,
+                                          },
+                                        ),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 14,
                                         vertical: 10,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
+                                        color: MoldifyColors.primaryColor
+                                            .withValues(alpha: 0.06),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                          color: MoldifyColors.primaryColor
+                                              .withValues(alpha: 0.2),
                                         ),
                                       ),
                                       child: Row(
@@ -1286,7 +1302,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                           const Text(
                                             'View WikiMold Reference',
                                             style: TextStyle(
-                                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                              fontFamily:
+                                                  'Bricolage-Grotesque-SemiBold',
                                               fontSize: 13,
                                               color: MoldifyColors.primaryColor,
                                             ),
@@ -1295,7 +1312,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                           Icon(
                                             Icons.arrow_forward_ios,
                                             size: 11,
-                                            color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                                            color: MoldifyColors.primaryColor
+                                                .withValues(alpha: 0.6),
                                           ),
                                         ],
                                       ),
@@ -1349,8 +1367,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         macroCharacteristics:
                                             _initMacroCharacteristics,
                                         isCaseClosed: isCaseClosed,
-                                        onAddInitialObservations:
-                                          isCaseClosed ? null : _openAddInitialObservations,
+                                        onAddInitialObservations: isCaseClosed
+                                            ? null
+                                            : _openAddInitialObservations,
                                       ),
                                       InVitroTab(
                                         isCaseClosed: isCaseClosed,

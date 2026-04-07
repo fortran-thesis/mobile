@@ -105,8 +105,12 @@ class _MainReportScreenState extends State<MainReportScreen> {
 
   // Sentinel value meaning the user explicitly chose "All" statuses.
   static const String _filterAll = '__all__';
-  // Default view: only active (pending + in-progress) cases.
-  static const List<String> _activeStatuses = ['pending', 'in progress'];
+  // Default view: pending, in-progress, and recently resolved cases.
+  static const List<String> _activeStatuses = [
+    'pending',
+    'in progress',
+    'resolved',
+  ];
 
   List<MoldReport> _applyClientFilters(List<MoldReport> reports) {
     final searchText = searchController.text.trim().toLowerCase();

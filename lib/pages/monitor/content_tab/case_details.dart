@@ -278,226 +278,235 @@ class _CaseTimelineTile extends StatelessWidget {
         color: MoldifyColors.primaryColor,
         thickness: 1,
       ),
-      endChild: Padding(
-        padding: const EdgeInsets.only(left: 12.0, bottom: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// --- DATE & TIME ---
-            Text(
-              dateTime,
-              style: const TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 12,
-                color: MoldifyColors.MoldifyGrey,
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            /// --- ADDITIONAL NOTES ---
-            Text(
-              AppLocalizations.of(context)!.additionalNotes,
-              style: TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Bold',
-                fontSize: 14,
-                color: MoldifyColors.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              notes,
-              style: const TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 16,
-                color: Colors.black87,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.justify,
-            ),
-            const SizedBox(height: 12),
-
-            /// --- IMAGES ---
-            if (imageUrls.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: imageUrls.map((url) {
-                  return GestureDetector(
-                    onTap: () {
-                      final initialIndex = imageUrls.indexOf(url);
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: true,
-                        builder: (context) {
-                          final controller = PageController(
-                            initialPage: initialIndex,
-                          );
-                          int currentIndex = initialIndex;
-
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              return Dialog(
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
-                                ),
-                                backgroundColor: Colors.black.withValues(
-                                  alpha: 0.9,
-                                ),
-                                insetPadding: EdgeInsets.zero,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    /// --- Swipeable images ---
-                                    PageView.builder(
-                                      controller: controller,
-                                      itemCount: imageUrls.length,
-                                      onPageChanged: (index) {
-                                        setState(() {
-                                          currentIndex = index;
-                                        });
-                                      },
-                                      itemBuilder: (context, index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0,
-                                          ),
-                                          child: InteractiveViewer(
-                                            child: Center(
-                                              child: Image.network(
-                                                imageUrls[index],
-                                                fit: BoxFit.contain,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-
-                                    /// --- Close button (top right) ---
-                                    Positioned(
-                                      top: 20,
-                                      right: 15,
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 28,
-                                        ),
-                                        onPressed: () => Navigator.pop(context),
-                                      ),
-                                    ),
-
-                                    /// --- Bottom control bar (arrows + counter) ---
-                                    Positioned(
-                                      bottom: 30,
-                                      left: 0,
-                                      right: 0,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          /// Left arrow
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.arrow_back_ios_new,
-                                              color:
-                                                  MoldifyColors.backgroundColor,
-                                              size: 20,
-                                            ),
-                                            onPressed: currentIndex > 0
-                                                ? () {
-                                                    controller.previousPage(
-                                                      duration: const Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      curve: Curves.easeInOut,
-                                                    );
-                                                  }
-                                                : null,
-                                          ),
-                                          const SizedBox(width: 16),
-
-                                          /// Counter text
-                                          Text(
-                                            "${currentIndex + 1} / ${imageUrls.length}",
-                                            style: const TextStyle(
-                                              color:
-                                                  MoldifyColors.backgroundColor,
-                                              fontSize: 16,
-                                              fontFamily:
-                                                  'Bricolage-Grotesque-Regular',
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-
-                                          /// Right arrow
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.arrow_forward_ios,
-                                              color:
-                                                  MoldifyColors.backgroundColor,
-                                              size: 20,
-                                            ),
-                                            onPressed:
-                                                currentIndex <
-                                                    imageUrls.length - 1
-                                                ? () {
-                                                    controller.nextPage(
-                                                      duration: const Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      curve: Curves.easeInOut,
-                                                    );
-                                                  }
-                                                : null,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-
-                    /// --- Thumbnail image ---x
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        url,
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 100,
-                            height: 100,
-                            color: Colors.grey[300],
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                }).toList(),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text(
-                  'No images available for this entry.',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 14,
-                    color: MoldifyColors.MoldifyGrey,
-                    fontStyle: FontStyle.italic,
-                  ),
+      endChild: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width - 60,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12.0, bottom: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// --- DATE & TIME ---
+              Text(
+                dateTime,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 12,
+                  color: MoldifyColors.MoldifyGrey,
                 ),
               ),
-          ],
+              const SizedBox(height: 6),
+
+              /// --- ADDITIONAL NOTES ---
+              Text(
+                AppLocalizations.of(context)!.additionalNotes,
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Bold',
+                  fontSize: 14,
+                  color: MoldifyColors.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                notes,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 16,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.justify,
+              ),
+              const SizedBox(height: 12),
+
+              /// --- IMAGES ---
+              if (imageUrls.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: imageUrls.map((url) {
+                    return GestureDetector(
+                      onTap: () {
+                        final initialIndex = imageUrls.indexOf(url);
+
+                        showDialog(
+                          context: context,
+                          barrierDismissible: true,
+                          builder: (context) {
+                            final controller = PageController(
+                              initialPage: initialIndex,
+                            );
+                            int currentIndex = initialIndex;
+
+                            return StatefulBuilder(
+                              builder: (context, setState) {
+                                return Dialog(
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                  insetPadding: EdgeInsets.zero,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      /// --- Swipeable images ---
+                                      PageView.builder(
+                                        controller: controller,
+                                        itemCount: imageUrls.length,
+                                        onPageChanged: (index) {
+                                          setState(() {
+                                            currentIndex = index;
+                                          });
+                                        },
+                                        itemBuilder: (context, index) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0,
+                                            ),
+                                            child: InteractiveViewer(
+                                              child: Center(
+                                                child: Image.network(
+                                                  imageUrls[index],
+                                                  fit: BoxFit.contain,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+
+                                      /// --- Close button (top right) ---
+                                      Positioned(
+                                        top: 20,
+                                        right: 15,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                      ),
+
+                                      /// --- Bottom control bar (arrows + counter) ---
+                                      Positioned(
+                                        bottom: 30,
+                                        left: 0,
+                                        right: 0,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            /// Left arrow
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.arrow_back_ios_new,
+                                                color: MoldifyColors
+                                                    .backgroundColor,
+                                                size: 20,
+                                              ),
+                                              onPressed: currentIndex > 0
+                                                  ? () {
+                                                      controller.previousPage(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 200,
+                                                            ),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    }
+                                                  : null,
+                                            ),
+                                            const SizedBox(width: 16),
+
+                                            /// Counter text
+                                            Text(
+                                              "${currentIndex + 1} / ${imageUrls.length}",
+                                              style: const TextStyle(
+                                                color: MoldifyColors
+                                                    .backgroundColor,
+                                                fontSize: 16,
+                                                fontFamily:
+                                                    'Bricolage-Grotesque-Regular',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+
+                                            /// Right arrow
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.arrow_forward_ios,
+                                                color: MoldifyColors
+                                                    .backgroundColor,
+                                                size: 20,
+                                              ),
+                                              onPressed:
+                                                  currentIndex <
+                                                      imageUrls.length - 1
+                                                  ? () {
+                                                      controller.nextPage(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 200,
+                                                            ),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    }
+                                                  : null,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+
+                      /// --- Thumbnail image ---x
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          url,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 100,
+                              height: 100,
+                              color: Colors.grey[300],
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    'No images available for this entry.',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      fontSize: 14,
+                      color: MoldifyColors.MoldifyGrey,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
