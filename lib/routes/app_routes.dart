@@ -634,10 +634,12 @@ class AppRoutes {
             return ViewWikiMoldScreen(articleId: articleId);
 
           case RouteNames.cultureDashboard:
-            return const CultureDashboard();
+            final args = _mapArgs(settings);
+            return CultureDashboard(caseId: _stringArg(args, 'caseId'));
 
           case RouteNames.setCulture:
-            return const InitializeCulturePage();
+            final args = _mapArgs(settings);
+            return InitializeCulturePage(caseId: _stringArg(args, 'caseId'));
 
           default:
             return Scaffold(

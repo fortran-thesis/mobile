@@ -53,7 +53,7 @@ class InVitroTab extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: MoldifyColors.primaryColor.withOpacity(0.1),
+              color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -80,7 +80,7 @@ class InVitroTab extends StatelessWidget {
                     fontFamily: 'Bricolage-Grotesque-Bold',
                     fontSize: 8,
                     letterSpacing: 1.0,
-                    color: MoldifyColors.primaryColor.withOpacity(0.5),
+                    color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -110,6 +110,7 @@ class InVitroTab extends StatelessWidget {
                                 if (result is! Map<String, dynamic>) return;
                                 final cultureName = result['name']?.toString().trim();
                                 if (cultureName == null || cultureName.isEmpty) return;
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Culture "$cultureName" initialized.')),
                                 );
@@ -197,6 +198,7 @@ class InVitroTab extends StatelessWidget {
                   textureLabel: 'Colony Texture',
                   macroSymptoms: entry['macroSymptoms'] ?? '',
                   macroCharacteristics: entry['macroCharacteristics'] ?? '',
+                  cultureName: entry['cultureName'] ?? '',
                   isFirst: index == 0,
                   isLast: index == inVitroEntries.length - 1,
                   // Hide popup menu when the case is closed

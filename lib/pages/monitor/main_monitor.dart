@@ -366,7 +366,10 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                       padding: const EdgeInsets.only(top: 10.0),
                                       child: MainCaseTile(
                                           caseName: moldCase.name,
-                                          dateSubmitted: DateFormat('MMMM dd, yyyy').format(moldCase.startDate),
+                                          dateSubmitted: (moldCase.cropName != null && moldCase.cropName!.trim().isNotEmpty)
+                                            ? moldCase.cropName!.trim()
+                                            : 'Crop not specified',
+                                          dateLabel: 'Crop Name',
                                           caseStatus: 'In Progress',
                                           imageUrl: _resolveTileImageUrl(moldCase),
                                           onTap: () async {
@@ -384,20 +387,10 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                             }
                                           },
                                           showPopupMenu: true,
-                                          popupMenuItems: ['Set Monitoring Details', 'Export PDF'],
-                                          popupMenuIcons: [FontAwesomeIcons.circleInfo, FontAwesomeIcons.solidFilePdf],
+                                          popupMenuItems: ['Export PDF'],
+                                          popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
                                           onPopupMenuItemSelected: (menuIndex) async {
                                             if (menuIndex == 0) {
-                                              final result = await pushNamedForMutationResult(
-                                                context,
-                                                '/set-monitoring-details',
-                                                arguments: {'moldCase': moldCase},
-                                              );
-                                              if (result.changed && mounted) {
-                                                final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-                                                _bloc.add(RefreshMoldCases(sessionCookie: authProvider.cookie));
-                                              }
-                                            } else if (menuIndex == 1) {
                                               // Export PDF
                                             }
                                           }

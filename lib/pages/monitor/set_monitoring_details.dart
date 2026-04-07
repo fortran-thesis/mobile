@@ -40,6 +40,8 @@ class _SetMonitoringDetailsScreenState
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _initialSymptomsController =
       TextEditingController();
+    final TextEditingController _initialSignsController =
+      TextEditingController();
   final TextEditingController _initialCharacteristicsController =
       TextEditingController();
   final TextEditingController _initialMicroscopicController =
@@ -69,6 +71,7 @@ class _SetMonitoringDetailsScreenState
   final List<Map<String, String>> _specimenEntries = [];
   final List<String> _selectedSpecimenTypes = [];
   final List<String> _selectedInitialSymptoms = [];
+  final List<String> _selectedInitialSigns = [];
   final List<String> _selectedInitialCharacteristics = [];
   final List<String> _scannedMicroscopicIds = [];
   final List<String> _scannedMacroscopicIds = [];
@@ -102,11 +105,23 @@ class _SetMonitoringDetailsScreenState
     'Spreading rapidly',
   ];
 
+  static const List<String> _defaultInitialSignsOptions = [
+    'White mycelial growth',
+    'Powdery residue',
+    'Dark sporulation',
+    'Water-soaked lesion edge',
+    'Foul odor',
+    'Slimy exudate',
+  ];
+
   final List<String> _initialSymptomsOptions = List<String>.from(
     _defaultInitialSymptomsOptions,
   );
   final List<String> _initialCharacteristicsOptions = List<String>.from(
     _defaultInitialCharacteristicsOptions,
+  );
+  final List<String> _initialSignsOptions = List<String>.from(
+    _defaultInitialSignsOptions,
   );
 
   final MoldCaseService _service = MoldCaseService();
@@ -214,6 +229,7 @@ class _SetMonitoringDetailsScreenState
       );
 
       final symptoms = <String>{..._defaultInitialSymptomsOptions};
+      final signs = <String>{..._defaultInitialSignsOptions};
       final characteristics = <String>{
         ..._defaultInitialCharacteristicsOptions,
       };
@@ -221,7 +237,9 @@ class _SetMonitoringDetailsScreenState
       for (final entry in catalog) {
         symptoms.addAll(entry.symptoms);
         symptoms.addAll(entry.signs);
+        signs.addAll(entry.signs);
         symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        signs.addAll(_splitCatalogValues(entry.symptomsAndSigns));
         characteristics.addAll(entry.characteristics);
       }
 
@@ -233,6 +251,9 @@ class _SetMonitoringDetailsScreenState
         _initialCharacteristicsOptions
           ..clear()
           ..addAll(characteristics.toList()..sort((a, b) => a.compareTo(b)));
+        _initialSignsOptions
+          ..clear()
+          ..addAll(signs.toList()..sort((a, b) => a.compareTo(b)));
       });
     } catch (_) {
       // Keep defaults if catalog options are unavailable.
@@ -334,6 +355,12 @@ class _SetMonitoringDetailsScreenState
         _selectedInitialSymptoms.clear();
         _selectedInitialSymptoms.addAll(details.initialSymptoms!);
         _initialSymptomsController.text = details.initialSymptoms!.join(', ');
+      }
+      if (details.initialSigns != null && details.initialSigns!.isNotEmpty) {
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(details.initialSigns!);
+        _initialSignsController.text = details.initialSigns!.join(', ');
       }
       if (details.initialCharacteristics != null &&
           details.initialCharacteristics!.isNotEmpty) {
@@ -482,6 +509,11 @@ class _SetMonitoringDetailsScreenState
         cultivationDetailsMap['initial_characteristics_csv'] =
             _selectedInitialCharacteristics.join(',');
       }
+        if (_selectedInitialSigns.isNotEmpty) {
+          cultivationDetailsMap['initial_signs'] = _selectedInitialSigns;
+          cultivationDetailsMap['initial_signs_csv'] = _selectedInitialSigns
+          .join(',');
+        }
       if (_initialMicroscopicController.text.trim().isNotEmpty) {
         cultivationDetailsMap['initial_microscopic'] =
             _initialMicroscopicController.text.trim();
@@ -619,6 +651,7 @@ class _SetMonitoringDetailsScreenState
     _dateOfObservationController.dispose();
     _locationController.dispose();
     _initialSymptomsController.dispose();
+    _initialSignsController.dispose();
     _initialCharacteristicsController.dispose();
     _initialMicroscopicController.dispose();
     _initialMacroscopicController.dispose();
@@ -696,6 +729,27 @@ class _SetMonitoringDetailsScreenState
         _initialCharacteristicsController.text = selectedCharacteristics.join(
           ', ',
         );
+      });
+    }
+  }
+
+  Future<void> _pickInitialSigns() async {
+    final selectedSigns = await showSearchableSelectionModal(
+      context: context,
+      title: 'Select Initial Signs',
+      options: _initialSignsOptions,
+      currentSelections: _selectedInitialSigns,
+      searchHint: 'Search signs...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+    );
+
+    if (selectedSigns != null && selectedSigns.isNotEmpty) {
+      setState(() {
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(selectedSigns);
+        _initialSignsController.text = selectedSigns.join(', ');
       });
     }
   }
@@ -1040,11 +1094,13 @@ class _SetMonitoringDetailsScreenState
         typeController: _specimenTypeController,
         qtyController: _specimenQuantityController,
         symptomsController: _initialSymptomsController,
+        signsController: _initialSignsController,
         charController: _initialCharacteristicsController,
         specimenEntries: _specimenEntries,
         onAddSpecimen: _addSpecimenEntry,
         onPickType: _pickSpecimenType,
         onPickSymptoms: _pickInitialSymptoms,
+        onPickSigns: _pickInitialSigns,
         onPickCharacteristics: _pickInitialCharacteristics,
         onRemoveSpecimen: (index) =>
             setState(() => _specimenEntries.removeAt(index)),

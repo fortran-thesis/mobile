@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/features/culture/services/culture_session_service.dart';
 import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
@@ -45,11 +46,13 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final TextEditingController _textureController = TextEditingController();
   final TextEditingController _logNotesController = TextEditingController();
   final TextEditingController _symptomsController = TextEditingController();
+  final TextEditingController _signsController = TextEditingController();
   final TextEditingController _characteristicsController =
       TextEditingController();
   bool _isSaving = false;
 
   final List<String> _selectedSymptoms = [];
+  final List<String> _selectedSigns = [];
   final List<String> _selectedCharacteristics = [];
 
   static const List<String> _defaultSymptomOptions = [
@@ -73,9 +76,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final List<String> _symptomOptions = List<String>.from(
     _defaultSymptomOptions,
   );
+  final List<String> _signOptions = List<String>.from(_defaultSymptomOptions);
   final List<String> _characteristicOptions = List<String>.from(
     _defaultCharacteristicOptions,
   );
+  List<CultureSession> _availableCultures = const [];
+  String? _selectedCultureId;
+  String? _selectedCultureName;
+  bool _isLoadingCultures = false;
 
   late final String _sizeLabel;
   late final String _sizeHint;
@@ -105,12 +113,15 @@ class _AddLogScreenState extends State<AddLogScreen> {
       );
 
       final symptoms = <String>{..._defaultSymptomOptions};
+      final signs = <String>{..._defaultSymptomOptions};
       final characteristics = <String>{..._defaultCharacteristicOptions};
 
       for (final entry in catalog) {
         symptoms.addAll(entry.symptoms);
         symptoms.addAll(entry.signs);
+        signs.addAll(entry.signs);
         symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        signs.addAll(_splitCatalogValues(entry.symptomsAndSigns));
         characteristics.addAll(entry.characteristics);
       }
 
@@ -119,6 +130,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
         _symptomOptions
           ..clear()
           ..addAll(symptoms.toList()..sort((a, b) => a.compareTo(b)));
+        _signOptions
+          ..clear()
+          ..addAll(signs.toList()..sort((a, b) => a.compareTo(b)));
         _characteristicOptions
           ..clear()
           ..addAll(characteristics.toList()..sort((a, b) => a.compareTo(b)));
@@ -132,6 +146,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
   void initState() {
     super.initState();
     _loadInvestigationOptions();
+    _loadAvailableCultures();
 
     // Keep role-specific labels while making the values user-editable.
     if (widget.sourceTab == 'in-vivo') {
@@ -142,10 +157,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
       _textureLabel = 'Lesion Texture';
       _textureHint = 'Enter lesion texture';
 
-      // Dummy defaults for now (no backend fetch).
-      _sizeController.text = '4';
-      _colorController.text = 'Brown';
-      _textureController.text = 'Rough';
+      // Keep fields blank by default for manual evidence entry.
+      _sizeController.clear();
+      _colorController.clear();
+      _textureController.clear();
     } else {
       _sizeLabel = 'Colony Diameter (mm)';
       _sizeHint = 'Enter colony diameter in mm';
@@ -154,10 +169,44 @@ class _AddLogScreenState extends State<AddLogScreen> {
       _textureLabel = 'Colony Texture';
       _textureHint = 'Enter colony texture';
 
-      // Dummy defaults for now (no backend fetch).
-      _sizeController.text = '4';
-      _colorController.text = 'Black';
-      _textureController.text = 'Powdery';
+      // Keep fields blank by default for manual evidence entry.
+      _sizeController.clear();
+      _colorController.clear();
+      _textureController.clear();
+    }
+  }
+
+  Future<void> _loadAvailableCultures() async {
+    if (!mounted) return;
+    setState(() => _isLoadingCultures = true);
+
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final available = await CultureSessionService.instance.getAvailableForLogs(
+        widget.caseId,
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _availableCultures = available;
+        if (available.isNotEmpty) {
+          final isCurrentSelectionValid = available.any(
+            (item) => item.id == _selectedCultureId,
+          );
+          if (!isCurrentSelectionValid) {
+            _selectedCultureId = available.first.id;
+            _selectedCultureName = available.first.name;
+          }
+        } else {
+          _selectedCultureId = null;
+          _selectedCultureName = null;
+        }
+        _isLoadingCultures = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingCultures = false);
     }
   }
 
@@ -168,6 +217,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
     _textureController.dispose();
     _logNotesController.dispose();
     _symptomsController.dispose();
+    _signsController.dispose();
     _characteristicsController.dispose();
     super.dispose();
   }
@@ -212,6 +262,26 @@ class _AddLogScreenState extends State<AddLogScreen> {
     });
   }
 
+  Future<void> _pickSigns() async {
+    final selected = await showSearchableSelectionModal(
+      context: context,
+      title: 'Select Signs',
+      options: _signOptions,
+      currentSelections: _selectedSigns,
+      searchHint: 'Search signs...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+    );
+
+    if (selected == null || selected.isEmpty) return;
+    setState(() {
+      _selectedSigns
+        ..clear()
+        ..addAll(selected);
+      _signsController.text = selected.join(', ');
+    });
+  }
+
   Future<void> _saveCultivationLog() async {
     try {
       setState(() => _isSaving = true);
@@ -224,6 +294,34 @@ class _AddLogScreenState extends State<AddLogScreen> {
       final scanModality = widget.scanModality ?? 'macroscopic';
       final scannedResults = {'confidence_score': 0, 'flagged': false};
       final cultivationType = _resolveCultivationType(widget.sourceTab);
+
+      final isCultivationLogFlow = sourceFlow == 'cultivation_log';
+      if (isCultivationLogFlow) {
+        await _loadAvailableCultures();
+        if (!mounted) return;
+      }
+
+      if (isCultivationLogFlow && _availableCultures.isEmpty) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No culture is available yet. Wait for timer completion, then assign a culture before adding a log.',
+            ),
+          ),
+        );
+        return;
+      }
+      if (isCultivationLogFlow &&
+          (_selectedCultureId == null || _selectedCultureName == null)) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a culture for this log.')),
+        );
+        return;
+      }
 
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final cameraService = CameraService();
@@ -259,10 +357,18 @@ class _AddLogScreenState extends State<AddLogScreen> {
       }
       if (_isInitialMacroscopicMode) {
         result['symptoms'] = List<String>.from(_selectedSymptoms);
+        result['signs'] = List<String>.from(_selectedSigns);
         result['characteristics'] = List<String>.from(_selectedCharacteristics);
         result['symptomsDisplay'] = _symptomsController.text.trim();
+        result['signsDisplay'] = _signsController.text.trim();
         result['characteristicsDisplay'] = _characteristicsController.text
             .trim();
+      }
+      if (_selectedCultureId != null) {
+        result['cultureId'] = _selectedCultureId;
+      }
+      if (_selectedCultureName != null) {
+        result['cultureName'] = _selectedCultureName;
       }
 
       if (scanRes['error'] != null) {
@@ -298,7 +404,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
         }
       }
 
-      final isCultivationLogFlow = sourceFlow == 'cultivation_log';
       if (isCultivationLogFlow) {
         final characteristics = _buildNormalizedCharacteristics();
         final payload = <String, dynamic>{
@@ -376,8 +481,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
     final color = _colorController.text.trim();
     final texture = _textureController.text.trim();
     final symptomsDisplay = _symptomsController.text.trim();
+    final signsDisplay = _signsController.text.trim();
     final characteristicsDisplay = _characteristicsController.text.trim();
     final symptoms = List<String>.from(_selectedSymptoms);
+    final signs = List<String>.from(_selectedSigns);
     final characteristics = List<String>.from(_selectedCharacteristics);
 
     final map = <String, dynamic>{
@@ -385,9 +492,12 @@ class _AddLogScreenState extends State<AddLogScreen> {
       'color': color,
       'texture': texture,
       'symptoms': symptoms.isNotEmpty ? symptoms : symptomsDisplay,
+        'signs': signs.isNotEmpty ? signs : signsDisplay,
       'characteristics': characteristics.isNotEmpty
           ? characteristics
           : characteristicsDisplay,
+      if (_selectedCultureId != null) 'culture_id': _selectedCultureId,
+      if (_selectedCultureName != null) 'culture_name': _selectedCultureName,
     };
 
     if (widget.sourceTab == 'in-vivo') {
@@ -511,6 +621,56 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 color: MoldifyColors.MoldifyGrey,
                               ),
                             ),
+                            if (_availableCultures.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Assigned Culture',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
+                                key: ValueKey(_selectedCultureId ?? '_none'),
+                                initialValue: _selectedCultureId,
+                                items: _availableCultures
+                                    .map(
+                                      (culture) => DropdownMenuItem<String>(
+                                        value: culture.id,
+                                        child: Text(culture.name),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  final selected = _availableCultures.firstWhere(
+                                    (item) => item.id == value,
+                                  );
+                                  setState(() {
+                                    _selectedCultureId = selected.id;
+                                    _selectedCultureName = selected.name;
+                                  });
+                                },
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Select culture',
+                                ),
+                              ),
+                            ] else if (!_isInitialMacroscopicMode) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                _isLoadingCultures
+                                    ? 'Checking culture availability...'
+                                    : 'No available culture yet. Use CULTURE to set a timer and wait until it is ready.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: 'Bricolage-Grotesque-Regular',
+                                  color: MoldifyColors.MoldifyGrey,
+                                ),
+                              ),
+                            ],
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [const SizedBox.shrink()],
@@ -601,6 +761,28 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 isMultiline: true,
                                 readOnly: true,
                                 onTap: _pickSymptoms,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 20.0,
+                                  bottom: 8.0,
+                                ),
+                                child: const Text(
+                                  'Signs',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                    color: MoldifyColors.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              BuildTextBox(
+                                hintText: 'Select sign(s)',
+                                controller: _signsController,
+                                showPassword: false,
+                                isMultiline: true,
+                                readOnly: true,
+                                onTap: _pickSigns,
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -700,7 +882,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
           if (_isSaving)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 child: const Center(
                   child: CircularProgressIndicator(
                     color: MoldifyColors.primaryColor,

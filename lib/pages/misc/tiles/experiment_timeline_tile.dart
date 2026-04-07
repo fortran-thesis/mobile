@@ -86,6 +86,9 @@ class ExperimentTimelineTile extends StatelessWidget {
   /// Comma-separated characteristic traits.
   final String macroCharacteristics;
 
+  /// Optional culture timer/source identity assigned when log was recorded.
+  final String cultureName;
+
   // --- Context-sensitive chip labels (set by the parent tab) ---
 
   /// "Colony Shape" for in-vitro, "Lesion Shape" for in-vivo.
@@ -129,6 +132,7 @@ class ExperimentTimelineTile extends StatelessWidget {
     required this.macroTexture,
     required this.macroSymptoms,
     required this.macroCharacteristics,
+    this.cultureName = '',
     // Labels
     required this.shapeLabel,
     required this.textureLabel,
@@ -455,6 +459,14 @@ class ExperimentTimelineTile extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            if (cultureName.trim().isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              ObservationDataTile(
+                                label: 'Culture Source',
+                                value: cultureName,
+                                icon: Icons.timer_outlined,
+                              ),
+                            ],
                           ],
                         ),
                       ),

@@ -97,7 +97,7 @@ class ScheduleTab extends StatelessWidget {
 
         BuildButton(
           onPressed: onNext,
-          buttonText: 'Continue',
+          buttonText: 'Next',
           backgroundColor: MoldifyColors.primaryColor,
           textColor: Colors.white,
           buttonHeight: 45,

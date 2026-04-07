@@ -32,6 +32,8 @@ class InitialObservationTab extends StatelessWidget {
   final String macroTexture;
   final String macroSymptoms;
   final String macroCharacteristics;
+  final bool isCaseClosed;
+  final VoidCallback? onAddInitialObservations;
 
   const InitialObservationTab({
     super.key,
@@ -43,6 +45,8 @@ class InitialObservationTab extends StatelessWidget {
     required this.macroTexture,
     required this.macroSymptoms,
     required this.macroCharacteristics,
+    this.isCaseClosed = false,
+    this.onAddInitialObservations,
   });
 
   @override
@@ -86,6 +90,28 @@ class InitialObservationTab extends StatelessWidget {
               color: MoldifyColors.MoldifyGrey,
             ),
           ),
+          if (!isCaseClosed && onAddInitialObservations != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onAddInitialObservations,
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: MoldifyColors.primaryColor,
+                ),
+                label: const Text(
+                  'Add Initial Observations',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-SemiBold',
+                    color: MoldifyColors.primaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
 
           const Text(

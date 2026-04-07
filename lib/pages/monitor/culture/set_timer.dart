@@ -5,9 +5,14 @@ import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:moldify/core/features/culture/services/culture_session_service.dart';
+import 'package:moldify/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class InitializeCulturePage extends StatefulWidget {
-  const InitializeCulturePage({super.key});
+  final String? caseId;
+
+  const InitializeCulturePage({super.key, this.caseId});
 
   @override
   State<InitializeCulturePage> createState() => _InitializeCulturePageState();
@@ -17,6 +22,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
   final TextEditingController _nameController = TextEditingController();
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 3));
   int? _activePreset = 3;
+  bool _isSubmitting = false;
 
   void _handlePreset(int days) {
     setState(() {
@@ -49,6 +55,15 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
 
   void _submitCulture() {
     final name = _nameController.text.trim();
+    final caseId = (widget.caseId ?? '').trim();
+
+    if (caseId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Case ID is required to create a timer.')),
+      );
+      return;
+    }
+
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a culture identifier.')),
@@ -56,7 +71,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
       return;
     }
 
-    final targetDateIso = _selectedDate.toIso8601String();
+    final targetDate = _selectedDate.toUtc();
     final targetDateLabel = DateFormat('MMM dd, yyyy').format(_selectedDate);
 
     showDialog(
@@ -66,12 +81,46 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
         return BuildConfirmationDialog(
           title: 'Set Culture Timer?',
           subtitle: 'Confirm timer for "$name" on $targetDateLabel.',
-          onConfirm: () {
+          onConfirm: () async {
             Navigator.of(dialogContext).pop();
-            Navigator.of(context).pop({
-              'name': name,
-              'targetDate': targetDateIso,
-            });
+            setState(() => _isSubmitting = true);
+
+            try {
+              final authProvider = Provider.of<AppAuthProvider>(
+                context,
+                listen: false,
+              );
+              final created = await CultureSessionService.instance.createCulture(
+                caseId: caseId,
+                name: name,
+                targetAt: targetDate,
+                sessionCookie: authProvider.cookie,
+              );
+
+              if (!mounted) return;
+              setState(() => _isSubmitting = false);
+
+              if (created == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to create culture timer.')),
+                );
+                return;
+              }
+
+              Navigator.of(context).pop({
+                'id': created.id,
+                'name': created.name,
+                'targetDate': created.targetAt.toIso8601String(),
+                'createdAt': created.createdAt.toIso8601String(),
+                'caseId': created.caseId,
+              });
+            } catch (_) {
+              if (!mounted) return;
+              setState(() => _isSubmitting = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Failed to create culture timer.')),
+              );
+            }
           },
           onCancel: () {
             Navigator.of(dialogContext).pop();
@@ -138,8 +187,8 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
             SizedBox(
               width: double.infinity,
               child: BuildButton(
-                onPressed: _submitCulture,
-                buttonText: 'Set Timer',
+                onPressed: _isSubmitting ? () {} : _submitCulture,
+                buttonText: _isSubmitting ? 'Saving...' : 'Set Timer',
                 backgroundColor: MoldifyColors.primaryColor,
                 textColor: Colors.white,
                 buttonHeight: 60,
@@ -156,7 +205,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: MoldifyColors.primaryColor.withOpacity(0.05),
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -178,7 +227,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
         fontFamily: 'Bricolage-Grotesque-Bold',
         fontSize: 11,
         letterSpacing: 2,
-        color: MoldifyColors.primaryColor.withOpacity(0.4),
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
       ),
     );
   }
@@ -195,7 +244,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
           color: isSel ? MoldifyColors.primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSel ? MoldifyColors.primaryColor : MoldifyColors.primaryColor.withOpacity(0.1),
+            color: isSel ? MoldifyColors.primaryColor : MoldifyColors.primaryColor.withValues(alpha: 0.1),
           ),
         ),
         child: Text(
@@ -222,7 +271,7 @@ class _InitializeCulturePageState extends State<InitializeCulturePage> {
           color: isSel ? MoldifyColors.primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSel ? MoldifyColors.primaryColor : MoldifyColors.primaryColor.withOpacity(0.1),
+            color: isSel ? MoldifyColors.primaryColor : MoldifyColors.primaryColor.withValues(alpha: 0.1),
           ),
         ),
         child: Icon(

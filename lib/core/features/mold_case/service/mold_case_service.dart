@@ -574,6 +574,193 @@ class MoldCaseService {
     }
   }
 
+  Future<Map<String, dynamic>> createCultureSession(
+    String caseId, {
+    required String name,
+    required DateTime targetAt,
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.post(
+      '/$caseId/culture-sessions',
+      headers: {'Content-Type': 'application/json'},
+      body: {
+        'name': name,
+        'target_at': targetAt.toUtc().toIso8601String(),
+      },
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        final success = payload['success'];
+        if (success == false) {
+          throw Exception(payload['error'] ?? 'Failed to create culture session');
+        }
+
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+      }
+      throw Exception('Unexpected response while creating culture session');
+    }
+
+    throw Exception(
+      'Failed to create culture session: ${response.statusCode} ${response.data}',
+    );
+  }
+
+  Future<Map<String, dynamic>> listCultureSessions(
+    String caseId, {
+    int limit = 100,
+    String? pageToken,
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.get(
+      '/$caseId/culture-sessions',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+      queryParams: {
+        'limit': limit.toString(),
+        if (pageToken != null && pageToken.trim().isNotEmpty)
+          'pageToken': pageToken.trim(),
+      },
+      cacheOptions: CacheConfig.noCache,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 304) {
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        final success = payload['success'];
+        if (success == false) {
+          throw Exception(payload['error'] ?? 'Failed to fetch culture sessions');
+        }
+
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+      }
+      throw Exception('Unexpected response while listing culture sessions');
+    }
+
+    throw Exception(
+      'Failed to fetch culture sessions: ${response.statusCode} ${response.data}',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> listAvailableCultureSessions(
+    String caseId, {
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.get(
+      '/$caseId/culture-sessions/available',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.noCache,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 304) {
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        final success = payload['success'];
+        if (success == false) {
+          throw Exception(payload['error'] ?? 'Failed to fetch available cultures');
+        }
+
+        final data = payload['data'];
+        if (data is List) {
+          return data
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList();
+        }
+      }
+      throw Exception('Unexpected response while fetching available cultures');
+    }
+
+    throw Exception(
+      'Failed to fetch available cultures: ${response.statusCode} ${response.data}',
+    );
+  }
+
+  Future<Map<String, dynamic>> endCultureSessionEarly(
+    String caseId,
+    String cultureId, {
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.patch(
+      '/$caseId/culture-sessions/$cultureId/end-early',
+      headers: {'Content-Type': 'application/json'},
+      body: {},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        final success = payload['success'];
+        if (success == false) {
+          throw Exception(payload['error'] ?? 'Failed to end culture session early');
+        }
+
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+      }
+      throw Exception('Unexpected response while ending culture session');
+    }
+
+    throw Exception(
+      'Failed to end culture session: ${response.statusCode} ${response.data}',
+    );
+  }
+
+  Future<Map<String, dynamic>> reassignCultureSession(
+    String caseId,
+    String cultureId, {
+    required DateTime targetAt,
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.patch(
+      '/$caseId/culture-sessions/$cultureId/reassign',
+      headers: {'Content-Type': 'application/json'},
+      body: {'target_at': targetAt.toUtc().toIso8601String()},
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode == 200) {
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        final success = payload['success'];
+        if (success == false) {
+          throw Exception(payload['error'] ?? 'Failed to reassign culture session');
+        }
+
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+      }
+      throw Exception('Unexpected response while reassigning culture session');
+    }
+
+    throw Exception(
+      'Failed to reassign culture session: ${response.statusCode} ${response.data}',
+    );
+  }
+
+  Future<void> deleteCultureSession(
+    String caseId,
+    String cultureId, {
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.delete(
+      '/$caseId/culture-sessions/$cultureId',
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to delete culture session: ${response.statusCode} ${response.data}',
+      );
+    }
+  }
+
   /// Update cultivation details for a mold case
   /// Endpoint: PATCH /:caseId/cultivation-details
   Future<Map<String, dynamic>> updateCultivationDetails(

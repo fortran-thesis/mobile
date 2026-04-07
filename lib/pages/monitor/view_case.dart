@@ -175,6 +175,10 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       characteristics['characteristics'],
       characteristics['characteristicsDisplay'],
     ]);
+    final cultureName = _firstNonEmpty([
+      characteristics['culture_name'],
+      characteristics['cultureName'],
+    ]);
 
     final microscopicImage = _firstNonEmpty([
       characteristics['microscopic_image_url'],
@@ -200,6 +204,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       'macroShape': color,
       'macroSymptoms': symptoms,
       'macroCharacteristics': trait,
+      'cultureName': cultureName,
       'notes': log.additionalInfo,
     };
   }
@@ -324,6 +329,18 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     );
   }
 
+  Future<void> _openAddInitialObservations() async {
+    final result = await pushNamedForMutationResult(
+      context,
+      '/set-monitoring-details',
+      arguments: {'moldCase': _case},
+    );
+    if (!mounted || !result.changed) return;
+
+    setState(() => _mutationOccurred = true);
+    _refreshCaseAndPendingAnalysis(showLoader: false);
+  }
+
   String _extractLookupMoldId(Map<String, dynamic> result) {
     final direct = result['moldId']?.toString().trim();
     if (direct != null && direct.isNotEmpty) return direct;
@@ -337,9 +354,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   double? _extractLookupConfidenceValue(Map<String, dynamic> result) {
     // Try 'confidence' first, then fallback to 'confidence_score'
     var confidenceRaw = result['confidence'];
-    if (confidenceRaw == null) {
-      confidenceRaw = result['confidence_score'];
-    }
+    confidenceRaw ??= result['confidence_score'];
     if (confidenceRaw is num) return confidenceRaw.toDouble();
     return double.tryParse(confidenceRaw?.toString() ?? '');
   }
@@ -431,9 +446,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _formatLookupConfidence(Map<String, dynamic> result) {
     // Try 'confidence' first, then fallback to 'confidence_score'
     var confidenceRaw = result['confidence'];
-    if (confidenceRaw == null) {
-      confidenceRaw = result['confidence_score'];
-    }
+    confidenceRaw ??= result['confidence_score'];
     final confidence = confidenceRaw is num
         ? confidenceRaw.toDouble()
         : double.tryParse(confidenceRaw?.toString() ?? '');
@@ -943,6 +956,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           ?.toString();
       if (assignedMycologistId != null && assignedMycologistId.isNotEmpty) {
         try {
+          if (!mounted) return;
           final authProvider = Provider.of<AppAuthProvider>(
             context,
             listen: false,
@@ -1035,13 +1049,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     //Dynamically build the list of menu items based on the case status.
     final List<String> popupMenuItems = [
-      if (!isCaseClosed) 'Set Monitoring Details',
       if (!isCaseClosed && !_hasGivenRecommendation) 'Give Recommendation',
       if (isCaseClosed) 'Export PDF',
     ];
 
     final List<IconData> popupMenuIcons = [
-      if (!isCaseClosed) FontAwesomeIcons.circleInfo,
       if (!isCaseClosed && !_hasGivenRecommendation) Icons.recommend,
       if (isCaseClosed) FontAwesomeIcons.solidFilePdf,
     ];
@@ -1068,17 +1080,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             // The selected item is now correctly determined from the same list used by the menu.
             final selectedItem = popupMenuItems[index];
 
-            if (selectedItem == 'Set Monitoring Details') {
-              final result = await pushNamedForMutationResult(
-                context,
-                '/set-monitoring-details',
-                arguments: {'moldCase': _case},
-              );
-              if (result.changed && mounted) {
-                setState(() => _mutationOccurred = true);
-                _refreshCaseAndPendingAnalysis(showLoader: false);
-              }
-            } else if (selectedItem == 'Give Recommendation') {
+            if (selectedItem == 'Give Recommendation') {
               await _handleGiveRecommendation();
             } else if (selectedItem == 'Export PDF') {
               // Implement export PDF functionality here
@@ -1346,6 +1348,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         macroSymptoms: _initMacroSymptoms,
                                         macroCharacteristics:
                                             _initMacroCharacteristics,
+                                        isCaseClosed: isCaseClosed,
+                                        onAddInitialObservations:
+                                          isCaseClosed ? null : _openAddInitialObservations,
                                       ),
                                       InVitroTab(
                                         isCaseClosed: isCaseClosed,

@@ -4,6 +4,7 @@ class MoldCase {
   final String id;
   final String mycologistId;
   final String name;
+  final String? cropName;
   final String moldReportId;
   final String? photoUrl;
   final String priority; // "low" | "medium" | "high"
@@ -17,6 +18,7 @@ class MoldCase {
     required this.id,
     required this.mycologistId,
     required this.name,
+    this.cropName,
     required this.moldReportId,
     this.photoUrl,
     required this.priority,
@@ -48,6 +50,7 @@ class MoldCase {
       id: json['id']?.toString() ?? '',
       mycologistId: json['mycologist_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
+      cropName: _parseCropName(json),
       moldReportId: json['mold_report_id']?.toString() ?? '',
       photoUrl: _parsePhotoUrl(json['photo_url']),
       priority: json['priority']?.toString() ?? 'low',
@@ -101,11 +104,28 @@ class MoldCase {
     return null;
   }
 
+  static String? _parseCropName(Map<String, dynamic> raw) {
+    final direct = raw['crop_name']?.toString().trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+
+    final host = raw['host']?.toString().trim();
+    if (host != null && host.isNotEmpty) return host;
+
+    final report = raw['mold_report'];
+    if (report is Map<String, dynamic>) {
+      final reportHost = report['host']?.toString().trim();
+      if (reportHost != null && reportHost.isNotEmpty) return reportHost;
+    }
+
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'mycologist_id': mycologistId,
       'name': name,
+      if (cropName != null) 'crop_name': cropName,
       'mold_report_id': moldReportId,
       'photo_url': photoUrl,
       'priority': priority,
@@ -127,6 +147,7 @@ class CultivationDetails {
   final List<String>? specimenTypes;
   final List<String>? specimenQuantities;
   final List<String>? initialSymptoms;
+  final List<String>? initialSigns;
   final List<String>? initialCharacteristics;
   final String? locationGathered;
   final String? initialMicroscopic;
@@ -151,6 +172,7 @@ class CultivationDetails {
     this.specimenTypes,
     this.specimenQuantities,
     this.initialSymptoms,
+    this.initialSigns,
     this.initialCharacteristics,
     this.locationGathered,
     this.initialMicroscopic,
@@ -175,6 +197,7 @@ class CultivationDetails {
       specimenTypes: null,
       specimenQuantities: null,
       initialSymptoms: null,
+      initialSigns: null,
       initialCharacteristics: null,
       locationGathered: null,
       initialMicroscopic: null,
@@ -223,6 +246,9 @@ class CultivationDetails {
     final List<String>? initialSymptoms = (json['initial_symptoms'] is List)
         ? List<String>.from(json['initial_symptoms'] as List)
         : null;
+    final List<String>? initialSigns = (json['initial_signs'] is List)
+      ? List<String>.from(json['initial_signs'] as List)
+      : null;
     final List<String>? initialCharacteristics =
         (json['initial_characteristics'] is List)
         ? List<String>.from(json['initial_characteristics'] as List)
@@ -269,6 +295,7 @@ class CultivationDetails {
       specimenTypes: specimenTypes,
       specimenQuantities: specimenQuantities,
       initialSymptoms: initialSymptoms,
+      initialSigns: initialSigns,
       initialCharacteristics: initialCharacteristics,
       locationGathered: json['location_gathered']?.toString(),
       initialMicroscopic: initialMicroscopic,
@@ -296,6 +323,7 @@ class CultivationDetails {
       if (specimenTypes != null) 'specimen_types': specimenTypes,
       if (specimenQuantities != null) 'specimen_quantities': specimenQuantities,
       if (initialSymptoms != null) 'initial_symptoms': initialSymptoms,
+      if (initialSigns != null) 'initial_signs': initialSigns,
       if (initialCharacteristics != null)
         'initial_characteristics': initialCharacteristics,
       if (locationGathered != null) 'location_gathered': locationGathered,

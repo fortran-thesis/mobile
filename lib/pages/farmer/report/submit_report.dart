@@ -419,6 +419,14 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                         return;
                       }
 
+                      if (uploadedPhotos.isEmpty) {
+                        AppFeedback.showError(
+                          context,
+                          'Please upload at least one photo before submitting.',
+                        );
+                        return;
+                      }
+
                       final shouldSubmit = await showDialog<bool>(
                         context: context,
                         barrierDismissible: false,

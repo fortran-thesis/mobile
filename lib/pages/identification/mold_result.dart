@@ -42,6 +42,15 @@ class MoldResultScreen extends StatefulWidget {
 }
 
 class _MoldResultScreenState extends State<MoldResultScreen> {
+  static const Map<String, String> _supportedCorrectionMap = {
+    'alternaria': 'Alternaria_spp',
+    'aspergillus section flavi': 'Aspergillus_section_Flavi',
+    'aspergillus section nigri': 'Aspergillus_section_Nigri',
+    'fusarium': 'Fusarium_spp',
+    'penicillium': 'Penicillium_spp',
+    'rhizopus': 'Rhizopus_spp',
+  };
+
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
@@ -389,6 +398,124 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     }
   }
 
+  String _normalizeCorrectionKey(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  Future<void> _applyCorrectedGenus(String correctedText) async {
+    final corrected = correctedText.trim();
+    if (corrected.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter or select a corrected genus.')),
+      );
+      return;
+    }
+
+    final normalized = _normalizeCorrectionKey(corrected);
+    final predictedClassName = _supportedCorrectionMap[normalized];
+
+    if (predictedClassName == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Mold genus information does not exist in the system yet.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      moldGenus = corrected;
+    });
+
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final details = await cameraService.getMoldDetails(
+        moldName: predictedClassName,
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (details['error'] != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Correction saved, but mold details are unavailable.'),
+          ),
+        );
+        return;
+      }
+
+      final resolved = MoldDetailAdapter.unwrapPayload(details);
+      if (resolved.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Correction saved, but mold details are unavailable.'),
+          ),
+        );
+        return;
+      }
+
+      final symptoms = _readMoldDetailSymptoms(resolved);
+      final spread = _readMoldDetailSpread(resolved);
+      final impact = _readMoldDetailImpact(resolved);
+      final prevention = _readMoldDetailPrevention(resolved);
+
+      setState(() {
+        _isMoldNotFound = false;
+        healthContent = _readMoldDetailField(
+          resolved,
+          'health_risks',
+          healthContent,
+        );
+        plantThreatContent = _readMoldDetailField(
+          resolved,
+          'affected_hosts',
+          plantThreatContent,
+        );
+        fullDescription = _readMoldDetailField(
+          resolved,
+          'overview',
+          fullDescription,
+        );
+
+        _recommendationSections['OVERVIEW'] =
+            'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
+        _recommendationSections['DESCRIPTION'] = fullDescription;
+        _recommendationSections['HEALTH RISKS'] = healthContent;
+        _recommendationSections['AFFECTED CROPS / HOSTS'] = plantThreatContent;
+        _recommendationSections['SYMPTOMS & SIGNS'] = symptoms;
+        _recommendationSections['DISEASE CYCLE / SPREAD'] = spread;
+        _recommendationSections['IMPACT'] = impact;
+        _recommendationSections['PREVENTION'] = prevention;
+
+        _managementControls
+          ..clear()
+          ..addAll(_parseManagementControls(_buildTreatmentsContent(resolved)));
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mold information has been updated.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Correction saved, but failed to fetch mold details.'),
+        ),
+      );
+    }
+  }
+
   Widget _buildManagementControls() {
     if (_managementControls.isEmpty) {
       return const Padding(
@@ -435,9 +562,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         onRightIconPressed: () {
           // Define the save logic here so it can be referenced by both onSave and onConfirm
           void onSave(String correctedText) {
-            // Add your save logic here
             AppLogger.d('Corrected Text: $correctedText');
-            Navigator.of(context).pop(); // This will pop the bottom sheet
+            _applyCorrectedGenus(correctedText);
           }
 
           showModalBottomSheet(
@@ -455,6 +581,14 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 child: BuildBottomSheet(
                   child: CorrectionBottomSheetContent(
                     correctedGenusController: correctedGenusController,
+                    presetGenusOptions: const [
+                      'Alternaria',
+                      'Aspergillus Section Flavi',
+                      'Aspergillus Section Nigri',
+                      'Fusarium',
+                      'Penicillium',
+                      'Rhizopus',
+                    ],
                     onClose: () {
                       Navigator.of(context).pop();
                     },
@@ -465,11 +599,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
                     /// This is the cancel action for the pop up dialog
                     onCancel: () {
-                      Navigator.of(context).pop();
+                      AppLogger.d('MoldResult: Correction cancelled by user');
                     },
 
                     /// This is the confirm action for the pop up dialog
                     onConfirm: () {
+                      Navigator.of(context).pop();
                       onSave(correctedGenusController.text);
                     },
                   ),
