@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/pages/misc/functions/step_indicator.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
@@ -266,10 +268,37 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
       if (mounted) {
         Navigator.of(context).pop();
 
-        AppLogger.d('🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics');
-        final result = await Navigator.of(context).pushNamed(
-          '/mold_result',
-          arguments: {
+        // Route to low-confidence correction screen when AI confidence is too low
+        final prob = (modelResult['probability'] as num?)?.toDouble() ?? 0.0;
+        final confidencePct = prob * 100;
+        final bool isLowConfidence =
+            confidencePct < ScanConstants.lowConfidenceThreshold;
+
+        AppLogger.d(
+          '🚀 InputCharacteristics: confidence=$confidencePct% threshold=${ScanConstants.lowConfidenceThreshold}% lowConfidence=$isLowConfidence',
+        );
+
+        final Object routeArgs;
+        final String routeName;
+        if (isLowConfidence) {
+          AppLogger.d(
+            '🚀 InputCharacteristics: Navigating to low_confidence_correction (confidence too low)',
+          );
+          routeName = RouteNames.lowConfidenceCorrection;
+          routeArgs = {
+            'croppedImagePath': croppedImagePath,
+            'modelResult': modelResult,
+            'sourceFlow': sourceFlow,
+            'scanModality': scanModality,
+            'sourceTab': sourceTab,
+            'caseId': caseId,
+          };
+        } else {
+          AppLogger.d(
+            '🚀 InputCharacteristics: Navigating to /mold_result with prediction and characteristics',
+          );
+          routeName = RouteNames.moldResult;
+          routeArgs = {
             'croppedImagePath': croppedImagePath,
             'modelResult': modelResult,
             'moldDetails': moldDetails,
@@ -278,7 +307,12 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
             'scanModality': scanModality,
             'sourceTab': sourceTab,
             'caseId': caseId,
-          },
+          };
+        }
+
+        final result = await Navigator.of(context).pushNamed(
+          routeName,
+          arguments: routeArgs,
         );
 
         if (result != null) {

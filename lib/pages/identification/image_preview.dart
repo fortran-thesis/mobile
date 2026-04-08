@@ -1,3 +1,5 @@
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
@@ -429,10 +431,37 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       
       if (!context.mounted) return;
       
-      AppLogger.d('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
-      final result = await Navigator.of(context).pushNamed(
-        '/mold_result',
-        arguments: {
+      // Route to low-confidence correction screen when AI confidence is too low
+      final prob = (modelResult['probability'] as num?)?.toDouble() ?? 0.0;
+      final confidencePct = prob * 100;
+      final bool isLowConfidence =
+          confidencePct < ScanConstants.lowConfidenceThreshold;
+
+      AppLogger.d(
+        '🚀 ImagePreview: confidence=$confidencePct% threshold=${ScanConstants.lowConfidenceThreshold}% lowConfidence=$isLowConfidence',
+      );
+
+      final Object routeArgs;
+      final String routeName;
+      if (isLowConfidence) {
+        AppLogger.d(
+          '🚀 ImagePreview: Navigating to low_confidence_correction (confidence too low)',
+        );
+        routeName = RouteNames.lowConfidenceCorrection;
+        routeArgs = {
+          'croppedImagePath': imagePath,
+          'modelResult': modelResult,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
+        };
+      } else {
+        AppLogger.d(
+          '🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails',
+        );
+        routeName = RouteNames.moldResult;
+        routeArgs = {
           'croppedImagePath': imagePath,
           'modelResult': modelResult,
           'moldDetails': moldDetails,
@@ -440,7 +469,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'scanModality': widget.scanModality,
           'sourceTab': widget.sourceTab,
           'caseId': widget.caseId,
-        },
+        };
+      }
+
+      final result = await Navigator.of(context).pushNamed(
+        routeName,
+        arguments: routeArgs,
       );
 
       if (!context.mounted) return;

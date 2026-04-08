@@ -26,6 +26,9 @@ class MoldResultScreen extends StatefulWidget {
   final String? scanModality;
   final String? sourceTab;
   final String? caseId;
+  /// When non-null the result was pre-corrected by [LowConfidenceCorrectionScreen].
+  /// The genus is pre-populated and the flag button is hidden.
+  final String? correctedGenus;
 
   const MoldResultScreen({
     super.key,
@@ -36,6 +39,7 @@ class MoldResultScreen extends StatefulWidget {
     this.scanModality,
     this.sourceTab,
     this.caseId,
+    this.correctedGenus,
   });
 
   @override
@@ -321,6 +325,16 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     _managementControls = _parseManagementControls(
       _buildTreatmentsContent(resolvedDetails),
     );
+
+    // Pre-populate corrected genus when arriving from LowConfidenceCorrectionScreen
+    if (widget.correctedGenus != null && widget.correctedGenus!.isNotEmpty) {
+      moldGenus = widget.correctedGenus!;
+      _correctedGenus = widget.correctedGenus;
+      _correctedAtIso = DateTime.now().toUtc().toIso8601String();
+      AppLogger.d(
+        'MoldResult: Pre-corrected genus from low-confidence flow: $_correctedGenus',
+      );
+    }
 
     _loadSupportedCorrectionOptions();
   }
@@ -656,9 +670,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
         title: 'Mold Result',
-        rightIcon: Icon(Icons.flag),
+        // Hide the flag button when genus was already corrected upstream
+        rightIcon: widget.correctedGenus != null ? null : Icon(Icons.flag),
         rightIconColor: MoldifyColors.MoldifyRed,
-        onRightIconPressed: () {
+        onRightIconPressed: widget.correctedGenus != null ? null : () {
           // Define the save logic here so it can be referenced by both onSave and onConfirm
           void onSave(String correctedText) {
             AppLogger.d('Corrected Text: $correctedText');

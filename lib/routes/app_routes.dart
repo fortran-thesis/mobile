@@ -24,6 +24,7 @@ import '../pages/farmer/report/submit_report.dart';
 import '../pages/farmer/report/view_report.dart';
 import '../pages/identification/main_camera.dart';
 import '../pages/identification/mold_result.dart';
+import '../pages/identification/low_confidence_correction_screen.dart';
 import '../pages/monitor/add_log.dart';
 import '../pages/monitor/add_log_instructions.dart';
 import '../pages/monitor/edit_log.dart';
@@ -188,6 +189,7 @@ class AppRoutes {
             final scanModality = _stringArg(args, 'scanModality');
             final sourceTab = _stringArg(args, 'sourceTab');
             final caseId = _stringArg(args, 'caseId');
+            final correctedGenus = _stringArg(args, 'correctedGenus');
             return MoldResultScreen(
               croppedImagePath: croppedImagePath,
               modelResult: modelResult,
@@ -196,6 +198,30 @@ class AppRoutes {
               scanModality: scanModality,
               sourceTab: sourceTab,
               caseId: caseId,
+              correctedGenus: correctedGenus,
+            );
+
+          case RouteNames.lowConfidenceCorrection:
+            final args = _mapArgs(settings);
+            final croppedImagePathLc = _stringArg(
+              args,
+              'croppedImagePath',
+              required: true,
+            );
+            if (croppedImagePathLc == null) {
+              return _routeArgError(
+                'lowConfidenceCorrection requires croppedImagePath',
+              );
+            }
+            final modelResultLc =
+                args?['modelResult'] as Map<String, dynamic>? ?? {};
+            return LowConfidenceCorrectionScreen(
+              croppedImagePath: croppedImagePathLc,
+              modelResult: modelResultLc,
+              sourceFlow: _stringArg(args, 'sourceFlow'),
+              scanModality: _stringArg(args, 'scanModality'),
+              sourceTab: _stringArg(args, 'sourceTab'),
+              caseId: _stringArg(args, 'caseId'),
             );
 
           case RouteNames.setMonitoringDetails:
