@@ -82,6 +82,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _initMacroColor = '';
   String _initMacroTexture = '';
   String _initMacroSymptoms = '';
+  String _initMacroSigns = '';
   String _initMacroCharacteristics = '';
 
   // Data for In-Vitro Tab
@@ -905,6 +906,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
         _initMacroSymptoms =
             cultivationDetails.initialMacroscopicSymptoms ?? '';
+        _initMacroSigns =
+          _displayText(cultivationDetails.initialSigns);
         _initMacroCharacteristics =
             cultivationDetails.initialMacroscopicCharacteristics ?? '';
 
@@ -1364,6 +1367,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         macroColor: _initMacroColor,
                                         macroTexture: _initMacroTexture,
                                         macroSymptoms: _initMacroSymptoms,
+                                        macroSigns: _initMacroSigns,
                                         macroCharacteristics:
                                             _initMacroCharacteristics,
                                         isCaseClosed: isCaseClosed,
@@ -1385,6 +1389,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         initialMacroTexture: _initMacroTexture,
                                         initialMacroSymptoms:
                                             _initMacroSymptoms,
+                                        initialMacroSigns: _initMacroSigns,
                                         initialMacroCharacteristics:
                                             _initMacroCharacteristics,
                                         onLogSaved: _handleInVitroLogSaved,
@@ -1402,6 +1407,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         initialMacroTexture: _initMacroTexture,
                                         initialMacroSymptoms:
                                             _initMacroSymptoms,
+                                        initialMacroSigns: _initMacroSigns,
                                         initialMacroCharacteristics:
                                             _initMacroCharacteristics,
                                         onLogSaved: _handleInVivoLogSaved,

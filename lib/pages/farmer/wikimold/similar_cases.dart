@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
@@ -180,7 +179,8 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
 
   String _extractCaseImageUrl(Map<String, dynamic> caseData) {
     final details = _asMap(caseData['cultivation_details']);
-    final dynamic coverPhoto = caseData['cover_photo'] ?? caseData['report_cover_photo'];
+    final dynamic coverPhoto =
+        caseData['cover_photo'] ?? caseData['report_cover_photo'];
 
     final candidates = <String>[
       _asText(details['initial_macroscopic_image_url']),
@@ -240,14 +240,12 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
     );
   }
 
-  Widget _buildVerdictSection({
-    required Map<String, dynamic> verdict,
-    required String? moldipediaId,
-  }) {
+  Widget _buildVerdictSection({required Map<String, dynamic> verdict}) {
     final moldName = _asText(verdict['moldName'] ?? verdict['mold_name']);
     final confidence = verdict['confidence'];
     final notes = _asText(verdict['mycologist_notes'] ?? '');
-    final verdictTs = verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
+    final verdictTs =
+        verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
 
     String verdictDateStr = '';
     if (verdictTs != null) {
@@ -261,7 +259,8 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
             verdictDate = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
           }
         }
-        verdictDateStr = '${verdictDate.month}/${verdictDate.day}/${verdictDate.year}';
+        verdictDateStr =
+            '${verdictDate.month}/${verdictDate.day}/${verdictDate.year}';
       } catch (e) {
         // Ignore date parsing errors
       }
@@ -400,27 +399,6 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                 const SizedBox(height: 10),
               ],
             ),
-          if (moldipediaId != null && moldipediaId.isNotEmpty)
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  RouteNames.viewWikiMold,
-                  arguments: {'id': moldipediaId},
-                );
-              },
-              icon: const Icon(Icons.description, size: 16),
-              label: const Text('View Article'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: MoldifyColors.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                textStyle: const TextStyle(
-                  fontFamily: 'Montserrat-Bold',
-                  fontSize: 11,
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -493,14 +471,14 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
         final entry = _cases[index];
         final caseKey = _caseKey(entry, index);
         final isExpanded = _expandedCaseIds.contains(caseKey);
-        final reportId = _asText(entry['mold_report_id'] ?? entry['id']);
         final caseImageUrl = _extractCaseImageUrl(entry);
 
         final details = _asMap(entry['cultivation_details']);
         final initialMicroscopic = _asText(details['initial_microscopic']);
         final initialMacroscopic = _asText(details['initial_macroscopic']);
         final initialSymptoms = _asTextList(
-          details['initial_symptoms'] ?? details['initial_macroscopic_symptoms'],
+          details['initial_symptoms'] ??
+              details['initial_macroscopic_symptoms'],
         );
         final initialCharacteristics = _asTextList(
           details['initial_characteristics'] ??
@@ -523,15 +501,17 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
               inVitroCharacteristics['colony_color'] ??
               inVitroCharacteristics['colony_diameter'],
         );
-        final initialDescription = initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
-            ? [initialMicroscopic, initialMacroscopic]
-                .where((t) => t.isNotEmpty)
-                .join(' | ')
+        final initialDescription =
+            initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
+            ? [
+                initialMicroscopic,
+                initialMacroscopic,
+              ].where((t) => t.isNotEmpty).join(' | ')
             : (initialSymptoms.isNotEmpty
-                ? initialSymptoms.join(', ')
-                : (initialCharacteristics.isNotEmpty
-                    ? initialCharacteristics.join(', ')
-                    : 'No initial observation evidence recorded.'));
+                  ? initialSymptoms.join(', ')
+                  : (initialCharacteristics.isNotEmpty
+                        ? initialCharacteristics.join(', ')
+                        : 'No initial observation evidence recorded.'));
 
         final finalVerdictMap = _asMap(entry['final_verdict']);
         final hasFinalVerdict = finalVerdictMap.isNotEmpty;
@@ -569,29 +549,6 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                                 color: MoldifyColors.primaryColor,
                               ),
                             ),
-                            if (reportId.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              OutlinedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    RouteNames.viewCase,
-                                    arguments: {'id': reportId},
-                                  );
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: MoldifyColors.primaryColor,
-                                  side: BorderSide(
-                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.25),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontFamily: 'Montserrat-Bold',
-                                    fontSize: 11,
-                                  ),
-                                ),
-                                child: const Text('Open Case'),
-                              ),
-                            ],
                           ],
                         ),
                       ),
@@ -608,7 +565,9 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: MoldifyColors.primaryColor,
                       side: BorderSide(
-                        color: MoldifyColors.primaryColor.withValues(alpha: 0.25),
+                        color: MoldifyColors.primaryColor.withValues(
+                          alpha: 0.25,
+                        ),
                       ),
                       textStyle: const TextStyle(
                         fontFamily: 'Montserrat-Bold',
@@ -647,10 +606,7 @@ class _SimilarCasesScreenState extends State<SimilarCasesScreen> {
                           ),
                           if (hasFinalVerdict) ...[
                             const SizedBox(height: 10),
-                            _buildVerdictSection(
-                              verdict: finalVerdictMap,
-                              moldipediaId: _asText(finalVerdictMap['moldipedia_id'] ?? ''),
-                            ),
+                            _buildVerdictSection(verdict: finalVerdictMap),
                           ],
                         ],
                       ),

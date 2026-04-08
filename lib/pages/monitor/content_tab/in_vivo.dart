@@ -18,6 +18,7 @@ class InVivoTab extends StatelessWidget {
   final String? initialMacroColor;
   final String? initialMacroTexture;
   final String? initialMacroSymptoms;
+  final String? initialMacroSigns;
   final String? initialMacroCharacteristics;
   final ValueChanged<Map<String, dynamic>>? onLogSaved;
 
@@ -32,6 +33,7 @@ class InVivoTab extends StatelessWidget {
     this.initialMacroColor,
     this.initialMacroTexture,
     this.initialMacroSymptoms,
+    this.initialMacroSigns,
     this.initialMacroCharacteristics,
     this.onLogSaved,
   });
@@ -162,6 +164,7 @@ class InVivoTab extends StatelessWidget {
                               'initialMacroColor': initialMacroColor,
                               'initialMacroTexture': initialMacroTexture,
                               'initialMacroSymptoms': initialMacroSymptoms,
+                                'initialMacroSigns': initialMacroSigns,
                               'initialMacroCharacteristics':
                                   initialMacroCharacteristics,
                             },

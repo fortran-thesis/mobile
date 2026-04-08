@@ -8,6 +8,7 @@ import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
+import 'package:moldify/core/utils/notification_navigation.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -206,51 +207,26 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
                                   // Navigate based on reference_type
                                   if (notif.referenceId != null && notif.referenceType != null) {
-                                    switch (notif.referenceType) {
-                                      case 'mold_report':
-                                        // Route based on user role: farmers view their report, others view the case
-                                        final userState = context.read<UserBloc>().state;
-                                        final userRole = (userState is UserProfileLoaded) ? userState.profile.role : null;
+                                    final userState = context.read<UserBloc>().state;
+                                    final userRole = (userState is UserProfileLoaded)
+                                        ? userState.profile.role
+                                        : null;
+                                    final target = resolveNotificationNavigationTarget(
+                                      referenceType: notif.referenceType,
+                                      referenceId: notif.referenceId,
+                                      userRole: userRole,
+                                    );
 
-                                        if (userRole == 'farmer') {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/view-report',
-                                            arguments: {'id': notif.referenceId},
-                                          );
-                                        } else {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/view-case',
-                                            arguments: {'id': notif.referenceId},
-                                          );
-                                        }
-                                        break;
-                                      case 'mold_case':
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/view-case',
-                                          arguments: {'id': notif.referenceId},
-                                        );
-                                        break;
-                                      case 'flag_report':
-                                        // Navigate to flag report detail screen
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/flag-report-detail',
-                                          arguments: {'id': notif.referenceId},
-                                        );
-                                        break;
-                                      case 'user':
-                                        // Navigate to user profile screen
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/user-profile',
-                                          arguments: {'id': notif.referenceId},
-                                        );
-                                        break;
-                                      default:
-                                        AppLogger.w('Unknown notification reference_type: ${notif.referenceType}');
+                                    if (target != null) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        target.routeName,
+                                        arguments: target.arguments,
+                                      );
+                                    } else {
+                                      AppLogger.w(
+                                        'Notification tap ignored: type=${notif.referenceType}, id=${notif.referenceId}, role=$userRole',
+                                      );
                                     }
                                   }
                                 },

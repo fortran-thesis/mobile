@@ -325,6 +325,8 @@ class AppRoutes {
                 args?['initialMacroTexture'] as String?;
             final String? initialMacroSymptoms =
                 args?['initialMacroSymptoms'] as String?;
+            final String? initialMacroSigns =
+              args?['initialMacroSigns'] as String?;
             final String? initialMacroCharacteristics =
                 args?['initialMacroCharacteristics'] as String?;
 
@@ -375,6 +377,7 @@ class AppRoutes {
               initialMacroColor: initialMacroColor,
               initialMacroTexture: initialMacroTexture,
               initialMacroSymptoms: initialMacroSymptoms,
+              initialMacroSigns: initialMacroSigns,
               initialMacroCharacteristics: initialMacroCharacteristics,
               onCaptureMicro: () {
                 final navigator = Navigator.of(context);
@@ -408,6 +411,7 @@ class AppRoutes {
                             'initialMacroColor': initialMacroColor,
                             'initialMacroTexture': initialMacroTexture,
                             'initialMacroSymptoms': initialMacroSymptoms,
+                            'initialMacroSigns': initialMacroSigns,
                             'initialMacroCharacteristics':
                                 initialMacroCharacteristics,
                           },
@@ -448,6 +452,7 @@ class AppRoutes {
                             'initialMacroColor': initialMacroColor,
                             'initialMacroTexture': initialMacroTexture,
                             'initialMacroSymptoms': initialMacroSymptoms,
+                            'initialMacroSigns': initialMacroSigns,
                             'initialMacroCharacteristics':
                                 initialMacroCharacteristics,
                           },

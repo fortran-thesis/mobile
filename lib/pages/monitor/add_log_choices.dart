@@ -16,6 +16,7 @@ class AddLogChoicesScreen extends StatefulWidget {
   final String? initialMacroColor;
   final String? initialMacroTexture;
   final String? initialMacroSymptoms;
+  final String? initialMacroSigns;
   final String? initialMacroCharacteristics;
   final VoidCallback onCaptureMicro;
   final VoidCallback onCaptureMacro;
@@ -31,6 +32,7 @@ class AddLogChoicesScreen extends StatefulWidget {
     this.initialMacroColor,
     this.initialMacroTexture,
     this.initialMacroSymptoms,
+    this.initialMacroSigns,
     this.initialMacroCharacteristics,
     required this.onCaptureMicro,
     required this.onCaptureMacro,
@@ -47,6 +49,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   final TextEditingController _macroColorController = TextEditingController();
   final TextEditingController _macroTextureController = TextEditingController();
   final TextEditingController _macroSymptomsController = TextEditingController();
+  final TextEditingController _macroSignsController = TextEditingController();
   final TextEditingController _macroCharacteristicsController = TextEditingController();
   bool _isSaving = false;
 
@@ -57,27 +60,43 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     }
 
     void _hydrateFromArguments() {
-    _microAnalysisController.text =
-      widget.microResult?['identifiedMold']?.toString() ??
-      widget.initialMicroIdentifiedMold?.toString() ??
-      '';
+    String asDisplayText(dynamic value) {
+      if (value == null) return '';
+      if (value is List) {
+        return value
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .join(', ');
+      }
+      return value.toString().trim();
+    }
 
-    _macroColorController.text =
-      widget.macroResult?['color']?.toString() ??
-      widget.initialMacroColor?.toString() ??
-      '';
-    _macroTextureController.text =
-      widget.macroResult?['texture']?.toString() ??
-      widget.initialMacroTexture?.toString() ??
-      '';
-    _macroSymptomsController.text =
-      widget.macroResult?['symptomsDisplay']?.toString() ??
-      widget.initialMacroSymptoms?.toString() ??
-      '';
-    _macroCharacteristicsController.text =
-      widget.macroResult?['characteristicsDisplay']?.toString() ??
-      widget.initialMacroCharacteristics?.toString() ??
-      '';
+    _microAnalysisController.text = asDisplayText(
+      widget.microResult?['identifiedMold'] ??
+          widget.initialMicroIdentifiedMold,
+    );
+
+    _macroColorController.text = asDisplayText(
+      widget.macroResult?['color'] ?? widget.initialMacroColor,
+    );
+    _macroTextureController.text = asDisplayText(
+      widget.macroResult?['texture'] ?? widget.initialMacroTexture,
+    );
+    _macroSymptomsController.text = asDisplayText(
+      widget.macroResult?['symptomsDisplay'] ??
+          widget.macroResult?['symptoms'] ??
+          widget.initialMacroSymptoms,
+    );
+    _macroSignsController.text = asDisplayText(
+      widget.macroResult?['signsDisplay'] ??
+          widget.macroResult?['signs'] ??
+          widget.initialMacroSigns,
+    );
+    _macroCharacteristicsController.text = asDisplayText(
+      widget.macroResult?['characteristicsDisplay'] ??
+          widget.macroResult?['characteristics'] ??
+          widget.initialMacroCharacteristics,
+    );
     }
 
   @override
@@ -86,6 +105,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     _macroColorController.dispose();
     _macroTextureController.dispose();
     _macroSymptomsController.dispose();
+    _macroSignsController.dispose();
     _macroCharacteristicsController.dispose();
     super.dispose();
   }
@@ -265,7 +285,12 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                   const SizedBox(height: 15),
                   _buildDataRow(
                     l1: 'SYMPTOMS', v1: _macroSymptomsController.text, i1: Icons.healing_outlined,
-                    l2: 'DETAILS', v2: _macroCharacteristicsController.text, i2: Icons.science_outlined,
+                    l2: 'SIGNS', v2: _macroSignsController.text, i2: Icons.visibility_outlined,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildDataRow(
+                    l1: 'DETAILS', v1: _macroCharacteristicsController.text, i1: Icons.science_outlined,
+                    l2: '', v2: '', i2: Icons.science_outlined,
                   ),
                 ],
               ),
@@ -279,12 +304,17 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     required String l1, required String v1, required IconData i1,
     required String l2, required String v2, required IconData i2,
   }) {
+    final hasSecondTile = l2.trim().isNotEmpty;
     return IntrinsicHeight(
       child: Row(
         children: [
           Expanded(child: ObservationDataTile(label: l1, value: v1, icon: i1)),
           const SizedBox(width: 12),
-          Expanded(child: ObservationDataTile(label: l2, value: v2, icon: i2)),
+          Expanded(
+            child: hasSecondTile
+                ? ObservationDataTile(label: l2, value: v2, icon: i2)
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

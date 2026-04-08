@@ -8,6 +8,7 @@ import '../../../core/features/user/logic/user_bloc.dart';
 
 import '../../../core/features/mold_report/models/closed_mold_report.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/utils/role_routing.dart' as role_routing;
 import '../../../core/utils/date_utils.dart';
 import '../../../providers/auth_provider.dart';
 import '../misc/colors.dart';
@@ -17,12 +18,7 @@ import '../misc/textboxes/textboxes.dart';
 import '../misc/tiles/main_case_tile.dart';
 
 String resolveCaseHistoryRouteForRole(String? role) {
-  final normalizedRole = role?.trim().toLowerCase() ?? '';
-  const caseViewRoles = {'mycologist', 'curator', 'admin'};
-  if (caseViewRoles.contains(normalizedRole)) {
-    return RouteNames.viewCase;
-  }
-  return RouteNames.viewReport;
+  return role_routing.resolveCaseHistoryRouteForRole(role);
 }
 
 class CaseHistoryScreen extends StatefulWidget {

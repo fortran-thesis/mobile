@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moldify/core/constants/route_names.dart';
 
 import '../../../misc/colors.dart';
 import '../../../misc/overlays/loading_ui.dart';
@@ -33,120 +32,136 @@ class WikiMoldFieldEvidenceSection extends StatefulWidget {
   final String retryLabel;
 
   @override
-  State<WikiMoldFieldEvidenceSection> createState() => _WikiMoldFieldEvidenceSectionState();
+  State<WikiMoldFieldEvidenceSection> createState() =>
+      _WikiMoldFieldEvidenceSectionState();
 }
 
-class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSection> {
+class _WikiMoldFieldEvidenceSectionState
+    extends State<WikiMoldFieldEvidenceSection> {
   final Set<String> _expandedCaseIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isLoading && widget.error == null && widget.linkedCases.isEmpty) {
+    if (!widget.isLoading &&
+        widget.error == null &&
+        widget.linkedCases.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const WikiMoldSectionHeader(
-            phaseNumber: '04',
-            superTitle: 'Fungal Analysis Phase',
-            mainTitle: 'Field Evidence',
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const WikiMoldSectionHeader(
+          phaseNumber: '04',
+          superTitle: 'Fungal Analysis Phase',
+          mainTitle: 'Field Evidence',
+        ),
+        if (widget.isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: AppLoadingSpinner(),
+            ),
           ),
-          if (widget.isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: AppLoadingSpinner(),
+        if (widget.error != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.error!,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 14,
+                  color: MoldifyColors.MoldifyBlack,
+                ),
               ),
-            ),
-          if (widget.error != null)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.error!,
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 14,
-                    color: MoldifyColors.MoldifyBlack,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: widget.onRetry,
-                  child: Text(widget.retryLabel),
-                ),
-              ],
-            ),
-          if (!widget.isLoading && widget.error == null && widget.linkedCases.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _buildLinkedInvestigationsHeader(),
-            const SizedBox(height: 24),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: widget.linkedCases.length,
-              itemBuilder: (context, index) {
-                final caseData = widget.linkedCases[index];
-                final caseKey = _caseKey(caseData, index);
-                final isExpanded = _expandedCaseIds.contains(caseKey);
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: widget.onRetry,
+                child: Text(widget.retryLabel),
+              ),
+            ],
+          ),
+        if (!widget.isLoading &&
+            widget.error == null &&
+            widget.linkedCases.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildLinkedInvestigationsHeader(),
+          const SizedBox(height: 24),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.linkedCases.length,
+            itemBuilder: (context, index) {
+              final caseData = widget.linkedCases[index];
+              final caseKey = _caseKey(caseData, index);
+              final isExpanded = _expandedCaseIds.contains(caseKey);
 
-                final details = _asMap(caseData['cultivation_details']);
-                final initialMicroscopic = _asText(details['initial_microscopic']);
-                final initialMacroscopic = _asText(details['initial_macroscopic']);
-                final initialSymptoms = _asTextList(
-                  details['initial_symptoms'] ?? details['initial_macroscopic_symptoms'],
-                );
-                final initialCharacteristics = _asTextList(
-                  details['initial_characteristics'] ?? details['initial_macroscopic_characteristics'],
-                );
+              final details = _asMap(caseData['cultivation_details']);
+              final initialMicroscopic = _asText(
+                details['initial_microscopic'],
+              );
+              final initialMacroscopic = _asText(
+                details['initial_macroscopic'],
+              );
+              final initialSymptoms = _asTextList(
+                details['initial_symptoms'] ??
+                    details['initial_macroscopic_symptoms'],
+              );
+              final initialCharacteristics = _asTextList(
+                details['initial_characteristics'] ??
+                    details['initial_macroscopic_characteristics'],
+              );
 
-                final inVivo = _latestLog(caseData, 'vivo');
-                final inVitro = _latestLog(caseData, 'vitro');
-                final inVivoCharacteristics = _asMap(inVivo?['characteristics']);
-                final inVitroCharacteristics = _asMap(inVitro?['characteristics']);
+              final inVivo = _latestLog(caseData, 'vivo');
+              final inVitro = _latestLog(caseData, 'vitro');
+              final inVivoCharacteristics = _asMap(inVivo?['characteristics']);
+              final inVitroCharacteristics = _asMap(
+                inVitro?['characteristics'],
+              );
 
-                final inVivoSummary = _asText(
-                  inVivoCharacteristics['symptoms'] ??
-                      inVivoCharacteristics['characteristics'] ??
-                      inVivoCharacteristics['lesion_color'] ??
-                      inVivoCharacteristics['lesion_size'],
-                );
-                final inVitroSummary = _asText(
-                  inVitroCharacteristics['characteristics'] ??
-                      inVitroCharacteristics['colony_color'] ??
-                      inVitroCharacteristics['colony_diameter'],
-                );
-                final initialDescription = initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
-                    ? [initialMicroscopic, initialMacroscopic]
-                        .where((t) => t.isNotEmpty)
-                        .join(' | ')
-                    : (initialSymptoms.isNotEmpty
+              final inVivoSummary = _asText(
+                inVivoCharacteristics['symptoms'] ??
+                    inVivoCharacteristics['characteristics'] ??
+                    inVivoCharacteristics['lesion_color'] ??
+                    inVivoCharacteristics['lesion_size'],
+              );
+              final inVitroSummary = _asText(
+                inVitroCharacteristics['characteristics'] ??
+                    inVitroCharacteristics['colony_color'] ??
+                    inVitroCharacteristics['colony_diameter'],
+              );
+              final initialDescription =
+                  initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
+                  ? [
+                      initialMicroscopic,
+                      initialMacroscopic,
+                    ].where((t) => t.isNotEmpty).join(' | ')
+                  : (initialSymptoms.isNotEmpty
                         ? initialSymptoms.join(', ')
                         : (initialCharacteristics.isNotEmpty
-                            ? initialCharacteristics.join(', ')
-                            : 'No initial observation evidence recorded.'));
+                              ? initialCharacteristics.join(', ')
+                              : 'No initial observation evidence recorded.'));
 
-                final finalVerdictMap = _asMap(caseData['final_verdict']);
-                final hasFinalVerdict = finalVerdictMap.isNotEmpty;
+              final finalVerdictMap = _asMap(caseData['final_verdict']);
+              final hasFinalVerdict = finalVerdictMap.isNotEmpty;
 
-                return _buildObservationCard(
-                  index: index,
-                  isExpanded: isExpanded,
-                  caseKey: caseKey,
-                  caseData: caseData,
-                  initialDescription: initialDescription,
-                  inVivoSummary: inVivoSummary,
-                  inVitroSummary: inVitroSummary,
-                  hasFinalVerdict: hasFinalVerdict,
-                  finalVerdictMap: finalVerdictMap,
-                  isLast: index == widget.linkedCases.length - 1,
-                );
-              },
-            ),
-          ],
+              return _buildObservationCard(
+                index: index,
+                isExpanded: isExpanded,
+                caseKey: caseKey,
+                caseData: caseData,
+                initialDescription: initialDescription,
+                inVivoSummary: inVivoSummary,
+                inVitroSummary: inVitroSummary,
+                hasFinalVerdict: hasFinalVerdict,
+                finalVerdictMap: finalVerdictMap,
+                isLast: index == widget.linkedCases.length - 1,
+              );
+            },
+          ),
         ],
+      ],
     );
   }
 
@@ -214,7 +229,9 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: MoldifyColors.accentColor.withValues(alpha: 0.4),
+                            color: MoldifyColors.accentColor.withValues(
+                              alpha: 0.4,
+                            ),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
@@ -260,7 +277,6 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
     final cropName = _asText(
       caseData['crop_name'] ?? caseData['cropName'] ?? caseData['crop'],
     );
-    final reportId = _asText(caseData['mold_report_id'] ?? caseData['id']);
     final caseImageUrl = _extractCaseImageUrl(caseData);
 
     const Color primaryGreen = MoldifyColors.primaryColor;
@@ -286,119 +302,102 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-        
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _CaseImagePreview(imageUrl: caseImageUrl),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'CROP NAME',
-                                        style: TextStyle(
-                                          fontFamily: 'Bricolage-Grotesque',
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.5,
-                                          color: orangeAccent,
-                                        ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _CaseImagePreview(imageUrl: caseImageUrl),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'CROP NAME',
+                                      style: TextStyle(
+                                        fontFamily: 'Bricolage-Grotesque',
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1.5,
+                                        color: orangeAccent,
                                       ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                                        textBaseline: TextBaseline.alphabetic,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              cropName.isNotEmpty ? cropName.toUpperCase() : 'UNKNOWN',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontFamily: 'Montserrat-Black',
-                                                fontSize: 22,
-                                                color: primaryGreen,
-                                                letterSpacing: -0.5,
-                                              ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.baseline,
+                                      textBaseline: TextBaseline.alphabetic,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            cropName.isNotEmpty
+                                                ? cropName.toUpperCase()
+                                                : 'UNKNOWN',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat-Black',
+                                              fontSize: 22,
+                                              color: primaryGreen,
+                                              letterSpacing: -0.5,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            children: [
-                              if (reportId.isNotEmpty)
-                                OutlinedButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      RouteNames.viewCase,
-                                      arguments: {'id': reportId},
-                                    );
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: primaryGreen,
-                                    side: BorderSide(
-                                      color: primaryGreen.withValues(alpha: 0.25),
+                                        ),
+                                      ],
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    textStyle: const TextStyle(
-                                      fontFamily: 'Montserrat-Bold',
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                  child: const Text('OPEN CASE'),
-                                ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: () => _toggleCaseExpanded(caseKey),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: isExpanded ? orangeAccent : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(
-                                      color: isExpanded
-                                          ? orangeAccent
-                                          : primaryGreen.withValues(alpha: 0.2),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isExpanded ? 'HIDE NOTES' : 'QUICK NOTES',
-                                    style: TextStyle(
-                                      fontFamily: 'Montserrat-Bold',
-                                      fontSize: 10,
-                                      letterSpacing: 0.5,
-                                      color: isExpanded ? Colors.white : primaryGreen,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _toggleCaseExpanded(caseKey),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isExpanded
+                                      ? orangeAccent
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: isExpanded
+                                        ? orangeAccent
+                                        : primaryGreen.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Text(
+                                  isExpanded ? 'HIDE NOTES' : 'QUICK NOTES',
+                                  style: TextStyle(
+                                    fontFamily: 'Montserrat-Bold',
+                                    fontSize: 10,
+                                    letterSpacing: 0.5,
+                                    color: isExpanded
+                                        ? Colors.white
+                                        : primaryGreen,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 AnimatedCrossFade(
                   duration: const Duration(milliseconds: 300),
                   crossFadeState: isExpanded
@@ -440,13 +439,9 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
                         if (hasFinalVerdict) ...[
                           const SizedBox(height: 12),
                           _buildVerdictSection(
-                            context: context,
                             verdict: finalVerdictMap,
                             primaryColor: primaryGreen,
                             accentColor: orangeAccent,
-                            moldipediaId: _asText(
-                              finalVerdictMap['moldipedia_id'] ?? '',
-                            ),
                           ),
                         ],
                       ],
@@ -530,13 +525,15 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
     final rawLogs = caseData['cultivation_logs'];
     if (rawLogs is! List) return null;
 
-    final filtered = rawLogs.whereType<Map>().map((item) => _asMap(item)).where((log) {
-      final normalized = _normalizeLogType(log['type']);
-      if (type == 'vivo') {
-        return normalized == 'vivo' || normalized == 'invivo';
-      }
-      return normalized == 'vitro' || normalized == 'invitro';
-    }).toList();
+    final filtered = rawLogs.whereType<Map>().map((item) => _asMap(item)).where(
+      (log) {
+        final normalized = _normalizeLogType(log['type']);
+        if (type == 'vivo') {
+          return normalized == 'vivo' || normalized == 'invivo';
+        }
+        return normalized == 'vitro' || normalized == 'invitro';
+      },
+    ).toList();
 
     if (filtered.isEmpty) return null;
 
@@ -555,7 +552,8 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
 
   String _extractCaseImageUrl(Map<String, dynamic> caseData) {
     final details = _asMap(caseData['cultivation_details']);
-    final dynamic coverPhoto = caseData['cover_photo'] ?? caseData['report_cover_photo'];
+    final dynamic coverPhoto =
+        caseData['cover_photo'] ?? caseData['report_cover_photo'];
 
     final candidates = <String>[
       _asText(details['initial_macroscopic_image_url']),
@@ -614,16 +612,15 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
   }
 
   Widget _buildVerdictSection({
-    required BuildContext context,
     required Map<String, dynamic> verdict,
     required Color primaryColor,
     required Color accentColor,
-    required String? moldipediaId,
   }) {
     final moldName = _asText(verdict['moldName'] ?? verdict['mold_name']);
     final confidenceValue = _asDouble(verdict['confidence']);
     final notes = _asText(verdict['mycologist_notes'] ?? '');
-    final verdictTs = verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
+    final verdictTs =
+        verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
 
     String verdictDateStr = '';
     if (verdictTs != null) {
@@ -638,7 +635,8 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
           }
         }
         if (verdictDate != null) {
-          verdictDateStr = '${verdictDate.month}/${verdictDate.day}/${verdictDate.year}';
+          verdictDateStr =
+              '${verdictDate.month}/${verdictDate.day}/${verdictDate.year}';
         }
       } catch (_) {
         // Ignore date parsing errors.
@@ -648,9 +646,13 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
     final summaryParts = <String>[];
     if (moldName.isNotEmpty) summaryParts.add('Identified Mold: $moldName');
     if (confidenceValue != null) {
-      summaryParts.add('Confidence: ${(confidenceValue * 100).toStringAsFixed(1)}%');
+      summaryParts.add(
+        'Confidence: ${(confidenceValue * 100).toStringAsFixed(1)}%',
+      );
     }
-    if (verdictDateStr.isNotEmpty) summaryParts.add('Verdict Date: $verdictDateStr');
+    if (verdictDateStr.isNotEmpty) {
+      summaryParts.add('Verdict Date: $verdictDateStr');
+    }
     if (notes.isNotEmpty) summaryParts.add('Mycologist Notes: $notes');
     if (summaryParts.isEmpty) summaryParts.add('Pending identification.');
 
@@ -664,31 +666,6 @@ class _WikiMoldFieldEvidenceSectionState extends State<WikiMoldFieldEvidenceSect
           primaryColor: primaryColor,
           accentColor: accentColor,
         ),
-        if (moldipediaId != null && moldipediaId.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  RouteNames.viewWikiMold,
-                  arguments: {'id': moldipediaId},
-                );
-              },
-              icon: const Icon(Icons.description, size: 16),
-              label: const Text('View Article'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: BorderSide(color: primaryColor.withValues(alpha: 0.25)),
-                textStyle: const TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Bold',
-                  fontSize: 11,
-                ),
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

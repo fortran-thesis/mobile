@@ -42,10 +42,17 @@ class FCMService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final NotificationService _notificationService = NotificationService();
   final _notificationTapController = StreamController<NotificationTapEvent>.broadcast();
+  NotificationTapEvent? _pendingTapEvent;
 
   String? _currentToken;
   String? get currentToken => _currentToken;
   Stream<NotificationTapEvent> get notificationTaps => _notificationTapController.stream;
+
+  NotificationTapEvent? consumePendingNotificationTap() {
+    final pending = _pendingTapEvent;
+    _pendingTapEvent = null;
+    return pending;
+  }
 
   /// Initialise FCM — call once after [Firebase.initializeApp].
   ///
@@ -164,16 +171,18 @@ class FCMService {
     final referenceId = message.data['reference_id'];
 
     if (referenceType != null && referenceId != null) {
+      final event = NotificationTapEvent(
+        referenceType: referenceType,
+        referenceId: referenceId,
+      );
+      if (!_notificationTapController.hasListener) {
+        _pendingTapEvent = event;
+      }
       AppLogger.d(
         'Emitting notification tap event: type=$referenceType, id=$referenceId',
         tag: 'FCM',
       );
-      _notificationTapController.add(
-        NotificationTapEvent(
-          referenceType: referenceType,
-          referenceId: referenceId,
-        ),
-      );
+      _notificationTapController.add(event);
     }
   }
 }

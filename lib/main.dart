@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +26,9 @@ import 'package:moldify/core/features/notification/logic/notification_bloc.dart'
 import 'package:moldify/core/features/notification/repository/notification_repository.dart';
 import 'package:moldify/core/services/fcm_service.dart';
 import 'package:moldify/core/services/cache_sync_service.dart';
+import 'package:moldify/core/utils/notification_navigation.dart';
 import 'package:moldify/core/utils/route_observer.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +77,7 @@ class _MyAppState extends State<MyApp> {
       GlobalKey<NavigatorState>();
   late final AppAuthProvider _authProvider;
   late final AppRouteObserver _routeObserver;
+  StreamSubscription<NotificationTapEvent>? _notificationTapSubscription;
   bool _wasAuthenticated = false;
 
   @override
@@ -87,13 +92,64 @@ class _MyAppState extends State<MyApp> {
     _wasAuthenticated =
         _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
     _authProvider.addListener(_onAuthStateChanged);
+    _subscribeToNotificationTaps();
   }
 
   @override
   void dispose() {
+    _notificationTapSubscription?.cancel();
     _authProvider.removeListener(_onAuthStateChanged);
     _routeObserver.dispose();
     super.dispose();
+  }
+
+  void _subscribeToNotificationTaps() {
+    _notificationTapSubscription = FCMService.instance.notificationTaps.listen(
+      _handleNotificationTap,
+    );
+
+    final pending = FCMService.instance.consumePendingNotificationTap();
+    if (pending != null) {
+      _handleNotificationTap(pending);
+    }
+  }
+
+  String? _resolveCurrentUserRole() {
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserProfileLoaded) {
+      return userState.profile.role;
+    }
+    return null;
+  }
+
+  void _handleNotificationTap(NotificationTapEvent event) {
+    final hasSession =
+        _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
+    if (!hasSession) {
+      AppLogger.w('Skipping notification navigation: no active session');
+      return;
+    }
+
+    final target = resolveNotificationNavigationTarget(
+      referenceType: event.referenceType,
+      referenceId: event.referenceId,
+      userRole: _resolveCurrentUserRole(),
+    );
+
+    if (target == null) {
+      AppLogger.w(
+        'No navigation target for notification type=${event.referenceType} id=${event.referenceId}',
+      );
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final navigator = _rootNavigatorKey.currentState;
+      if (navigator == null) return;
+
+      navigator.pushNamed(target.routeName, arguments: target.arguments);
+    });
   }
 
   void _onAuthStateChanged() {

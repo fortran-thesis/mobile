@@ -43,7 +43,7 @@ class MoldResultScreen extends StatefulWidget {
 }
 
 class _MoldResultScreenState extends State<MoldResultScreen> {
-  static const Map<String, String> _supportedCorrectionMap = {
+  static const Map<String, String> _fallbackSupportedCorrectionMap = {
     'alternaria': 'Alternaria_spp',
     'aspergillus section flavi': 'Aspergillus_section_Flavi',
     'aspergillus section nigri': 'Aspergillus_section_Nigri',
@@ -52,10 +52,29 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     'rhizopus': 'Rhizopus_spp',
   };
 
+  static const List<String> _fallbackPresetGenusOptions = [
+    'Alternaria',
+    'Aspergillus Section Flavi',
+    'Aspergillus Section Nigri',
+    'Fusarium',
+    'Penicillium',
+    'Rhizopus',
+  ];
+
+  Map<String, String> _supportedCorrectionMap = Map<String, String>.from(
+    _fallbackSupportedCorrectionMap,
+  );
+  List<String> _presetGenusOptions = List<String>.from(
+    _fallbackPresetGenusOptions,
+  );
+
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
   bool _isMoldNotFound = false; // Flag to detect when mold not in database
+  String? _correctedGenus;
+  String? _correctedPredictedClassName;
+  String? _correctedAtIso;
   late String healthContent;
   late String plantThreatContent;
   late String fullDescription;
@@ -214,7 +233,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         resolvedDetails.isEmpty ||
         resolvedDetails.containsKey('error') ||
         moldStatus == 'draft';
-    AppLogger.d('MoldResult: Mold found/reviewed: ${!_isMoldNotFound} (status: $moldStatus)');
+    AppLogger.d(
+      'MoldResult: Mold found/reviewed: ${!_isMoldNotFound} (status: $moldStatus)',
+    );
 
     // Use moldDetails if available to populate data instead of hardcoded values
     if (!_isMoldNotFound) {
@@ -300,6 +321,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     _managementControls = _parseManagementControls(
       _buildTreatmentsContent(resolvedDetails),
     );
+
+    _loadSupportedCorrectionOptions();
   }
 
   List<Map<String, dynamic>> _buildTopPredictions() {
@@ -407,12 +430,74 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         .replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  Future<void> _loadSupportedCorrectionOptions() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final response = await cameraService.getSupportedCorrectionGenera(
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (response['error'] != null) {
+        AppLogger.e(
+          'MoldResult: Failed to load supported correction genera: ${response['error']}',
+        );
+        return;
+      }
+
+      final rawGenera = response['genera'];
+      if (rawGenera is! List) return;
+
+      final nextMap = <String, String>{};
+      final nextOptions = <String>[];
+
+      for (final item in rawGenera) {
+        if (item is! Map) continue;
+        final data = Map<String, dynamic>.from(item);
+
+        final displayName = data['display_name']?.toString().trim() ?? '';
+        final predictedClassName =
+            data['predicted_class_name']?.toString().trim() ?? '';
+        final normalizedKeyRaw =
+            data['normalized_key']?.toString().trim() ?? '';
+
+        if (displayName.isEmpty || predictedClassName.isEmpty) continue;
+
+        final normalizedKey = normalizedKeyRaw.isNotEmpty
+            ? _normalizeCorrectionKey(normalizedKeyRaw)
+            : _normalizeCorrectionKey(displayName);
+
+        nextMap[normalizedKey] = predictedClassName;
+        if (!nextOptions.contains(displayName)) {
+          nextOptions.add(displayName);
+        }
+      }
+
+      if (!mounted || nextMap.isEmpty) return;
+
+      setState(() {
+        _supportedCorrectionMap = nextMap;
+        if (nextOptions.isNotEmpty) {
+          _presetGenusOptions = nextOptions;
+        }
+      });
+    } catch (error, stackTrace) {
+      AppLogger.e(
+        'MoldResult: Exception while loading supported correction genera',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   Future<void> _applyCorrectedGenus(String correctedText) async {
     final corrected = correctedText.trim();
     if (corrected.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter or select a corrected genus.')),
+        const SnackBar(
+          content: Text('Please enter or select a corrected genus.'),
+        ),
       );
       return;
     }
@@ -420,7 +505,20 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     final normalized = _normalizeCorrectionKey(corrected);
     final predictedClassName = _supportedCorrectionMap[normalized];
 
+    setState(() {
+      moldGenus = corrected;
+      _correctedGenus = corrected;
+      _correctedPredictedClassName = predictedClassName;
+      _correctedAtIso = DateTime.now().toUtc().toIso8601String();
+    });
+
     if (predictedClassName == null) {
+      setState(() {
+        _isMoldNotFound = true;
+        _recommendationSections['OVERVIEW'] =
+            'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database';
+      });
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -431,10 +529,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       );
       return;
     }
-
-    setState(() {
-      moldGenus = corrected;
-    });
 
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
@@ -448,7 +542,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correction saved, but mold details are unavailable.'),
+            content: Text(
+              'Correction saved, but mold details are unavailable.',
+            ),
           ),
         );
         return;
@@ -459,7 +555,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correction saved, but mold details are unavailable.'),
+            content: Text(
+              'Correction saved, but mold details are unavailable.',
+            ),
           ),
         );
         return;
@@ -582,14 +680,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 child: BuildBottomSheet(
                   child: CorrectionBottomSheetContent(
                     correctedGenusController: correctedGenusController,
-                    presetGenusOptions: const [
-                      'Alternaria',
-                      'Aspergillus Section Flavi',
-                      'Aspergillus Section Nigri',
-                      'Fusarium',
-                      'Penicillium',
-                      'Rhizopus',
-                    ],
+                    presetGenusOptions: _presetGenusOptions,
                     onClose: () {
                       Navigator.of(context).pop();
                     },
@@ -842,6 +933,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               'sourceTab': widget.sourceTab,
                               'moldCaseId': widget.caseId,
                               'predictedClassName': predictedClassName,
+                              'correctedGenus': _correctedGenus,
+                              'correctedPredictedClassName':
+                                  _correctedPredictedClassName,
+                              'correctedAt': _correctedAtIso,
                               'isMoldNotFound':
                                   _isMoldNotFound, // Flag for backend tracking
                             };
@@ -866,6 +961,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     sourceTab: widget.sourceTab,
                                     moldCaseId: widget.caseId,
                                     predictedClassName: predictedClassName,
+                                    correctedGenus: _correctedGenus,
+                                    correctedPredictedClassName:
+                                        _correctedPredictedClassName,
+                                    correctedAt: _correctedAtIso,
                                     capturedAt: nowIso,
                                     scannedResults: {
                                       'confidence_score': confidenceDecimal,
@@ -896,8 +995,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                           'content_id': data['id'],
                                           'content_type': 'mold_scan',
                                           'reason': 'low_confidence_auto_flag',
-                                          'details':
-                                              confidenceDecimal.toString(),
+                                          'details': confidenceDecimal
+                                              .toString(),
                                         },
                                         sessionCookie: authProvider.cookie,
                                       );
@@ -907,6 +1006,35 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     } catch (e, s) {
                                       AppLogger.e(
                                         'MoldResult: Failed to create flag report',
+                                        error: e,
+                                        stackTrace: s,
+                                      );
+                                    }
+                                  }
+
+                                  if (_correctedGenus != null &&
+                                      (_correctedPredictedClassName == null ||
+                                          _correctedPredictedClassName!
+                                              .trim()
+                                              .isEmpty)) {
+                                    try {
+                                      final flagReportService =
+                                          FlagReportService();
+                                      await flagReportService.createFlagReport(
+                                        payload: {
+                                          'content_id': data['id'],
+                                          'content_type': 'mold_scan',
+                                          'reason': 'corrected_genus_not_found',
+                                          'details': _correctedGenus,
+                                        },
+                                        sessionCookie: authProvider.cookie,
+                                      );
+                                      AppLogger.d(
+                                        'MoldResult: Flag report created for unsupported corrected genus',
+                                      );
+                                    } catch (e, s) {
+                                      AppLogger.e(
+                                        'MoldResult: Failed to create unsupported-genus flag report',
                                         error: e,
                                         stackTrace: s,
                                       );
