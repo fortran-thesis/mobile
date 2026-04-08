@@ -34,6 +34,7 @@ class EvidenceTab extends StatelessWidget {
   final TextEditingController macroColorController;
   final TextEditingController macroTextureController;
   final TextEditingController macroSymptomsController;
+  final TextEditingController macroSignsController;
   final TextEditingController macroCharacteristicsController;
   final String? microscopicImagePath;
   final String? macroscopicImagePath;
@@ -53,6 +54,7 @@ class EvidenceTab extends StatelessWidget {
     required this.macroColorController,
     required this.macroTextureController,
     required this.macroSymptomsController,
+    required this.macroSignsController,
     required this.macroCharacteristicsController,
     this.microscopicImagePath,
     this.macroscopicImagePath,
@@ -251,10 +253,25 @@ class EvidenceTab extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             ObservationDataTile(
+                              label: 'Signs',
+                              value: macroSignsController.text,
+                              icon: Icons.visibility_outlined,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ObservationDataTile(
                               label: 'Characteristics',
                               value: macroCharacteristicsController.text,
                               icon: Icons.science_outlined,
                             ),
+                            const SizedBox(width: 12),
+                            const Expanded(child: SizedBox.shrink()),
                           ],
                         ),
                       ),

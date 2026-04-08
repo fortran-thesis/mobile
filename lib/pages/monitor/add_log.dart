@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
-import 'package:moldify/core/features/culture/services/culture_session_service.dart';
 import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
@@ -24,6 +23,8 @@ class AddLogScreen extends StatefulWidget {
   final bool includeSize;
   final String? sourceFlow;
   final String? scanModality;
+  final String? selectedCultureId;
+  final String? selectedCultureName;
 
   // 2. Update the constructor to require them
   const AddLogScreen({
@@ -34,6 +35,8 @@ class AddLogScreen extends StatefulWidget {
     this.includeSize = true,
     this.sourceFlow,
     this.scanModality,
+    this.selectedCultureId,
+    this.selectedCultureName,
   });
 
   @override
@@ -89,10 +92,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final List<String> _characteristicOptions = List<String>.from(
     _defaultCharacteristicOptions,
   );
-  List<CultureSession> _availableCultures = const [];
-  String? _selectedCultureId;
-  String? _selectedCultureName;
-  bool _isLoadingCultures = false;
 
   late final String _sizeLabel;
   late final String _sizeHint;
@@ -159,7 +158,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
   void initState() {
     super.initState();
     _loadInvestigationOptions();
-    _loadAvailableCultures();
 
     // Keep role-specific labels while making the values user-editable.
     if (widget.sourceTab == 'in-vivo') {
@@ -186,40 +184,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
       _sizeController.clear();
       _colorController.clear();
       _textureController.clear();
-    }
-  }
-
-  Future<void> _loadAvailableCultures() async {
-    if (!mounted) return;
-    setState(() => _isLoadingCultures = true);
-
-    try {
-      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      final available = await CultureSessionService.instance.getAvailableForLogs(
-        widget.caseId,
-        sessionCookie: authProvider.cookie,
-      );
-
-      if (!mounted) return;
-      setState(() {
-        _availableCultures = available;
-        if (available.isNotEmpty) {
-          final isCurrentSelectionValid = available.any(
-            (item) => item.id == _selectedCultureId,
-          );
-          if (!isCurrentSelectionValid) {
-            _selectedCultureId = available.first.id;
-            _selectedCultureName = available.first.name;
-          }
-        } else {
-          _selectedCultureId = null;
-          _selectedCultureName = null;
-        }
-        _isLoadingCultures = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoadingCultures = false);
     }
   }
 
@@ -307,31 +271,19 @@ class _AddLogScreenState extends State<AddLogScreen> {
       final scanModality = widget.scanModality ?? 'macroscopic';
       final scannedResults = {'confidence_score': 0, 'flagged': false};
       final cultivationType = _resolveCultivationType(widget.sourceTab);
+      final selectedCultureId = widget.selectedCultureId?.trim();
+      final selectedCultureName = widget.selectedCultureName?.trim();
 
       final isCultivationLogFlow = sourceFlow == 'cultivation_log';
-      if (isCultivationLogFlow) {
-        await _loadAvailableCultures();
-        if (!mounted) return;
-      }
-
-      if (isCultivationLogFlow && _availableCultures.isEmpty) {
+      if (isCultivationLogFlow &&
+          ((selectedCultureId ?? '').isEmpty ||
+              (selectedCultureName ?? '').isEmpty)) {
         if (!mounted) return;
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'No culture is available yet. Wait for timer completion, then assign a culture before adding a log.',
-            ),
+            content: Text('Please assign a culture first in Add Log Choices.'),
           ),
-        );
-        return;
-      }
-      if (isCultivationLogFlow &&
-          (_selectedCultureId == null || _selectedCultureName == null)) {
-        if (!mounted) return;
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a culture for this log.')),
         );
         return;
       }
@@ -377,11 +329,11 @@ class _AddLogScreenState extends State<AddLogScreen> {
         result['characteristicsDisplay'] = _characteristicsController.text
             .trim();
       }
-      if (_selectedCultureId != null) {
-        result['cultureId'] = _selectedCultureId;
+      if ((selectedCultureId ?? '').isNotEmpty) {
+        result['cultureId'] = selectedCultureId;
       }
-      if (_selectedCultureName != null) {
-        result['cultureName'] = _selectedCultureName;
+      if ((selectedCultureName ?? '').isNotEmpty) {
+        result['cultureName'] = selectedCultureName;
       }
 
       if (scanRes['error'] != null) {
@@ -499,18 +451,21 @@ class _AddLogScreenState extends State<AddLogScreen> {
     final symptoms = List<String>.from(_selectedSymptoms);
     final signs = List<String>.from(_selectedSigns);
     final characteristics = List<String>.from(_selectedCharacteristics);
+    final selectedCultureId = widget.selectedCultureId?.trim();
+    final selectedCultureName = widget.selectedCultureName?.trim();
 
     final map = <String, dynamic>{
       'size': size,
       'color': color,
       'texture': texture,
       'symptoms': symptoms.isNotEmpty ? symptoms : symptomsDisplay,
-        'signs': signs.isNotEmpty ? signs : signsDisplay,
+      'signs': signs.isNotEmpty ? signs : signsDisplay,
       'characteristics': characteristics.isNotEmpty
           ? characteristics
           : characteristicsDisplay,
-      if (_selectedCultureId != null) 'culture_id': _selectedCultureId,
-      if (_selectedCultureName != null) 'culture_name': _selectedCultureName,
+      if ((selectedCultureId ?? '').isNotEmpty) 'culture_id': selectedCultureId,
+      if ((selectedCultureName ?? '').isNotEmpty)
+        'culture_name': selectedCultureName,
     };
 
     if (widget.sourceTab == 'in-vivo') {
@@ -634,66 +589,6 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 color: MoldifyColors.MoldifyGrey,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Document your observations with images and details to track the progression of the case.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Bricolage-Grotesque-Regular',
-                                color: MoldifyColors.MoldifyGrey,
-                                height: 1.4,
-                              ),
-                            ),
-                            if (_availableCultures.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Assigned Culture',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                  color: MoldifyColors.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(_selectedCultureId ?? '_none'),
-                                value: _selectedCultureId,
-                                items: _availableCultures
-                                    .map(
-                                      (culture) => DropdownMenuItem<String>(
-                                        value: culture.id,
-                                        child: Text(culture.name),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  final selected = _availableCultures.firstWhere(
-                                    (item) => item.id == value,
-                                  );
-                                  setState(() {
-                                    _selectedCultureId = selected.id;
-                                    _selectedCultureName = selected.name;
-                                  });
-                                },
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Select culture',
-                                ),
-                              ),
-                            ] else if (!_isInitialMacroscopicMode) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _isLoadingCultures
-                                    ? 'Checking culture availability...'
-                                    : 'No available culture yet. Use CULTURE to set a timer and wait until it is ready.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontFamily: 'Bricolage-Grotesque-Regular',
-                                  color: MoldifyColors.MoldifyGrey,
-                                ),
-                              ),
-                            ],
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [const SizedBox.shrink()],

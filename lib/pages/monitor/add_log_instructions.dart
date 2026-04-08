@@ -11,6 +11,8 @@ class AddLogInstructionsScreen extends StatefulWidget {
   // 1. Add sourceTab as a constructor argument
   final String? sourceTab;
   final String? caseId;
+  final String? selectedCultureId;
+  final String? selectedCultureName;
   final bool includeSize;
   final String? sourceFlow;
   final String? scanModality;
@@ -25,6 +27,8 @@ class AddLogInstructionsScreen extends StatefulWidget {
     super.key,
     this.sourceTab,
     this.caseId,
+    this.selectedCultureId,
+    this.selectedCultureName,
     this.pageTitle,
     this.pageSubtitle,
     this.includeSize = true,
@@ -68,6 +72,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
             'source': 'add_log',
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'selectedCultureId': widget.selectedCultureId,
+            'selectedCultureName': widget.selectedCultureName,
             'includeSize': widget.includeSize,
             'sourceFlow': widget.sourceFlow,
             'scanModality': widget.scanModality,
@@ -105,6 +111,8 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
         'source': 'add_log',
         'sourceTab': widget.sourceTab,
         'caseId': widget.caseId,
+        'selectedCultureId': widget.selectedCultureId,
+        'selectedCultureName': widget.selectedCultureName,
         'includeSize': widget.includeSize,
         'sourceFlow': widget.sourceFlow,
         'scanModality': widget.scanModality,

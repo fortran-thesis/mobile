@@ -889,6 +889,29 @@ class _SetMonitoringDetailsScreenState
     if (!mounted) return;
     setState(() {
       if (result is Map<String, dynamic>) {
+        String asDisplayText(dynamic value) {
+          if (value == null) return '';
+          if (value is List) {
+            return value
+                .map((entry) => entry.toString().trim())
+                .where((entry) => entry.isNotEmpty)
+                .join(', ');
+          }
+          return value.toString().trim();
+        }
+
+        List<String> asStringList(dynamic value) {
+          if (value is List) {
+            return value
+                .map((entry) => entry.toString().trim())
+                .where((entry) => entry.isNotEmpty)
+                .toList();
+          }
+          final raw = asDisplayText(value);
+          if (raw.isEmpty) return <String>[];
+          return _splitCatalogValues(raw);
+        }
+
         _initialMacroscopicImagePath = result['imagePath']?.toString();
         _initialMacroscopicColorController.text =
             result['color']?.toString() ?? '';
@@ -896,6 +919,15 @@ class _SetMonitoringDetailsScreenState
             result['texture']?.toString() ?? '';
         _initialMacroscopicSymptomsController.text =
             result['symptomsDisplay']?.toString() ?? '';
+        final signsDisplay = asDisplayText(
+          result['signsDisplay'] ?? result['signs'],
+        );
+        final parsedSigns = asStringList(result['signs']);
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(parsedSigns.isNotEmpty ? parsedSigns : asStringList(signsDisplay));
+        _initialSignsController.text =
+            signsDisplay.isNotEmpty ? signsDisplay : _selectedInitialSigns.join(', ');
         _initialMacroscopicCharacteristicsController.text =
             result['characteristicsDisplay']?.toString() ?? '';
         _initialMacroscopicController.text =
@@ -1122,6 +1154,7 @@ class _SetMonitoringDetailsScreenState
         macroColorController: _initialMacroscopicColorController,
         macroTextureController: _initialMacroscopicTextureController,
         macroSymptomsController: _initialMacroscopicSymptomsController,
+        macroSignsController: _initialSignsController,
         macroCharacteristicsController:
             _initialMacroscopicCharacteristicsController,
         microscopicImagePath: _initialMicroscopicImagePath,

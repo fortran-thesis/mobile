@@ -222,7 +222,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       confidenceLevel = '';
       AppLogger.d('MoldResult: No probability found in modelResult');
     }
-    // Extract only the genus from 'genus_spp' format
+    // Extract genus from predicted_class as fallback display name
     final predictedClass =
         widget.modelResult?['predicted_class']?.toString() ?? '';
     moldGenus = predictedClass.contains('_')
@@ -235,13 +235,27 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     // Detect if mold was found in database
     final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
     final moldStatus = resolvedDetails['status']?.toString();
+    // When the user explicitly corrected the genus (via LowConfidenceCorrectionScreen),
+    // treat the mold as found regardless of draft status — they selected it from the
+    // catalog and the document exists. For regular scans, draft molds are still hidden
+    // because their data may be incomplete/unreviewed.
+    final bool isCorrectedFlow =
+        widget.correctedGenus != null && widget.correctedGenus!.isNotEmpty;
     _isMoldNotFound =
         resolvedDetails.isEmpty ||
         resolvedDetails.containsKey('error') ||
-        moldStatus == 'draft';
+        (moldStatus == 'draft' && !isCorrectedFlow);
     AppLogger.d(
       'MoldResult: Mold found/reviewed: ${!_isMoldNotFound} (status: $moldStatus)',
     );
+
+    // When the mold is found in the DB, prefer its stored name over the
+    // truncated predicted_class string (e.g. "Aspergillus section Flavi"
+    // instead of the split-on-underscore "Aspergillus").
+    if (!_isMoldNotFound) {
+      final dbName = resolvedDetails['name']?.toString().trim() ?? '';
+      if (dbName.isNotEmpty) moldGenus = dbName;
+    }
 
     // Use moldDetails if available to populate data instead of hardcoded values
     if (!_isMoldNotFound) {

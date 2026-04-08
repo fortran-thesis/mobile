@@ -144,7 +144,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       characteristics['lesion_texture'],
       characteristics['colony_texture'],
       characteristics['symptoms'],
+      characteristics['symptomsDisplay'],
+      characteristics['signs'],
+      characteristics['signsDisplay'],
       characteristics['characteristics'],
+      characteristics['characteristicsDisplay'],
     ]).isNotEmpty;
   }
 
@@ -172,21 +176,26 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final symptoms = _firstNonEmpty([
       characteristics['symptoms'],
       characteristics['symptomsDisplay'],
+      characteristics['symptoms_csv'],
     ]);
     final signs = _firstNonEmpty([
       characteristics['signs'],
       characteristics['signsDisplay'],
+      characteristics['signs_csv'],
       characteristics['initial_signs'],
+      characteristics['initial_signs_csv'],
       characteristics['symptoms_signs'],
       characteristics['symptomsSigns'],
     ]);
     final trait = _firstNonEmpty([
       characteristics['characteristics'],
       characteristics['characteristicsDisplay'],
+      characteristics['characteristics_csv'],
     ]);
     final cultureName = _firstNonEmpty([
       characteristics['culture_name'],
       characteristics['cultureName'],
+      characteristics['assigned_culture_name'],
     ]);
 
     final microscopicImage = _firstNonEmpty([

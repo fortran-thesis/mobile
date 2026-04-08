@@ -105,6 +105,32 @@ class CameraService {
     }
   }
 
+  /// Fetches mold details by database ID (used after selecting from full catalog).
+  Future<Map<String, dynamic>> getMoldDetailsById({
+    required String moldId,
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _moldApi.get(
+        '/$moldId',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
+      );
+      if (response.statusCode == 200) {
+        final payload = response.data as Map<String, dynamic>;
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+        return payload;
+      }
+      return {
+        'error': 'Failed to fetch mold details: ${response.statusCode}',
+      };
+    } catch (e) {
+      return {'error': 'Error: $e'};
+    }
+  }
+
   /// Gets the supported mold genera list used for correction dropdown options.
   Future<Map<String, dynamic>> getSupportedCorrectionGenera({
     String? sessionCookie,

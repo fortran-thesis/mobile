@@ -315,9 +315,11 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
           arguments: routeArgs,
         );
 
-        if (result != null) {
-          Navigator.of(context).pop(result);
-        }
+        // Always pop so input_characteristics is never left stranded when the
+        // user backs out of the result screen. Camera decides whether to stay
+        // (null = keep camera open) or also pop (non-null = scan saved).
+        if (!mounted) return;
+        Navigator.of(context).pop(result);
       }
     } catch (e, stackTrace) {
       AppLogger.e('❌ InputCharacteristics: EXCEPTION during submit', error: e, stackTrace: stackTrace);

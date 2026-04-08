@@ -251,6 +251,7 @@ class ExperimentTimelineTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasMicro = microscopicImagePath.trim().isNotEmpty;
     final hasMacro = macroscopicImagePath.trim().isNotEmpty;
+    final hasCulture = cultureName.trim().isNotEmpty;
     final hasMicroEvidence = hasMicro || microGenusName.trim().isNotEmpty;
     final hasMacroEvidence =
         hasMacro ||
@@ -310,6 +311,19 @@ class ExperimentTimelineTile extends StatelessWidget {
                     ),
                 ],
               ),
+
+              if (hasCulture) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    ObservationDataTile(
+                      label: 'Assigned Culture',
+                      value: cultureName,
+                      icon: Icons.timer_outlined,
+                    ),
+                  ],
+                ),
+              ],
 
               // =================================================================
               // MICROSCOPIC SECTION
@@ -440,8 +454,8 @@ class ExperimentTimelineTile extends StatelessWidget {
                               ),
                       ),
 
-                      // Metadata (only shown when an image exists)
-                      if (hasMacro)
+                      // Metadata should still render when only field values are available.
+                      if (hasMacroEvidence)
                         Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Column(
@@ -485,18 +499,6 @@ class ExperimentTimelineTile extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              if (cultureName.trim().isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    ObservationDataTile(
-                                      label: 'Culture Source',
-                                      value: cultureName,
-                                      icon: Icons.timer_outlined,
-                                    ),
-                                  ],
-                                ),
-                              ],
                             ],
                           ),
                         ),
@@ -505,7 +507,7 @@ class ExperimentTimelineTile extends StatelessWidget {
                 ),
               ],
 
-              if (!hasMicroEvidence && !hasMacroEvidence)
+              if (!hasMicroEvidence && !hasMacroEvidence && !hasCulture)
                 const Padding(
                   padding: EdgeInsets.only(top: 8.0),
                   child: ObservationEmptyStateCard(

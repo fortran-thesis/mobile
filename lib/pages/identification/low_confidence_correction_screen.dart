@@ -3,23 +3,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/core/constants/route_names.dart';
-import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/features/mold/service/mold_detail_adapter.dart';
+import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
-import 'package:moldify/pages/misc/textboxes/textboxes.dart';
+import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 /// Shown automatically when the AI scan result confidence is below
 /// [ScanConstants.lowConfidenceThreshold].
 ///
-/// The user must select the correct genus from the supported 6 (dropdown),
-/// or enter a different genus manually (text field). On confirmation the app
-/// navigates to [MoldResultScreen] with the corrected data already loaded.
+/// The user must select the correct genus from the full mold catalog (or add a
+/// new one). On confirmation the app navigates to [MoldResultScreen] with the
+/// corrected data already loaded.
 class LowConfidenceCorrectionScreen extends StatefulWidget {
   final String croppedImagePath;
   final Map<String, dynamic> modelResult;
@@ -45,33 +45,13 @@ class LowConfidenceCorrectionScreen extends StatefulWidget {
 
 class _LowConfidenceCorrectionScreenState
     extends State<LowConfidenceCorrectionScreen> {
-  // --- Fallback genus list (identical to MoldResultScreen) ---
-  static const Map<String, String> _fallbackSupportedCorrectionMap = {
-    'alternaria': 'Alternaria_spp',
-    'aspergillus flavi': 'Aspergillus_section_Flavi',
-    'aspergillus section flavi': 'Aspergillus_section_Flavi',
-    'aspergillus section nigri': 'Aspergillus_section_Nigri',
-    'fusarium': 'Fusarium_spp',
-    'penicillium': 'Penicillium_spp',
-    'rhizopus': 'Rhizopus_spp',
-  };
-
-  static const List<String> _fallbackPresetGenusOptions = [
-    'Alternaria',
-    'Aspergillus Flavi',
-    'Aspergillus Section Nigri',
-    'Fusarium',
-    'Penicillium',
-    'Rhizopus',
-  ];
-
-  Map<String, String> _supportedCorrectionMap =
-      Map<String, String>.from(_fallbackSupportedCorrectionMap);
-  List<String> _presetGenusOptions =
-      List<String>.from(_fallbackPresetGenusOptions);
-
-  String? _selectedDropdownGenus;
-  final TextEditingController _customGenusController = TextEditingController();
+  final Map<String, MoldCatalogEntry> _moldCatalogByName = {};
+  final Map<String, MoldCatalogEntry> _moldCatalogById = {};
+  final List<String> _genusOptions = [];
+  int _dropdownKey = 0;
+  bool _isLoadingMoldOptions = false;
+  String? _selectedGenus;
+  String? _moldOptionsError;
   bool _isConfirming = false;
 
   // Derived display values from modelResult
@@ -97,148 +77,149 @@ class _LowConfidenceCorrectionScreenState
         ? predictedClass.split('_')[0]
         : predictedClass;
 
-    _customGenusController.addListener(_onTextChanged);
-    _loadSupportedCorrectionOptions();
+    _loadMoldOptions();
   }
 
-  @override
-  void dispose() {
-    _customGenusController.removeListener(_onTextChanged);
-    _customGenusController.dispose();
-    super.dispose();
-  }
+  Future<void> _loadMoldOptions() async {
+    setState(() {
+      _isLoadingMoldOptions = true;
+      _moldOptionsError = null;
+    });
 
-  void _onTextChanged() {
-    // When the user types in the custom field, clear the dropdown selection
-    if (_customGenusController.text.isNotEmpty && _selectedDropdownGenus != null) {
-      setState(() {
-        _selectedDropdownGenus = null;
-      });
-    } else {
-      setState(() {}); // rebuild to re-evaluate button enabled state
-    }
-  }
-
-  String _normalizeCorrectionKey(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll('_', ' ')
-        .replaceAll(RegExp(r'\s+'), ' ');
-  }
-
-  Future<void> _loadSupportedCorrectionOptions() async {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-      final cameraService = CameraService();
-      final response = await cameraService.getSupportedCorrectionGenera(
+      final service = MoldService();
+      final catalog = await service.fetchAllMoldCatalog(
         sessionCookie: authProvider.cookie,
       );
 
-      if (response['error'] != null) return;
+      if (!mounted) return;
 
-      final rawGenera = response['genera'];
-      if (rawGenera is! List) return;
-
-      final nextMap = <String, String>{};
-      final nextOptions = <String>[];
-
-      for (final item in rawGenera) {
-        if (item is! Map) continue;
-        final data = Map<String, dynamic>.from(item);
-        var displayName = data['display_name']?.toString().trim() ?? '';
-        final predictedClassName =
-            data['predicted_class_name']?.toString().trim() ?? '';
-        final normalizedKeyRaw =
-            data['normalized_key']?.toString().trim() ?? '';
-
-        if (displayName.isEmpty || predictedClassName.isEmpty) continue;
-
-        final normalizedKey = normalizedKeyRaw.isNotEmpty
-            ? _normalizeCorrectionKey(normalizedKeyRaw)
-            : _normalizeCorrectionKey(displayName);
-
-        if (normalizedKey == 'aspergillus section flavi' ||
-            normalizedKey == 'aspergillus flavi') {
-          displayName = 'Aspergillus Flavi';
-        }
-
-        nextMap[normalizedKey] = predictedClassName;
-        if (normalizedKey == 'aspergillus section flavi') {
-          nextMap['aspergillus flavi'] = predictedClassName;
-        }
-        if (!nextOptions.contains(displayName)) nextOptions.add(displayName);
-      }
-
-      if (!mounted || nextMap.isEmpty) return;
       setState(() {
-        _supportedCorrectionMap = nextMap;
-        if (nextOptions.isNotEmpty) _presetGenusOptions = nextOptions;
+        _moldCatalogByName.clear();
+        _moldCatalogById.clear();
+
+        for (final mold in catalog) {
+          if (mold.name.trim().isEmpty) continue;
+          final key = mold.name.toLowerCase();
+          _moldCatalogByName[key] = mold;
+          if (mold.id.trim().isNotEmpty) {
+            _moldCatalogById[mold.id.trim()] = mold;
+          }
+        }
+
+        _genusOptions
+          ..clear()
+          ..addAll(
+            _moldCatalogByName.values.map((e) => e.name).toList()
+              ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+          )
+          ..add('+ Add New Mold');
+
+        if (_selectedGenus != null && !_genusOptions.contains(_selectedGenus)) {
+          _selectedGenus = null;
+        }
+
+        if (_genusOptions.isEmpty) {
+          _moldOptionsError =
+              'No mold options available. Seed mold data first.';
+        }
+
+        _isLoadingMoldOptions = false;
       });
-    } catch (error, stackTrace) {
-      AppLogger.e(
-        'LowConfidenceCorrection: Failed to load supported genera',
-        error: error,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      if (!mounted) return;
+      final errorText = e.toString().toLowerCase();
+      setState(() {
+        _isLoadingMoldOptions = false;
+        _moldOptionsError = errorText.contains('http 404')
+            ? 'No mold options found. Seed mold records first.'
+            : 'Unable to load mold options right now.';
+      });
     }
   }
 
-  bool get _canConfirm {
-    final dropdownSelected =
-        _selectedDropdownGenus != null && _selectedDropdownGenus!.isNotEmpty;
-    final customEntered = _customGenusController.text.trim().isNotEmpty;
-    return (dropdownSelected || customEntered) && !_isConfirming;
+  Future<void> _navigateToCreateMold() async {
+    setState(() => _dropdownKey++);
+
+    final result = await Navigator.of(context).pushNamed(RouteNames.createMold);
+    if (result is! MoldCatalogEntry || !mounted) return;
+
+    setState(() {
+      final entry = result;
+      final key = entry.name.toLowerCase();
+      _moldCatalogByName[key] = entry;
+      if (entry.id.trim().isNotEmpty) _moldCatalogById[entry.id.trim()] = entry;
+
+      _genusOptions
+        ..clear()
+        ..addAll(
+          _moldCatalogByName.values.map((e) => e.name).toList()
+            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+        )
+        ..add('+ Add New Mold');
+
+      _selectedGenus = entry.name;
+      _dropdownKey++;
+    });
   }
 
-  String get _effectiveGenus {
-    if (_selectedDropdownGenus != null && _selectedDropdownGenus!.isNotEmpty) {
-      return _selectedDropdownGenus!;
+  void _handleMoldSelectionChanged(String? selectedName) {
+    if (selectedName == '+ Add New Mold') {
+      _navigateToCreateMold();
+      return;
     }
-    return _customGenusController.text.trim();
+    setState(() {
+      _selectedGenus = selectedName;
+    });
   }
+
+  bool get _canConfirm =>
+      _selectedGenus != null &&
+      _selectedGenus!.trim().isNotEmpty &&
+      !_isConfirming;
 
   Future<void> _onConfirm() async {
-    final genus = _effectiveGenus;
+    final genus = _selectedGenus?.trim() ?? '';
     if (genus.isEmpty) return;
 
     setState(() => _isConfirming = true);
 
-    final normalized = _normalizeCorrectionKey(genus);
-    final predictedClassName = _supportedCorrectionMap[normalized];
-
-    // Build the updated modelResult with the corrected class name
-    final correctedModelResult = Map<String, dynamic>.from(widget.modelResult);
-    if (predictedClassName != null) {
-      correctedModelResult['predicted_class'] = predictedClassName;
+    final entry = _moldCatalogByName[genus.toLowerCase()];
+    if (entry == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Selected mold not found in catalog. Please retry.'),
+          ),
+        );
+      }
+      setState(() => _isConfirming = false);
+      return;
     }
+
+    final correctedModelResult = Map<String, dynamic>.from(widget.modelResult);
+    correctedModelResult['predicted_class'] = entry.name;
 
     Map<String, dynamic> moldDetails = {'error': 'not_found'};
 
-    if (predictedClassName != null) {
-      try {
-        final authProvider =
-            Provider.of<AppAuthProvider>(context, listen: false);
-        final cameraService = CameraService();
-        final fetched = await cameraService.getMoldDetails(
-          moldName: predictedClassName,
-          sessionCookie: authProvider.cookie,
-        );
-        final resolved = MoldDetailAdapter.unwrapPayload(fetched);
-        if (resolved.isNotEmpty && !resolved.containsKey('error')) {
-          moldDetails = fetched;
-        }
-      } catch (error, stackTrace) {
-        AppLogger.e(
-          'LowConfidenceCorrection: Failed to fetch mold details',
-          error: error,
-          stackTrace: stackTrace,
-        );
+    try {
+      final authProvider =
+          Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final fetched = await cameraService.getMoldDetailsById(
+        moldId: entry.id,
+        sessionCookie: authProvider.cookie,
+      );
+      final resolved = MoldDetailAdapter.unwrapPayload(fetched);
+      if (resolved.isNotEmpty && !resolved.containsKey('error')) {
+        moldDetails = fetched;
       }
-    } else {
-      // Unknown genus — show "not in database" state in MoldResultScreen
-      AppLogger.d(
-        'LowConfidenceCorrection: Genus "$genus" not in supported map — flagging as not found',
+    } catch (error, stackTrace) {
+      AppLogger.e(
+        'LowConfidenceCorrection: Failed to fetch mold details by id',
+        error: error,
+        stackTrace: stackTrace,
       );
     }
 
@@ -246,7 +227,9 @@ class _LowConfidenceCorrectionScreenState
 
     setState(() => _isConfirming = false);
 
-    await Navigator.of(context).pushReplacementNamed(
+    // Push (instead of replacement) so callers awaiting this route only resume
+    // after the result screen is finished; then forward the result upstream.
+    final result = await Navigator.of(context).pushNamed(
       RouteNames.moldResult,
       arguments: {
         'croppedImagePath': widget.croppedImagePath,
@@ -259,6 +242,9 @@ class _LowConfidenceCorrectionScreenState
         'correctedGenus': genus,
       },
     );
+
+    if (!mounted) return;
+    Navigator.of(context).pop(result);
   }
 
   @override
@@ -354,94 +340,51 @@ class _LowConfidenceCorrectionScreenState
             ),
             const SizedBox(height: 10),
 
-            // --- Dropdown: supported 6 genera ---
-            DropdownButtonFormField<String>(
-              value: _selectedDropdownGenus,
-              decoration: InputDecoration(
-                labelText: 'Select from supported genera',
-                labelStyle: const TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  color: MoldifyColors.MoldifyGrey,
-                  fontSize: 13,
+            // --- Dropdown: full mold catalog ---
+            if (_isLoadingMoldOptions)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: LinearProgressIndicator(
+                  minHeight: 3,
+                  color: MoldifyColors.primaryColor,
+                  backgroundColor: MoldifyColors.taupe,
                 ),
-                border: OutlineInputBorder(
+              )
+            else if (_genusOptions.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: MoldifyColors.taupe,
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: MoldifyColors.primaryColor,
-                    width: 1.5,
-                  ),
-                ),
-                filled: true,
-                fillColor: MoldifyColors.taupe,
-              ),
-              style: const TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 14,
-                color: MoldifyColors.MoldifyBlack,
-              ),
-              items: _presetGenusOptions
-                  .map(
-                    (item) => DropdownMenuItem<String>(
-                      value: item,
-                      child: Text(item),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _moldOptionsError ?? 'No mold options available.',
+                        style: const TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-Regular',
+                          fontSize: 13,
+                          color: MoldifyColors.MoldifyGrey,
+                        ),
+                      ),
                     ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value == null || value.trim().isEmpty) return;
-                setState(() {
-                  _selectedDropdownGenus = value;
-                  _customGenusController.clear();
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // --- Divider with "or" label ---
-            Row(
-              children: [
-                const Expanded(child: Divider(thickness: 1)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'or enter manually',
-                    style: TextStyle(
-                      fontFamily: 'Bricolage-Grotesque-Regular',
-                      fontSize: 12,
-                      color: MoldifyColors.MoldifyGrey,
+                    TextButton(
+                      onPressed: _loadMoldOptions,
+                      child: const Text('Retry'),
                     ),
-                  ),
+                  ],
                 ),
-                const Expanded(child: Divider(thickness: 1)),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // --- Custom genus text field ---
-            BuildTextBox(
-              hintText: 'Enter genus name (if not in list)',
-              controller: _customGenusController,
-              showPassword: false,
-            ),
-
-            const SizedBox(height: 6),
-            Text(
-              'If the genus is not in the supported list, '
-              'the system will flag it as not yet in the database.',
-              style: TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 11,
-                color: MoldifyColors.MoldifyGrey,
+              )
+            else
+              BuildDropdown(
+                key: ValueKey(_dropdownKey),
+                hintText: 'Select Genus',
+                items: _genusOptions,
+                initialValue: _selectedGenus,
+                onChanged: _handleMoldSelectionChanged,
               ),
-            ),
 
             const SizedBox(height: 32),
 

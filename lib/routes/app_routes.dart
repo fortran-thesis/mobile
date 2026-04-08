@@ -134,6 +134,8 @@ class AppRoutes {
             final source = args?['source'] as String?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
+            final selectedCultureId = args?['selectedCultureId'] as String?;
+            final selectedCultureName = args?['selectedCultureName'] as String?;
             final sourceFlow = args?['sourceFlow'] as String?;
             final scanModality = args?['scanModality'] as String?;
             final includeSize = args?['includeSize'] as bool? ?? true;
@@ -142,6 +144,8 @@ class AppRoutes {
               source: source,
               sourceTab: sourceTab,
               caseId: caseId,
+              selectedCultureId: selectedCultureId,
+              selectedCultureName: selectedCultureName,
               sourceFlow: sourceFlow,
               scanModality: scanModality,
               includeSize: includeSize,
@@ -157,6 +161,8 @@ class AppRoutes {
             final source = _stringArg(args, 'source');
             final sourceTab = _stringArg(args, 'sourceTab');
             final caseId = _stringArg(args, 'caseId');
+            final selectedCultureId = _stringArg(args, 'selectedCultureId');
+            final selectedCultureName = _stringArg(args, 'selectedCultureName');
             final sourceFlow = _stringArg(args, 'sourceFlow');
             final scanModality = _stringArg(args, 'scanModality');
             final includeSize = _boolArg(args, 'includeSize', fallback: true);
@@ -167,6 +173,8 @@ class AppRoutes {
               source: source,
               sourceTab: sourceTab,
               caseId: caseId,
+              selectedCultureId: selectedCultureId,
+              selectedCultureName: selectedCultureName,
               sourceFlow: sourceFlow,
               scanModality: scanModality,
               includeSize: includeSize,
@@ -262,6 +270,8 @@ class AppRoutes {
             final args = settings.arguments as Map<String, dynamic>?;
             final sourceTab = args?['sourceTab'] as String?;
             final caseId = args?['caseId'] as String?;
+            final selectedCultureId = args?['selectedCultureId'] as String?;
+            final selectedCultureName = args?['selectedCultureName'] as String?;
             final pageTitle = args?['pageTitle'] as String?;
             final pageSubtitle = args?['pageSubtitle'] as String?;
             final includeSize = args?['includeSize'] as bool? ?? true;
@@ -271,6 +281,8 @@ class AppRoutes {
             return AddLogInstructionsScreen(
               sourceTab: sourceTab,
               caseId: caseId,
+              selectedCultureId: selectedCultureId,
+              selectedCultureName: selectedCultureName,
               pageTitle: pageTitle,
               pageSubtitle: pageSubtitle,
               includeSize: includeSize,
@@ -293,6 +305,8 @@ class AppRoutes {
             final includeSize = _boolArg(args, 'includeSize', fallback: true);
             final sourceFlow = _stringArg(args, 'sourceFlow');
             final scanModality = _stringArg(args, 'scanModality');
+            final selectedCultureId = _stringArg(args, 'selectedCultureId');
+            final selectedCultureName = _stringArg(args, 'selectedCultureName');
             return AddLogScreen(
               imagePath: imagePath,
               sourceTab: sourceTab,
@@ -300,6 +314,8 @@ class AppRoutes {
               includeSize: includeSize,
               sourceFlow: sourceFlow,
               scanModality: scanModality,
+              selectedCultureId: selectedCultureId,
+              selectedCultureName: selectedCultureName,
             );
 
           case RouteNames.mainCamera:
@@ -355,6 +371,10 @@ class AppRoutes {
               args?['initialMacroSigns'] as String?;
             final String? initialMacroCharacteristics =
                 args?['initialMacroCharacteristics'] as String?;
+            final String? selectedCultureId =
+              args?['selectedCultureId'] as String?;
+            final String? selectedCultureName =
+              args?['selectedCultureName'] as String?;
 
             List<String> toStringList(dynamic value) {
               if (value is List) {
@@ -405,7 +425,10 @@ class AppRoutes {
               initialMacroSymptoms: initialMacroSymptoms,
               initialMacroSigns: initialMacroSigns,
               initialMacroCharacteristics: initialMacroCharacteristics,
-              onCaptureMicro: () {
+              caseId: caseId,
+              selectedCultureId: selectedCultureId,
+              selectedCultureName: selectedCultureName,
+              onCaptureMicro: (captureCultureId, captureCultureName) {
                 final navigator = Navigator.of(context);
                 navigator
                     .pushNamed(
@@ -422,6 +445,15 @@ class AppRoutes {
                     .then((result) {
                       if (result is Map<String, dynamic>) {
                         final nextMicroPath = result['imagePath']?.toString();
+                        final nextMicroResult = {
+                          ...result,
+                          if (captureCultureId != null &&
+                              captureCultureId.trim().isNotEmpty)
+                            'cultureId': captureCultureId,
+                          if (captureCultureName != null &&
+                              captureCultureName.trim().isNotEmpty)
+                            'cultureName': captureCultureName,
+                        };
                         navigator.pushReplacementNamed(
                           RouteNames.addLogChoices,
                           arguments: {
@@ -430,7 +462,7 @@ class AppRoutes {
                             'includeSize': includeSize,
                             'microscopicImagePath': nextMicroPath,
                             'macroscopicImagePath': macroscopicImagePath,
-                            'microResult': result,
+                            'microResult': nextMicroResult,
                             'macroResult': macroResult,
                             'initialMicroIdentifiedMold':
                                 initialMicroIdentifiedMold,
@@ -440,12 +472,14 @@ class AppRoutes {
                             'initialMacroSigns': initialMacroSigns,
                             'initialMacroCharacteristics':
                                 initialMacroCharacteristics,
+                            'selectedCultureId': captureCultureId,
+                            'selectedCultureName': captureCultureName,
                           },
                         );
                       }
                     });
               },
-              onCaptureMacro: () {
+              onCaptureMacro: (captureCultureId, captureCultureName) {
                 if (sourceTab == null || caseId == null) return;
                 final navigator = Navigator.of(context);
                 navigator
@@ -454,6 +488,8 @@ class AppRoutes {
                       arguments: {
                         'sourceTab': sourceTab,
                         'caseId': caseId,
+                        'selectedCultureId': captureCultureId,
+                        'selectedCultureName': captureCultureName,
                         'includeSize': includeSize,
                         'sourceFlow': 'cultivation_log',
                         'scanModality': 'macroscopic',
@@ -481,12 +517,14 @@ class AppRoutes {
                             'initialMacroSigns': initialMacroSigns,
                             'initialMacroCharacteristics':
                                 initialMacroCharacteristics,
+                            'selectedCultureId': captureCultureId,
+                            'selectedCultureName': captureCultureName,
                           },
                         );
                       }
                     });
               },
-              onSubmit: () async {
+              onSubmit: (submitCultureId, submitCultureName) async {
                 if (microResult == null && macroResult == null) {
                   Navigator.of(context).pop();
                   return;
@@ -500,6 +538,18 @@ class AppRoutes {
                 final microPersisted = didCultivationLogPersist(microResult);
                 final microImagePath =
                     microResult?['imagePath']?.toString().trim() ?? '';
+                final cultureId =
+                  (submitCultureId ??
+                   macroResult?['cultureId'] ??
+                   microResult?['cultureId'])
+                    ?.toString()
+                    .trim();
+                final cultureName =
+                  (submitCultureName ??
+                   macroResult?['cultureName'] ??
+                   microResult?['cultureName'])
+                    ?.toString()
+                    .trim();
 
                 // Persist a microscopic-only cultivation log when no macroscopic
                 // log was stored. This ensures microscopy entries appear in the
@@ -523,6 +573,10 @@ class AppRoutes {
                         'top_predictions': microResult['topPredictions'],
                       if (microResult['modelSource'] != null)
                         'model_source': microResult['modelSource'].toString(),
+                      if (cultureId != null && cultureId.isNotEmpty)
+                        'culture_id': cultureId,
+                      if (cultureName != null && cultureName.isNotEmpty)
+                        'culture_name': cultureName,
                     };
 
                     final microLogResponse = await moldCaseService
@@ -619,6 +673,10 @@ class AppRoutes {
                     ? null
                     : {
                         ...macroResult,
+                        if (cultureId != null && cultureId.isNotEmpty)
+                          'cultureId': cultureId,
+                        if (cultureName != null && cultureName.isNotEmpty)
+                          'cultureName': cultureName,
                         'scanAssociationSaved': scanAssociationSaved,
                         'scannedMicroscopicIdsAdded':
                             scannedMicroscopicIdsAdded,
@@ -631,6 +689,10 @@ class AppRoutes {
                     ? null
                     : {
                         ...microResult,
+                        if (cultureId != null && cultureId.isNotEmpty)
+                          'cultureId': cultureId,
+                        if (cultureName != null && cultureName.isNotEmpty)
+                          'cultureName': cultureName,
                         'scanAssociationSaved': scanAssociationSaved,
                         'scannedMicroscopicIdsAdded':
                             scannedMicroscopicIdsAdded,
@@ -651,6 +713,10 @@ class AppRoutes {
                   'scanAssociationSaved': scanAssociationSaved,
                   'scannedMicroscopicIdsAdded': scannedMicroscopicIdsAdded,
                   'scannedMacroscopicIdsAdded': scannedMacroscopicIdsAdded,
+                  if (cultureId != null && cultureId.isNotEmpty)
+                    'selectedCultureId': cultureId,
+                  if (cultureName != null && cultureName.isNotEmpty)
+                    'selectedCultureName': cultureName,
                   if (enrichedMicroResult != null)
                     'microResult': enrichedMicroResult,
                   if (enrichedMacroResult != null)
