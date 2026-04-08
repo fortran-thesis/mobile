@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/features/mold/service/mold_detail_adapter.dart';
+import 'package:moldify/core/features/flag_report/services/flag_report_service.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
@@ -884,6 +885,33 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                   savePayload['scanId'] = data['id']
                                       ?.toString();
                                   savePayload['savedScan'] = data;
+
+                                  // Create flag report if scan was auto-flagged (low confidence)
+                                  if (confidenceDecimal < 0.70) {
+                                    try {
+                                      final flagReportService =
+                                          FlagReportService();
+                                      await flagReportService.createFlagReport(
+                                        payload: {
+                                          'content_id': data['id'],
+                                          'content_type': 'mold_scan',
+                                          'reason': 'low_confidence_auto_flag',
+                                          'details':
+                                              confidenceDecimal.toString(),
+                                        },
+                                        sessionCookie: authProvider.cookie,
+                                      );
+                                      AppLogger.d(
+                                        'MoldResult: Flag report created for low-confidence scan',
+                                      );
+                                    } catch (e, s) {
+                                      AppLogger.e(
+                                        'MoldResult: Failed to create flag report',
+                                        error: e,
+                                        stackTrace: s,
+                                      );
+                                    }
+                                  }
                                 }
                               }
                             } catch (e, s) {
