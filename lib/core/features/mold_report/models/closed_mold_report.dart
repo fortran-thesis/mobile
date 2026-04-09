@@ -19,9 +19,16 @@ class ClosedMoldReport {
 
   factory ClosedMoldReport.fromJson(Map<String, dynamic> json) {
     return ClosedMoldReport(
-      id: json['id']?.toString() ?? '',
-      caseName: json['case_name']?.toString() ?? '',
-      dateObserved: _parseDate(json['date_observed']),
+      id:
+          json['id']?.toString() ??
+          json['_id']?.toString() ??
+          json['report_id']?.toString() ??
+          '',
+      caseName:
+          json['case_name']?.toString() ??
+          json['name']?.toString() ??
+          'Untitled Case',
+      dateObserved: _parseDate(json['date_observed'] ?? json['created_at']),
       assignedMycologistId: json['assigned_mycologist_id']?.toString(),
       host: json['host']?.toString(),
       location: json['location']?.toString(),

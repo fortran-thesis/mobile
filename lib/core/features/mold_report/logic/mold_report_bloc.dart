@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/mold_report/models/mold_report.dart';
 import 'package:moldify/core/features/mold_report/repository/mold_report_repository.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 
 // Events
 abstract class MoldReportEvent extends Equatable {
@@ -85,19 +86,44 @@ class MoldReportCreateSuccess extends MoldReportState {}
 class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   final MoldReportRepository repository;
   final int pageSize;
+  static const Duration _invalidationCooldown = Duration(milliseconds: 500);
   
   // Track pages ourselves now that repository is simplified
   final List<MoldReport> _allReports = [];
   String? _nextPageToken;
+  String? _lastSessionCookie;
+  String _lastScope = 'own';
+  DateTime _lastInvalidationAt = DateTime.fromMillisecondsSinceEpoch(0);
+  late final StreamSubscription<CacheInvalidationEvent> _invalidationSub;
 
   MoldReportBloc({required this.repository, this.pageSize = 20}) : super(MoldReportInitial()) {
     on<FetchMoldReports>(_onFetch);
     on<RefreshMoldReports>(_onRefresh);
     on<CreateMoldReportEvent>(_onCreate);
     on<SearchMoldReports>(_onSearch);
+
+    _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      final shouldRefresh =
+          event.entity == InvalidationEntity.moldReport ||
+          event.entity == InvalidationEntity.moldCase;
+      if (!shouldRefresh) return;
+
+      final now = DateTime.now().toUtc();
+      if (now.difference(_lastInvalidationAt) < _invalidationCooldown) return;
+      _lastInvalidationAt = now;
+
+      add(
+        RefreshMoldReports(
+          sessionCookie: _lastSessionCookie,
+          scope: _lastScope,
+        ),
+      );
+    });
   }
 
   Future<void> _onFetch(FetchMoldReports event, Emitter<MoldReportState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
+    _lastScope = event.scope;
     try {
       if (event.pageToken == null) {
         emit(MoldReportLoading());
@@ -133,6 +159,8 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   }
 
   Future<void> _onRefresh(RefreshMoldReports event, Emitter<MoldReportState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
+    _lastScope = event.scope;
     try {
       emit(MoldReportLoading());
       _allReports.clear();
@@ -152,6 +180,7 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   }
 
   Future<void> _onCreate(CreateMoldReportEvent event, Emitter<MoldReportState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
     try {
       emit(MoldReportCreating());
       // Call service directly to create report
@@ -173,6 +202,8 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
   }
 
   Future<void> _onSearch(SearchMoldReports event, Emitter<MoldReportState> emit) async {
+    _lastSessionCookie = event.sessionCookie;
+    _lastScope = event.scope;
     try {
       emit(MoldReportLoading());
       _allReports.clear();
@@ -205,5 +236,11 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
     } catch (e) {
       emit(MoldReportError(e.toString()));
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _invalidationSub.cancel();
+    return super.close();
   }
 }

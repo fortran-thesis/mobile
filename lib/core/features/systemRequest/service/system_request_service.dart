@@ -6,11 +6,7 @@ class SystemRequestResponse {
   final String? error;
   final Map<String, dynamic>? data;
 
-  SystemRequestResponse({
-    required this.success,
-    this.error,
-    this.data,
-  });
+  SystemRequestResponse({required this.success, this.error, this.data});
 
   factory SystemRequestResponse.fromJson(Map<String, dynamic> json) {
     return SystemRequestResponse(
@@ -33,11 +29,7 @@ class SystemRequestService {
     try {
       final response = await _apiService.post(
         '',
-        body: {
-          'type': type,
-          'message': message,
-          'user_id': userId,
-        },
+        body: {'type': type, 'message': message, 'user_id': userId},
         sessionCookie: sessionCookie,
       );
 
@@ -49,7 +41,8 @@ class SystemRequestService {
               responseData.trim().startsWith('<html'))) {
         return SystemRequestResponse(
           success: false,
-          error: 'Invalid endpoint - received HTML instead of JSON. Check API URL.',
+          error:
+              'Invalid endpoint - received HTML instead of JSON. Check API URL.',
         );
       }
 

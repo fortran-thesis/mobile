@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +25,10 @@ import 'package:moldify/core/features/user/services/user_services.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/repository/notification_repository.dart';
 import 'package:moldify/core/services/fcm_service.dart';
+import 'package:moldify/core/services/cache_sync_service.dart';
+import 'package:moldify/core/utils/notification_navigation.dart';
+import 'package:moldify/core/utils/route_observer.dart';
+import 'package:moldify/core/utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +41,9 @@ void main() async {
 
   // Initialise FCM (request permission, get token, register with backend)
   await FCMService.instance.initialise(sessionCookie: authProvider.cookie);
+
+  // Initialize cache sync service to listen for invalidation events
+  CacheSyncService.instance.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   final languageProvider = LanguageProvider(prefs);
@@ -67,23 +76,80 @@ class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _rootNavigatorKey =
       GlobalKey<NavigatorState>();
   late final AppAuthProvider _authProvider;
+  late final AppRouteObserver _routeObserver;
+  StreamSubscription<NotificationTapEvent>? _notificationTapSubscription;
   bool _wasAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
+    // Initialize route observer for back-navigation refresh support
+    _routeObserver = AppRouteObserver();
+
     // Listen to auth changes once and only redirect when session transitions
     // from authenticated -> unauthenticated.
     _authProvider = Provider.of<AppAuthProvider>(context, listen: false);
     _wasAuthenticated =
         _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
     _authProvider.addListener(_onAuthStateChanged);
+    _subscribeToNotificationTaps();
   }
 
   @override
   void dispose() {
+    _notificationTapSubscription?.cancel();
     _authProvider.removeListener(_onAuthStateChanged);
+    _routeObserver.dispose();
     super.dispose();
+  }
+
+  void _subscribeToNotificationTaps() {
+    _notificationTapSubscription = FCMService.instance.notificationTaps.listen(
+      _handleNotificationTap,
+    );
+
+    final pending = FCMService.instance.consumePendingNotificationTap();
+    if (pending != null) {
+      _handleNotificationTap(pending);
+    }
+  }
+
+  String? _resolveCurrentUserRole() {
+    final userState = context.read<UserBloc>().state;
+    if (userState is UserProfileLoaded) {
+      return userState.profile.role;
+    }
+    return null;
+  }
+
+  void _handleNotificationTap(NotificationTapEvent event) {
+    final hasSession =
+        _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
+    if (!hasSession) {
+      AppLogger.w('Skipping notification navigation: no active session');
+      return;
+    }
+
+    final target = resolveNotificationNavigationTarget(
+      referenceType: event.referenceType,
+      referenceId: event.referenceId,
+      userRole: _resolveCurrentUserRole(),
+    );
+
+    if (target == null) {
+      AppLogger.w(
+        'No navigation target for notification type=${event.referenceType} id=${event.referenceId}',
+      );
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final navigator = _rootNavigatorKey.currentState;
+      if (navigator == null) return;
+
+      navigator.pushNamed(target.routeName, arguments: target.arguments);
+    });
   }
 
   void _onAuthStateChanged() {
@@ -112,7 +178,20 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           title: 'Moldify',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(),
+          theme: ThemeData(
+            snackBarTheme: SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: MoldifyColors.primaryColor,
+              contentTextStyle: const TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                fontSize: 14,
+                color: MoldifyColors.backgroundColor,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
           locale: langProvider.effectiveLocale,
           localizationsDelegates: [
             AppLocalizations.delegate,
@@ -127,6 +206,7 @@ class _MyAppState extends State<MyApp> {
           initialRoute: RouteNames.splash,
           onGenerateRoute: AppRoutes.generateRoute,
           navigatorKey: _rootNavigatorKey,
+          navigatorObservers: [_routeObserver],
         );
       },
     );
@@ -210,8 +290,9 @@ class _MainPageState extends State<MainPage> {
           _handleNativeBack();
         },
         child: Scaffold(
+          backgroundColor: Colors.transparent,
           resizeToAvoidBottomInset: false,
-            extendBody: false,
+            extendBody: true,
           drawer: showNavChrome && selectedPosition == 0 ? const AppDrawer() : null,
           body: IndexedStack(
             index: selectedPosition,
@@ -275,40 +356,59 @@ class _MainPageState extends State<MainPage> {
   /// - Monitor icon that navigates to the MainMonitorScreen when tapped.
   /// The selected icon is highlighted based on the selectedPosition.
   Widget _buildBottomNavigationBar() {
+    final mediaQuery = MediaQuery.of(context);
+    final safeBottom = mediaQuery.viewPadding.bottom;
+    final screenWidth = mediaQuery.size.width;
+    final isNarrowPhone = mediaQuery.size.width < 360;
+    final iconSize = isNarrowPhone ? 18.0 : 21.0;
+    final tabHorizontalPadding = isNarrowPhone ? 10.0 : 16.0;
+    final baseFabGap = screenWidth * (isNarrowPhone ? 0.30 : 0.36);
+    final fabGap = baseFabGap.clamp(112.0, 170.0);
+    const navContentHeight = 56.0;
+
     return SizedBox(
-      height: 52.0,
+      height: navContentHeight + safeBottom,
       child: BottomAppBar(
         color: MoldifyColors.primaryColor,
         shape: const CircularNotchedRectangle(),
         notchMargin: 5.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.max,
-          children: _isExpert
-              ? [
-                  _tabItem(
-                    icon: FontAwesomeIcons.house,
-                    isSelected: selectedPosition == 0,
-                    onTap: () => setState(() => selectedPosition = 0),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: safeBottom),
+          child: SizedBox(
+            height: navContentHeight,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _tabItem(
+                      icon: FontAwesomeIcons.house,
+                      isSelected: selectedPosition == 0,
+                      onTap: () => setState(() => selectedPosition = 0),
+                      iconSize: iconSize,
+                      horizontalPadding: tabHorizontalPadding,
+                    ),
                   ),
-                  _tabItem(
-                    icon: FontAwesomeIcons.seedling,
-                    isSelected: selectedPosition == 1,
-                    onTap: () => setState(() => selectedPosition = 1),
+                ),
+                SizedBox(width: fabGap),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _tabItem(
+                      icon: FontAwesomeIcons.seedling,
+                      isSelected: selectedPosition == 1,
+                      onTap: () => setState(() => selectedPosition = 1),
+                      iconSize: iconSize,
+                      horizontalPadding: tabHorizontalPadding,
+                    ),
                   ),
-                ]
-              : [
-                  _tabItem(
-                    icon: FontAwesomeIcons.house,
-                    isSelected: selectedPosition == 0,
-                    onTap: () => setState(() => selectedPosition = 0),
-                  ),
-                  _tabItem(
-                    icon: FontAwesomeIcons.seedling,
-                    isSelected: selectedPosition == 1,
-                    onTap: () => setState(() => selectedPosition = 1),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -321,24 +421,28 @@ class _MainPageState extends State<MainPage> {
     required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
+    required double iconSize,
+    required double horizontalPadding,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.0),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
+      radius: 22,
+      splashColor: MoldifyColors.accentColor.withValues(alpha: 0.18),
+      highlightColor: MoldifyColors.accentColor.withValues(alpha: 0.10),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Center(
+            child: Icon(
               icon,
               color: isSelected
                   ? MoldifyColors.accentColor
                   : MoldifyColors.backgroundColor,
-              size: 20.0,
+              size: iconSize,
             ),
-          ],
+          ),
         ),
       ),
     );

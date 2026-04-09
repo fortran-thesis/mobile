@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -16,21 +17,42 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   );
 }
 
+/// Notification tap event data for deep linking
+class NotificationTapEvent {
+  final String referenceType;
+  final String referenceId;
+
+  NotificationTapEvent({
+    required this.referenceType,
+    required this.referenceId,
+  });
+}
+
 /// Singleton service that manages the full FCM lifecycle:
 ///   1. Request notification permission
 ///   2. Obtain the device FCM token
 ///   3. Register / refresh the token with the backend
 ///   4. Listen for token-refresh events
 ///   5. Surface foreground messages via a callback
+///   6. Emit notification tap events for deep linking
 class FCMService {
   FCMService._();
   static final FCMService instance = FCMService._();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final NotificationService _notificationService = NotificationService();
+  final _notificationTapController = StreamController<NotificationTapEvent>.broadcast();
+  NotificationTapEvent? _pendingTapEvent;
 
   String? _currentToken;
   String? get currentToken => _currentToken;
+  Stream<NotificationTapEvent> get notificationTaps => _notificationTapController.stream;
+
+  NotificationTapEvent? consumePendingNotificationTap() {
+    final pending = _pendingTapEvent;
+    _pendingTapEvent = null;
+    return pending;
+  }
 
   /// Initialise FCM — call once after [Firebase.initializeApp].
   ///
@@ -87,6 +109,7 @@ class FCMService {
         'Notification tap (background): ${message.data}',
         tag: 'FCM',
       );
+      _handleNotificationTap(message);
     });
 
     // Check if the app was opened from a terminated state via a notification
@@ -96,6 +119,7 @@ class FCMService {
         'App opened from terminated via notification: ${initialMessage.data}',
         tag: 'FCM',
       );
+      _handleNotificationTap(initialMessage);
     }
   }
 
@@ -138,6 +162,27 @@ class FCMService {
       AppLogger.d('FCM token deleted locally', tag: 'FCM');
     } catch (e) {
       AppLogger.e('Failed to delete FCM token', tag: 'FCM', error: e);
+    }
+  }
+
+  /// Handle notification tap by emitting an event for app-level routing.
+  void _handleNotificationTap(RemoteMessage message) {
+    final referenceType = message.data['reference_type'];
+    final referenceId = message.data['reference_id'];
+
+    if (referenceType != null && referenceId != null) {
+      final event = NotificationTapEvent(
+        referenceType: referenceType,
+        referenceId: referenceId,
+      );
+      if (!_notificationTapController.hasListener) {
+        _pendingTapEvent = event;
+      }
+      AppLogger.d(
+        'Emitting notification tap event: type=$referenceType, id=$referenceId',
+        tag: 'FCM',
+      );
+      _notificationTapController.add(event);
     }
   }
 }

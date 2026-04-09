@@ -5,8 +5,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/language_toggle.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../../core/constants/route_names.dart';
 import '../../core/utils/auth_navigation.dart';
@@ -45,56 +49,70 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showErrorSnackBar(String message) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
-          ),
-        ),
-        backgroundColor: MoldifyColors.MoldifyRed,
-      ),
-    );
+  String _normalizeLoginError(dynamic rawError) {
+    final message = rawError?.toString().trim().toLowerCase() ?? '';
+
+    if (message.isEmpty) {
+      return 'Invalid username or password.';
+    }
+
+    if (message.contains('invalid credential') ||
+        message.contains('invalid username') ||
+        message.contains('invalid password') ||
+        message.contains('unauthorized') ||
+        message.contains('incorrect') ||
+        message.contains('password too long')) {
+      return 'Invalid username or password.';
+    }
+
+    if (message.contains('network') ||
+        message.contains('socket') ||
+        message.contains('timeout') ||
+        message.contains('connection')) {
+      return 'Unable to connect. Please check your internet and try again.';
+    }
+
+    return 'Login failed. Please try again.';
+  }
+
+  void _showUnifiedLoginError(dynamic rawError) {
+    AppFeedback.showError(context, _normalizeLoginError(rawError));
   }
 
   Future<void> _handleUsernamePasswordSignIn() async {
     if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      _showErrorSnackBar('Please enter your username and password.');
+      AppFeedback.showError(context, 'Username and password are required.');
       return;
     }
 
-    setState(() => isLoading = true);
-    final result = await _loginBloc.loginWithUsernamePassword(
-      usernameController.text,
-      passwordController.text,
-    );
-    setState(() => isLoading = false);
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final result = await _loginBloc.loginWithUsernamePassword(
+        usernameController.text,
+        passwordController.text,
+      );
 
-    if (!result['success']) {
-      _showErrorSnackBar('Invalid username or password.');
-      return;
-    }
-
-    if (!result['success']) {
-      final error = result['error'];
-      if (error != null) {
-        _showErrorSnackBar(error);
+      if (!result['success']) {
+        _showUnifiedLoginError(result['error']);
+        return;
       }
-      return;
-    }
 
-    if (!mounted) return;
-    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-    if (result['sessionValue'] != null) {
-      await authProvider.saveCookie(result['sessionValue']);
+      if (!mounted) return;
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      if (result['sessionValue'] != null) {
+        await authProvider.saveCookie(result['sessionValue']);
+      }
+      if (!mounted) return;
+      AuthNavigation.resetToMainFromContext(context);
+    } catch (e) {
+      _showUnifiedLoginError(e);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
-    if (!mounted) return;
-    AuthNavigation.resetToMainFromContext(context);
   }
 
   // Wrapper function to handle button press and loading state
@@ -107,6 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isMycologist = widget.userRole?.toLowerCase() == 'mycologist';
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       body: Stack(
@@ -142,9 +162,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 height: 1,
                               ),
                               children: [
-                                const TextSpan(text: 'LOG IN\n'),
+                                TextSpan(text: '${l10n.logIn}\n'),
                                 TextSpan(
-                                  text: 'Please enter username and password.',
+                                  text: l10n.loginSubtitle,
                                   style: TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 14,
@@ -160,6 +180,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             softWrap: true,
                           ),
                         ),
+                      ),
+                    ),
+                    /// Language Toggle (Top Right of header)
+                    Positioned(
+                      top: 10,
+                      right: 15,
+                      child: LanguageToggle(
+                        color: MoldifyColors.backgroundColor,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -178,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 30.0),
                         child: AutoSizeText(
-                          'Username',
+                          l10n.username,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -193,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 3.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Username',
+                          hintText: l10n.enterUsername,
                           controller: usernameController,
                           showPassword: false,
                         ),
@@ -206,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': 'Forgot Username'},
+                            arguments: {'pageTitle': l10n.forgotUsername},
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -215,13 +244,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           highlightColor: MoldifyColors.primaryColor.withValues(
                             alpha: 0.2,
                           ),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               vertical: 4,
                               horizontal: 6,
                             ),
                             child: AutoSizeText(
-                              'Forgot Username?',
+                              l10n.forgotUsername,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 12,
@@ -237,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 20.0),
                         child: AutoSizeText(
-                          'Password',
+                          l10n.passwordLabel,
                           style: TextStyle(
                             fontSize: 16,
                             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -252,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 3.0),
                         child: BuildTextBox(
-                          hintText: 'Enter Password',
+                          hintText: l10n.enterPasswordHint,
                           controller: passwordController,
                           showPassword: true,
                         ),
@@ -265,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': 'Forgot Password'},
+                            arguments: {'pageTitle': l10n.forgotPassword},
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -274,13 +303,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           highlightColor: MoldifyColors.primaryColor.withValues(
                             alpha: 0.2,
                           ),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.symmetric(
                               vertical: 4,
                               horizontal: 6,
                             ),
                             child: AutoSizeText(
-                              'Forgot Password?',
+                              l10n.forgotPassword,
                               style: TextStyle(
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 12,
@@ -297,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 50.0, bottom: 3.0),
                         child: BuildButton(
-                          buttonText: 'Log In',
+                          buttonText: l10n.logIn,
                           onPressed: _onLoginPressed,
                           backgroundColor: MoldifyColors.primaryColor,
                           textColor: MoldifyColors.backgroundColor,
@@ -314,8 +343,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const AutoSizeText(
-                                'Don\'t have an account?',
+                              AutoSizeText(
+                                l10n.dontHaveAccount,
                                 style: TextStyle(
                                   fontFamily: 'Bricolage-Grotesque-Regular',
                                   fontSize: 14,
@@ -334,13 +363,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     .withValues(alpha: 0.2),
                                 highlightColor: MoldifyColors.accentColor
                                     .withValues(alpha: 0.2),
-                                child: const Padding(
+                                child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     vertical: 4,
                                     horizontal: 6,
                                   ),
                                   child: AutoSizeText(
-                                    'Sign Up',
+                                    l10n.signUpLink,
                                     style: TextStyle(
                                       fontFamily: 'Bricolage-Grotesque-Bold',
                                       fontSize: 14,
@@ -438,12 +467,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: MoldifyColors.MoldifyBlack,
                               ),
                               children: [
-                                const TextSpan(
-                                  text:
-                                      'By proceeding you acknowledge that you have read, understood and agree to our ',
+                                TextSpan(
+                                  text: l10n.loginTermsText,
                                 ),
                                 TextSpan(
-                                  text: 'Terms of Agreement',
+                                  text: l10n.termsOfAgreement,
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
@@ -458,7 +486,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const TextSpan(text: ' and '),
                                 TextSpan(
-                                  text: 'Privacy Policy',
+                                  text: l10n.privacyPolicy,
                                   style: const TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
@@ -487,15 +515,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           if (isLoading)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    MoldifyColors.backgroundColor,
-                  ),
-                ),
-              ),
+            const AppLoadingOverlay(
+              message: 'Logging you in...',
             ),
         ],
       ),

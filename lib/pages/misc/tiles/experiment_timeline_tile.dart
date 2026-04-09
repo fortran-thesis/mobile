@@ -40,6 +40,7 @@ import 'initial_observation_components/observation_preview_image.dart';
 /// [macroShape] — Observed colony/lesion shape (e.g. "Circular").
 /// [macroTexture] — Observed surface texture (e.g. "Powdery").
 /// [macroSymptoms] — Comma-separated symptoms (e.g. "Leaf spots, Wilting").
+/// [macroSigns] — Comma-separated signs (e.g. "White cottony growth").
 /// [macroCharacteristics] — Comma-separated characteristic traits.
 ///
 /// **Context-sensitive labels** (supplied by the parent tab):
@@ -83,8 +84,14 @@ class ExperimentTimelineTile extends StatelessWidget {
   /// Comma-separated symptoms.
   final String macroSymptoms;
 
+  /// Comma-separated signs.
+  final String macroSigns;
+
   /// Comma-separated characteristic traits.
   final String macroCharacteristics;
+
+  /// Optional culture timer/source identity assigned when log was recorded.
+  final String cultureName;
 
   // --- Context-sensitive chip labels (set by the parent tab) ---
 
@@ -128,7 +135,9 @@ class ExperimentTimelineTile extends StatelessWidget {
     required this.macroShape,
     required this.macroTexture,
     required this.macroSymptoms,
+    required this.macroSigns,
     required this.macroCharacteristics,
+    this.cultureName = '',
     // Labels
     required this.shapeLabel,
     required this.textureLabel,
@@ -242,12 +251,14 @@ class ExperimentTimelineTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasMicro = microscopicImagePath.trim().isNotEmpty;
     final hasMacro = macroscopicImagePath.trim().isNotEmpty;
+    final hasCulture = cultureName.trim().isNotEmpty;
     final hasMicroEvidence = hasMicro || microGenusName.trim().isNotEmpty;
     final hasMacroEvidence =
         hasMacro ||
         macroShape.trim().isNotEmpty ||
         macroTexture.trim().isNotEmpty ||
         macroSymptoms.trim().isNotEmpty ||
+        macroSigns.trim().isNotEmpty ||
         macroCharacteristics.trim().isNotEmpty;
 
     return TimelineTile(
@@ -265,213 +276,248 @@ class ExperimentTimelineTile extends StatelessWidget {
         color: MoldifyColors.primaryColor,
         thickness: 1,
       ),
-      endChild: Padding(
-        padding: const EdgeInsets.only(left: 12.0, bottom: 28.0, right: 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Date + overflow menu row ---
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  dateTime,
-                  style: const TextStyle(
-                    color: MoldifyColors.MoldifyGrey,
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 12,
-                  ),
-                ),
-                if (popupMenuItems != null &&
-                    popupMenuItems!.isNotEmpty &&
-                    onPopupMenuItemSelected != null)
-                  PopupMenu(
-                    popMenuColor: MoldifyColors.MoldifyGrey,
-                    popMenuIcon: popupMenuIcon,
-                    items: popupMenuItems!,
-                    icons: popupMenuIcons,
-                    onItemSelected: onPopupMenuItemSelected!,
-                  ),
-              ],
-            ),
-
-            // =================================================================
-            // MICROSCOPIC SECTION
-            //
-            // Shows the mold-scanner image with a glassmorphic genus-name
-            // overlay at the bottom — identical to InitialObservationTab.
-            // Tapping the image opens the full-screen viewer.
-            // =================================================================
-            if (hasMicroEvidence) ...[
-              _sectionHeader('Microscopic'),
-              GestureDetector(
-                onTap: hasMicro
-                    ? () => _showFullscreen(context, microscopicImagePath)
-                    : null,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: double.infinity,
-                  height: hasMicro ? 180 : 80,
-                  decoration: BoxDecoration(
-                    color: MoldifyColors.primaryColor.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
-                      width: 1.5,
+      endChild: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width - 60,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12.0, bottom: 28.0, right: 12.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Date + overflow menu row ---
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    dateTime,
+                    style: const TextStyle(
+                      color: MoldifyColors.MoldifyGrey,
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      fontSize: 12,
                     ),
                   ),
-                  child: hasMicro
-                      ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Microscopic image
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: ObservationPreviewImage(
-                                imagePath: microscopicImagePath,
+                  if (popupMenuItems != null &&
+                      popupMenuItems!.isNotEmpty &&
+                      onPopupMenuItemSelected != null)
+                    PopupMenu(
+                      popMenuColor: MoldifyColors.MoldifyGrey,
+                      popMenuIcon: popupMenuIcon,
+                      items: popupMenuItems!,
+                      icons: popupMenuIcons,
+                      onItemSelected: onPopupMenuItemSelected!,
+                    ),
+                ],
+              ),
+
+              if (hasCulture) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    ObservationDataTile(
+                      label: 'Assigned Culture',
+                      value: cultureName,
+                      icon: Icons.timer_outlined,
+                    ),
+                  ],
+                ),
+              ],
+
+              // =================================================================
+              // MICROSCOPIC SECTION
+              //
+              // Shows the mold-scanner image with a glassmorphic genus-name
+              // overlay at the bottom — identical to InitialObservationTab.
+              // Tapping the image opens the full-screen viewer.
+              // =================================================================
+              if (hasMicroEvidence) ...[
+                _sectionHeader('Microscopic'),
+                GestureDetector(
+                  onTap: hasMicro
+                      ? () => _showFullscreen(context, microscopicImagePath)
+                      : null,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: double.infinity,
+                    height: hasMicro ? 180 : 80,
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.primaryColor.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: MoldifyColors.primaryColor.withValues(
+                          alpha: 0.1,
+                        ),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: hasMicro
+                        ? Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // Microscopic image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: ObservationPreviewImage(
+                                  imagePath: microscopicImagePath,
+                                ),
                               ),
-                            ),
-                            // Glassmorphic genus-name label
-                            Positioned(
-                              bottom: 12,
-                              left: 12,
-                              right: 12,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 8,
-                                    sigmaY: 8,
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 7,
-                                      horizontal: 12,
+                              // Glassmorphic genus-name label
+                              Positioned(
+                                bottom: 12,
+                                left: 12,
+                                right: 12,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 8,
+                                      sigmaY: 8,
                                     ),
-                                    color: Colors.black.withValues(alpha: 0.5),
-                                    child: Text(
-                                      microGenusName.trim().isNotEmpty
-                                          ? microGenusName
-                                          : 'Identified: Pending Analysis',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontFamily:
-                                            'Bricolage-Grotesque-Regular',
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 7,
+                                        horizontal: 12,
+                                      ),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      child: Text(
+                                        microGenusName.trim().isNotEmpty
+                                            ? microGenusName
+                                            : 'Identified: Pending Analysis',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontFamily:
+                                              'Bricolage-Grotesque-Regular',
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
-                      : const ObservationEmptyStateCard(
-                          message: 'No microscopic image captured',
-                          height: 80,
-                        ),
-                ),
-              ),
-            ],
-
-            // =================================================================
-            // MACROSCOPIC SECTION
-            //
-            // Taupe card:
-            //   1. Full-bleed image header (tap to full-screen)
-            //   2. Two chips: shape | texture
-            //      (labels are context-driven by the parent tab)
-            //   3. Two ObservationDataTile widgets: symptoms | characteristics
-            // =================================================================
-            if (hasMacroEvidence) ...[
-              _sectionHeader('Macroscopic'),
-              Container(
-                decoration: BoxDecoration(
-                  color: MoldifyColors.taupe,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: MoldifyColors.primaryColor.withValues(alpha: 0.12),
+                            ],
+                          )
+                        : const ObservationEmptyStateCard(
+                            message: 'No microscopic image captured',
+                            height: 80,
+                          ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image header
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15),
-                      ),
-                      child: hasMacro
-                          ? GestureDetector(
-                              onTap: () => _showFullscreen(
-                                context,
-                                macroscopicImagePath,
+              ],
+
+              // =================================================================
+              // MACROSCOPIC SECTION
+              //
+              // Taupe card:
+              //   1. Full-bleed image header (tap to full-screen)
+              //   2. Two chips: shape | texture
+              //      (labels are context-driven by the parent tab)
+              //   3. Two ObservationDataTile widgets: symptoms | characteristics
+              // =================================================================
+              if (hasMacroEvidence) ...[
+                _sectionHeader('Macroscopic'),
+                Container(
+                  decoration: BoxDecoration(
+                    color: MoldifyColors.taupe,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: MoldifyColors.primaryColor.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image header
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(15),
+                        ),
+                        child: hasMacro
+                            ? GestureDetector(
+                                onTap: () => _showFullscreen(
+                                  context,
+                                  macroscopicImagePath,
+                                ),
+                                child: SizedBox(
+                                  height: 180,
+                                  width: double.infinity,
+                                  child: ObservationPreviewImage(
+                                    imagePath: macroscopicImagePath,
+                                  ),
+                                ),
+                              )
+                            : const ObservationEmptyStateCard(
+                                message: 'No macroscopic image captured',
                               ),
-                              child: SizedBox(
-                                height: 180,
-                                width: double.infinity,
-                                child: ObservationPreviewImage(
-                                  imagePath: macroscopicImagePath,
+                      ),
+
+                      // Metadata should still render when only field values are available.
+                      if (hasMacroEvidence)
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            children: [
+                              // Row 1: shape | texture chips
+                              Row(
+                                children: [
+                                  _chip(shapeLabel, macroShape),
+                                  const SizedBox(width: 6),
+                                  _chip(textureLabel, macroTexture),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // Row 2: symptoms | characteristics tiles
+                              IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ObservationDataTile(
+                                      label: 'Symptoms',
+                                      value: macroSymptoms,
+                                      icon: Icons.healing_outlined,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ObservationDataTile(
+                                      label: 'Characteristics',
+                                      value: macroCharacteristics,
+                                      icon: Icons.science_outlined,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            )
-                          : const ObservationEmptyStateCard(
-                              message: 'No macroscopic image captured',
-                            ),
-                    ),
-
-                    // Metadata (only shown when an image exists)
-                    if (hasMacro)
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          children: [
-                            // Row 1: shape | texture chips
-                            Row(
-                              children: [
-                                _chip(shapeLabel, macroShape),
-                                const SizedBox(width: 6),
-                                _chip(textureLabel, macroTexture),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            // Row 2: symptoms | characteristics tiles
-                            IntrinsicHeight(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                              const SizedBox(height: 8),
+                              Row(
                                 children: [
                                   ObservationDataTile(
-                                    label: 'Symptoms',
-                                    value: macroSymptoms,
-                                    icon: Icons.healing_outlined,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ObservationDataTile(
-                                    label: 'Characteristics',
-                                    value: macroCharacteristics,
-                                    icon: Icons.science_outlined,
+                                    label: 'Signs',
+                                    value: macroSigns,
+                                    icon: Icons.visibility_outlined,
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
 
-            if (!hasMicroEvidence && !hasMacroEvidence)
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: ObservationEmptyStateCard(
-                  message: 'No microscopic or macroscopic evidence in this log',
-                  height: 90,
+              if (!hasMicroEvidence && !hasMacroEvidence && !hasCulture)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: ObservationEmptyStateCard(
+                    message:
+                        'No microscopic or macroscopic evidence in this log',
+                    height: 90,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

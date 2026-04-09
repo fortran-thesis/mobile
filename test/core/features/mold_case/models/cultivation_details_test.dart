@@ -149,6 +149,52 @@ void main() {
         final details = CultivationDetails.fromJson(original);
         expect(details.specimenTypes, isNull);
       });
+
+      test('should preserve initial_signs array', () {
+        final original = {
+          'growth_medium': 'PDA',
+          'initial_signs': ['Sporulation', 'Discoloration'],
+        };
+
+        final details = CultivationDetails.fromJson(original);
+        expect(details.initialSigns, equals(['Sporulation', 'Discoloration']));
+
+        final json = details.toJson();
+        expect(json['initial_signs'], equals(['Sporulation', 'Discoloration']));
+      });
+
+      test('should handle empty initial_signs array', () {
+        final original = {
+          'growth_medium': 'PDA',
+          'initial_signs': <String>[],
+        };
+
+        final details = CultivationDetails.fromJson(original);
+        expect(details.initialSigns, equals([]));
+
+        final json = details.toJson();
+        expect(json['initial_signs'], equals([]));
+      });
+
+      test('should fallback to null for non-list initial_signs', () {
+        final original = {
+          'growth_medium': 'PDA',
+          'initial_signs': 'Sporulation',
+        };
+
+        final details = CultivationDetails.fromJson(original);
+        expect(details.initialSigns, isNull);
+      });
+
+      test('should omit initial_signs from toJson when null', () {
+        final original = {'growth_medium': 'PDA'};
+
+        final details = CultivationDetails.fromJson(original);
+        expect(details.initialSigns, isNull);
+
+        final json = details.toJson();
+        expect(json.containsKey('initial_signs'), isFalse);
+      });
     });
 
     group('CultivationDetails.empty()', () {

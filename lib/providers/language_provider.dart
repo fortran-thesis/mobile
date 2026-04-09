@@ -6,6 +6,7 @@ class LanguageProvider extends ChangeNotifier {
 
   Locale _selectedLocale;
   bool _isFarmer = false;
+  bool _roleSet = false; // Tracks whether user has logged in
 
   final SharedPreferences _prefs;
 
@@ -15,10 +16,18 @@ class LanguageProvider extends ChangeNotifier {
         );
 
   /// The locale that is actually applied to the app.
-  /// Returns the farmer's chosen locale only when the logged-in user is a
-  /// farmer; mycologists/experts always fall back to English regardless of any
-  /// stored preference.
-  Locale get effectiveLocale => _isFarmer ? _selectedLocale : const Locale('en');
+  /// Before login (_roleSet == false): returns the user's selected locale (farmers can pick Filipino early)
+  /// After login (_roleSet == true):
+  ///   - If farmer: returns the user's selected locale
+  ///   - If mycologist: always returns English regardless of preference
+  Locale get effectiveLocale {
+    if (!_roleSet) {
+      // Pre-auth: honor the selected locale (user can pick Filipino on welcome/intro screens)
+      return _selectedLocale;
+    }
+    // Post-auth: only farmers can use non-English locales
+    return _isFarmer ? _selectedLocale : const Locale('en');
+  }
 
   Locale get selectedLocale => _selectedLocale;
 
@@ -27,13 +36,20 @@ class LanguageProvider extends ChangeNotifier {
   /// Called after the user profile loads so that the provider knows whether
   /// the current session belongs to a farmer.
   void setRole({required bool isFarmer}) {
-    if (_isFarmer == isFarmer) return;
+    if (_roleSet && _isFarmer == isFarmer) return;
     _isFarmer = isFarmer;
+    _roleSet = true;
     notifyListeners();
   }
 
-  /// Persists and applies the new locale. Only meaningful when the user is a
-  /// farmer — experts see English regardless.
+  /// Called on logout to reset the provider state so locale switching works again pre-auth.
+  void resetRole() {
+    _isFarmer = false;
+    _roleSet = false;
+    notifyListeners();
+  }
+
+  /// Persists and applies the new locale.
   Future<void> setLocale(Locale locale) async {
     if (_selectedLocale == locale) return;
     _selectedLocale = locale;

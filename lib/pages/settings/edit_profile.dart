@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,7 +13,10 @@ import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/icon_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/images/profile_image.dart';
+import 'package:moldify/pages/misc/overlays/app_feedback.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
+import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
 import 'package:moldify/pages/misc/tiles/bottom_sheet.dart';
 import '../../core/features/user/logic/user_bloc.dart';
 import '../../core/features/user/models/user_profile.dart';
@@ -22,6 +26,37 @@ import '../misc/buttons/primary_button.dart';
 import '../misc/textboxes/textboxes.dart';
 import '../misc/tiles/bottom_sheet_contents/photo_options_content.dart';
 import 'package:moldify/core/utils/logger.dart';
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll('-', '');
+
+    if (text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    if (text.length <= 3) {
+      return newValue.copyWith(text: text);
+    } else if (text.length <= 6) {
+      final formatted = '${text.substring(0, 3)}-${text.substring(3)}';
+      return newValue.copyWith(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    } else {
+      final formatted =
+          '${text.substring(0, 3)}-${text.substring(3, 6)}-${text.substring(6, 10)}';
+      return newValue.copyWith(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
+  }
+}
 
 /// This screen allows users to edit their profile information such as username and email.
 /// It includes a profile image section where users can upload or remove their profile photo.
@@ -40,6 +75,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController phoneNumController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController occupationController = TextEditingController();
 
   // late UserBloc _userBloc;
   // StreamSubscription? _userSub;
@@ -50,6 +86,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Image? _selectedPhotoWidget;
   bool _isSaving = false;
   UserProfile? _initialProfile;
+  final List<String> _occupationOptions = [
+    'Farmer',
+    'Horticulturist',
+    'Student',
+    'Agricultural Worker',
+    'Business Owner',
+  ];
 
   @override
   void initState() {
@@ -87,12 +130,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       emailController.text = profile.email;
 
       if (!isExpert) {
-        phoneNumController.text = profile.phoneNumber;
+        phoneNumController.text = _formatPhoneNumberForDisplay(profile.phoneNumber);
         addressController.text = profile.address;
+        occupationController.text = profile.occupation ?? '';
       }
 
       _isLoading = false;
     });
+  }
+
+  String _normalizePhoneNumber(String phoneNumber) {
+    var digits = phoneNumber.replaceAll('-', '').trim();
+
+    if (digits.startsWith('+63')) {
+      digits = digits.substring(3);
+    }
+
+    if (digits.startsWith('0') && digits.length == 11) {
+      digits = digits.substring(1);
+    }
+
+    return digits;
+  }
+
+  String _formatPhoneNumberForDisplay(String phoneNumber) {
+    final digits = _normalizePhoneNumber(phoneNumber);
+    if (digits.isEmpty) {
+      return '';
+    }
+
+    if (digits.length <= 3) {
+      return digits;
+    }
+
+    if (digits.length <= 6) {
+      return '${digits.substring(0, 3)}-${digits.substring(3)}';
+    }
+
+    final endIndex = digits.length > 10 ? 10 : digits.length;
+    return '${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6, endIndex)}';
+  }
+
+  Future<void> _selectOccupation() async {
+    final l10n = AppLocalizations.of(context)!;
+    final selectedOccupation = await showChipSelectionModal(
+      context: context,
+      title: l10n.occupation,
+      options: _occupationOptions,
+      currentSelection: occupationController.text,
+      customInputHint: l10n.enterOccupation,
+      othersLabel: l10n.othersLabel,
+      isMultiLine: false,
+    );
+
+    if (selectedOccupation != null && selectedOccupation.isNotEmpty) {
+      setState(() {
+        occupationController.text = selectedOccupation;
+      });
+    }
   }
 
 
@@ -143,7 +238,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final firstName = fnameController.text.trim();
       final lastName = lnameController.text.trim();
       final address = addressController.text.trim();
-      final phoneNumber = phoneNumController.text.trim();
+        final phoneNumber = phoneNumController.text.trim();
+      final occupation = occupationController.text.trim();
+          final normalizedPhoneNumber = _normalizePhoneNumber(phoneNumber);
+
+      if (username.isEmpty) {
+        _showSnackBar('Username is required.');
+        return;
+      }
+
+      if (firstName.isEmpty) {
+        _showSnackBar('First name is required.');
+        return;
+      }
+
+      if (lastName.isEmpty) {
+        _showSnackBar('Last name is required.');
+        return;
+      }
+
+      if (!_isExpert) {
+        if (phoneNumber.isEmpty) {
+          _showSnackBar('Phone number is required.');
+          return;
+        }
+
+        if (address.isEmpty) {
+          _showSnackBar('Location is required.');
+          return;
+        }
+
+        if (occupation.isEmpty) {
+          _showSnackBar('Occupation is required.');
+          return;
+        }
+      }
 
       // Auto-generate displayName from firstName + lastName
       final displayName = '$firstName $lastName'.trim();
@@ -164,8 +293,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ? null
                 : displayName,
         address: _isExpert ? null : (address == _initialProfile?.address ? null : address),
-        phoneNumber:
-            _isExpert ? null : (phoneNumber == _initialProfile?.phoneNumber ? null : phoneNumber),
+        phoneNumber: _isExpert
+          ? null
+          : (_normalizePhoneNumber(phoneNumber) == _normalizePhoneNumber(_initialProfile?.phoneNumber ?? '')
+            ? null
+                : normalizedPhoneNumber),
+        occupation: _isExpert ? null : (occupation == _initialProfile?.occupation ? null : occupation),
         photoFile: _selectedPhoto,
       );
 
@@ -179,12 +312,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         await Future.delayed(const Duration(milliseconds: 500));
         // Refresh profile
         if (!mounted) return;
-        context.read<UserBloc>().add(
-          FetchUserProfile(sessionCookie: sessionCookie),
-        );
+        if (mounted) {
+          context.read<UserBloc>().add(
+            FetchUserProfile(sessionCookie: sessionCookie),
+          );
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) Navigator.pop(context, true);
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) Navigator.pop(context, true);
+        }
       } else {
         AppLogger.e('❌ Failed: ${result['error']}');
         _showSnackBar(result['error'] != null ? l10n.failedToUpdateProfile(result['error']) : l10n.somethingWentWrong);
@@ -199,10 +334,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    AppFeedback.showInfo(context, message);
   }
   @override
   void dispose() {
@@ -215,6 +347,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     phoneNumController.dispose();
     addressController.dispose();
     emailController.dispose();
+    occupationController.dispose();
     super.dispose();
   }
   List<String> _getChangedFields() {
@@ -227,8 +360,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (lnameController.text.trim() != _initialProfile!.lastName) changes.add(l10n.lastName);
 
     if (!_isExpert) {
-      if (phoneNumController.text.trim() != _initialProfile!.phoneNumber) changes.add(l10n.phoneNumber);
+      if (_normalizePhoneNumber(phoneNumController.text) != _normalizePhoneNumber(_initialProfile!.phoneNumber)) changes.add(l10n.phoneNumber);
       if (addressController.text.trim() != _initialProfile!.address) changes.add(l10n.locationLabel);
+      if (occupationController.text.trim() != (_initialProfile!.occupation ?? '')) changes.add('Occupation');
     }
 
     if (_selectedPhoto != null) changes.add(l10n.uploadPhoto);
@@ -251,11 +385,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       body: Stack(
         children: [ _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: MoldifyColors.primaryColor,
-                )
-              )
+            ? const Center(child: AppLoadingSpinner())
             : SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.only(left: 15.0, right: 15.0, top: 20.0, bottom: 30.0),
@@ -457,11 +587,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: BuildTextBox(
-                        hintText: AppLocalizations.of(context)!.enterPhoneNumber,
+                        hintText: '9__-___-____',
                         controller: phoneNumController,
                         showPassword: false,
                         keyboardType: TextInputType.phone,
                         showPhoneNumberPrefix: true,
+                        maxLength: 12,
+                        customInputFormatters: [PhoneNumberFormatter()],
                       ),
                     ),
 
@@ -487,6 +619,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         hintText: AppLocalizations.of(context)!.enterLocation,
                         controller: addressController,
                         showPassword: false,
+                      ),
+                    ),
+
+                    /// Occupation Label
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: AutoSizeText(
+                        AppLocalizations.of(context)!.occupation,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Bricolage-Grotesque-SemiBold',
+                          color: MoldifyColors.primaryColor,
+                        ),
+                        maxLines: 1,
+                        minFontSize: 12,
+                      ),
+                    ),
+
+                    /// Occupation TextBox (for farmers only)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: BuildTextBox(
+                        hintText: AppLocalizations.of(context)!.enterOccupation,
+                        controller: occupationController,
+                        showPassword: false,
+                        rightIcon: FontAwesomeIcons.angleRight,
+                        rightIconColor: MoldifyColors.accentColor,
+                        readOnly: true,
+                        onTap: _selectOccupation,
                       ),
                     ),
                   ],
@@ -534,14 +695,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
           if (_isSaving)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(MoldifyColors.backgroundColor),
-                ),
-              ),
-            ),
+            const AppLoadingOverlay(),
         ],
       ),
     )

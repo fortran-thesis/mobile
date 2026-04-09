@@ -8,6 +8,8 @@ import '../../core/features/authentication/services/auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/email_recover_account.dart';
 import '../misc/buttons/primary_button.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/textboxes/textboxes.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -93,23 +95,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
-        _showSnackBar(result['data'] ?? l10n.passwordChangedSuccessfully);
+        _showSuccessSnackBar(result['data'] ?? l10n.passwordChangedSuccessfully);
         Navigator.pop(context);
       } else {
-        _showSnackBar(result['error'] != null ? l10n.failedToChangePassword(result['error']) : l10n.somethingWentWrong);
+        _showErrorSnackBar(result['error'] != null ? l10n.failedToChangePassword(result['error']) : l10n.somethingWentWrong);
       }
     } catch (e) {
-      _showSnackBar(l10n.somethingWentWrong);
+      _showErrorSnackBar(l10n.somethingWentWrong);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    AppFeedback.showInfo(context, message);
+  }
+
+  void _showErrorSnackBar(String message) {
+    AppFeedback.showError(context, message);
+  }
+
+  void _showSuccessSnackBar(String message) {
+    AppFeedback.showSuccess(context, message);
   }
 
   @override
@@ -270,14 +277,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 )
             ),
             if (_isLoading)
-              Container(
-                color: Colors.black.withValues(alpha: 0.5),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(MoldifyColors.backgroundColor),
-                  ),
-                ),
-              ),
+              const AppLoadingOverlay(),
           ],
         )
     );

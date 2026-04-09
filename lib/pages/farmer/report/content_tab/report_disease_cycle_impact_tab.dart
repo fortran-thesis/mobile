@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../../../misc/colors.dart';
 
 class ReportDiseaseCycleImpactTab extends StatelessWidget {
@@ -7,12 +8,15 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
 
   /// Section aliases that this tab displays
   static final Map<String, List<String>> _sectionAliases = {
-    'Disease Cycle / Spread': ['disease cycle', 'cycle', 'spread', 'transmission'],
-    'Infection Mechanism': ['infection mechanism', 'mechanism', 'infection'],
-    'Soil Inoculum Details': ['soil inoculum', 'inoculum', 'soil'],
-    'Peanut-Specific Impact': ['on peanuts specifically', 'peanuts', 'peanut'],
-    'Mycotoxin Risk Assessment': ['mycotoxin risk', 'mycotoxin', 'toxin'],
-    'Overall Impact': ['impact', 'consequence', 'implications'],
+    'Disease Cycle / Spread / Impact': [
+      'disease cycle spread impact',
+      'disease cycle / spread / impact',
+      'disease cycle spread',
+      'disease cycle',
+      'spread',
+      'impact',
+      'transmission',
+    ],
   };
 
   const ReportDiseaseCycleImpactTab({
@@ -41,6 +45,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
   Widget _buildSection({
     required String title,
     required String content,
+    required AppLocalizations l10n,
     bool isLast = false,
   }) {
     final bool hasData = content.isNotEmpty;
@@ -76,13 +81,13 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
 
           // 2. High-Readability Justified Content
           Text(
-            hasData ? content : 'Scientific data pending review...',
+            hasData ? content : l10n.scientificDataPending,
             textAlign: TextAlign.justify,
             style: TextStyle(
               fontSize: 18,
               fontFamily: 'Bricolage-Grotesque-Regular',
-              color: hasData 
-                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85) 
+              color: hasData
+                  ? MoldifyColors.MoldifyBlack.withValues(alpha: 0.85)
                   : MoldifyColors.MoldifyGrey,
               height: 1.6,
             ),
@@ -102,6 +107,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final sectionTitles = _sectionAliases.keys.toList();
     final displayedSections = <Widget>[];
 
@@ -114,6 +120,7 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
         _buildSection(
           title: displayTitle,
           content: content,
+          l10n: l10n,
           isLast: i == sectionTitles.length - 1,
         ),
       );

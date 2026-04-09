@@ -1,3 +1,5 @@
+import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
@@ -17,6 +19,8 @@ class ImagePreviewScreen extends StatefulWidget {
   final String? source;
   final String? sourceTab;
   final String? caseId;
+  final String? selectedCultureId;
+  final String? selectedCultureName;
   final String? sourceFlow;
   final String? scanModality;
   final bool includeSize;
@@ -28,6 +32,8 @@ class ImagePreviewScreen extends StatefulWidget {
     this.source,
     this.sourceTab,
     this.caseId,
+    this.selectedCultureId,
+    this.selectedCultureName,
     this.sourceFlow,
     this.scanModality,
     this.includeSize = true,
@@ -170,8 +176,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         _isProcessing = false;
       });
       
-      // Check the source to determine next action
-      if (widget.source == 'add_log') {
+      // Check the source to determine next action.
+      // Reused monitoring flows can pass source=add_log for both modalities;
+      // microscopic must still go through identification, not Add Log form.
+      final isMicroscopicFlow =
+          (widget.scanModality ?? '').toLowerCase() == 'microscopic';
+      if (widget.source == 'add_log' && !isMicroscopicFlow) {
         // For add_log source, navigate directly without API call
         final result = await Navigator.pushNamed(
           context,
@@ -180,6 +190,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             'imagePath': file.path,
             'sourceTab': widget.sourceTab,
             'caseId': widget.caseId,
+            'selectedCultureId': widget.selectedCultureId,
+            'selectedCultureName': widget.selectedCultureName,
             'includeSize': widget.includeSize,
             'sourceFlow': widget.sourceFlow,
             'scanModality': widget.scanModality,
@@ -224,9 +236,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                     },
                   ).then((result) {
                     if (!mounted) return;
-                    if (result != null) {
-                      Navigator.of(context).pop(result);
-                    }
+                    // Always pop regardless of result so image_preview is never
+                    // left stranded on the stack when the user backs out of the
+                    // result screen without saving.
+                    Navigator.of(context).pop(result);
                   });
                 },
                 onCancel: () {
@@ -429,10 +442,37 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       
       if (!context.mounted) return;
       
-      AppLogger.d('🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails');
-      final result = await Navigator.of(context).pushNamed(
-        '/mold_result',
-        arguments: {
+      // Route to low-confidence correction screen when AI confidence is too low
+      final prob = (modelResult['probability'] as num?)?.toDouble() ?? 0.0;
+      final confidencePct = prob * 100;
+      final bool isLowConfidence =
+          confidencePct < ScanConstants.lowConfidenceThreshold;
+
+      AppLogger.d(
+        '🚀 ImagePreview: confidence=$confidencePct% threshold=${ScanConstants.lowConfidenceThreshold}% lowConfidence=$isLowConfidence',
+      );
+
+      final Object routeArgs;
+      final String routeName;
+      if (isLowConfidence) {
+        AppLogger.d(
+          '🚀 ImagePreview: Navigating to low_confidence_correction (confidence too low)',
+        );
+        routeName = RouteNames.lowConfidenceCorrection;
+        routeArgs = {
+          'croppedImagePath': imagePath,
+          'modelResult': modelResult,
+          'sourceFlow': widget.sourceFlow,
+          'scanModality': widget.scanModality,
+          'sourceTab': widget.sourceTab,
+          'caseId': widget.caseId,
+        };
+      } else {
+        AppLogger.d(
+          '🚀 ImagePreview: Navigating to /mold_result with both modelResult and moldDetails',
+        );
+        routeName = RouteNames.moldResult;
+        routeArgs = {
           'croppedImagePath': imagePath,
           'modelResult': modelResult,
           'moldDetails': moldDetails,
@@ -440,42 +480,44 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           'scanModality': widget.scanModality,
           'sourceTab': widget.sourceTab,
           'caseId': widget.caseId,
-        },
+        };
+      }
+
+      final result = await Navigator.of(context).pushNamed(
+        routeName,
+        arguments: routeArgs,
       );
 
       if (!context.mounted) return;
-      if (result != null) {
-        Navigator.of(context).pop(result);
-        return;
-      }
+      // Always pop so image_preview is never left stranded when the user backs
+      // out of the result screen without saving (null result from back-press).
+      Navigator.of(context).pop(result);
     } catch (e, stackTrace) {
       AppLogger.e('❌ ImagePreview: EXCEPTION in _handleNoSeeResult', error: e, stackTrace: stackTrace);
 
       if (!context.mounted) return;
       
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to process image: $e')),
-      );
-      
-      // Navigate anyway with error data
-      final result = await Navigator.of(context).pushNamed(
-        '/mold_result',
-        arguments: {
-          'croppedImagePath': imagePath,
-          'modelResult': {'error': e.toString()},
-          'moldDetails': {'error': e.toString()},
-          'sourceFlow': widget.sourceFlow,
-          'scanModality': widget.scanModality,
-          'sourceTab': widget.sourceTab,
-          'caseId': widget.caseId,
-        },
-      );
+      if (mounted) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to process image: $e')),
+        );
+        
+        // Navigate anyway with error data
+        final result = await Navigator.of(context).pushNamed(
+          '/mold_result',
+          arguments: {
+            'croppedImagePath': imagePath,
+            'modelResult': {'error': e.toString()},
+            'moldDetails': {'error': e.toString()},
+            'sourceFlow': widget.sourceFlow,
+            'scanModality': widget.scanModality,
+            'sourceTab': widget.sourceTab,
+            'caseId': widget.caseId,
+          },
+        );
 
-      if (!context.mounted) return;
-      if (result != null) {
-        Navigator.of(context).pop(result);
-        return;
+        if (context.mounted) Navigator.of(context).pop(result);
       }
     } finally {
       if (mounted) {

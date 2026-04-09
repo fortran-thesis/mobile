@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../../misc/colors.dart';
@@ -11,11 +12,13 @@ import '../../misc/colors.dart';
 /// - [typeController]: Selected specimen type controller.
 /// - [qtyController]: Numeric quantity controller.
 /// - [symptomsController]: Read-only display of selected initial symptoms.
+/// - [signsController]: Read-only display of selected initial signs.
 /// - [charController]: Read-only display of selected initial characteristics.
 /// - [specimenEntries]: Current added specimen+quantity pairs.
 /// - [onAddSpecimen]: Adds a new specimen pair.
 /// - [onPickType]: Opens specimen type selector.
 /// - [onPickSymptoms]: Opens multi-select symptoms selector.
+/// - [onPickSigns]: Opens multi-select signs selector.
 /// - [onPickCharacteristics]: Opens multi-select characteristics selector.
 /// - [onRemoveSpecimen]: Removes a specimen pair by index.
 /// - [onNext]: Moves to next step.
@@ -25,11 +28,13 @@ class SpecimenTab extends StatelessWidget {
   final TextEditingController typeController;
   final TextEditingController qtyController;
   final TextEditingController symptomsController;
+  final TextEditingController signsController;
   final TextEditingController charController;
   final List<Map<String, String>> specimenEntries;
   final VoidCallback onAddSpecimen;
   final VoidCallback onPickType;
   final VoidCallback onPickSymptoms;
+  final VoidCallback onPickSigns;
   final VoidCallback onPickCharacteristics;
   final Function(int) onRemoveSpecimen;
   final VoidCallback onNext;
@@ -41,11 +46,13 @@ class SpecimenTab extends StatelessWidget {
     required this.typeController,
     required this.qtyController,
     required this.symptomsController,
+    required this.signsController,
     required this.charController,
     required this.specimenEntries,
     required this.onAddSpecimen,
     required this.onPickType,
     required this.onPickSymptoms,
+    required this.onPickSigns,
     required this.onPickCharacteristics,
     required this.onRemoveSpecimen,
     required this.onNext,
@@ -58,7 +65,7 @@ class SpecimenTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Crop Name',
+          'Host Plant Affected',
           style: TextStyle(
             fontSize: 16,
             fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -67,7 +74,7 @@ class SpecimenTab extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         BuildTextBox(
-          hintText: 'Enter crop name',
+          hintText: 'Enter host plant affected (e.g. tomato, mango)',
           controller: cropNameController,
           showPassword: false,
         ),
@@ -90,6 +97,8 @@ class SpecimenTab extends StatelessWidget {
                 hintText: 'Select type(s) of specimen',
                 controller: typeController,
                 showPassword: false,
+                rightIcon: FontAwesomeIcons.angleRight,
+                rightIconColor: MoldifyColors.accentColor,
                 readOnly: true,
                 onTap: onPickType,
               ),
@@ -124,6 +133,25 @@ class SpecimenTab extends StatelessWidget {
           showPassword: false,
           readOnly: true,
           onTap: onPickSymptoms,
+          isMultiline: true,
+        ),
+        const SizedBox(height: 16),
+
+        const Text(
+          'Initial Signs',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Bricolage-Grotesque-SemiBold',
+            color: MoldifyColors.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        BuildTextBox(
+          hintText: 'Select initial sign(s)',
+          controller: signsController,
+          showPassword: false,
+          readOnly: true,
+          onTap: onPickSigns,
           isMultiline: true,
         ),
         const SizedBox(height: 16),

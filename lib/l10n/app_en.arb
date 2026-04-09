@@ -195,5 +195,75 @@
         "type": "String"
       }
     }
-  }
+  },
+  "retry": "Retry",
+  "articleDataUnavailable": "Article data is unavailable.",
+  "viewWikiMold": "View WikiMold",
+  "unknownDate": "Unknown date",
+  "errorLoadingArticles": "Error loading articles: {error}",
+  "@errorLoadingArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingMoreArticles": "Error loading more articles: {error}",
+  "@errorLoadingMoreArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "articleNotAvailableYet": "This article is not available yet.",
+  "controlTreatmentsLabel": "5 CONTROL TREATMENTS",
+  "preventionTacticsTitle": "Prevention Tactics",
+  "preventionTacticsSubtitle": "Comprehensive mold control management strategies.",
+  "noPreventionTacticsAvailable": "No prevention tactics available",
+  "treatmentRecommendations": "Treatment Recommendations",
+  "informationUnavailable": "Information currently unavailable.",
+  "observationDataPending": "Observation data pending...",
+  "scientificDataPending": "Scientific data pending review...",
+  "errorReportIdNotFound": "Error: Report ID not found",
+  "photoUploadLimit": "You can only upload up to 5 photos.",
+
+  "welcomeTo": "Welcome To",
+  "welcomeAppSubtitle": "A Mold Investigation System for Agriculture",
+  "onboarding1Title": "Submit Mold Cases with ",
+  "onboarding1Highlight": "Ease",
+  "onboarding1Subtitle": "Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.",
+  "onboarding2Title": "Expert Review by ",
+  "onboarding2Highlight": "Mycologists",
+  "onboarding2Subtitle": "Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.",
+  "skip": "Skip",
+  "next": "Next",
+  "continueToApp": "Continue To App",
+
+  "chooseRole": "CHOOSE ROLE",
+  "chooseRoleSubtitle": "Please select your role to proceed to login",
+  "farmer": "Farmer",
+  "mycologist": "Mycologist",
+
+  "logIn": "LOG IN",
+  "loginSubtitle": "Please enter username and password.",
+  "passwordLabel": "Password",
+  "enterPasswordHint": "Enter Password",
+  "forgotUsername": "Forgot Username?",
+  "dontHaveAccount": "Don't have an account?",
+  "signUpLink": "Sign Up",
+  "loginTermsText": "By proceeding you acknowledge that you have read, understood and agree to our ",
+
+  "signUp": "SIGN UP",
+  "signUpSubtitle": "Please enter details to create an account.",
+  "email": "Email",
+  "enterEmail": "Enter Email",
+  "occupation": "Occupation",
+  "enterOccupation": "Enter occupation",
+  "confirmPassword": "Confirm Password",
+  "enterConfirmPassword": "Enter Confirm Password",
+  "signUpButton": "Sign Up",
+  "alreadyHaveAccount": "Already have an account? ",
+  "logInLink": "Log In",
+  "signUpTermsText": "I acknowledged that I have read, understood and agree to our "
 }

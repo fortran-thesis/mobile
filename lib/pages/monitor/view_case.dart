@@ -15,13 +15,17 @@ import 'package:provider/provider.dart';
 
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/images/cover_image.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/tiles/status_tile.dart';
 import '../../../core/features/mold_case/models/mold_case.dart';
 import '../../../core/features/mold_case/repository/mold_case_repository.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../core/features/lookup/service/lookup_service.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../services/api_service.dart';
+import '../../../core/constants/api_url.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 
@@ -46,6 +50,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String? _reportId; // Store the report ID for status updates
   bool _mutationOccurred = false; // Signal list refresh to caller on pop
   bool _hasGivenRecommendation = false;
+  String?
+  _linkedMoldipediaId; // Set when the final verdict links to a WikiMold article.
   bool _isRunningLookup = false;
   String _lookupTopMoldId = '';
   String _lookupTopMoldName = '';
@@ -53,9 +59,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _lookupTopConfidenceDisplay = '';
   Map<String, dynamic>? _latestMicroscopicSnapshot;
   List<Map<String, dynamic>> _latestReportLookupResults = [];
+  String? _mycologistOccupation;
 
   // Farmer details from mold report
   String farmerName = 'Juan Dela Cruz';
+  String? farmerOccupation;
   String dateFirstObserved = 'October 30, 2025';
   String emailAddress = 'juan.delacruz@example.com';
   String contactNumber = '+63 917 123 4567';
@@ -74,6 +82,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   String _initMacroColor = '';
   String _initMacroTexture = '';
   String _initMacroSymptoms = '';
+  String _initMacroSigns = '';
   String _initMacroCharacteristics = '';
 
   // Data for In-Vitro Tab
@@ -135,7 +144,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       characteristics['lesion_texture'],
       characteristics['colony_texture'],
       characteristics['symptoms'],
+      characteristics['symptomsDisplay'],
+      characteristics['signs'],
+      characteristics['signsDisplay'],
       characteristics['characteristics'],
+      characteristics['characteristicsDisplay'],
     ]).isNotEmpty;
   }
 
@@ -163,10 +176,26 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final symptoms = _firstNonEmpty([
       characteristics['symptoms'],
       characteristics['symptomsDisplay'],
+      characteristics['symptoms_csv'],
+    ]);
+    final signs = _firstNonEmpty([
+      characteristics['signs'],
+      characteristics['signsDisplay'],
+      characteristics['signs_csv'],
+      characteristics['initial_signs'],
+      characteristics['initial_signs_csv'],
+      characteristics['symptoms_signs'],
+      characteristics['symptomsSigns'],
     ]);
     final trait = _firstNonEmpty([
       characteristics['characteristics'],
       characteristics['characteristicsDisplay'],
+      characteristics['characteristics_csv'],
+    ]);
+    final cultureName = _firstNonEmpty([
+      characteristics['culture_name'],
+      characteristics['cultureName'],
+      characteristics['assigned_culture_name'],
     ]);
 
     final microscopicImage = _firstNonEmpty([
@@ -192,7 +221,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       'macroTexture': texture,
       'macroShape': color,
       'macroSymptoms': symptoms,
+      'macroSigns': signs,
       'macroCharacteristics': trait,
+      'cultureName': cultureName,
       'notes': log.additionalInfo,
     };
   }
@@ -242,30 +273,32 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     setState(() => _mutationOccurred = true);
 
-    if (macro?['scanSaveError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Log saved but scan evidence failed: ${macro!['scanSaveError']}',
+    if (mounted) {
+      if (macro?['scanSaveError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Log saved but scan evidence failed: ${macro!['scanSaveError']}',
+            ),
           ),
-        ),
-      );
-    } else if (macro?['scanAssociationError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Log saved, but failed to associate scan to case: ${macro!['scanAssociationError']}',
+        );
+      } else if (macro?['scanAssociationError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Log saved, but failed to associate scan to case: ${macro!['scanAssociationError']}',
+            ),
           ),
-        ),
-      );
-    } else if (payload['microLogSaveError'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Microscopic log save failed: ${payload['microLogSaveError']}',
+        );
+      } else if (payload['microLogSaveError'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Microscopic log save failed: ${payload['microLogSaveError']}',
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -284,9 +317,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   /// Handles the temporary local "Give Recommendation" flow.
   ///
   /// Navigates to the dedicated recommendation page and only flips local state
-  /// when that page returns a successful submission (`true`).
+  /// when that page returns a successful mutation result.
   Future<void> _handleGiveRecommendation() async {
-    final result = await Navigator.pushNamed(
+    final result = await pushNamedForMutationResult(
       context,
       RouteNames.giveRecommendation,
       arguments: {
@@ -298,7 +331,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       },
     );
 
-    if (!mounted || result != true) return;
+    if (!mounted || !result.changed) return;
 
     await _refreshCaseAndPendingAnalysis(showLoader: false);
     if (!mounted) return;
@@ -315,6 +348,18 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     );
   }
 
+  Future<void> _openAddInitialObservations() async {
+    final result = await pushNamedForMutationResult(
+      context,
+      '/set-monitoring-details',
+      arguments: {'moldCase': _case},
+    );
+    if (!mounted || !result.changed) return;
+
+    setState(() => _mutationOccurred = true);
+    _refreshCaseAndPendingAnalysis(showLoader: false);
+  }
+
   String _extractLookupMoldId(Map<String, dynamic> result) {
     final direct = result['moldId']?.toString().trim();
     if (direct != null && direct.isNotEmpty) return direct;
@@ -326,7 +371,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   }
 
   double? _extractLookupConfidenceValue(Map<String, dynamic> result) {
-    final confidenceRaw = result['confidence'];
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    var confidenceRaw = result['confidence'];
+    confidenceRaw ??= result['confidence_score'];
     if (confidenceRaw is num) return confidenceRaw.toDouble();
     return double.tryParse(confidenceRaw?.toString() ?? '');
   }
@@ -416,7 +463,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   }
 
   String _formatLookupConfidence(Map<String, dynamic> result) {
-    final confidenceRaw = result['confidence'];
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    var confidenceRaw = result['confidence'];
+    confidenceRaw ??= result['confidence_score'];
     final confidence = confidenceRaw is num
         ? confidenceRaw.toDouble()
         : double.tryParse(confidenceRaw?.toString() ?? '');
@@ -691,6 +740,26 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         if (moldCases.isNotEmpty) {
           moldCase = moldCases.first;
 
+          // Extract moldipedia_id from final_verdict (not stored on MoldCase model).
+          try {
+            final rawCase = await MoldCaseService().getMoldCaseById(
+              moldCase.id,
+              sessionCookie: sessionCookie,
+            );
+            final rawData = rawCase['data'] is Map
+                ? rawCase['data'] as Map
+                : rawCase;
+            final verdict = rawData['final_verdict'];
+            if (verdict is Map) {
+              final mid = verdict['moldipedia_id']?.toString().trim();
+              if (mid != null && mid.isNotEmpty) {
+                setState(() => _linkedMoldipediaId = mid);
+              }
+            }
+          } catch (_) {
+            // Non-critical: silently skip if raw case fetch fails.
+          }
+
           try {
             final moldCaseService = MoldCaseService();
             final logsResponse = await moldCaseService.getCultivationLogs(
@@ -728,6 +797,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       // Fetch farmer details from the mold report
       String localFarmerName = 'Juan Dela Cruz';
+      String localFarmerOccupation = '';
       String localDateFirstObserved = 'October 30, 2025';
       String localEmailAddress = 'juan.delacruz@example.com';
       String localContactNumber = '+63 917 123 4567';
@@ -746,6 +816,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           localFarmerName =
               '${user['first_name']?.toString() ?? ''} ${user['last_name']?.toString() ?? ''}'
                   .trim();
+          localFarmerOccupation = user['occupation']?.toString() ?? '';
         }
         if (details != null) {
           localEmailAddress = details['email']?.toString() ?? localEmailAddress;
@@ -844,6 +915,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
         _initMacroSymptoms =
             cultivationDetails.initialMacroscopicSymptoms ?? '';
+        _initMacroSigns =
+          _displayText(cultivationDetails.initialSigns);
         _initMacroCharacteristics =
             cultivationDetails.initialMacroscopicCharacteristics ?? '';
 
@@ -900,6 +973,37 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         }
       }
 
+      // Fetch mycologist occupation if assigned
+      String localMycologistOccupation = '';
+      final assignedMycologistId = reportPayload['assigned_mycologist_id']
+          ?.toString();
+      if (assignedMycologistId != null && assignedMycologistId.isNotEmpty) {
+        try {
+          if (!mounted) return;
+          final authProvider = Provider.of<AppAuthProvider>(
+            context,
+            listen: false,
+          );
+          final sessionCookie = authProvider.cookie;
+          final apiService = ApiService(baseUrl: ApiUrl.user);
+          final response = await apiService.get(
+            '/$assignedMycologistId',
+            sessionCookie: sessionCookie,
+          );
+          if (response.data is Map<String, dynamic>) {
+            final responseData = response.data as Map<String, dynamic>;
+            final userData = responseData['data'] as Map<String, dynamic>?;
+            if (userData != null) {
+              final userObj = userData['user'] as Map<String, dynamic>?;
+              localMycologistOccupation =
+                  userObj?['occupation']?.toString() ?? '';
+            }
+          }
+        } catch (e) {
+          AppLogger.w('ViewCase: Failed to fetch mycologist occupation: $e');
+        }
+      }
+
       setState(() {
         _case = moldCase;
         _latestReportLookupResults = parsedLookupResults;
@@ -908,11 +1012,15 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         reportStatus = localReportStatus;
         caseImageUrl = _case!.photoUrl ?? caseImageUrl;
         farmerName = localFarmerName;
+        farmerOccupation = localFarmerOccupation.isNotEmpty
+            ? localFarmerOccupation
+            : null;
         dateFirstObserved = localDateFirstObserved;
         emailAddress = localEmailAddress;
         contactNumber = localContactNumber;
         location = localLocation;
         caseEntries = localCaseEntries;
+        _mycologistOccupation = localMycologistOccupation;
         inVitroDateTime = localInVitroDateTime;
         inVitroGrowthMedium = localInVitroGrowthMedium;
         inVitroIncubationTemperature = localInVitroIncubationTemperature;
@@ -964,21 +1072,25 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     //Dynamically build the list of menu items based on the case status.
     final List<String> popupMenuItems = [
-      if (!isCaseClosed) 'Set Monitoring Details',
       if (!isCaseClosed && !_hasGivenRecommendation) 'Give Recommendation',
-      'Export PDF',
+      if (isCaseClosed) 'Export PDF',
     ];
 
     final List<IconData> popupMenuIcons = [
-      if (!isCaseClosed) FontAwesomeIcons.circleInfo,
       if (!isCaseClosed && !_hasGivenRecommendation) Icons.recommend,
-      FontAwesomeIcons.solidFilePdf,
+      if (isCaseClosed) FontAwesomeIcons.solidFilePdf,
     ];
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) Navigator.of(context).pop(_mutationOccurred);
+        if (!didPop) {
+          final payload = MutationResult(
+            changed: _mutationOccurred,
+            tags: _mutationOccurred ? const [MutationTags.moldCase] : const [],
+          ).toMap();
+          Navigator.of(context).pop(payload);
+        }
       },
       child: Scaffold(
         backgroundColor: MoldifyColors.backgroundColor,
@@ -991,17 +1103,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             // The selected item is now correctly determined from the same list used by the menu.
             final selectedItem = popupMenuItems[index];
 
-            if (selectedItem == 'Set Monitoring Details') {
-              final result = await Navigator.pushNamed(
-                context,
-                '/set-monitoring-details',
-                arguments: {'moldCase': _case},
-              );
-              if (result == true && mounted) {
-                setState(() => _mutationOccurred = true);
-                _refreshCaseAndPendingAnalysis(showLoader: false);
-              }
-            } else if (selectedItem == 'Give Recommendation') {
+            if (selectedItem == 'Give Recommendation') {
               await _handleGiveRecommendation();
             } else if (selectedItem == 'Export PDF') {
               // Implement export PDF functionality here
@@ -1009,11 +1111,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
           },
         ),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: MoldifyColors.primaryColor,
-                ),
-              )
+            ? const Center(child: AppLoadingSpinner())
             : _error != null
             ? Center(
                 child: Padding(
@@ -1179,6 +1277,62 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                   ),
                                 ),
 
+                                // WikiMold reference button (visible when verdict links an article).
+                                if (_linkedMoldipediaId != null) ...[
+                                  const SizedBox(height: 14),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        Navigator.of(context).pushNamed(
+                                          RouteNames.viewWikiMold,
+                                          arguments: {
+                                            'id': _linkedMoldipediaId,
+                                          },
+                                        ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: MoldifyColors.primaryColor
+                                            .withValues(alpha: 0.06),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: MoldifyColors.primaryColor
+                                              .withValues(alpha: 0.2),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.menu_book_outlined,
+                                            size: 16,
+                                            color: MoldifyColors.primaryColor,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            'View WikiMold Reference',
+                                            style: TextStyle(
+                                              fontFamily:
+                                                  'Bricolage-Grotesque-SemiBold',
+                                              fontSize: 13,
+                                              color: MoldifyColors.primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 11,
+                                            color: MoldifyColors.primaryColor
+                                                .withValues(alpha: 0.6),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+
                                 const SizedBox(height: 30),
 
                                 // --- CONTENT TABS ---
@@ -1205,9 +1359,12 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                       CaseDetailsTab(
                                         entries: caseEntries,
                                         farmerName: farmerName,
+                                        farmerOccupation: farmerOccupation,
                                         dateFirstObserved: dateFirstObserved,
                                         emailAddress: emailAddress,
                                         contactNumber: contactNumber,
+                                        mycologistOccupation:
+                                            _mycologistOccupation,
                                       ),
                                       InitialObservationTab(
                                         microscopicImagePath:
@@ -1219,8 +1376,13 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         macroColor: _initMacroColor,
                                         macroTexture: _initMacroTexture,
                                         macroSymptoms: _initMacroSymptoms,
+                                        macroSigns: _initMacroSigns,
                                         macroCharacteristics:
                                             _initMacroCharacteristics,
+                                        isCaseClosed: isCaseClosed,
+                                        onAddInitialObservations: isCaseClosed
+                                            ? null
+                                            : _openAddInitialObservations,
                                       ),
                                       InVitroTab(
                                         isCaseClosed: isCaseClosed,
@@ -1236,6 +1398,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         initialMacroTexture: _initMacroTexture,
                                         initialMacroSymptoms:
                                             _initMacroSymptoms,
+                                        initialMacroSigns: _initMacroSigns,
                                         initialMacroCharacteristics:
                                             _initMacroCharacteristics,
                                         onLogSaved: _handleInVitroLogSaved,
@@ -1253,6 +1416,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         initialMacroTexture: _initMacroTexture,
                                         initialMacroSymptoms:
                                             _initMacroSymptoms,
+                                        initialMacroSigns: _initMacroSigns,
                                         initialMacroCharacteristics:
                                             _initMacroCharacteristics,
                                         onLogSaved: _handleInVivoLogSaved,

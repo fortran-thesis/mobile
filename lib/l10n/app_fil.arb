@@ -136,7 +136,7 @@
   },
   "editProfileTitle": "I-edit ang Profile",
   "editProfileSubtitle": "I-edit ang mga field para ma-update ang iyong impormasyon.",
-  "username": "Username",
+  "username": "Pangalan ng Gumagamit",
   "enterUsername": "Ilagay ang Username",
   "firstName": "Pangalan",
   "enterFirstName": "Ilagay ang Pangalan",
@@ -195,5 +195,75 @@
         "type": "String"
       }
     }
-  }
+  },
+  "retry": "Subukan Muli",
+  "articleDataUnavailable": "Hindi available ang datos ng artikulo.",
+  "viewWikiMold": "Tingnan ang WikiMold",
+  "unknownDate": "Hindi kilalang petsa",
+  "errorLoadingArticles": "Nabigong mag-load ng mga artikulo: {error}",
+  "@errorLoadingArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingMoreArticles": "Nabigong mag-load ng mga karagdagang artikulo: {error}",
+  "@errorLoadingMoreArticles": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "articleNotAvailableYet": "Hindi pa available ang artikulong ito.",
+  "controlTreatmentsLabel": "5 KONTROL NA PAGGAMOT",
+  "preventionTacticsTitle": "Mga Taktika sa Pag-iwas",
+  "preventionTacticsSubtitle": "Komprehensibong mga estratehiya sa kontrol ng amag.",
+  "noPreventionTacticsAvailable": "Walang available na mga taktika sa pag-iwas",
+  "treatmentRecommendations": "Mga Rekomendasyon sa Paggamot",
+  "informationUnavailable": "Hindi kasalukuyang available ang impormasyon.",
+  "observationDataPending": "Naghihintay ng datos ng obserbasyon...",
+  "scientificDataPending": "Naghihintay ng pagsusuri ng siyentipikong datos...",
+  "errorReportIdNotFound": "Error: Hindi nahanap ang ID ng ulat",
+  "photoUploadLimit": "Maaari ka lamang mag-upload ng hanggang 5 larawan.",
+
+  "welcomeTo": "Maligayang Pagdating sa",
+  "welcomeAppSubtitle": "Isang Sistema ng Pagsisiyasat ng Amag para sa Agrikultura",
+  "onboarding1Title": "Mag-submit ng Mga Kaso ng Amag nang",
+  "onboarding1Highlight": "Madali",
+  "onboarding1Subtitle": "Ang Moldify ay isang digital na sistema na nagbibigay-daan sa mga magsasaka na mag-submit ng mga pinaghihinalaang kaso ng amag para sa maayos na pagsisiyasat ng eksperto.",
+  "onboarding2Title": "Pagsusuri ng Eksperto ng",
+  "onboarding2Highlight": "Mga Mykologo",
+  "onboarding2Subtitle": "Sinusuportahan ng Moldify ang pagsusuri ng eksperto at matalinong desisyon sa agrikultura. May alalahanin sa amag? Gamitin ang Moldify at kumilos ngayon.",
+  "skip": "Laktawan",
+  "next": "Susunod",
+  "continueToApp": "Ituloy sa App",
+
+  "chooseRole": "PUMILI NG PAPEL",
+  "chooseRoleSubtitle": "Mangyaring piliin ang iyong papel upang magpatuloy sa pag-login",
+  "farmer": "Magsasaka",
+  "mycologist": "Mykologo",
+
+  "logIn": "MAG-LOGIN",
+  "loginSubtitle": "Mangyaring ilagay ang username at password.",
+  "passwordLabel": "Password",
+  "enterPasswordHint": "Ilagay ang Password",
+  "forgotUsername": "Nakalimutan ang Username?",
+  "dontHaveAccount": "Wala kang account?",
+  "signUpLink": "Mag-sign Up",
+  "loginTermsText": "Sa pagpapatuloy, kinikilala mo na nabasa, naunawaan, at sinang-ayunan mo ang aming",
+
+  "signUp": "MAG-SIGN UP",
+  "signUpSubtitle": "Mangyaring ilagay ang mga detalye upang lumikha ng account.",
+  "email": "Email",
+  "enterEmail": "Ilagay ang Email",
+  "occupation": "Trabaho",
+  "enterOccupation": "Ilagay ang trabaho",
+  "confirmPassword": "Kumpirmahin ang Password",
+  "enterConfirmPassword": "Ilagay ang Kumpirmasyon ng Password",
+  "signUpButton": "Mag-sign Up",
+  "alreadyHaveAccount": "Mayroon na bang account? ",
+  "logInLink": "Mag-Login",
+  "signUpTermsText": "Kinikilala ko na nabasa, naunawaan, at sinang-ayunan ko ang aming"
 }

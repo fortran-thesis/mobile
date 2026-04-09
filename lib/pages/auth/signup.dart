@@ -3,9 +3,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/auth/login.dart';
+import 'package:moldify/pages/misc/language_toggle.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
+import '../misc/overlays/modals/chip_selection_modal.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
@@ -65,9 +71,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final lnameController = TextEditingController();
 
   final addressController = TextEditingController();
+  final occupationController = TextEditingController();
   bool _agreedToTerms = false;
   bool isLoading = false;
   final phoneNumController = TextEditingController();
+  String? _formErrorText;
+
+  final List<String> _occupationOptions = [
+    'Farmer',
+    'Horticulturist',
+    'Student',
+    'Agricultural Worker',
+    'Business Owner',
+  ];
 
   String? _passwordErrorText;
   String? _phoneErrorText;
@@ -83,39 +99,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
     lnameController.dispose();
     phoneNumController.dispose();
     addressController.dispose();
+    occupationController.dispose();
     super.dispose();
   }
 
   void _showErrorSnackBar(String message) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
-          ),
-        ),
-        backgroundColor: MoldifyColors.MoldifyRed,
-      ),
-    );
+    AppFeedback.showError(context, message);
   }
 
   void _showSuccessSnackBar(String message) {
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message,
-          style: const TextStyle(
-            fontFamily: 'Bricolage-Grotesque-Regular',
-            fontSize: 14,
-            color: MoldifyColors.backgroundColor,
-          ),
-        ),
-        backgroundColor: MoldifyColors.primaryColor,
-      ),
+    AppFeedback.showSuccess(context, message);
+  }
+
+  Future<void> _selectOccupation() async {
+    final l10n = AppLocalizations.of(context)!;
+    final selectedOccupation = await showChipSelectionModal(
+      context: context,
+      title: 'Select Occupation',
+      options: _occupationOptions,
+      currentSelection: occupationController.text,
+      customInputHint: 'Enter your occupation',
+      othersLabel: l10n.othersLabel,
+      isMultiLine: false,
     );
+
+    if (selectedOccupation != null && selectedOccupation.isNotEmpty) {
+      setState(() {
+        occupationController.text = selectedOccupation;
+      });
+    }
   }
 
   /// Validates password meets all requirements
@@ -158,10 +170,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() {
       _passwordErrorText = null;
       _phoneErrorText = null;
+      _formErrorText = null;
     });
 
     // Check terms & conditions FIRST before any other validation
     if (!_agreedToTerms) {
+      setState(() {
+        _formErrorText = 'You must agree to the terms and privacy policy.';
+      });
       _showErrorSnackBar('You must agree to the terms and privacy policy.');
       return;
     }
@@ -174,7 +190,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         fnameController.text.isEmpty ||
         lnameController.text.isEmpty ||
         phoneNumController.text.isEmpty ||
-        addressController.text.isEmpty) {
+        addressController.text.isEmpty ||
+        occupationController.text.isEmpty) {
+      setState(() {
+        _formErrorText = 'Please fill in all required fields.';
+      });
       _showErrorSnackBar('All fields are required.');
       return;
     }
@@ -218,6 +238,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       lnameController.text,
       addressController.text,
       '+63${phoneNumController.text.replaceAll('-', '')}',
+      occupationController.text,
     );
     setState(() => isLoading = false);
 
@@ -227,7 +248,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Wait for a moment before navigating to give user time to see the message
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(RouteNames.login);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(RouteNames.login);
+      }
     } else {
       final error = result['error'];
       if (error != null) {
@@ -245,6 +268,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       @override
       Widget build(BuildContext context) {
+        final l10n = AppLocalizations.of(context)!;
+
         return Scaffold(
           backgroundColor: MoldifyColors.backgroundColor,
           body: Stack(
@@ -287,9 +312,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       height: 1,
                                     ),
                                     children: [
-                                      const TextSpan(text: 'SIGN UP\n'),
+                                      TextSpan(text: '${l10n.signUp}\n'),
                                       TextSpan(
-                                        text: 'Please enter details to create an account.',
+                                        text: l10n.signUpSubtitle,
                                         style: TextStyle(
                                           fontFamily: 'Bricolage-Grotesque-Regular',
                                           fontSize: 14,
@@ -301,6 +326,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   textAlign: TextAlign.start,
                                 )
                             ),
+                          ),
+                        ),
+                        /// Language Toggle (Top Right of header)
+                        Positioned(
+                          top: 10,
+                          right: 15,
+                          child: LanguageToggle(
+                            color: MoldifyColors.backgroundColor,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -318,7 +352,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 30.0),
                             child: AutoSizeText(
-                              'Username',
+                              l10n.username,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -333,7 +367,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter Username',
+                              hintText: l10n.enterUsername,
                               controller: usernameController,
                               showPassword: false,
                             ),
@@ -343,7 +377,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'First Name',
+                              l10n.firstName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -358,7 +392,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter first name',
+                              hintText: l10n.enterFirstName,
                               controller: fnameController,
                               showPassword: false,
                             ),
@@ -368,7 +402,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Last Name',
+                              l10n.lastName,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -383,7 +417,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter last name',
+                              hintText: l10n.enterLastName,
                               controller: lnameController,
                               showPassword: false,
                             ),
@@ -393,7 +427,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Email',
+                              l10n.email,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -408,7 +442,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BuildTextBox(
-                              hintText: 'Enter Email',
+                              hintText: l10n.enterEmail,
                               controller: emailController,
                               showPassword: false,
                               keyboardType: TextInputType.emailAddress,
@@ -459,11 +493,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
 
+                          /// Occupation Label
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: AutoSizeText(
+                              l10n.occupation,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                              maxLines: 1,
+                              minFontSize: 12,
+                            ),
+                          ),
+
+                          /// Occupation TextBox
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: BuildTextBox(
+                              hintText: 'Select occupation',
+                              controller: occupationController,
+                              showPassword: false,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              rightIconColor: MoldifyColors.accentColor,
+                              readOnly: true,
+                              onTap: _selectOccupation,
+                            ),
+                          ),
+
                           /// Location Label
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Location(City/Province)',
+                              l10n.locationLabel,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -488,7 +551,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Password',
+                              l10n.passwordLabel,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -528,7 +591,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              'Confirm Password',
+                              l10n.confirmPassword,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -550,11 +613,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
 
                           /// Signup Button
+                          if (_formErrorText != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: MoldifyColors.MoldifyRed.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: MoldifyColors.MoldifyRed.withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Text(
+                                  _formErrorText!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Bricolage-Grotesque-Regular',
+                                    fontSize: 13,
+                                    color: MoldifyColors.MoldifyRed,
+                                  ),
+                                ),
+                              ),
+                            ),
+
                           Padding(
                             padding: const EdgeInsets.only(
                                 top: 50.0, bottom: 3.0),
                             child: BuildButton(
-                                buttonText: 'Sign Up',
+                                buttonText: l10n.signUpButton,
                                 onPressed: _onSignUpPressed,
                                 backgroundColor: isLoading ? MoldifyColors
                                     .MoldifyGrey : MoldifyColors.primaryColor,
@@ -577,7 +664,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 AutoSizeText (
-                                  'Already have an account? ',
+                                  l10n.alreadyHaveAccount,
                                   style: TextStyle(
                                     fontFamily: 'Bricolage-Grotesque-Regular',
                                     fontSize: 14,
@@ -602,11 +689,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       .withValues(alpha: 0.2),
                                   highlightColor: MoldifyColors.accentColor
                                       .withValues(alpha: 0.2),
-                                  child: const Padding(
+                                  child: Padding(
                                     padding: EdgeInsets.symmetric(
                                         vertical: 4, horizontal: 4),
                                     child: AutoSizeText(
-                                      'Log In',
+                                      l10n.logInLink,
                                       style: TextStyle(
                                         fontFamily: 'Bricolage-Grotesque-SemiBold',
                                         fontSize: 14,
@@ -691,11 +778,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           color: MoldifyColors.MoldifyBlack,
                                         ),
                                         children: [
-                                          const TextSpan(
-                                            text: 'I acknowledged that I have read, understood and agree to our ',
+                                          TextSpan(
+                                            text: l10n.signUpTermsText,
                                           ),
                                           TextSpan(
-                                            text: 'Terms of Agreement',
+                                            text: l10n.termsOfAgreement,
                                             style: const TextStyle(
                                               fontFamily: 'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
@@ -711,7 +798,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           ),
                                           const TextSpan(text: ' and '),
                                           TextSpan(
-                                            text: 'Privacy Policy',
+                                            text: l10n.privacyPolicy,
                                             style: const TextStyle(
                                               fontFamily: 'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
@@ -741,12 +828,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               if (isLoading)
-                Container(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
+                const AppLoadingOverlay(),
             ],
           ),
         );

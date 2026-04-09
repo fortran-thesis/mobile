@@ -22,6 +22,8 @@ import '../../textboxes/textboxes.dart';
 
 class CorrectionBottomSheetContent extends StatelessWidget {
   final TextEditingController correctedGenusController;
+  final List<String> presetGenusOptions;
+  final ValueChanged<String>? onPresetSelected;
   final VoidCallback? onClose;
   final Function(String)? onSave;
   final VoidCallback onCancel;
@@ -30,6 +32,8 @@ class CorrectionBottomSheetContent extends StatelessWidget {
   const CorrectionBottomSheetContent({
     super.key,
     required this.correctedGenusController,
+    this.presetGenusOptions = const [],
+    this.onPresetSelected,
     this.onClose,
     this.onSave,
     required this.onCancel,
@@ -83,6 +87,28 @@ class CorrectionBottomSheetContent extends StatelessWidget {
           controller: correctedGenusController,
           showPassword: false,
         ),
+        if (presetGenusOptions.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: 'Quick select supported mold genus',
+            ),
+            items: presetGenusOptions
+                .map(
+                  (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null || value.trim().isEmpty) return;
+              correctedGenusController.text = value;
+              onPresetSelected?.call(value);
+            },
+          ),
+        ],
         Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: Text(
@@ -105,7 +131,10 @@ class CorrectionBottomSheetContent extends StatelessWidget {
                   return BuildConfirmationDialog(
                     title: 'Submit Correction?',
                     subtitle: 'Are you sure you want to submit correction?',
-                    onConfirm: onConfirm,
+                    onConfirm: () {
+                      Navigator.of(context).pop();
+                      onConfirm();
+                    },
                     onCancel: onCancel,
                     // onConfirm: () {
                     //   onSave?.call(correctedGenusController.text);
@@ -113,8 +142,8 @@ class CorrectionBottomSheetContent extends StatelessWidget {
                     // onCancel: (){
                     //   Navigator.of(context).pop();
                     // },
-                    cancelText: 'Yes',
-                    confirmText: 'No',
+                    cancelText: 'No',
+                    confirmText: 'Yes',
                   );
                 },
               );

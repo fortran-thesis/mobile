@@ -101,8 +101,8 @@ class AuthBloc {
     }
   }
 
-  Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber) async {
-    final result = await authService.registerUser(username, email, password, firstName, lastName, address, phoneNumber);
+  Future<Map<String, dynamic>> registerUser(String username, String email, String password, String firstName, String lastName, String address, String phoneNumber, String occupation) async {
+    final result = await authService.registerUser(username, email, password, firstName, lastName, address, phoneNumber, occupation);
     if (!result['success']) {
       return {
         'success': false,

@@ -11,6 +11,7 @@ import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/photo_uploader.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 
 class AddFollowUpScreen extends StatefulWidget {
@@ -51,9 +52,12 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
 
       if (reportId == null || reportId.isEmpty) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: Report ID not found')),
-        );
+        if (mounted) {
+          final l10nLocal = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10nLocal.errorReportIdNotFound)),
+          );
+        }
         return;
       }
 
@@ -82,20 +86,26 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.followUpSubmitted)),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.followUpSubmitted)),
+        );
 
-      // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
-      // Pass `true` on the second pop so main_report can detect success and refresh.
-      Navigator.of(context).pop();
-      Navigator.of(context).pop(true);
+        // Pop twice: once for AddFollowUpScreen, once for ViewReportScreen.
+        // Pass a typed mutation result on the second pop so callers can detect refresh intent.
+        Navigator.of(context).pop();
+        Navigator.of(context).pop(
+          const MutationResult.changed(tags: [MutationTags.moldReport]).toMap(),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToSubmitFollowUp(e.toString()))),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.failedToSubmitFollowUp(e.toString()))),
+        );
+      }
     }
   }
 
@@ -133,11 +143,11 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
           if (!context.mounted) return;
           //If the user confirmed, pop the current route
           if (shouldPop != null && shouldPop) {
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(const MutationResult.unchanged().toMap());
           }
         } else {
           //No unsaved changes, allow pop without confirmation
-          Navigator.of(context).pop(true);
+          Navigator.of(context).pop(const MutationResult.unchanged().toMap());
         }
       },
       child: Scaffold(

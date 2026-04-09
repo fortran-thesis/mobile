@@ -13,17 +13,21 @@ import 'package:moldify/core/utils/logger.dart';
 class CaseDetailsTab extends StatelessWidget {
   final List<Map<String, dynamic>> entries;
   final String farmerName;
+  final String? farmerOccupation;
   final String dateFirstObserved;
   final String emailAddress;
   final String contactNumber;
+  final String? mycologistOccupation;
 
   const CaseDetailsTab({
     super.key,
     required this.entries,
     required this.farmerName,
+    this.farmerOccupation,
     required this.dateFirstObserved,
     required this.emailAddress,
     required this.contactNumber,
+    this.mycologistOccupation,
   });
 
   @override
@@ -33,7 +37,7 @@ class CaseDetailsTab extends StatelessWidget {
     for (var i = 0; i < entries.length; i++) {
       AppLogger.d('  entry[$i]: ${entries[i]}');
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -86,6 +90,20 @@ class CaseDetailsTab extends StatelessWidget {
                       color: MoldifyColors.primaryColor,
                     ),
                   ),
+
+                  /// Farmer Occupation (if available)
+                  if (farmerOccupation != null &&
+                      farmerOccupation!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      farmerOccupation!,
+                      style: TextStyle(
+                        fontFamily: 'Bricolage-Grotesque-Regular',
+                        fontSize: 12,
+                        color: MoldifyColors.MoldifyGrey,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               Column(
@@ -165,6 +183,32 @@ class CaseDetailsTab extends StatelessWidget {
               color: MoldifyColors.primaryColor,
             ),
           ),
+
+          /// Assigned Mycologist Occupation (if available)
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text(
+                "Assigned Mycologist:",
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 12,
+                  color: MoldifyColors.primaryColor,
+                ),
+              ),
+            ),
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            SizedBox(height: 4),
+          if (mycologistOccupation != null && mycologistOccupation!.isNotEmpty)
+            Text(
+              mycologistOccupation!,
+              style: TextStyle(
+                fontFamily: 'Montserrat-Black',
+                fontSize: 16,
+                color: MoldifyColors.primaryColor,
+              ),
+            ),
+
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Divider(),
@@ -178,20 +222,21 @@ class CaseDetailsTab extends StatelessWidget {
               height: MediaQuery.of(context).size.height - 500,
             )
           else
-            ...List.generate(
-              entries.length,
-              (index) {
-                AppLogger.d('CaseDetailsTab: generating tile for index=$index, entries.length=${entries.length}');
-                final reversedIndex = entries.length - 1 - index;
-                AppLogger.d('CaseDetailsTab: reversedIndex=$reversedIndex, entry=${entries[reversedIndex]}');
-                return _CaseTimelineTile(
-                  dateTime: entries[reversedIndex]["date"],
-                  notes: entries[reversedIndex]["notes"],
-                  imageUrls: List<String>.from(entries[reversedIndex]["images"]),
-                  isLast: index == entries.length - 1,
-                );
-              },
-            ),
+            ...List.generate(entries.length, (index) {
+              AppLogger.d(
+                'CaseDetailsTab: generating tile for index=$index, entries.length=${entries.length}',
+              );
+              final reversedIndex = entries.length - 1 - index;
+              AppLogger.d(
+                'CaseDetailsTab: reversedIndex=$reversedIndex, entry=${entries[reversedIndex]}',
+              );
+              return _CaseTimelineTile(
+                dateTime: entries[reversedIndex]["date"],
+                notes: entries[reversedIndex]["notes"],
+                imageUrls: List<String>.from(entries[reversedIndex]["images"]),
+                isLast: index == entries.length - 1,
+              );
+            }),
         ],
       ),
     );
@@ -216,7 +261,9 @@ class _CaseTimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.d('_CaseTimelineTile.build(): dateTime=$dateTime, notes=$notes, imageUrls=$imageUrls, isLast=$isLast');
+    AppLogger.d(
+      '_CaseTimelineTile.build(): dateTime=$dateTime, notes=$notes, imageUrls=$imageUrls, isLast=$isLast',
+    );
     return TimelineTile(
       alignment: TimelineAlign.start,
       lineXY: 0.1,
@@ -231,51 +278,55 @@ class _CaseTimelineTile extends StatelessWidget {
         color: MoldifyColors.primaryColor,
         thickness: 1,
       ),
-      endChild: Padding(
-        padding: const EdgeInsets.only(left: 12.0, bottom: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// --- DATE & TIME ---
-            Text(
-              dateTime,
-              style: const TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 12,
-                color: MoldifyColors.MoldifyGrey,
+      endChild: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width - 60,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12.0, bottom: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// --- DATE & TIME ---
+              Text(
+                dateTime,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 12,
+                  color: MoldifyColors.MoldifyGrey,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
+              const SizedBox(height: 6),
 
-            /// --- ADDITIONAL NOTES ---
-            Text(
-              AppLocalizations.of(context)!.additionalNotes,
-              style: TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Bold',
-                fontSize: 14,
-                color: MoldifyColors.primaryColor,
+              /// --- ADDITIONAL NOTES ---
+              Text(
+                AppLocalizations.of(context)!.additionalNotes,
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Bold',
+                  fontSize: 14,
+                  color: MoldifyColors.primaryColor,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              notes,
-              style: const TextStyle(
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                fontSize: 16,
-                color: Colors.black87,
-                height: 1.4,
+              const SizedBox(height: 2),
+              Text(
+                notes,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 16,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.justify,
               ),
-              textAlign: TextAlign.justify,
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            /// --- IMAGES ---
-            if (imageUrls.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: imageUrls.map(
-                      (url) {
+              /// --- IMAGES ---
+              if (imageUrls.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: imageUrls.map((url) {
                     return GestureDetector(
                       onTap: () {
                         final initialIndex = imageUrls.indexOf(url);
@@ -284,17 +335,20 @@ class _CaseTimelineTile extends StatelessWidget {
                           context: context,
                           barrierDismissible: true,
                           builder: (context) {
-                            final controller =
-                            PageController(initialPage: initialIndex);
+                            final controller = PageController(
+                              initialPage: initialIndex,
+                            );
                             int currentIndex = initialIndex;
 
                             return StatefulBuilder(
                               builder: (context, setState) {
                                 return Dialog(
                                   shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero),
-                                  backgroundColor:
-                                  Colors.black.withValues(alpha: 0.9),
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.9,
+                                  ),
                                   insetPadding: EdgeInsets.zero,
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -311,7 +365,8 @@ class _CaseTimelineTile extends StatelessWidget {
                                         itemBuilder: (context, index) {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
-                                                horizontal: 8.0),
+                                              horizontal: 8.0,
+                                            ),
                                             child: InteractiveViewer(
                                               child: Center(
                                                 child: Image.network(
@@ -329,8 +384,11 @@ class _CaseTimelineTile extends StatelessWidget {
                                         top: 20,
                                         right: 15,
                                         child: IconButton(
-                                          icon: const Icon(Icons.close,
-                                              color: Colors.white, size: 28),
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
                                           onPressed: () =>
                                               Navigator.pop(context),
                                         ),
@@ -343,24 +401,26 @@ class _CaseTimelineTile extends StatelessWidget {
                                         right: 0,
                                         child: Row(
                                           mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                              MainAxisAlignment.center,
                                           children: [
                                             /// Left arrow
                                             IconButton(
                                               icon: const Icon(
-                                                  Icons.arrow_back_ios_new,
-                                                  color: MoldifyColors
-                                                      .backgroundColor,
-                                                  size: 20),
+                                                Icons.arrow_back_ios_new,
+                                                color: MoldifyColors
+                                                    .backgroundColor,
+                                                size: 20,
+                                              ),
                                               onPressed: currentIndex > 0
                                                   ? () {
-                                                controller.previousPage(
-                                                  duration: const Duration(
-                                                      milliseconds: 200),
-                                                  curve:
-                                                  Curves.easeInOut,
-                                                );
-                                              }
+                                                      controller.previousPage(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 200,
+                                                            ),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    }
                                                   : null,
                                             ),
                                             const SizedBox(width: 16),
@@ -373,7 +433,7 @@ class _CaseTimelineTile extends StatelessWidget {
                                                     .backgroundColor,
                                                 fontSize: 16,
                                                 fontFamily:
-                                                'Bricolage-Grotesque-Regular',
+                                                    'Bricolage-Grotesque-Regular',
                                               ),
                                             ),
                                             const SizedBox(width: 16),
@@ -381,20 +441,23 @@ class _CaseTimelineTile extends StatelessWidget {
                                             /// Right arrow
                                             IconButton(
                                               icon: const Icon(
-                                                  Icons.arrow_forward_ios,
-                                                  color: MoldifyColors
-                                                      .backgroundColor,
-                                                  size: 20),
-                                              onPressed: currentIndex <
-                                                  imageUrls.length - 1
+                                                Icons.arrow_forward_ios,
+                                                color: MoldifyColors
+                                                    .backgroundColor,
+                                                size: 20,
+                                              ),
+                                              onPressed:
+                                                  currentIndex <
+                                                      imageUrls.length - 1
                                                   ? () {
-                                                controller.nextPage(
-                                                  duration: const Duration(
-                                                      milliseconds: 200),
-                                                  curve:
-                                                  Curves.easeInOut,
-                                                );
-                                              }
+                                                      controller.nextPage(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 200,
+                                                            ),
+                                                        curve: Curves.easeInOut,
+                                                      );
+                                                    }
                                                   : null,
                                             ),
                                           ],
@@ -427,23 +490,23 @@ class _CaseTimelineTile extends StatelessWidget {
                         ),
                       ),
                     );
-                  },
-                ).toList(),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text(
-                  'No images available for this entry.',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 14,
-                    color: MoldifyColors.MoldifyGrey,
-                    fontStyle: FontStyle.italic,
+                  }).toList(),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    'No images available for this entry.',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Regular',
+                      fontSize: 14,
+                      color: MoldifyColors.MoldifyGrey,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

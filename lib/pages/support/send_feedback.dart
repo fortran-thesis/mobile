@@ -11,6 +11,8 @@ import '../../providers/auth_provider.dart';
 import '../misc/appbar/secondary_appbar.dart';
 import '../misc/buttons/primary_button.dart';
 import '../misc/colors.dart';
+import '../misc/overlays/app_feedback.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../misc/textboxes/textboxes.dart';
 import 'package:moldify/core/utils/logger.dart';
@@ -36,9 +38,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
     }
 
     if (feedbackController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please describe the feedback')),
-      );
+      AppFeedback.showError(context, 'Please describe the feedback');
       return;
     }
 
@@ -51,9 +51,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
 
 
       if (sessionCookie == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Not authenticated')),
-        );
+        AppFeedback.showError(context, 'Not authenticated');
         setState(() => _isLoading = false);
         return;
       }
@@ -68,9 +66,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
       }
 
       if (userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not loaded yet')),
-        );
+        AppFeedback.showError(context, 'User not loaded yet');
         setState(() => _isLoading = false);
         return;
       }
@@ -85,12 +81,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
 
       if (response.success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Feedback submitted successfully!'),
-              backgroundColor: MoldifyColors.primaryColor,
-            ),
-          );
+          AppFeedback.showSuccess(context, 'Feedback submitted successfully!');
           feedbackController.clear();
           Navigator.pop(context);
         }
@@ -98,12 +89,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
         AppLogger.e('Failed. Error: ${response.error}');
         // Show the actual error from the API
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.error ?? 'Failed to submit report'),
-              backgroundColor: MoldifyColors.MoldifyRed,
-            ),
-          );
+          AppFeedback.showError(context, response.error ?? 'Failed to submit report');
         }
       }
     } catch (e, stackTrace) {
@@ -112,12 +98,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
       AppLogger.e('Stack trace', error: stackTrace);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Network error: ${e.toString()}'),
-            backgroundColor: MoldifyColors.MoldifyRed,
-          ),
-        );
+        AppFeedback.showError(context, 'Network error: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -280,14 +261,7 @@ class _SendFeedbackScreenState extends State<SendFeedbackScreen> {
             Positioned.fill(
               child: AbsorbPointer(
                 absorbing: true,
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: MoldifyColors.backgroundColor,
-                    ),
-                  ),
-                ),
+                child: const AppLoadingOverlay(),
               ),
             ),
         ],

@@ -10,6 +10,7 @@ import '../../../core/features/wikimold/models/wikimold.dart';
 import '../../../core/features/wikimold/services/wikimold_services.dart';
 import '../../../providers/auth_provider.dart';
 import '../../misc/functions/empty_state.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/tiles/wikimold_tiles.dart';
 
 
@@ -89,8 +90,9 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading articles: $e')),
+          SnackBar(content: Text(l10n.errorLoadingArticles(e.toString()))),
         );
       }
     }
@@ -118,8 +120,9 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingMore = false);
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading more articles: $e')),
+          SnackBar(content: Text(l10n.errorLoadingMoreArticles(e.toString()))),
         );
       }
     }
@@ -169,11 +172,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
           // List of articles
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: MoldifyColors.primaryColor,
-                    ),
-                  )
+                ? const Center(child: AppLoadingSpinner())
                 : _filteredArticles.isEmpty
                 ? EmptyState(
               message: l10n.noArticlesFound,
@@ -189,9 +188,7 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                   return const Padding(
                     padding: EdgeInsets.all(20.0),
                     child: Center(
-                      child: CircularProgressIndicator(
-                        color: MoldifyColors.primaryColor,
-                      ),
+                      child: AppLoadingSpinner(),
                     ),
                   );
                 }
@@ -212,9 +209,10 @@ class _MainWikiMoldScreenState extends State<MainWikiMoldScreen> {
                             ),
                           );
                         } else {
+                          final l10n = AppLocalizations.of(context)!;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('This article is not available yet.'),
+                            SnackBar(
+                              content: Text(l10n.articleNotAvailableYet),
                             ),
                           );
                         }

@@ -363,7 +363,7 @@ class AppLocalizationsFil extends AppLocalizations {
       'I-edit ang mga field para ma-update ang iyong impormasyon.';
 
   @override
-  String get username => 'Username';
+  String get username => 'Pangalan ng Gumagamit';
 
   @override
   String get enterUsername => 'Ilagay ang Username';
@@ -491,4 +491,176 @@ class AppLocalizationsFil extends AppLocalizations {
   String failedToChangePassword(String error) {
     return 'Nabigong palitan ang password: $error';
   }
+
+  @override
+  String get retry => 'Subukan Muli';
+
+  @override
+  String get articleDataUnavailable => 'Hindi available ang datos ng artikulo.';
+
+  @override
+  String get viewWikiMold => 'Tingnan ang WikiMold';
+
+  @override
+  String get unknownDate => 'Hindi kilalang petsa';
+
+  @override
+  String errorLoadingArticles(String error) {
+    return 'Nabigong mag-load ng mga artikulo: $error';
+  }
+
+  @override
+  String errorLoadingMoreArticles(String error) {
+    return 'Nabigong mag-load ng mga karagdagang artikulo: $error';
+  }
+
+  @override
+  String get articleNotAvailableYet => 'Hindi pa available ang artikulong ito.';
+
+  @override
+  String get controlTreatmentsLabel => '5 KONTROL NA PAGGAMOT';
+
+  @override
+  String get preventionTacticsTitle => 'Mga Taktika sa Pag-iwas';
+
+  @override
+  String get preventionTacticsSubtitle =>
+      'Komprehensibong mga estratehiya sa kontrol ng amag.';
+
+  @override
+  String get noPreventionTacticsAvailable =>
+      'Walang available na mga taktika sa pag-iwas';
+
+  @override
+  String get treatmentRecommendations => 'Mga Rekomendasyon sa Paggamot';
+
+  @override
+  String get informationUnavailable =>
+      'Hindi kasalukuyang available ang impormasyon.';
+
+  @override
+  String get observationDataPending => 'Naghihintay ng datos ng obserbasyon...';
+
+  @override
+  String get scientificDataPending =>
+      'Naghihintay ng pagsusuri ng siyentipikong datos...';
+
+  @override
+  String get errorReportIdNotFound => 'Error: Hindi nahanap ang ID ng ulat';
+
+  @override
+  String get photoUploadLimit =>
+      'Maaari ka lamang mag-upload ng hanggang 5 larawan.';
+
+  @override
+  String get welcomeTo => 'Maligayang Pagdating sa';
+
+  @override
+  String get welcomeAppSubtitle =>
+      'Isang Sistema ng Pagsisiyasat ng Amag para sa Agrikultura';
+
+  @override
+  String get onboarding1Title => 'Mag-submit ng Mga Kaso ng Amag nang';
+
+  @override
+  String get onboarding1Highlight => 'Madali';
+
+  @override
+  String get onboarding1Subtitle =>
+      'Ang Moldify ay isang digital na sistema na nagbibigay-daan sa mga magsasaka na mag-submit ng mga pinaghihinalaang kaso ng amag para sa maayos na pagsisiyasat ng eksperto.';
+
+  @override
+  String get onboarding2Title => 'Pagsusuri ng Eksperto ng';
+
+  @override
+  String get onboarding2Highlight => 'Mga Mykologo';
+
+  @override
+  String get onboarding2Subtitle =>
+      'Sinusuportahan ng Moldify ang pagsusuri ng eksperto at matalinong desisyon sa agrikultura. May alalahanin sa amag? Gamitin ang Moldify at kumilos ngayon.';
+
+  @override
+  String get skip => 'Laktawan';
+
+  @override
+  String get next => 'Susunod';
+
+  @override
+  String get continueToApp => 'Ituloy sa App';
+
+  @override
+  String get chooseRole => 'PUMILI NG PAPEL';
+
+  @override
+  String get chooseRoleSubtitle =>
+      'Mangyaring piliin ang iyong papel upang magpatuloy sa pag-login';
+
+  @override
+  String get farmer => 'Magsasaka';
+
+  @override
+  String get mycologist => 'Mykologo';
+
+  @override
+  String get logIn => 'MAG-LOGIN';
+
+  @override
+  String get loginSubtitle => 'Mangyaring ilagay ang username at password.';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get enterPasswordHint => 'Ilagay ang Password';
+
+  @override
+  String get forgotUsername => 'Nakalimutan ang Username?';
+
+  @override
+  String get dontHaveAccount => 'Wala kang account?';
+
+  @override
+  String get signUpLink => 'Mag-sign Up';
+
+  @override
+  String get loginTermsText =>
+      'Sa pagpapatuloy, kinikilala mo na nabasa, naunawaan, at sinang-ayunan mo ang aming';
+
+  @override
+  String get signUp => 'MAG-SIGN UP';
+
+  @override
+  String get signUpSubtitle =>
+      'Mangyaring ilagay ang mga detalye upang lumikha ng account.';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get enterEmail => 'Ilagay ang Email';
+
+  @override
+  String get occupation => 'Trabaho';
+
+  @override
+  String get enterOccupation => 'Ilagay ang trabaho';
+
+  @override
+  String get confirmPassword => 'Kumpirmahin ang Password';
+
+  @override
+  String get enterConfirmPassword => 'Ilagay ang Kumpirmasyon ng Password';
+
+  @override
+  String get signUpButton => 'Mag-sign Up';
+
+  @override
+  String get alreadyHaveAccount => 'Mayroon na bang account? ';
+
+  @override
+  String get logInLink => 'Mag-Login';
+
+  @override
+  String get signUpTermsText =>
+      'Kinikilala ko na nabasa, naunawaan, at sinang-ayunan ko ang aming';
 }

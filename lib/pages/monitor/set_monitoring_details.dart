@@ -2,9 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/functions/step_indicator.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -15,6 +18,7 @@ import 'set_monitor_details_tab/specimen_tab.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/overlays/modals/chip_selection_modal.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
+import '../../core/utils/mutation_result.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 class SetMonitoringDetailsScreen extends StatefulWidget {
@@ -36,6 +40,8 @@ class _SetMonitoringDetailsScreenState
       TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _initialSymptomsController =
+      TextEditingController();
+    final TextEditingController _initialSignsController =
       TextEditingController();
   final TextEditingController _initialCharacteristicsController =
       TextEditingController();
@@ -66,6 +72,7 @@ class _SetMonitoringDetailsScreenState
   final List<Map<String, String>> _specimenEntries = [];
   final List<String> _selectedSpecimenTypes = [];
   final List<String> _selectedInitialSymptoms = [];
+  final List<String> _selectedInitialSigns = [];
   final List<String> _selectedInitialCharacteristics = [];
   final List<String> _scannedMicroscopicIds = [];
   final List<String> _scannedMacroscopicIds = [];
@@ -81,7 +88,7 @@ class _SetMonitoringDetailsScreenState
     'Water sample',
   ];
 
-  final List<String> _initialSymptomsOptions = [
+  static const List<String> _defaultInitialSymptomsOptions = [
     'Leaf spots',
     'Wilting',
     'Yellowing leaves',
@@ -90,7 +97,7 @@ class _SetMonitoringDetailsScreenState
     'Stem lesions',
   ];
 
-  final List<String> _initialCharacteristicsOptions = [
+  static const List<String> _defaultInitialCharacteristicsOptions = [
     'Cottony',
     'Powdery',
     'Slimy',
@@ -98,6 +105,25 @@ class _SetMonitoringDetailsScreenState
     'Discolored',
     'Spreading rapidly',
   ];
+
+  static const List<String> _defaultInitialSignsOptions = [
+    'White mycelial growth',
+    'Powdery residue',
+    'Dark sporulation',
+    'Water-soaked lesion edge',
+    'Foul odor',
+    'Slimy exudate',
+  ];
+
+  final List<String> _initialSymptomsOptions = List<String>.from(
+    _defaultInitialSymptomsOptions,
+  );
+  final List<String> _initialCharacteristicsOptions = List<String>.from(
+    _defaultInitialCharacteristicsOptions,
+  );
+  final List<String> _initialSignsOptions = List<String>.from(
+    _defaultInitialSignsOptions,
+  );
 
   final MoldCaseService _service = MoldCaseService();
 
@@ -116,6 +142,8 @@ class _SetMonitoringDetailsScreenState
     super.initState();
     _initializeFields();
     _hydrateLatestAssignmentDates();
+    _hydrateCaseReportContext();
+    _loadInvestigationOptions();
   }
 
   Future<void> _hydrateLatestAssignmentDates() async {
@@ -162,6 +190,125 @@ class _SetMonitoringDetailsScreenState
         normalized.startsWith('/v0/b/');
   }
 
+  String _displayDate(String value) {
+    final parsed = _parseDateLike(value);
+    if (parsed == null) return value;
+    return DateFormat('MMMM dd, yyyy').format(parsed.toLocal());
+  }
+
+  String? _toIsoDateTime(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    final parsedUiDate = DateFormat('MMMM dd, yyyy').tryParseStrict(trimmed);
+    if (parsedUiDate != null) {
+      return DateTime(
+        parsedUiDate.year,
+        parsedUiDate.month,
+        parsedUiDate.day,
+      ).toUtc().toIso8601String();
+    }
+
+    final parsedIso = DateTime.tryParse(trimmed);
+    return parsedIso?.toUtc().toIso8601String();
+  }
+
+  List<String> _splitCatalogValues(String raw) {
+    return raw
+        .split(RegExp(r'[,;|\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> _loadInvestigationOptions() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final service = MoldService();
+      final catalog = await service.fetchAllMoldCatalog(
+        sessionCookie: authProvider.cookie,
+      );
+
+      final symptoms = <String>{..._defaultInitialSymptomsOptions};
+      final signs = <String>{..._defaultInitialSignsOptions};
+      final characteristics = <String>{
+        ..._defaultInitialCharacteristicsOptions,
+      };
+
+      for (final entry in catalog) {
+        symptoms.addAll(entry.symptoms);
+        signs.addAll(entry.signs);
+        final fallbackCombined = _splitCatalogValues(entry.symptomsAndSigns);
+        if (entry.symptoms.isEmpty) {
+          symptoms.addAll(fallbackCombined);
+        }
+        if (entry.signs.isEmpty) {
+          signs.addAll(fallbackCombined);
+        }
+        characteristics.addAll(entry.characteristics);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _initialSymptomsOptions
+          ..clear()
+          ..addAll(symptoms.toList()..sort((a, b) => a.compareTo(b)));
+        _initialCharacteristicsOptions
+          ..clear()
+          ..addAll(characteristics.toList()..sort((a, b) => a.compareTo(b)));
+        _initialSignsOptions
+          ..clear()
+          ..addAll(signs.toList()..sort((a, b) => a.compareTo(b)));
+      });
+    } catch (_) {
+      // Keep defaults if catalog options are unavailable.
+    }
+  }
+
+  Future<void> _hydrateCaseReportContext() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+      if (sessionCookie == null || sessionCookie.isEmpty) return;
+
+      final reportId = widget.moldCase.moldReportId.trim().isNotEmpty
+          ? widget.moldCase.moldReportId.trim()
+          : widget.moldCase.id.trim();
+      if (reportId.isEmpty) return;
+
+      final reportService = MoldReportService();
+      final reportResponse = await reportService.getMoldReportById(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      final reportPayload = reportResponse['data'] is Map<String, dynamic>
+          ? reportResponse['data'] as Map<String, dynamic>
+          : reportResponse;
+
+      final host = reportPayload['host']?.toString().trim() ?? '';
+      final location = reportPayload['location']?.toString().trim() ?? '';
+      final observedDate =
+          reportPayload['date_observed']?.toString().trim() ?? '';
+
+      if (!mounted) return;
+      setState(() {
+        if (host.isNotEmpty) {
+          _cropNameController.text = host;
+        }
+        if (_locationController.text.trim().isEmpty && location.isNotEmpty) {
+          _locationController.text = location;
+        }
+        if (_dateOfObservationController.text.trim().isEmpty &&
+            observedDate.isNotEmpty) {
+          _dateOfObservationController.text = _displayDate(observedDate);
+        }
+      });
+    } catch (_) {
+      // Optional hydration only; keep current defaults if unavailable.
+    }
+  }
+
   void _initializeFields() {
     // Initialize with existing data if available
     final details = widget.moldCase.cultivationDetails;
@@ -169,7 +316,7 @@ class _SetMonitoringDetailsScreenState
     _startDateController.text = DateFormat(
       'MMMM dd, yyyy',
     ).format(widget.moldCase.startDate);
-    // Crop name comes from the mold case `name` field
+    // Temporary default; this is replaced with report host when available.
     _cropNameController.text = widget.moldCase.name;
 
     if (widget.moldCase.endDate != null) {
@@ -213,6 +360,12 @@ class _SetMonitoringDetailsScreenState
         _selectedInitialSymptoms.clear();
         _selectedInitialSymptoms.addAll(details.initialSymptoms!);
         _initialSymptomsController.text = details.initialSymptoms!.join(', ');
+      }
+      if (details.initialSigns != null && details.initialSigns!.isNotEmpty) {
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(details.initialSigns!);
+        _initialSignsController.text = details.initialSigns!.join(', ');
       }
       if (details.initialCharacteristics != null &&
           details.initialCharacteristics!.isNotEmpty) {
@@ -277,7 +430,9 @@ class _SetMonitoringDetailsScreenState
       }
       if (details.dateObservation != null &&
           details.dateObservation!.isNotEmpty) {
-        _dateOfObservationController.text = details.dateObservation!;
+        _dateOfObservationController.text = _displayDate(
+          details.dateObservation!,
+        );
       }
       if (details.scannedMicroscopicIds != null &&
           details.scannedMicroscopicIds!.isNotEmpty) {
@@ -359,6 +514,11 @@ class _SetMonitoringDetailsScreenState
         cultivationDetailsMap['initial_characteristics_csv'] =
             _selectedInitialCharacteristics.join(',');
       }
+        if (_selectedInitialSigns.isNotEmpty) {
+          cultivationDetailsMap['initial_signs'] = _selectedInitialSigns;
+          cultivationDetailsMap['initial_signs_csv'] = _selectedInitialSigns
+          .join(',');
+        }
       if (_initialMicroscopicController.text.trim().isNotEmpty) {
         cultivationDetailsMap['initial_microscopic'] =
             _initialMicroscopicController.text.trim();
@@ -412,9 +572,12 @@ class _SetMonitoringDetailsScreenState
             .trim();
       }
       if (_dateOfObservationController.text.trim().isNotEmpty) {
-        cultivationDetailsMap['date_observation'] = _dateOfObservationController
-            .text
-            .trim();
+        final isoObservationDate = _toIsoDateTime(
+          _dateOfObservationController.text,
+        );
+        if (isoObservationDate != null) {
+          cultivationDetailsMap['date_observation'] = isoObservationDate;
+        }
       }
       if (_microscopicAiSnapshot != null &&
           _microscopicAiSnapshot!.isNotEmpty) {
@@ -461,21 +624,27 @@ class _SetMonitoringDetailsScreenState
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Show success and pop
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Monitoring details updated successfully'),
-        ),
-      );
-      Navigator.of(context).pop(true);
+      // Show success and pop only if widget is still mounted
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Monitoring details updated successfully'),
+          ),
+        );
+        Navigator.of(context).pop(
+          const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       AppLogger.e('Error updating mold case', error: e);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
     }
   }
 
@@ -487,6 +656,7 @@ class _SetMonitoringDetailsScreenState
     _dateOfObservationController.dispose();
     _locationController.dispose();
     _initialSymptomsController.dispose();
+    _initialSignsController.dispose();
     _initialCharacteristicsController.dispose();
     _initialMicroscopicController.dispose();
     _initialMacroscopicController.dispose();
@@ -525,14 +695,14 @@ class _SetMonitoringDetailsScreenState
   }
 
   Future<void> _pickInitialSymptoms() async {
-    final selectedSymptoms = await showMultiChipSelectionModal(
+    final selectedSymptoms = await showSearchableSelectionModal(
       context: context,
       title: 'Select Initial Symptoms',
       options: _initialSymptomsOptions,
       currentSelections: _selectedInitialSymptoms,
-      customInputHint: 'Add custom symptom(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search symptoms...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selectedSymptoms != null && selectedSymptoms.isNotEmpty) {
@@ -546,14 +716,14 @@ class _SetMonitoringDetailsScreenState
   }
 
   Future<void> _pickInitialCharacteristics() async {
-    final selectedCharacteristics = await showMultiChipSelectionModal(
+    final selectedCharacteristics = await showSearchableSelectionModal(
       context: context,
       title: 'Select Initial Characteristics',
       options: _initialCharacteristicsOptions,
       currentSelections: _selectedInitialCharacteristics,
-      customInputHint: 'Add custom characteristic(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      searchHint: 'Search characteristics...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
     );
 
     if (selectedCharacteristics != null && selectedCharacteristics.isNotEmpty) {
@@ -564,6 +734,27 @@ class _SetMonitoringDetailsScreenState
         _initialCharacteristicsController.text = selectedCharacteristics.join(
           ', ',
         );
+      });
+    }
+  }
+
+  Future<void> _pickInitialSigns() async {
+    final selectedSigns = await showSearchableSelectionModal(
+      context: context,
+      title: 'Select Initial Signs',
+      options: _initialSignsOptions,
+      currentSelections: _selectedInitialSigns,
+      searchHint: 'Search signs...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+    );
+
+    if (selectedSigns != null && selectedSigns.isNotEmpty) {
+      setState(() {
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(selectedSigns);
+        _initialSignsController.text = selectedSigns.join(', ');
       });
     }
   }
@@ -668,11 +859,12 @@ class _SetMonitoringDetailsScreenState
 
     if (!mounted || result is! Map<String, dynamic>) return;
     final confidence = (result['confidenceDecimal'] as num?)?.toDouble();
-    if (confidence != null && confidence < 0.70) {
+    final thresholdDecimal = ScanConstants.lowConfidenceThreshold / 100;
+    if (confidence != null && confidence < thresholdDecimal) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Low AI confidence detected. Consider adding more observations before final verdict.',
+            'Low AI confidence detected (<${ScanConstants.lowConfidenceThreshold.toStringAsFixed(0)}%). Consider adding more observations before final verdict.',
           ),
         ),
       );
@@ -697,6 +889,29 @@ class _SetMonitoringDetailsScreenState
     if (!mounted) return;
     setState(() {
       if (result is Map<String, dynamic>) {
+        String asDisplayText(dynamic value) {
+          if (value == null) return '';
+          if (value is List) {
+            return value
+                .map((entry) => entry.toString().trim())
+                .where((entry) => entry.isNotEmpty)
+                .join(', ');
+          }
+          return value.toString().trim();
+        }
+
+        List<String> asStringList(dynamic value) {
+          if (value is List) {
+            return value
+                .map((entry) => entry.toString().trim())
+                .where((entry) => entry.isNotEmpty)
+                .toList();
+          }
+          final raw = asDisplayText(value);
+          if (raw.isEmpty) return <String>[];
+          return _splitCatalogValues(raw);
+        }
+
         _initialMacroscopicImagePath = result['imagePath']?.toString();
         _initialMacroscopicColorController.text =
             result['color']?.toString() ?? '';
@@ -704,6 +919,15 @@ class _SetMonitoringDetailsScreenState
             result['texture']?.toString() ?? '';
         _initialMacroscopicSymptomsController.text =
             result['symptomsDisplay']?.toString() ?? '';
+        final signsDisplay = asDisplayText(
+          result['signsDisplay'] ?? result['signs'],
+        );
+        final parsedSigns = asStringList(result['signs']);
+        _selectedInitialSigns
+          ..clear()
+          ..addAll(parsedSigns.isNotEmpty ? parsedSigns : asStringList(signsDisplay));
+        _initialSignsController.text =
+            signsDisplay.isNotEmpty ? signsDisplay : _selectedInitialSigns.join(', ');
         _initialMacroscopicCharacteristicsController.text =
             result['characteristicsDisplay']?.toString() ?? '';
         _initialMacroscopicController.text =
@@ -801,15 +1025,43 @@ class _SetMonitoringDetailsScreenState
   }
 
   /// Shows a date picker and writes the selected date into [targetController].
+  /// If selecting a start date, validates it does not exceed the end date.
   Future<void> _selectDate(
     BuildContext context,
     TextEditingController targetController,
   ) async {
+    final today = DateTime.now();
+    final todayDateOnly = DateTime(today.year, today.month, today.day);
+
+    // Determine if this is for start date or another date
+    final isStartDate = targetController == _startDateController;
+
+    // If setting start date and end date is set, use end date as the max
+    DateTime lastDateForPicker = DateTime(2101);
+    if (isStartDate && _endDateController.text.isNotEmpty) {
+      try {
+        final endDate = DateFormat(
+          'MMMM dd, yyyy',
+        ).parse(_endDateController.text);
+        lastDateForPicker = endDate;
+      } catch (e) {
+        AppLogger.e('Failed to parse end date: $e');
+      }
+    }
+
+    final DateTime firstDateForPicker =
+        isStartDate ? todayDateOnly : DateTime(2000);
+
+    final DateTime initialDateForPicker =
+        todayDateOnly.isAfter(lastDateForPicker)
+            ? lastDateForPicker
+            : todayDateOnly;
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      initialDate: initialDateForPicker,
+      firstDate: firstDateForPicker,
+      lastDate: lastDateForPicker,
       errorFormatText: 'Enter valid date',
       errorInvalidText: 'Enter date in valid range',
       fieldHintText: 'Month/Day/Year',
@@ -880,11 +1132,13 @@ class _SetMonitoringDetailsScreenState
         typeController: _specimenTypeController,
         qtyController: _specimenQuantityController,
         symptomsController: _initialSymptomsController,
+        signsController: _initialSignsController,
         charController: _initialCharacteristicsController,
         specimenEntries: _specimenEntries,
         onAddSpecimen: _addSpecimenEntry,
         onPickType: _pickSpecimenType,
         onPickSymptoms: _pickInitialSymptoms,
+        onPickSigns: _pickInitialSigns,
         onPickCharacteristics: _pickInitialCharacteristics,
         onRemoveSpecimen: (index) =>
             setState(() => _specimenEntries.removeAt(index)),
@@ -900,6 +1154,7 @@ class _SetMonitoringDetailsScreenState
         macroColorController: _initialMacroscopicColorController,
         macroTextureController: _initialMacroscopicTextureController,
         macroSymptomsController: _initialMacroscopicSymptomsController,
+        macroSignsController: _initialSignsController,
         macroCharacteristicsController:
             _initialMacroscopicCharacteristicsController,
         microscopicImagePath: _initialMicroscopicImagePath,
@@ -927,7 +1182,7 @@ class _SetMonitoringDetailsScreenState
                 children: [
                   /// ----------- Identification History Header -----------
                   Text(
-                    'Set Monitoring Details',
+                    'Set initial observation',
                     style: TextStyle(
                       fontSize: 36,
                       fontFamily: 'Montserrat-Black',
@@ -935,7 +1190,7 @@ class _SetMonitoringDetailsScreenState
                     ),
                   ),
                   Text(
-                    'Adjust the schedule and setup for your mold case.',
+                    'Adjust baseline observation details for your mold case.',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-Regular',

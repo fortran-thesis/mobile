@@ -1,11 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:moldify/core/features/culture/services/culture_session_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_empty_state_card.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_preview_image.dart';
+import 'package:moldify/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class AddLogChoicesScreen extends StatefulWidget {
   final String? microscopicImagePath;
@@ -16,10 +19,14 @@ class AddLogChoicesScreen extends StatefulWidget {
   final String? initialMacroColor;
   final String? initialMacroTexture;
   final String? initialMacroSymptoms;
+  final String? initialMacroSigns;
   final String? initialMacroCharacteristics;
-  final VoidCallback onCaptureMicro;
-  final VoidCallback onCaptureMacro;
-  final Future<void> Function() onSubmit;
+  final String? caseId;
+  final String? selectedCultureId;
+  final String? selectedCultureName;
+  final void Function(String? cultureId, String? cultureName) onCaptureMicro;
+  final void Function(String? cultureId, String? cultureName) onCaptureMacro;
+  final Future<void> Function(String? cultureId, String? cultureName) onSubmit;
 
   const AddLogChoicesScreen({
     super.key,
@@ -31,7 +38,11 @@ class AddLogChoicesScreen extends StatefulWidget {
     this.initialMacroColor,
     this.initialMacroTexture,
     this.initialMacroSymptoms,
+    this.initialMacroSigns,
     this.initialMacroCharacteristics,
+    this.caseId,
+    this.selectedCultureId,
+    this.selectedCultureName,
     required this.onCaptureMicro,
     required this.onCaptureMacro,
     required this.onSubmit,
@@ -47,38 +58,103 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   final TextEditingController _macroColorController = TextEditingController();
   final TextEditingController _macroTextureController = TextEditingController();
   final TextEditingController _macroSymptomsController = TextEditingController();
+  final TextEditingController _macroSignsController = TextEditingController();
   final TextEditingController _macroCharacteristicsController = TextEditingController();
+  List<CultureSession> _availableCultures = const [];
+  String? _selectedCultureId;
+  String? _selectedCultureName;
+  bool _isLoadingCultures = false;
   bool _isSaving = false;
 
     @override
     void initState() {
     super.initState();
     _hydrateFromArguments();
+    _loadAvailableCultures();
     }
 
     void _hydrateFromArguments() {
-    _microAnalysisController.text =
-      widget.microResult?['identifiedMold']?.toString() ??
-      widget.initialMicroIdentifiedMold?.toString() ??
-      '';
-
-    _macroColorController.text =
-      widget.macroResult?['color']?.toString() ??
-      widget.initialMacroColor?.toString() ??
-      '';
-    _macroTextureController.text =
-      widget.macroResult?['texture']?.toString() ??
-      widget.initialMacroTexture?.toString() ??
-      '';
-    _macroSymptomsController.text =
-      widget.macroResult?['symptomsDisplay']?.toString() ??
-      widget.initialMacroSymptoms?.toString() ??
-      '';
-    _macroCharacteristicsController.text =
-      widget.macroResult?['characteristicsDisplay']?.toString() ??
-      widget.initialMacroCharacteristics?.toString() ??
-      '';
+    String asDisplayText(dynamic value) {
+      if (value == null) return '';
+      if (value is List) {
+        return value
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .join(', ');
+      }
+      return value.toString().trim();
     }
+
+    _microAnalysisController.text = asDisplayText(
+      widget.microResult?['identifiedMold'] ??
+          widget.initialMicroIdentifiedMold,
+    );
+
+    _macroColorController.text = asDisplayText(
+      widget.macroResult?['color'] ?? widget.initialMacroColor,
+    );
+    _macroTextureController.text = asDisplayText(
+      widget.macroResult?['texture'] ?? widget.initialMacroTexture,
+    );
+    _macroSymptomsController.text = asDisplayText(
+      widget.macroResult?['symptomsDisplay'] ??
+          widget.macroResult?['symptoms'] ??
+          widget.initialMacroSymptoms,
+    );
+    _macroSignsController.text = asDisplayText(
+      widget.macroResult?['signsDisplay'] ??
+          widget.macroResult?['signs'] ??
+          widget.initialMacroSigns,
+    );
+    _macroCharacteristicsController.text = asDisplayText(
+      widget.macroResult?['characteristicsDisplay'] ??
+          widget.macroResult?['characteristics'] ??
+          widget.initialMacroCharacteristics,
+    );
+
+    _selectedCultureId =
+        widget.selectedCultureId ??
+        widget.macroResult?['cultureId']?.toString() ??
+        widget.microResult?['cultureId']?.toString();
+    _selectedCultureName =
+        widget.selectedCultureName ??
+        widget.macroResult?['cultureName']?.toString() ??
+        widget.microResult?['cultureName']?.toString();
+    }
+
+  Future<void> _loadAvailableCultures() async {
+    final caseId = widget.caseId?.trim() ?? '';
+    if (caseId.isEmpty || !mounted) return;
+
+    setState(() => _isLoadingCultures = true);
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final available = await CultureSessionService.instance.getAvailableForLogs(
+        caseId,
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _availableCultures = available;
+        if (_availableCultures.isEmpty) {
+          _selectedCultureId = null;
+          _selectedCultureName = null;
+        } else {
+          final selected = _availableCultures.firstWhere(
+            (item) => item.id == _selectedCultureId,
+            orElse: () => _availableCultures.first,
+          );
+          _selectedCultureId = selected.id;
+          _selectedCultureName = selected.name;
+        }
+        _isLoadingCultures = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingCultures = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -86,6 +162,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     _macroColorController.dispose();
     _macroTextureController.dispose();
     _macroSymptomsController.dispose();
+    _macroSignsController.dispose();
     _macroCharacteristicsController.dispose();
     super.dispose();
   }
@@ -107,6 +184,8 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildPageHeader(),
+                const SizedBox(height: 20),
+                _buildCultureAssignmentSection(),
                 const SizedBox(height: 50),
 
                 // --- MICROSCOPIC SECTION ---
@@ -115,7 +194,12 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                 _buildCaptureCard(
                   hasImage: hasMicro,
                   imagePath: widget.microscopicImagePath,
-                  onTap: _isSaving ? null : widget.onCaptureMicro,
+                  onTap: _isSaving
+                      ? null
+                      : () => widget.onCaptureMicro(
+                            _selectedCultureId,
+                            _selectedCultureName,
+                          ),
                   statusText: _microAnalysisController.text.isEmpty 
                       ? "Pending Analysis" 
                       : _microAnalysisController.text,
@@ -165,7 +249,7 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                   color: MoldifyColors.primaryColor,
                 )
             ),
-            Text(
+        Text(
                 "Document your observations with images and details to track the progression of the case.",
                 style: TextStyle(
                   fontSize: 16,
@@ -173,6 +257,73 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                   color: MoldifyColors.MoldifyBlack,
                 )
             ),
+      ],
+    );
+  }
+
+  Widget _buildCultureAssignmentSection() {
+    if (_isLoadingCultures) {
+      return const Text(
+        'Checking culture availability...',
+        style: TextStyle(
+          fontSize: 12,
+          fontFamily: 'Bricolage-Grotesque-Regular',
+          color: MoldifyColors.MoldifyGrey,
+        ),
+      );
+    }
+
+    if (_availableCultures.isEmpty) {
+      return const Text(
+        'No available culture yet. Use CULTURE to set a timer and wait until it is ready.',
+        style: TextStyle(
+          fontSize: 12,
+          fontFamily: 'Bricolage-Grotesque-Regular',
+          color: MoldifyColors.MoldifyGrey,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Assigned Culture',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Bricolage-Grotesque-SemiBold',
+            color: MoldifyColors.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          key: ValueKey(_selectedCultureId ?? '_none'),
+          value: _selectedCultureId,
+          items: _availableCultures
+              .map(
+                (culture) => DropdownMenuItem<String>(
+                  value: culture.id,
+                  child: Text(culture.name),
+                ),
+              )
+              .toList(),
+          onChanged: _isSaving
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  final selected = _availableCultures.firstWhere(
+                    (item) => item.id == value,
+                  );
+                  setState(() {
+                    _selectedCultureId = selected.id;
+                    _selectedCultureName = selected.name;
+                  });
+                },
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Select culture',
+          ),
+        ),
       ],
     );
   }
@@ -249,7 +400,12 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
           _buildCaptureCard(
             hasImage: hasImage,
             imagePath: widget.macroscopicImagePath,
-            onTap: _isSaving ? null : widget.onCaptureMacro,
+            onTap: _isSaving
+                ? null
+                : () => widget.onCaptureMacro(
+                      _selectedCultureId,
+                      _selectedCultureName,
+                    ),
             statusText: "Macroscopic Specimen",
             emptyMsg: "Tap to capture macroscopic view",
           ),
@@ -265,7 +421,12 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                   const SizedBox(height: 15),
                   _buildDataRow(
                     l1: 'SYMPTOMS', v1: _macroSymptomsController.text, i1: Icons.healing_outlined,
-                    l2: 'DETAILS', v2: _macroCharacteristicsController.text, i2: Icons.science_outlined,
+                    l2: 'SIGNS', v2: _macroSignsController.text, i2: Icons.visibility_outlined,
+                  ),
+                  const SizedBox(height: 15),
+                  _buildDataRow(
+                    l1: 'DETAILS', v1: _macroCharacteristicsController.text, i1: Icons.science_outlined,
+                    l2: '', v2: '', i2: Icons.science_outlined,
                   ),
                 ],
               ),
@@ -279,12 +440,17 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
     required String l1, required String v1, required IconData i1,
     required String l2, required String v2, required IconData i2,
   }) {
+    final hasSecondTile = l2.trim().isNotEmpty;
     return IntrinsicHeight(
       child: Row(
         children: [
           Expanded(child: ObservationDataTile(label: l1, value: v1, icon: i1)),
           const SizedBox(width: 12),
-          Expanded(child: ObservationDataTile(label: l2, value: v2, icon: i2)),
+          Expanded(
+            child: hasSecondTile
+                ? ObservationDataTile(label: l2, value: v2, icon: i2)
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -344,10 +510,20 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
 
   Future<void> _handleSubmit() async {
     if (_isSaving) return;
+
+    if (_availableCultures.isNotEmpty &&
+        ((_selectedCultureId ?? '').trim().isEmpty ||
+            (_selectedCultureName ?? '').trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an assigned culture first.')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
-      await widget.onSubmit();
+      await widget.onSubmit(_selectedCultureId, _selectedCultureName);
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

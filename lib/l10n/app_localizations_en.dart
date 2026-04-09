@@ -482,4 +482,171 @@ class AppLocalizationsEn extends AppLocalizations {
   String failedToChangePassword(String error) {
     return 'Failed to change password: $error';
   }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get articleDataUnavailable => 'Article data is unavailable.';
+
+  @override
+  String get viewWikiMold => 'View WikiMold';
+
+  @override
+  String get unknownDate => 'Unknown date';
+
+  @override
+  String errorLoadingArticles(String error) {
+    return 'Error loading articles: $error';
+  }
+
+  @override
+  String errorLoadingMoreArticles(String error) {
+    return 'Error loading more articles: $error';
+  }
+
+  @override
+  String get articleNotAvailableYet => 'This article is not available yet.';
+
+  @override
+  String get controlTreatmentsLabel => '5 CONTROL TREATMENTS';
+
+  @override
+  String get preventionTacticsTitle => 'Prevention Tactics';
+
+  @override
+  String get preventionTacticsSubtitle =>
+      'Comprehensive mold control management strategies.';
+
+  @override
+  String get noPreventionTacticsAvailable => 'No prevention tactics available';
+
+  @override
+  String get treatmentRecommendations => 'Treatment Recommendations';
+
+  @override
+  String get informationUnavailable => 'Information currently unavailable.';
+
+  @override
+  String get observationDataPending => 'Observation data pending...';
+
+  @override
+  String get scientificDataPending => 'Scientific data pending review...';
+
+  @override
+  String get errorReportIdNotFound => 'Error: Report ID not found';
+
+  @override
+  String get photoUploadLimit => 'You can only upload up to 5 photos.';
+
+  @override
+  String get welcomeTo => 'Welcome To';
+
+  @override
+  String get welcomeAppSubtitle =>
+      'A Mold Investigation System for Agriculture';
+
+  @override
+  String get onboarding1Title => 'Submit Mold Cases with ';
+
+  @override
+  String get onboarding1Highlight => 'Ease';
+
+  @override
+  String get onboarding1Subtitle =>
+      'Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.';
+
+  @override
+  String get onboarding2Title => 'Expert Review by ';
+
+  @override
+  String get onboarding2Highlight => 'Mycologists';
+
+  @override
+  String get onboarding2Subtitle =>
+      'Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get continueToApp => 'Continue To App';
+
+  @override
+  String get chooseRole => 'CHOOSE ROLE';
+
+  @override
+  String get chooseRoleSubtitle =>
+      'Please select your role to proceed to login';
+
+  @override
+  String get farmer => 'Farmer';
+
+  @override
+  String get mycologist => 'Mycologist';
+
+  @override
+  String get logIn => 'LOG IN';
+
+  @override
+  String get loginSubtitle => 'Please enter username and password.';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get enterPasswordHint => 'Enter Password';
+
+  @override
+  String get forgotUsername => 'Forgot Username?';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String get signUpLink => 'Sign Up';
+
+  @override
+  String get loginTermsText =>
+      'By proceeding you acknowledge that you have read, understood and agree to our ';
+
+  @override
+  String get signUp => 'SIGN UP';
+
+  @override
+  String get signUpSubtitle => 'Please enter details to create an account.';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get enterEmail => 'Enter Email';
+
+  @override
+  String get occupation => 'Occupation';
+
+  @override
+  String get enterOccupation => 'Enter occupation';
+
+  @override
+  String get confirmPassword => 'Confirm Password';
+
+  @override
+  String get enterConfirmPassword => 'Enter Confirm Password';
+
+  @override
+  String get signUpButton => 'Sign Up';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? ';
+
+  @override
+  String get logInLink => 'Log In';
+
+  @override
+  String get signUpTermsText =>
+      'I acknowledged that I have read, understood and agree to our ';
 }

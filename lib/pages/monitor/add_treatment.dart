@@ -189,7 +189,7 @@ class _AddTreatmentScreenState extends State<AddTreatmentScreen> {
                   ),
                   /// Additional Notes Textbox.
                   BuildTextBox(
-                    hintText: 'Enter additional notes here',
+                    hintText: 'Write additional notes here...',
                     controller: _notesTreatController,
                     showPassword: false,
                     isMultiline: true,

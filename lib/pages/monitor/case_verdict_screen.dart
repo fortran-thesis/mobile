@@ -52,7 +52,9 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
     final selectedResult = widget.lookupResults[_selectedIndex!];
     final moldId = selectedResult['moldId']?.toString();
     final moldName = selectedResult['moldName']?.toString() ?? '';
-    final confidence = (selectedResult['confidence'] as num?)?.toDouble() ?? 0.0;
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    final confidenceRaw = selectedResult['confidence'] ?? selectedResult['confidence_score'];
+    final confidence = (confidenceRaw as num?)?.toDouble() ?? 0.0;
 
     _performVerdictSubmission(moldId, moldName, confidence);
   }
@@ -283,7 +285,9 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
   Widget _buildVerdictCard(int index) {
     final result = widget.lookupResults[index];
     final moldName = result['moldName']?.toString() ?? 'Unknown';
-    final confidence = (result['confidence'] as num?)?.toDouble() ?? 0.0;
+    // Try 'confidence' first, then fallback to 'confidence_score'
+    final confidenceRaw = result['confidence'] ?? result['confidence_score'];
+    final confidence = (confidenceRaw as num?)?.toDouble() ?? 0.0;
     final isSelected = _selectedIndex == index;
 
     return GestureDetector(

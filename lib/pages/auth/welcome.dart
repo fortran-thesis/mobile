@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/language_toggle.dart';
 import 'package:moldify/providers/auth_provider.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 /// ===============================
@@ -27,35 +29,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  /// -------------------------------
-  /// ONBOARDING PAGE DATA
-  /// -------------------------------
-  /// This makes the onboarding UI easy to update
-  final List<OnboardingPageData> _pages = [
-    OnboardingPageData(
-      type: PageType.welcome,
-      image: 'assets/images/welcome_farmer.png',
-      title: 'Welcome To',
-      titleLarge: 'MOLDIFY',
-      subtitle: 'A Mold Investigation System for Agriculture',
-    ),
-    OnboardingPageData(
-      type: PageType.standard,
-      image: 'assets/images/onboarding_farmer.png',
-      title: 'Submit Mold Cases with ',
-      titleHighlight: 'Ease',
-      subtitle: 'Moldify is a digital system that enables farmers to submit suspected mold cases for structured expert investigation.',
-    ),
-    OnboardingPageData(
-      type: PageType.standard,
-      image: 'assets/images/onboarding_scientist.png',
-      title: 'Expert Review by ',
-      titleHighlight: 'Mycologists',
-      subtitle: 'Moldify supports expert assessment and informed agricultural decision. Got mold worries? Use Moldify and take action today.',
-      isLastPage: true,
-    ),
-  ];
-
   /// Dispose controller to avoid memory leaks
   @override
   void dispose() {
@@ -70,9 +43,37 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     });
   }
 
+  /// Builds the list of onboarding pages with localized content
+  List<OnboardingPageData> _buildPages(AppLocalizations l10n) {
+    return [
+      OnboardingPageData(
+        type: PageType.welcome,
+        image: 'assets/images/welcome_farmer.png',
+        title: l10n.welcomeTo,
+        titleLarge: 'MOLDIFY',
+        subtitle: l10n.welcomeAppSubtitle,
+      ),
+      OnboardingPageData(
+        type: PageType.standard,
+        image: 'assets/images/onboarding_farmer.png',
+        title: l10n.onboarding1Title,
+        titleHighlight: l10n.onboarding1Highlight,
+        subtitle: l10n.onboarding1Subtitle,
+      ),
+      OnboardingPageData(
+        type: PageType.standard,
+        image: 'assets/images/onboarding_scientist.png',
+        title: l10n.onboarding2Title,
+        titleHighlight: l10n.onboarding2Highlight,
+        subtitle: l10n.onboarding2Subtitle,
+        isLastPage: true,
+      ),
+    ];
+  }
+
   /// Navigates to the next onboarding page
-  void _nextPage() {
-    if (_currentPage < _pages.length - 1) {
+  void _nextPage(int pagesLength) {
+    if (_currentPage < pagesLength - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -101,6 +102,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final l10n = AppLocalizations.of(context)!;
+    final pages = _buildPages(l10n);
 
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
@@ -112,13 +115,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           PageView.builder(
             controller: _pageController,
             onPageChanged: _onPageChanged,
-            itemCount: _pages.length,
+            itemCount: pages.length,
             itemBuilder: (context, index) {
-              final page = _pages[index];
+              final page = pages[index];
               return page.type == PageType.welcome
                   ? _buildWelcomePage(page, screenHeight)
                   : _buildStandardPage(page);
             },
+          ),
+
+          /// -------------------------------
+          /// LANGUAGE TOGGLE (TOP LEFT)
+          /// -------------------------------
+          Positioned(
+            top: 30,
+            left: 15,
+            child: LanguageToggle(
+              color: MoldifyColors.backgroundColor,
+              fontSize: 12,
+            ),
           ),
 
           /// -------------------------------
@@ -129,9 +144,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             right: 5,
             child: TextButton(
               onPressed: _skip,
-              child: const Text(
-                'Skip',
-                style: TextStyle(
+              child: Text(
+                l10n.skip,
+                style: const TextStyle(
                   color: MoldifyColors.primaryColor,
                   fontFamily: 'Bricolage-Grotesque-Regular',
                   fontSize: 16,
@@ -176,21 +191,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 // Indicators
                 Row(
                   children: List.generate(
-                    _pages.length,
-                        (index) => _buildIndicator(index),
+                    pages.length,
+                    (index) => _buildIndicator(index, pages.length),
                   ),
                 ),
 
                 // Next/Continue button
                 BuildButton(
-                  buttonText: _pages[_currentPage].isLastPage ? 'Continue To App' : 'Next',
-                  onPressed: _pages[_currentPage].isLastPage ? _finish : _nextPage,
-                  backgroundColor: _currentPage == 0 ? MoldifyColors.backgroundColor : MoldifyColors.accentColor,
-                  textColor: _currentPage == 0 ? MoldifyColors.primaryColor : MoldifyColors.MoldifyBlack,
+                  buttonText: pages[_currentPage].isLastPage
+                      ? l10n.continueToApp
+                      : l10n.next,
+                  onPressed: pages[_currentPage].isLastPage
+                      ? _finish
+                      : () => _nextPage(pages.length),
+                  backgroundColor: _currentPage == 0
+                      ? MoldifyColors.backgroundColor
+                      : MoldifyColors.accentColor,
+                  textColor: _currentPage == 0
+                      ? MoldifyColors.primaryColor
+                      : MoldifyColors.MoldifyBlack,
                   buttonHeight: 35,
                   buttonRadius: 10,
                   rightIcon: Icons.arrow_forward,
-                  rightIconColor: _currentPage == 0 ? MoldifyColors.primaryColor : MoldifyColors.MoldifyBlack,
+                  rightIconColor: _currentPage == 0
+                      ? MoldifyColors.primaryColor
+                      : MoldifyColors.MoldifyBlack,
                   rightIconSize: 18,
                   paddingIconText: 8,
                 ),
@@ -346,7 +371,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   /// ===============================
   /// PAGE INDICATOR DOT
   /// ===============================
-  Widget _buildIndicator(int index) {
+  Widget _buildIndicator(int index, int totalPages) {
     final isActive = _currentPage == index;
 
     return AnimatedContainer(

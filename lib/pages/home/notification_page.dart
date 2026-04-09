@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/notification/logic/notification_bloc.dart';
 import 'package:moldify/core/features/notification/models/notification.dart';
+import 'package:moldify/core/features/user/logic/user_bloc.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/tiles/notification_tile.dart';
+import 'package:moldify/core/utils/notification_navigation.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -41,14 +45,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
           if (state is NotificationLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: MoldifyColors.primaryColor,
-              ),
-            );
+            return const Center(child: AppLoadingSpinner());
           }
 
           if (state is NotificationError) {
+            final l10n = AppLocalizations.of(context)!;
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -68,7 +69,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         RefreshNotifications(sessionCookie: cookie),
                       );
                     },
-                    child: const Text('Retry'),
+                    child: Text(l10n.retry),
                   ),
                 ],
               ),
@@ -194,7 +195,40 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               },
                               child: BuildNotificationTile(
                                 onViewDetails: () {
-                                  AppLogger.d('View details of notification ${notif.id}');
+                                  AppLogger.d('View details of notification ${notif.id}: referenceType=${notif.referenceType}, referenceId=${notif.referenceId}');
+
+                                  // Mark as read
+                                  context.read<NotificationBloc>().add(
+                                    MarkNotificationRead(
+                                      notificationId: notif.id,
+                                      sessionCookie: cookie,
+                                    ),
+                                  );
+
+                                  // Navigate based on reference_type
+                                  if (notif.referenceId != null && notif.referenceType != null) {
+                                    final userState = context.read<UserBloc>().state;
+                                    final userRole = (userState is UserProfileLoaded)
+                                        ? userState.profile.role
+                                        : null;
+                                    final target = resolveNotificationNavigationTarget(
+                                      referenceType: notif.referenceType,
+                                      referenceId: notif.referenceId,
+                                      userRole: userRole,
+                                    );
+
+                                    if (target != null) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        target.routeName,
+                                        arguments: target.arguments,
+                                      );
+                                    } else {
+                                      AppLogger.w(
+                                        'Notification tap ignored: type=${notif.referenceType}, id=${notif.referenceId}, role=$userRole',
+                                      );
+                                    }
+                                  }
                                 },
                                 onMarkAsRead: () {
                                   context.read<NotificationBloc>().add(

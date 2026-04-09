@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/l10n/app_localizations.dart';
 
 
 import 'bottom_sheet.dart';
@@ -155,9 +156,10 @@ class _PhotoUploaderState extends State<PhotoUploader> {
   }
 
   void _showLimitSnackBar() {
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('You can only upload up to 5 photos.'),
+      SnackBar(
+        content: Text(l10n.photoUploadLimit),
         behavior: SnackBarBehavior.floating,
       ),
     );

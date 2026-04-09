@@ -11,6 +11,7 @@ class RouteNames {
   static const String camera = '/camera';
   static const String imagePreview = '/image_preview';
   static const String moldResult = '/mold_result';
+  static const String lowConfidenceCorrection = '/low_confidence_correction';
   static const String setMonitoringDetails = '/set-monitoring-details';
   static const String viewCase = '/view-case';
   static const String editLog = '/edit-log';
@@ -34,5 +35,8 @@ class RouteNames {
   /// for culture
   static const String cultureDashboard = '/culture-dashboard';
   static const String setCulture = '/set-culture';
+  static const String createMold = '/create-mold';
+  // WikiMold article detail
+  static const String viewWikiMold = '/view-wikimold';
   // Add more route names as needed
 }

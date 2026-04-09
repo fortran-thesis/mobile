@@ -19,6 +19,9 @@ class CameraService {
     String? sourceTab,
     String? moldCaseId,
     String? predictedClassName,
+    String? correctedGenus,
+    String? correctedPredictedClassName,
+    String? correctedAt,
     String? moldId,
     String? capturedAt,
     required Map<String, dynamic> scannedResults,
@@ -34,6 +37,13 @@ class CameraService {
         'mold_case_id': moldCaseId,
       if (predictedClassName != null && predictedClassName.isNotEmpty)
         'predicted_class_name': predictedClassName,
+      if (correctedGenus != null && correctedGenus.isNotEmpty)
+        'corrected_genus': correctedGenus,
+      if (correctedPredictedClassName != null &&
+          correctedPredictedClassName.isNotEmpty)
+        'corrected_predicted_class_name': correctedPredictedClassName,
+      if (correctedAt != null && correctedAt.isNotEmpty)
+        'corrected_at': correctedAt,
       if (moldId != null && moldId.isNotEmpty) 'mold_id': moldId,
       if (capturedAt != null && capturedAt.isNotEmpty)
         'captured_at': capturedAt,
@@ -92,6 +102,91 @@ class CameraService {
       }
     } catch (e) {
       return {'error': 'Error: $e'};
+    }
+  }
+
+  /// Fetches mold details by database ID (used after selecting from full catalog).
+  Future<Map<String, dynamic>> getMoldDetailsById({
+    required String moldId,
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _moldApi.get(
+        '/$moldId',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
+      );
+      if (response.statusCode == 200) {
+        final payload = response.data as Map<String, dynamic>;
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+        return payload;
+      }
+      return {
+        'error': 'Failed to fetch mold details: ${response.statusCode}',
+      };
+    } catch (e) {
+      return {'error': 'Error: $e'};
+    }
+  }
+
+  /// Gets the supported mold genera list used for correction dropdown options.
+  Future<Map<String, dynamic>> getSupportedCorrectionGenera({
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _moldApi.get(
+        '/supported-genera',
+        headers: {'Content-Type': 'application/json'},
+        sessionCookie: sessionCookie,
+        cacheOptions: CacheConfig.staticData,
+      );
+
+      if (response.statusCode == 200) {
+        final payload = response.data as Map<String, dynamic>;
+        final data = payload['data'];
+        if (data is Map<String, dynamic>) return data;
+        return payload;
+      }
+
+      return {
+        'error': 'Failed to fetch supported genera: ${response.statusCode}',
+      };
+    } catch (e) {
+      return {'error': 'Error: $e'};
+    }
+  }
+
+  /// Updates an existing scanned mold record.
+  Future<Map<String, dynamic>> updateScannedMold({
+    required String scannedMoldId,
+    required Map<String, dynamic> payload,
+    String? sessionCookie,
+  }) async {
+    try {
+      final response = await _scanApi.patch(
+        '/$scannedMoldId',
+        headers: {'Content-Type': 'application/json'},
+        body: payload,
+        sessionCookie: sessionCookie,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        return {'data': data};
+      }
+
+      return {
+        'error': 'Failed to update scan: ${response.statusCode}',
+        'statusCode': response.statusCode,
+        'data': response.data,
+      };
+    } catch (e) {
+      return {'error': 'Exception: $e'};
     }
   }
 

@@ -10,7 +10,9 @@ import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/core/features/mold/service/mold_detail_adapter.dart';
+import 'package:moldify/core/features/flag_report/services/flag_report_service.dart';
 import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
@@ -25,6 +27,9 @@ class MoldResultScreen extends StatefulWidget {
   final String? scanModality;
   final String? sourceTab;
   final String? caseId;
+  /// When non-null the result was pre-corrected by [LowConfidenceCorrectionScreen].
+  /// The genus is pre-populated and the flag button is hidden.
+  final String? correctedGenus;
 
   const MoldResultScreen({
     super.key,
@@ -35,6 +40,7 @@ class MoldResultScreen extends StatefulWidget {
     this.scanModality,
     this.sourceTab,
     this.caseId,
+    this.correctedGenus,
   });
 
   @override
@@ -42,10 +48,39 @@ class MoldResultScreen extends StatefulWidget {
 }
 
 class _MoldResultScreenState extends State<MoldResultScreen> {
+  static const Map<String, String> _fallbackSupportedCorrectionMap = {
+    'alternaria': 'Alternaria_spp',
+    'aspergillus flavi': 'Aspergillus_section_Flavi',
+    'aspergillus section flavi': 'Aspergillus_section_Flavi',
+    'aspergillus section nigri': 'Aspergillus_section_Nigri',
+    'fusarium': 'Fusarium_spp',
+    'penicillium': 'Penicillium_spp',
+    'rhizopus': 'Rhizopus_spp',
+  };
+
+  static const List<String> _fallbackPresetGenusOptions = [
+    'Alternaria',
+    'Aspergillus Flavi',
+    'Aspergillus Section Nigri',
+    'Fusarium',
+    'Penicillium',
+    'Rhizopus',
+  ];
+
+  Map<String, String> _supportedCorrectionMap = Map<String, String>.from(
+    _fallbackSupportedCorrectionMap,
+  );
+  List<String> _presetGenusOptions = List<String>.from(
+    _fallbackPresetGenusOptions,
+  );
+
   late String confidenceLevel;
   late String moldGenus;
   bool _isSavingResult = false;
   bool _isMoldNotFound = false; // Flag to detect when mold not in database
+  String? _correctedGenus;
+  String? _correctedPredictedClassName;
+  String? _correctedAtIso;
   late String healthContent;
   late String plantThreatContent;
   late String fullDescription;
@@ -187,7 +222,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       confidenceLevel = '';
       AppLogger.d('MoldResult: No probability found in modelResult');
     }
-    // Extract only the genus from 'genus_spp' format
+    // Extract genus from predicted_class as fallback display name
     final predictedClass =
         widget.modelResult?['predicted_class']?.toString() ?? '';
     moldGenus = predictedClass.contains('_')
@@ -199,9 +234,28 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
     // Detect if mold was found in database
     final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
+    final moldStatus = resolvedDetails['status']?.toString();
+    // When the user explicitly corrected the genus (via LowConfidenceCorrectionScreen),
+    // treat the mold as found regardless of draft status — they selected it from the
+    // catalog and the document exists. For regular scans, draft molds are still hidden
+    // because their data may be incomplete/unreviewed.
+    final bool isCorrectedFlow =
+        widget.correctedGenus != null && widget.correctedGenus!.isNotEmpty;
     _isMoldNotFound =
-        resolvedDetails.isEmpty || resolvedDetails.containsKey('error');
-    AppLogger.d('MoldResult: Mold found in database: ${!_isMoldNotFound}');
+        resolvedDetails.isEmpty ||
+        resolvedDetails.containsKey('error') ||
+        (moldStatus == 'draft' && !isCorrectedFlow);
+    AppLogger.d(
+      'MoldResult: Mold found/reviewed: ${!_isMoldNotFound} (status: $moldStatus)',
+    );
+
+    // When the mold is found in the DB, prefer its stored name over the
+    // truncated predicted_class string (e.g. "Aspergillus section Flavi"
+    // instead of the split-on-underscore "Aspergillus").
+    if (!_isMoldNotFound) {
+      final dbName = resolvedDetails['name']?.toString().trim() ?? '';
+      if (dbName.isNotEmpty) moldGenus = dbName;
+    }
 
     // Use moldDetails if available to populate data instead of hardcoded values
     if (!_isMoldNotFound) {
@@ -287,6 +341,18 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     _managementControls = _parseManagementControls(
       _buildTreatmentsContent(resolvedDetails),
     );
+
+    // Pre-populate corrected genus when arriving from LowConfidenceCorrectionScreen
+    if (widget.correctedGenus != null && widget.correctedGenus!.isNotEmpty) {
+      moldGenus = widget.correctedGenus!;
+      _correctedGenus = widget.correctedGenus;
+      _correctedAtIso = DateTime.now().toUtc().toIso8601String();
+      AppLogger.d(
+        'MoldResult: Pre-corrected genus from low-confidence flow: $_correctedGenus',
+      );
+    }
+
+    _loadSupportedCorrectionOptions();
   }
 
   List<Map<String, dynamic>> _buildTopPredictions() {
@@ -386,6 +452,207 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     }
   }
 
+  String _normalizeCorrectionKey(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  Future<void> _loadSupportedCorrectionOptions() async {
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final response = await cameraService.getSupportedCorrectionGenera(
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (response['error'] != null) {
+        AppLogger.e(
+          'MoldResult: Failed to load supported correction genera: ${response['error']}',
+        );
+        return;
+      }
+
+      final rawGenera = response['genera'];
+      if (rawGenera is! List) return;
+
+      final nextMap = <String, String>{};
+      final nextOptions = <String>[];
+
+      for (final item in rawGenera) {
+        if (item is! Map) continue;
+        final data = Map<String, dynamic>.from(item);
+
+        var displayName = data['display_name']?.toString().trim() ?? '';
+        final predictedClassName =
+            data['predicted_class_name']?.toString().trim() ?? '';
+        final normalizedKeyRaw =
+            data['normalized_key']?.toString().trim() ?? '';
+
+        if (displayName.isEmpty || predictedClassName.isEmpty) continue;
+
+        final normalizedKey = normalizedKeyRaw.isNotEmpty
+            ? _normalizeCorrectionKey(normalizedKeyRaw)
+            : _normalizeCorrectionKey(displayName);
+
+        if (normalizedKey == 'aspergillus section flavi' ||
+            normalizedKey == 'aspergillus flavi') {
+          displayName = 'Aspergillus Flavi';
+        }
+
+        nextMap[normalizedKey] = predictedClassName;
+        if (normalizedKey == 'aspergillus section flavi') {
+          nextMap['aspergillus flavi'] = predictedClassName;
+        }
+        if (!nextOptions.contains(displayName)) {
+          nextOptions.add(displayName);
+        }
+      }
+
+      if (!mounted || nextMap.isEmpty) return;
+
+      setState(() {
+        _supportedCorrectionMap = nextMap;
+        if (nextOptions.isNotEmpty) {
+          _presetGenusOptions = nextOptions;
+        }
+      });
+    } catch (error, stackTrace) {
+      AppLogger.e(
+        'MoldResult: Exception while loading supported correction genera',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _applyCorrectedGenus(String correctedText) async {
+    final corrected = correctedText.trim();
+    if (corrected.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter or select a corrected genus.'),
+        ),
+      );
+      return;
+    }
+
+    final normalized = _normalizeCorrectionKey(corrected);
+    final predictedClassName = _supportedCorrectionMap[normalized];
+
+    setState(() {
+      moldGenus = corrected;
+      _correctedGenus = corrected;
+      _correctedPredictedClassName = predictedClassName;
+      _correctedAtIso = DateTime.now().toUtc().toIso8601String();
+    });
+
+    if (predictedClassName == null) {
+      setState(() {
+        _isMoldNotFound = true;
+        _recommendationSections['OVERVIEW'] =
+            'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database';
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Mold genus information does not exist in the system yet.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final cameraService = CameraService();
+      final details = await cameraService.getMoldDetails(
+        moldName: predictedClassName,
+        sessionCookie: authProvider.cookie,
+      );
+
+      if (details['error'] != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Correction saved, but mold details are unavailable.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final resolved = MoldDetailAdapter.unwrapPayload(details);
+      if (resolved.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Correction saved, but mold details are unavailable.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final symptoms = _readMoldDetailSymptoms(resolved);
+      final spread = _readMoldDetailSpread(resolved);
+      final impact = _readMoldDetailImpact(resolved);
+      final prevention = _readMoldDetailPrevention(resolved);
+
+      setState(() {
+        _isMoldNotFound = false;
+        healthContent = _readMoldDetailField(
+          resolved,
+          'health_risks',
+          healthContent,
+        );
+        plantThreatContent = _readMoldDetailField(
+          resolved,
+          'affected_hosts',
+          plantThreatContent,
+        );
+        fullDescription = _readMoldDetailField(
+          resolved,
+          'overview',
+          fullDescription,
+        );
+
+        _recommendationSections['OVERVIEW'] =
+            'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
+        _recommendationSections['DESCRIPTION'] = fullDescription;
+        _recommendationSections['HEALTH RISKS'] = healthContent;
+        _recommendationSections['AFFECTED CROPS / HOSTS'] = plantThreatContent;
+        _recommendationSections['SYMPTOMS & SIGNS'] = symptoms;
+        _recommendationSections['DISEASE CYCLE / SPREAD'] = spread;
+        _recommendationSections['IMPACT'] = impact;
+        _recommendationSections['PREVENTION'] = prevention;
+
+        _managementControls
+          ..clear()
+          ..addAll(_parseManagementControls(_buildTreatmentsContent(resolved)));
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mold information has been updated.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Correction saved, but failed to fetch mold details.'),
+        ),
+      );
+    }
+  }
+
   Widget _buildManagementControls() {
     if (_managementControls.isEmpty) {
       return const Padding(
@@ -427,14 +694,14 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: PrimaryAppBar(
         title: 'Mold Result',
-        rightIcon: Icon(Icons.flag),
+        // Hide the flag button when genus was already corrected upstream
+        rightIcon: widget.correctedGenus != null ? null : Icon(Icons.flag),
         rightIconColor: MoldifyColors.MoldifyRed,
-        onRightIconPressed: () {
+        onRightIconPressed: widget.correctedGenus != null ? null : () {
           // Define the save logic here so it can be referenced by both onSave and onConfirm
           void onSave(String correctedText) {
-            // Add your save logic here
             AppLogger.d('Corrected Text: $correctedText');
-            Navigator.of(context).pop(); // This will pop the bottom sheet
+            _applyCorrectedGenus(correctedText);
           }
 
           showModalBottomSheet(
@@ -452,6 +719,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 child: BuildBottomSheet(
                   child: CorrectionBottomSheetContent(
                     correctedGenusController: correctedGenusController,
+                    presetGenusOptions: _presetGenusOptions,
                     onClose: () {
                       Navigator.of(context).pop();
                     },
@@ -462,11 +730,12 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
                     /// This is the cancel action for the pop up dialog
                     onCancel: () {
-                      Navigator.of(context).pop();
+                      AppLogger.d('MoldResult: Correction cancelled by user');
                     },
 
                     /// This is the confirm action for the pop up dialog
                     onConfirm: () {
+                      Navigator.of(context).pop();
                       onSave(correctedGenusController.text);
                     },
                   ),
@@ -682,6 +951,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             final nowIso = DateTime.now()
                                 .toUtc()
                                 .toIso8601String();
+                            final thresholdDecimal =
+                              ScanConstants.lowConfidenceThreshold / 100;
 
                             final savePayload = <String, dynamic>{
                               'imagePath': widget.croppedImagePath,
@@ -703,6 +974,10 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               'sourceTab': widget.sourceTab,
                               'moldCaseId': widget.caseId,
                               'predictedClassName': predictedClassName,
+                              'correctedGenus': _correctedGenus,
+                              'correctedPredictedClassName':
+                                  _correctedPredictedClassName,
+                              'correctedAt': _correctedAtIso,
                               'isMoldNotFound':
                                   _isMoldNotFound, // Flag for backend tracking
                             };
@@ -727,10 +1002,15 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     sourceTab: widget.sourceTab,
                                     moldCaseId: widget.caseId,
                                     predictedClassName: predictedClassName,
+                                    correctedGenus: _correctedGenus,
+                                    correctedPredictedClassName:
+                                        _correctedPredictedClassName,
+                                    correctedAt: _correctedAtIso,
                                     capturedAt: nowIso,
                                     scannedResults: {
                                       'confidence_score': confidenceDecimal,
-                                      'flagged': confidenceDecimal < 0.70,
+                                      'flagged': confidenceDecimal <
+                                          thresholdDecimal,
                                     },
                                     sessionCookie: authProvider.cookie,
                                   );
@@ -746,6 +1026,62 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                   savePayload['scanId'] = data['id']
                                       ?.toString();
                                   savePayload['savedScan'] = data;
+
+                                  // Create flag report if scan was auto-flagged (low confidence)
+                                  if (confidenceDecimal < thresholdDecimal) {
+                                    try {
+                                      final flagReportService =
+                                          FlagReportService();
+                                      await flagReportService.createFlagReport(
+                                        payload: {
+                                          'content_id': data['id'],
+                                          'content_type': 'mold_scan',
+                                          'reason': 'low_confidence_auto_flag',
+                                          'details': confidenceDecimal
+                                              .toString(),
+                                        },
+                                        sessionCookie: authProvider.cookie,
+                                      );
+                                      AppLogger.d(
+                                        'MoldResult: Flag report created for low-confidence scan',
+                                      );
+                                    } catch (e, s) {
+                                      AppLogger.e(
+                                        'MoldResult: Failed to create flag report',
+                                        error: e,
+                                        stackTrace: s,
+                                      );
+                                    }
+                                  }
+
+                                  if (_correctedGenus != null &&
+                                      (_correctedPredictedClassName == null ||
+                                          _correctedPredictedClassName!
+                                              .trim()
+                                              .isEmpty)) {
+                                    try {
+                                      final flagReportService =
+                                          FlagReportService();
+                                      await flagReportService.createFlagReport(
+                                        payload: {
+                                          'content_id': data['id'],
+                                          'content_type': 'mold_scan',
+                                          'reason': 'corrected_genus_not_found',
+                                          'details': _correctedGenus,
+                                        },
+                                        sessionCookie: authProvider.cookie,
+                                      );
+                                      AppLogger.d(
+                                        'MoldResult: Flag report created for unsupported corrected genus',
+                                      );
+                                    } catch (e, s) {
+                                      AppLogger.e(
+                                        'MoldResult: Failed to create unsupported-genus flag report',
+                                        error: e,
+                                        stackTrace: s,
+                                      );
+                                    }
+                                  }
                                 }
                               }
                             } catch (e, s) {
@@ -762,7 +1098,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             }
 
                             if (!context.mounted) return;
-                            Navigator.of(context).pop(savePayload);
+                            if (context.mounted) {
+                              Navigator.of(context).pop(savePayload);
+                            }
                           },
                         ),
                       ),

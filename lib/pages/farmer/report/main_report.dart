@@ -9,11 +9,13 @@ import 'package:provider/provider.dart';
 import '../../misc/buttons/popmenu_button.dart';
 import '../../misc/colors.dart';
 import '../../misc/functions/empty_state.dart';
+import '../../misc/overlays/loading_ui.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/main_case_tile.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../core/features/mold_report/models/mold_report.dart';
 import '../../../core/features/mold_report/repository/mold_report_repository.dart';
+import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 
 class MainReportScreen extends StatefulWidget {
@@ -38,6 +40,22 @@ class _MainReportScreenState extends State<MainReportScreen> {
   final Set<String> _requestedDetailedReportIds = {};
   static const String _reportScope = 'own';
 
+  // Tracks the last-known cookie to detect login after logout.
+  String? _lastKnownCookie;
+
+  void _onAuthChanged() {
+    if (!mounted) return;
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    final cookie = authProvider.cookie;
+    // A new session started: cookie changed from null (or different value) to a non-null value.
+    if (cookie != null && cookie != _lastKnownCookie) {
+      _lastKnownCookie = cookie;
+      _bloc.add(RefreshMoldReports(sessionCookie: cookie, scope: _reportScope));
+    } else if (cookie == null) {
+      _lastKnownCookie = null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +65,10 @@ class _MainReportScreenState extends State<MainReportScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
+      _lastKnownCookie = sessionCookie;
       _bloc.add(FetchMoldReports(sessionCookie: sessionCookie, scope: _reportScope));
+      // Listen for future login/logout changes so stale BLoC state is replaced.
+      authProvider.addListener(_onAuthChanged);
     });
 
     _scrollController.addListener(() {
@@ -82,6 +103,15 @@ class _MainReportScreenState extends State<MainReportScreen> {
     return value.toLowerCase().replaceAll('_', ' ').trim();
   }
 
+  // Sentinel value meaning the user explicitly chose "All" statuses.
+  static const String _filterAll = '__all__';
+  // Default view: pending, in-progress, and recently resolved cases.
+  static const List<String> _activeStatuses = [
+    'pending',
+    'in progress',
+    'resolved',
+  ];
+
   List<MoldReport> _applyClientFilters(List<MoldReport> reports) {
     final searchText = searchController.text.trim().toLowerCase();
     return reports.where((report) {
@@ -90,8 +120,16 @@ class _MainReportScreenState extends State<MainReportScreen> {
       final matchesSearch = searchText.isEmpty || caseName.contains(searchText) || host.contains(searchText);
 
       final reportStatus = _normalizeStatus(report.status);
-      final activeStatus = _activeStatusFilter == null ? null : _normalizeStatus(_activeStatusFilter!);
-      final matchesStatus = activeStatus == null || reportStatus == activeStatus;
+      final bool matchesStatus;
+      if (_activeStatusFilter == _filterAll) {
+        // User explicitly picked "All" — show everything.
+        matchesStatus = true;
+      } else if (_activeStatusFilter == null) {
+        // Default view: show only pending and in-progress.
+        matchesStatus = _activeStatuses.contains(reportStatus);
+      } else {
+        matchesStatus = reportStatus == _normalizeStatus(_activeStatusFilter!);
+      }
 
       return matchesSearch && matchesStatus;
     }).toList();
@@ -169,6 +207,9 @@ class _MainReportScreenState extends State<MainReportScreen> {
     searchController.dispose();
     _scrollController.dispose();
     _bloc.close();
+    // Remove the auth listener to avoid calling setState after dispose.
+    final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    authProvider.removeListener(_onAuthChanged);
     super.dispose();
   }
   @override
@@ -215,12 +256,12 @@ class _MainReportScreenState extends State<MainReportScreen> {
                             /// Submit Mold Report Button
                             TextButton(
                               onPressed: () async {
-                                final result = await Navigator.pushNamed(
+                                final result = await pushNamedForMutationResult(
                                   context,
                                   '/submit-report',
                                 );
                                 if (!mounted) return;
-                                if (result == true) {
+                                if (result.changed) {
                                   final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                   _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie, scope: _reportScope));
                                 }
@@ -253,11 +294,18 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                   color: MoldifyColors.accentColor,
                                   size: 20.0
                               ),
-                              items: ['All', 'In Progress', 'Pending', 'Resolved', 'Rejected'],
+                              items: ['Active (Default)', 'All', 'In Progress', 'Pending', 'Resolved', 'Rejected'],
                               onItemSelected: (index) {
-                                final selectedStatus = ['All', 'In Progress', 'Pending', 'Resolved', 'Rejected'][index];
+                                const options = ['Active (Default)', 'All', 'In Progress', 'Pending', 'Resolved', 'Rejected'];
+                                final selected = options[index];
                                 setState(() {
-                                  _activeStatusFilter = selectedStatus == 'All' ? null : selectedStatus;
+                                  if (selected == 'Active (Default)') {
+                                    _activeStatusFilter = null; // default: pending + in-progress
+                                  } else if (selected == 'All') {
+                                    _activeStatusFilter = _filterAll;
+                                  } else {
+                                    _activeStatusFilter = selected;
+                                  }
                                 });
                               },
                             ),
@@ -282,11 +330,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                           child: BlocBuilder<MoldReportBloc, MoldReportState>(
                             builder: (context, state) {
                               if (state is MoldReportLoading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    color: MoldifyColors.primaryColor,
-                                  ),
-                                );
+                                return const Center(child: AppLoadingSpinner());
                               }
                               if (state is MoldReportError) {
                                 return EmptyState(message: state.message, height: MediaQuery.of(context).size.height - 300);
@@ -313,9 +357,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                       return const Padding(
                                         padding: EdgeInsets.symmetric(vertical: 12.0),
                                         child: Center(
-                                          child: CircularProgressIndicator(
-                                            color: MoldifyColors.primaryColor,
-                                          ),
+                                          child: AppLoadingSpinner(),
                                         ),
                                       );
                                     }
@@ -342,13 +384,13 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                         caseStatus: caseStatus,
                                         imageUrl: _resolveReportCoverPhoto(report),
                                         onTap: () async {
-                                          final result = await Navigator.pushNamed(
+                                          final result = await pushNamedForMutationResult(
                                             context,
                                             '/view-report',
                                             arguments: {'id': report.id},
                                           );
                                           if (!mounted) return;
-                                          if (result == true) {
+                                          if (result.changed) {
                                             final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
                                             _bloc.add(RefreshMoldReports(sessionCookie: authProvider.cookie));
                                           }
