@@ -8,10 +8,8 @@ class ReportHostsSymptomsTab extends StatelessWidget {
 
   /// Section aliases that this tab displays
   static final Map<String, List<String>> _sectionAliases = {
-    'Affected Crops / Hosts': ['affected crops', 'affected hosts', 'hosts', 'host range', 'host'],
-    'Symptoms & Signs': ['symptoms signs', 'symptoms and signs', 'symptoms', 'signs'],
-    'Signs in Onions': ['in onions', 'onions', 'allium'],
-    'Signs in Postharvest Fruit': ['in postharvest fruit', 'postharvest fruit', 'postharvest'],
+    'Affected Hosts': ['affected hosts', 'affected crops', 'hosts', 'host range', 'host'],
+    'Symptoms and Signs': ['symptoms and signs', 'symptoms & signs', 'symptoms signs', 'symptoms', 'signs'],
   };
 
   const ReportHostsSymptomsTab({

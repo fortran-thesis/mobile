@@ -64,6 +64,15 @@ class _AddLogScreenState extends State<AddLogScreen> {
     'Necrosis',
   ];
 
+  static const List<String> _defaultSignOptions = [
+    'White mycelial growth',
+    'Powdery residue',
+    'Dark sporulation',
+    'Water-soaked lesion edge',
+    'Foul odor',
+    'Slimy exudate',
+  ];
+
   static const List<String> _defaultCharacteristicOptions = [
     'Cottony',
     'Powdery',
@@ -76,7 +85,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final List<String> _symptomOptions = List<String>.from(
     _defaultSymptomOptions,
   );
-  final List<String> _signOptions = List<String>.from(_defaultSymptomOptions);
+  final List<String> _signOptions = List<String>.from(_defaultSignOptions);
   final List<String> _characteristicOptions = List<String>.from(
     _defaultCharacteristicOptions,
   );
@@ -113,15 +122,19 @@ class _AddLogScreenState extends State<AddLogScreen> {
       );
 
       final symptoms = <String>{..._defaultSymptomOptions};
-      final signs = <String>{..._defaultSymptomOptions};
+      final signs = <String>{..._defaultSignOptions};
       final characteristics = <String>{..._defaultCharacteristicOptions};
 
       for (final entry in catalog) {
         symptoms.addAll(entry.symptoms);
-        symptoms.addAll(entry.signs);
         signs.addAll(entry.signs);
-        symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
-        signs.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        final fallbackCombined = _splitCatalogValues(entry.symptomsAndSigns);
+        if (entry.symptoms.isEmpty) {
+          symptoms.addAll(fallbackCombined);
+        }
+        if (entry.signs.isEmpty) {
+          signs.addAll(fallbackCombined);
+        }
         characteristics.addAll(entry.characteristics);
       }
 
@@ -619,6 +632,16 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 fontFamily: 'Bricolage-Grotesque-Regular',
                                 fontSize: 10,
                                 color: MoldifyColors.MoldifyGrey,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Document your observations with images and details to track the progression of the case.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyGrey,
+                                height: 1.4,
                               ),
                             ),
                             if (_availableCultures.isNotEmpty) ...[

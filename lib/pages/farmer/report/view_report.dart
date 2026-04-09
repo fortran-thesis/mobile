@@ -672,11 +672,11 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   : _preventionTacticsContent;
 
                               final tabs = <String>[
+                                'Prevention & Control',
                                 'Case Details',
                                 'Overview',
                                 'Hosts & Symptoms',
                                 'Disease Cycle & Impact',
-                                'Prevention & Control',
                               ];
 
                               final maxIndex = tabs.length - 1;
@@ -685,12 +685,6 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   .toInt();
 
                               final tabContents = <Widget>[
-                                _buildCaseDetailsTab(context),
-                                ReportOverviewTab(sections: noteSections),
-                                ReportHostsSymptomsTab(sections: noteSections),
-                                ReportDiseaseCycleImpactTab(
-                                  sections: noteSections,
-                                ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 5.0,
@@ -698,6 +692,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   child: PreventionTacticsContent(
                                     treatmentsContent: preventionContent,
                                   ),
+                                ),
+                                _buildCaseDetailsTab(context),
+                                ReportOverviewTab(sections: noteSections),
+                                ReportHostsSymptomsTab(sections: noteSections),
+                                ReportDiseaseCycleImpactTab(
+                                  sections: noteSections,
                                 ),
                               ];
 
@@ -712,7 +712,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'IDENTIFIED GENUS',
+                                            'DISEASE NAME',
                                             style: TextStyle(
                                               fontSize: 9,
                                               letterSpacing: 2.0,

@@ -10,6 +10,7 @@ import '../misc/appbar/primary_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/core/features/mold/service/mold_detail_adapter.dart';
 import 'package:moldify/core/features/flag_report/services/flag_report_service.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -49,6 +50,7 @@ class MoldResultScreen extends StatefulWidget {
 class _MoldResultScreenState extends State<MoldResultScreen> {
   static const Map<String, String> _fallbackSupportedCorrectionMap = {
     'alternaria': 'Alternaria_spp',
+    'aspergillus flavi': 'Aspergillus_section_Flavi',
     'aspergillus section flavi': 'Aspergillus_section_Flavi',
     'aspergillus section nigri': 'Aspergillus_section_Nigri',
     'fusarium': 'Fusarium_spp',
@@ -58,7 +60,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
   static const List<String> _fallbackPresetGenusOptions = [
     'Alternaria',
-    'Aspergillus Section Flavi',
+    'Aspergillus Flavi',
     'Aspergillus Section Nigri',
     'Fusarium',
     'Penicillium',
@@ -469,7 +471,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         if (item is! Map) continue;
         final data = Map<String, dynamic>.from(item);
 
-        final displayName = data['display_name']?.toString().trim() ?? '';
+        var displayName = data['display_name']?.toString().trim() ?? '';
         final predictedClassName =
             data['predicted_class_name']?.toString().trim() ?? '';
         final normalizedKeyRaw =
@@ -481,7 +483,15 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
             ? _normalizeCorrectionKey(normalizedKeyRaw)
             : _normalizeCorrectionKey(displayName);
 
+        if (normalizedKey == 'aspergillus section flavi' ||
+            normalizedKey == 'aspergillus flavi') {
+          displayName = 'Aspergillus Flavi';
+        }
+
         nextMap[normalizedKey] = predictedClassName;
+        if (normalizedKey == 'aspergillus section flavi') {
+          nextMap['aspergillus flavi'] = predictedClassName;
+        }
         if (!nextOptions.contains(displayName)) {
           nextOptions.add(displayName);
         }
@@ -927,6 +937,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             final nowIso = DateTime.now()
                                 .toUtc()
                                 .toIso8601String();
+                            final thresholdDecimal =
+                              ScanConstants.lowConfidenceThreshold / 100;
 
                             final savePayload = <String, dynamic>{
                               'imagePath': widget.croppedImagePath,
@@ -983,7 +995,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     capturedAt: nowIso,
                                     scannedResults: {
                                       'confidence_score': confidenceDecimal,
-                                      'flagged': confidenceDecimal < 0.70,
+                                      'flagged': confidenceDecimal <
+                                          thresholdDecimal,
                                     },
                                     sessionCookie: authProvider.cookie,
                                   );
@@ -1001,7 +1014,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                   savePayload['savedScan'] = data;
 
                                   // Create flag report if scan was auto-flagged (low confidence)
-                                  if (confidenceDecimal < 0.70) {
+                                  if (confidenceDecimal < thresholdDecimal) {
                                     try {
                                       final flagReportService =
                                           FlagReportService();

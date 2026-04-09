@@ -8,12 +8,15 @@ class ReportDiseaseCycleImpactTab extends StatelessWidget {
 
   /// Section aliases that this tab displays
   static final Map<String, List<String>> _sectionAliases = {
-    'Disease Cycle / Spread': ['disease cycle', 'cycle', 'spread', 'transmission'],
-    'Infection Mechanism': ['infection mechanism', 'mechanism', 'infection'],
-    'Soil Inoculum Details': ['soil inoculum', 'inoculum', 'soil'],
-    'Peanut-Specific Impact': ['on peanuts specifically', 'peanuts', 'peanut'],
-    'Mycotoxin Risk Assessment': ['mycotoxin risk', 'mycotoxin', 'toxin'],
-    'Overall Impact': ['impact', 'consequence', 'implications'],
+    'Disease Cycle / Spread / Impact': [
+      'disease cycle spread impact',
+      'disease cycle / spread / impact',
+      'disease cycle spread',
+      'disease cycle',
+      'spread',
+      'impact',
+      'transmission',
+    ],
   };
 
   const ReportDiseaseCycleImpactTab({

@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/functions/empty_state.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_preview_image.dart';
@@ -72,15 +74,65 @@ class InitialObservationTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Initial Observation',
-            style: TextStyle(
-              fontFamily: 'Montserrat-Black',
-              fontSize: 20,
-              color: MoldifyColors.primaryColor,
+          Container(
+            padding: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: MoldifyColors.primaryColor.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'INITIAL OBSERVATION',
+                      style: TextStyle(
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 18,
+                        letterSpacing: -0.5,
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                    Text(
+                      hasAnyObservation
+                          ? 'BASELINE CAPTURED'
+                          : 'NO ENTRIES FOUND',
+                      style: TextStyle(
+                        fontFamily: 'Bricolage-Grotesque-Bold',
+                        fontSize: 8,
+                        letterSpacing: 1.0,
+                        color: MoldifyColors.primaryColor.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!isCaseClosed && onAddInitialObservations != null)
+                  BuildButton(
+                    buttonText: 'ADD INITIAL',
+                    onPressed: onAddInitialObservations!,
+                    backgroundColor: Colors.transparent,
+                    textColor: MoldifyColors.primaryColor,
+                    leftIcon: FontAwesomeIcons.plus,
+                    iconColor: MoldifyColors.primaryColor,
+                    iconSize: 10,
+                    paddingIconText: 6,
+                    buttonHeight: 30,
+                    buttonRadius: 0,
+                    fontSize: 12,
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
           const Text(
             'Baseline microscopic and macroscopic data captured during setup.',
             style: TextStyle(
@@ -89,28 +141,6 @@ class InitialObservationTab extends StatelessWidget {
               color: MoldifyColors.MoldifyGrey,
             ),
           ),
-          if (!isCaseClosed && onAddInitialObservations != null) ...[
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: onAddInitialObservations,
-                icon: const Icon(
-                  Icons.add_circle_outline,
-                  size: 16,
-                  color: MoldifyColors.primaryColor,
-                ),
-                label: const Text(
-                  'Add Initial Observations',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-SemiBold',
-                    color: MoldifyColors.primaryColor,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
-          ],
           if (!hasAnyObservation) ...[
             const SizedBox(height: 24),
             EmptyState(

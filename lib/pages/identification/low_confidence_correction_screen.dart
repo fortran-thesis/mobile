@@ -48,6 +48,7 @@ class _LowConfidenceCorrectionScreenState
   // --- Fallback genus list (identical to MoldResultScreen) ---
   static const Map<String, String> _fallbackSupportedCorrectionMap = {
     'alternaria': 'Alternaria_spp',
+    'aspergillus flavi': 'Aspergillus_section_Flavi',
     'aspergillus section flavi': 'Aspergillus_section_Flavi',
     'aspergillus section nigri': 'Aspergillus_section_Nigri',
     'fusarium': 'Fusarium_spp',
@@ -57,7 +58,7 @@ class _LowConfidenceCorrectionScreenState
 
   static const List<String> _fallbackPresetGenusOptions = [
     'Alternaria',
-    'Aspergillus Section Flavi',
+    'Aspergillus Flavi',
     'Aspergillus Section Nigri',
     'Fusarium',
     'Penicillium',
@@ -145,7 +146,7 @@ class _LowConfidenceCorrectionScreenState
       for (final item in rawGenera) {
         if (item is! Map) continue;
         final data = Map<String, dynamic>.from(item);
-        final displayName = data['display_name']?.toString().trim() ?? '';
+        var displayName = data['display_name']?.toString().trim() ?? '';
         final predictedClassName =
             data['predicted_class_name']?.toString().trim() ?? '';
         final normalizedKeyRaw =
@@ -157,7 +158,15 @@ class _LowConfidenceCorrectionScreenState
             ? _normalizeCorrectionKey(normalizedKeyRaw)
             : _normalizeCorrectionKey(displayName);
 
+        if (normalizedKey == 'aspergillus section flavi' ||
+            normalizedKey == 'aspergillus flavi') {
+          displayName = 'Aspergillus Flavi';
+        }
+
         nextMap[normalizedKey] = predictedClassName;
+        if (normalizedKey == 'aspergillus section flavi') {
+          nextMap['aspergillus flavi'] = predictedClassName;
+        }
         if (!nextOptions.contains(displayName)) nextOptions.add(displayName);
       }
 

@@ -9,8 +9,7 @@ class ReportOverviewTab extends StatelessWidget {
   /// Section aliases that this tab displays
   static final Map<String, List<String>> _sectionAliases = {
     'Overview': ['overview', 'introduction', 'summary'],
-    'Detailed Description': ['description', 'detailed description', 'details'],
-    'Health & Safety Risk': ['health risk', 'human risk', 'risk', 'health', 'safety'],
+    'Health Risks': ['health risks', 'health risk', 'human risk', 'risk', 'health', 'safety'],
   };
 
   const ReportOverviewTab({

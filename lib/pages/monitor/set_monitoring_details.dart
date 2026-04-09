@@ -7,6 +7,7 @@ import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
 import 'package:moldify/core/constants/route_names.dart';
+import 'package:moldify/core/constants/scan_constants.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/functions/step_indicator.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -236,10 +237,14 @@ class _SetMonitoringDetailsScreenState
 
       for (final entry in catalog) {
         symptoms.addAll(entry.symptoms);
-        symptoms.addAll(entry.signs);
         signs.addAll(entry.signs);
-        symptoms.addAll(_splitCatalogValues(entry.symptomsAndSigns));
-        signs.addAll(_splitCatalogValues(entry.symptomsAndSigns));
+        final fallbackCombined = _splitCatalogValues(entry.symptomsAndSigns);
+        if (entry.symptoms.isEmpty) {
+          symptoms.addAll(fallbackCombined);
+        }
+        if (entry.signs.isEmpty) {
+          signs.addAll(fallbackCombined);
+        }
         characteristics.addAll(entry.characteristics);
       }
 
@@ -854,11 +859,12 @@ class _SetMonitoringDetailsScreenState
 
     if (!mounted || result is! Map<String, dynamic>) return;
     final confidence = (result['confidenceDecimal'] as num?)?.toDouble();
-    if (confidence != null && confidence < 0.70) {
+    final thresholdDecimal = ScanConstants.lowConfidenceThreshold / 100;
+    if (confidence != null && confidence < thresholdDecimal) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Low AI confidence detected. Consider adding more observations before final verdict.',
+            'Low AI confidence detected (<${ScanConstants.lowConfidenceThreshold.toStringAsFixed(0)}%). Consider adding more observations before final verdict.',
           ),
         ),
       );
@@ -1143,7 +1149,7 @@ class _SetMonitoringDetailsScreenState
                 children: [
                   /// ----------- Identification History Header -----------
                   Text(
-                    'Set Monitoring Details',
+                    'Set initial observation',
                     style: TextStyle(
                       fontSize: 36,
                       fontFamily: 'Montserrat-Black',
@@ -1151,7 +1157,7 @@ class _SetMonitoringDetailsScreenState
                     ),
                   ),
                   Text(
-                    'Adjust the schedule and setup for your mold case.',
+                    'Adjust baseline observation details for your mold case.',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-Regular',
