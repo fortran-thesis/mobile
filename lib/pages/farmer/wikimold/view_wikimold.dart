@@ -428,6 +428,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
   /// Icon mapping for different treatment types
   IconData _getIconForTreatmentType(String type) {
     const iconMap = {
+      'PREVENTION': Icons.shield_outlined,
       'MECHANICAL': Icons.settings_suggest_outlined,
       'BIOLOGICAL': Icons.biotech_outlined,
       'CHEMICAL': Icons.science_outlined,
@@ -483,6 +484,7 @@ class _ViewWikiMoldScreenState extends State<ViewWikiMoldScreen> {
 
   // Dummy data for development/testing
   static const String _dummyTreatmentsHtml =
+      'PREVENTION::Prevention Summary::Keep affected areas dry, improve airflow, remove crop debris, and sanitize tools between field visits.|'
       'MECHANICAL::Physical Removal::Remove visible mold using brushes and HEPA vacuum. Dispose contaminated materials in sealed bags. Wear protective gear during cleanup.|'
       'BIOLOGICAL::Natural Solutions::Apply beneficial microorganisms that compete with mold. Use vinegar or tea tree oil solutions for surface treatment.|'
       'CHEMICAL::Antimicrobial Treatment::Use EPA-approved fungicides for severe cases. Ensure proper ventilation during application. Follow manufacturer instructions carefully.';

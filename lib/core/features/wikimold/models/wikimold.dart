@@ -34,6 +34,9 @@ class WikiArticle {
     final metadata = json['metadata'] is Map<String, dynamic> 
         ? json['metadata'] as Map<String, dynamic>
         : <String, dynamic>{};
+    final moldDetails = _asMap(json['mold_details']);
+    final moldInfo = _asMap(moldDetails['info']);
+    final moldPrevention = _asMap(moldDetails['prevention']);
     
     return WikiArticle(
       id: json['id']?.toString() ?? '',
@@ -57,18 +60,31 @@ class WikiArticle {
           'mechanicalContent',
         ],
       ),
-      treatments: _extractContent(
-        json,
+      treatments: _extractContentFromSources(
+        [json, moldInfo, moldPrevention],
         const [
           'treatments',
           'treatment',
+          'prevention',
+          'prevention_summary',
+          'preventionSummary',
           'stage2_content',
           'stage2Content',
+          'treatment_mechanical',
+          'treatment_cultural',
+          'treatment_biological',
+          'treatment_physical',
+          'treatment_chemical',
           'chemical_content',
           'chemicalContent',
           'recommendations',
         ],
         preferTreatmentControls: true,
+        sectionTitles: const [
+          'prevention summary',
+          'prevention',
+          'preventive measures',
+        ],
       ),
       author: json['author']?.toString() ?? 'Unknown',
       coverPhoto: json['cover_photo']?.toString(),
@@ -77,35 +93,40 @@ class WikiArticle {
       updatedAt: _parseDate(metadata['updated_at']) ?? _parseDate(json['updated_at']),
       mycologistId: json['mycologist_id']?.toString() ?? metadata['mycologist_id']?.toString(),
       approvedAt: _parseDate(metadata['approved_at']) ?? _parseDate(json['approved_at']),
-      hostPathogenImpact: _extractHostPathogenImpact(json, metadata),
+      hostPathogenImpact: _extractHostPathogenImpact(
+        json,
+        metadata,
+        moldInfo,
+        moldPrevention,
+      ),
     );
   }
 
   static Map<String, String> _extractHostPathogenImpact(
     Map<String, dynamic> json,
     Map<String, dynamic> metadata,
+    Map<String, dynamic> moldInfo,
+    Map<String, dynamic> moldPrevention,
   ) {
-    final containers = <Map<String, dynamic>>[];
+    final sources = <dynamic>[
+      moldInfo,
+      moldPrevention,
+      json['host_pathogen_impact'],
+      json['hostPathogenImpact'],
+      metadata['host_pathogen_impact'],
+      metadata['hostPathogenImpact'],
+      json,
+      metadata,
+    ];
 
-    Map<String, dynamic>? asStringMap(dynamic raw) {
-      if (raw is Map<String, dynamic>) return raw;
-      if (raw is Map) return Map<String, dynamic>.from(raw);
-      return null;
-    }
-
-    final fromRoot = asStringMap(json['host_pathogen_impact']) ?? asStringMap(json['hostPathogenImpact']);
-    final fromMeta = asStringMap(metadata['host_pathogen_impact']) ?? asStringMap(metadata['hostPathogenImpact']);
-    if (fromRoot != null) containers.add(fromRoot);
-    if (fromMeta != null) containers.add(fromMeta);
-    containers.add(json);
-    containers.add(metadata);
-
-    String read(List<String> keys) {
-      for (final container in containers) {
-        for (final key in keys) {
-          final text = _normalizeContent(container[key]).replaceAll(RegExp(r'<[^>]*>'), '').trim();
-          if (text.isNotEmpty) return text;
-        }
+    String read(List<String> keys, {List<String> sectionTitles = const []}) {
+      for (final source in sources) {
+        final text = _readNestedSection(
+          source,
+          keys,
+          sectionTitles: sectionTitles,
+        );
+        if (text.isNotEmpty) return text;
       }
       return '';
     }
@@ -117,6 +138,10 @@ class WikiArticle {
         'hosts',
         'host_range',
         'hostRange',
+        'affected_hoses',
+      ], sectionTitles: const [
+        'affected hosts',
+        'host range',
       ]),
       'symptoms_signs': read([
         'symptoms_signs',
@@ -125,12 +150,29 @@ class WikiArticle {
         'symptomsAndSigns',
         'symptoms',
         'signs',
+        'symptoms_signs_and_impact',
+      ], sectionTitles: const [
+        'symptoms & signs',
+        'symptoms and signs',
+        'symptoms/signs',
+        'symptoms',
+        'signs',
       ]),
       'transmission_cycle': read([
+        'disease_cycle',
+        'diseaseCycle',
         'transmission_cycle',
         'transmissionCycle',
         'cycle_of_transmission',
         'cycleOfTransmission',
+        'disease_cycle_spread_impact',
+        'diseaseCycleSpreadImpact',
+        'spread',
+      ], sectionTitles: const [
+        'disease cycle',
+        'transmission cycle',
+        'cycle of transmission',
+        'disease cycle spread impact',
         'spread',
       ]),
       'impact_analysis': read([
@@ -139,6 +181,13 @@ class WikiArticle {
         'impact',
         'damage_analysis',
         'damageAnalysis',
+        'health_risks',
+        'healthRisks',
+      ], sectionTitles: const [
+        'impact analysis',
+        'damage analysis',
+        'health risks',
+        'impact',
       ]),
     };
 
@@ -192,19 +241,174 @@ class WikiArticle {
     return '';
   }
 
+  static String _extractContentFromSources(
+    List<dynamic> sources,
+    List<String> keys, {
+    bool preferTreatmentControls = false,
+    List<String> sectionTitles = const [],
+  }) {
+    if (preferTreatmentControls) {
+      String merged = '';
+      for (final source in sources) {
+        if (source is! Map) continue;
+        final map = Map<String, dynamic>.from(source);
+
+        final flatStructured = _buildFlatTreatmentSegments(map);
+        if (flatStructured.isNotEmpty) {
+          merged = _mergeStructuredTreatments(merged, flatStructured);
+        }
+
+        final extracted = _readNestedSection(
+          map,
+          keys,
+          preferTreatmentControls: true,
+          sectionTitles: sectionTitles,
+        );
+        if (extracted.isNotEmpty) {
+          merged = _mergeStructuredTreatments(merged, extracted);
+        }
+      }
+      return merged;
+    }
+
+    for (final source in sources) {
+      if (source is! Map) continue;
+      final map = Map<String, dynamic>.from(source);
+      final extracted = _readNestedSection(
+        map,
+        keys,
+        preferTreatmentControls: false,
+        sectionTitles: sectionTitles,
+      );
+      if (extracted.isNotEmpty) return extracted;
+    }
+    return '';
+  }
+
+  static String _mergeStructuredTreatments(String current, String incoming) {
+    if (current.trim().isEmpty) return incoming.trim();
+    if (incoming.trim().isEmpty) return current.trim();
+
+    final merged = <String, String>{};
+
+    void addSegments(String source) {
+      final segments = source
+          .split('|')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty);
+
+      for (final segment in segments) {
+        final parts = segment.split('::');
+        if (parts.length < 3) continue;
+        final key = '${parts[0].trim().toUpperCase()}::${parts[1].trim().toLowerCase()}';
+        if (!merged.containsKey(key)) {
+          merged[key] = '${parts[0].trim()}::${parts[1].trim()}::${parts.sublist(2).join('::').trim()}';
+        }
+      }
+    }
+
+    addSegments(current);
+    addSegments(incoming);
+
+    return merged.values.join('|');
+  }
+
+  static String _buildFlatTreatmentSegments(Map<String, dynamic> map) {
+    String readFlat(List<String> keys) {
+      for (final key in keys) {
+        final text = _normalizeSectionContent(map[key]);
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+
+    final segments = <String>[];
+
+    void addFlatSegment(String type, String title, List<String> keys) {
+      final value = readFlat(keys);
+      if (value.isEmpty) return;
+      segments.add('$type::$title::$value');
+    }
+
+    addFlatSegment('PREVENTION', 'Prevention Summary', [
+      'prevention',
+      'prevention_summary',
+      'preventionSummary',
+    ]);
+    addFlatSegment('MECHANICAL', 'Mechanical Control', [
+      'treatment_mechanical',
+      'mechanical',
+      'mechanical_control',
+      'mechanicalControl',
+    ]);
+    addFlatSegment('CULTURAL', 'Cultural Control', [
+      'treatment_cultural',
+      'cultural',
+      'cultural_control',
+      'culturalControl',
+    ]);
+    addFlatSegment('BIOLOGICAL', 'Biological Control', [
+      'treatment_biological',
+      'biological',
+      'biological_control',
+      'biologicalControl',
+    ]);
+    addFlatSegment('PHYSICAL', 'Physical Control', [
+      'treatment_physical',
+      'physical',
+      'physical_control',
+      'physicalControl',
+    ]);
+    addFlatSegment('CHEMICAL', 'Chemical Control', [
+      'treatment_chemical',
+      'chemical',
+      'chemical_control',
+      'chemicalControl',
+    ]);
+
+    return segments.join('|').trim();
+  }
+
   static String _normalizeTreatments(dynamic raw) {
+    if (raw is List) {
+      final segments = <String>[];
+      for (final item in raw) {
+        if (item is Map) {
+          final map = Map<String, dynamic>.from(item);
+          final title = _normalizeSectionContent(map['title'] ?? map['name']);
+          final content = _normalizeSectionContent(map['content'] ?? map['description']);
+          final sectionType = _normalizeSectionContent(
+            map['type'] ?? map['section'] ?? map['control_type'],
+          ).toUpperCase();
+          if (title.isEmpty && content.isEmpty) continue;
+          final type = sectionType.isNotEmpty ? sectionType : 'TREATMENT';
+          segments.add('$type::$title::$content');
+        }
+      }
+      return segments.join('|').trim();
+    }
+
     if (raw is! Map) return '';
 
     final map = Map<String, dynamic>.from(raw);
 
     String read(List<String> keys) {
       for (final key in keys) {
-        final value = map[key];
-        final text = _normalizeContent(value)
-            .replaceAll(RegExp(r'<[^>]*>'), '')
-            .trim();
+        final text = _readNestedSection(map[key], const []);
         if (text.isNotEmpty) return text;
       }
+
+      final nestedPrevention = _readNestedSection(
+        map,
+        const [],
+        sectionTitles: const [
+          'prevention summary',
+          'prevention',
+          'preventive measures',
+        ],
+      );
+      if (nestedPrevention.isNotEmpty) return nestedPrevention;
+
       return '';
     }
 
@@ -214,6 +418,14 @@ class WikiArticle {
       if (value.isEmpty) return;
       segments.add('$type::$title::$value');
     }
+
+    addSegment('PREVENTION', 'Prevention Summary', [
+      'prevention_summary',
+      'preventionSummary',
+      'prevention',
+      'preventive_measures',
+      'preventiveMeasures',
+    ]);
 
     addSegment('MECHANICAL', 'Mechanical Control', [
       'mechanical',
@@ -247,6 +459,94 @@ class WikiArticle {
     ]);
 
     return segments.join('|').trim();
+  }
+
+  static String _normalizeSectionContent(dynamic raw) {
+    final normalized = _normalizeContent(raw).replaceAll(RegExp(r'<[^>]*>'), '').trim();
+    if (normalized == 'no_image' || normalized == 'null' || normalized == '[]') {
+      return '';
+    }
+    return normalized;
+  }
+
+  static Map<String, dynamic> _asMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return <String, dynamic>{};
+  }
+
+  static String _readNestedSection(
+    dynamic source,
+    List<String> keys, {
+    List<String> sectionTitles = const [],
+    bool preferTreatmentControls = false,
+  }) {
+    if (source == null) return '';
+
+    if (source is String || source is num || source is bool) {
+      return _normalizeSectionContent(source);
+    }
+
+    if (source is List) {
+      for (final item in source) {
+        final text = _readNestedSection(
+          item,
+          keys,
+          sectionTitles: sectionTitles,
+        );
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+
+    if (source is Map) {
+      final map = Map<String, dynamic>.from(source);
+
+      for (final key in keys) {
+        final raw = map[key];
+        if (preferTreatmentControls) {
+          final structured = _normalizeTreatments(raw);
+          if (structured.isNotEmpty) return structured;
+        }
+        final text = _normalizeSectionContent(raw);
+        if (text.isNotEmpty) return text;
+      }
+
+      final title = _normalizeSectionContent(
+        map['title'] ?? map['name'] ?? map['heading'] ?? map['label'],
+      );
+      if (sectionTitles.isNotEmpty && _matchesAnyTitle(title, sectionTitles)) {
+        final text = _normalizeSectionContent(
+          map['content'] ?? map['description'] ?? map['body'] ?? map['text'] ?? map['value'],
+        );
+        if (text.isNotEmpty) return text;
+      }
+
+      for (final value in map.values) {
+        final text = _readNestedSection(
+          value,
+          keys,
+          sectionTitles: sectionTitles,
+          preferTreatmentControls: preferTreatmentControls,
+        );
+        if (text.isNotEmpty) return text;
+      }
+    }
+
+    return '';
+  }
+
+  static bool _matchesAnyTitle(String sourceTitle, List<String> targets) {
+    if (sourceTitle.isEmpty) return false;
+    final normalizedSource = sourceTitle.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+    for (final target in targets) {
+      final normalizedTarget = target.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+      if (normalizedTarget.isEmpty) continue;
+      if (normalizedSource == normalizedTarget || normalizedSource.contains(normalizedTarget)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static String? _normalizeFindings(dynamic raw) {

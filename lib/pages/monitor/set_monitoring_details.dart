@@ -1168,7 +1168,7 @@ class _SetMonitoringDetailsScreenState
     ];
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
-      appBar: const PrimaryAppBar(title: 'Setup Monitoring'),
+      appBar: const PrimaryAppBar(title: 'Set Initial Observation'),
       body: Stack(
         children: [
           SingleChildScrollView(

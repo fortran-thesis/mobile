@@ -277,7 +277,6 @@ class _WikiMoldFieldEvidenceSectionState
     final cropName = _asText(
       caseData['crop_name'] ?? caseData['cropName'] ?? caseData['crop'],
     );
-    final caseImageUrl = _extractCaseImageUrl(caseData);
 
     const Color primaryGreen = MoldifyColors.primaryColor;
     const Color orangeAccent = MoldifyColors.accentColor;
@@ -310,50 +309,41 @@ class _WikiMoldFieldEvidenceSectionState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Row(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _CaseImagePreview(imageUrl: caseImageUrl),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'CROP NAME',
+                              Text(
+                                'CROP NAME',
+                                style: TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque',
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                  color: orangeAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      cropName.isNotEmpty
+                                          ? cropName.toUpperCase()
+                                          : 'UNKNOWN',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontFamily: 'Bricolage-Grotesque',
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.5,
-                                        color: orangeAccent,
+                                        fontFamily: 'Montserrat-Black',
+                                        fontSize: 22,
+                                        color: primaryGreen,
+                                        letterSpacing: -0.5,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.baseline,
-                                      textBaseline: TextBaseline.alphabetic,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            cropName.isNotEmpty
-                                                ? cropName.toUpperCase()
-                                                : 'UNKNOWN',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: 'Montserrat-Black',
-                                              fontSize: 22,
-                                              color: primaryGreen,
-                                              letterSpacing: -0.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -550,25 +540,6 @@ class _WikiMoldFieldEvidenceSectionState
     return filtered.first;
   }
 
-  String _extractCaseImageUrl(Map<String, dynamic> caseData) {
-    final details = _asMap(caseData['cultivation_details']);
-    final dynamic coverPhoto =
-        caseData['cover_photo'] ?? caseData['report_cover_photo'];
-
-    final candidates = <String>[
-      _asText(details['initial_macroscopic_image_url']),
-      _asText(details['initial_microscopic_image_url']),
-    ];
-
-    if (coverPhoto is List && coverPhoto.isNotEmpty) {
-      candidates.add(_asText(coverPhoto.first));
-    } else {
-      candidates.add(_asText(coverPhoto));
-    }
-
-    return candidates.firstWhere((item) => item.isNotEmpty, orElse: () => '');
-  }
-
   Widget _buildEvidencePanel({
     required String phase,
     required String title,
@@ -667,41 +638,6 @@ class _WikiMoldFieldEvidenceSectionState
           accentColor: accentColor,
         ),
       ],
-    );
-  }
-}
-
-class _CaseImagePreview extends StatelessWidget {
-  const _CaseImagePreview({required this.imageUrl});
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 64,
-        height: 64,
-        color: MoldifyColors.primaryColor.withValues(alpha: 0.08),
-        child: imageUrl.isEmpty
-            ? Icon(
-                Icons.image_not_supported_outlined,
-                color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-                size: 20,
-              )
-            : Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.image_not_supported_outlined,
-                    color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-                    size: 20,
-                  );
-                },
-              ),
-      ),
     );
   }
 }

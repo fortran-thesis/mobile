@@ -262,7 +262,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                           children: [
                             PopupMenu(
                               popMenuIcon: Icon(
-                                FontAwesomeIcons.sort,
+                                FontAwesomeIcons.arrowUpShortWide,
                                 color: MoldifyColors.accentColor,
                                 size: 20.0,
                               ),

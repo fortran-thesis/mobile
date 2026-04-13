@@ -218,6 +218,43 @@ class CultivationDetails {
   }
 
   factory CultivationDetails.fromJson(Map<String, dynamic> json) {
+    String? parseImageField(dynamic raw) {
+      if (raw == null) return null;
+
+      if (raw is String) {
+        final text = raw.trim();
+        if (text.isEmpty || text == 'null' || text == '[]') return null;
+
+        if (text.startsWith('[') || text.startsWith('{')) {
+          try {
+            final decoded = jsonDecode(text);
+            return parseImageField(decoded);
+          } catch (_) {
+            // If the value is not valid JSON, keep the raw string fallback.
+          }
+        }
+
+        return text;
+      }
+
+      if (raw is List) {
+        for (final item in raw) {
+          final parsed = parseImageField(item);
+          if (parsed != null && parsed.isNotEmpty) return parsed;
+        }
+        return null;
+      }
+
+      if (raw is Map<String, dynamic>) {
+        return parseImageField(
+          raw['url'] ?? raw['image_url'] ?? raw['photo_url'] ?? raw['secure_url'],
+        );
+      }
+
+      final fallback = raw.toString().trim();
+      return fallback.isEmpty ? null : fallback;
+    }
+
     InVivoDetails? inVivo;
     InVitroDetails? inVitro;
 
@@ -268,10 +305,12 @@ class CultivationDetails {
         json['initial_macroscopic_symptoms']?.toString();
     final String? initialMacroscopicCharacteristics =
         json['initial_macroscopic_characteristics']?.toString();
-    final String? initialMicroscopicImageUrl =
-        json['initial_microscopic_image_url']?.toString();
-    final String? initialMacroscopicImageUrl =
-        json['initial_macroscopic_image_url']?.toString();
+    final String? initialMicroscopicImageUrl = parseImageField(
+      json['initial_microscopic_image_url'],
+    );
+    final String? initialMacroscopicImageUrl = parseImageField(
+      json['initial_macroscopic_image_url'],
+    );
     final String? dateObservation = json['date_observation']?.toString();
     final Map<String, dynamic>? microscopicAiSnapshot =
         (json['microscopic_ai_snapshot'] is Map<String, dynamic>)

@@ -307,7 +307,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
 
       if (result['success'] == true) {
-        _showSnackBar(l10n.profileUpdated);
+        AppFeedback.showSuccess(context, l10n.profileUpdated);
 
         await Future.delayed(const Duration(milliseconds: 500));
         // Refresh profile
@@ -695,7 +695,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
           if (_isSaving)
-            const AppLoadingOverlay(),
+            const AppLoadingOverlay(
+              message: 'Saving profile changes...',
+            ),
         ],
       ),
     )

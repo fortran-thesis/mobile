@@ -14,7 +14,7 @@ class MoldifyColors{
     static const Color backgroundColor = Color(0xFFFEFCF0);
 
     static const Color MoldifyRed = Color(0xFFE44C37);
-    static const Color MoldifyBlue = Color(0xFF4986EB);
+    static const Color MoldifyBlue = Color(0xFF2F4F6F);
     static const Color MoldifyBlack = Color(0xFF22272B);
 
     static const Color MoldifyGrey = Color(0xFF7E8083);

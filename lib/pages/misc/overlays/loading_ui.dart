@@ -141,7 +141,7 @@ class AppLoadingOverlay extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Text(
-                        'SYNC_IN_PROGRESS',
+                        'SYNC IN PROGRESS',
                         style: TextStyle(
                           fontFamily: 'Bricolage-Grotesque',
                           fontSize: 10,

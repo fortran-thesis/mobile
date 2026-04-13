@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -159,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
           report['mold_report_id']?.toString() ??
           report['id']?.toString() ??
           '',
-      'photo_url': report['cover_photo'] ?? report['photo_url'],
+        'photo_url': _resolveAssignedCaseImageUrl(report),
       'priority': report['priority']?.toString() ?? 'low',
       'start_date':
           report['date_observed'] ??
@@ -168,6 +170,78 @@ class _HomeScreenState extends State<HomeScreen> {
       'end_date': report['end_date'],
       'is_archived': report['is_archived'] ?? false,
     };
+  }
+
+  String? _extractPhotoUrl(dynamic raw) {
+    if (raw is String) {
+      final normalized = raw.trim();
+      if (normalized.isEmpty ||
+          normalized == 'no_image' ||
+          normalized == '[]' ||
+          normalized == 'null') {
+        return null;
+      }
+
+      if (normalized.startsWith('[') && normalized.endsWith(']')) {
+        try {
+          final decoded = jsonDecode(normalized);
+          return _extractPhotoUrl(decoded);
+        } catch (_) {
+          // Keep normalized string fallback if JSON parsing fails.
+        }
+      }
+
+      return normalized;
+    }
+
+    if (raw is List) {
+      for (final item in raw) {
+        final extracted = _extractPhotoUrl(item);
+        if (extracted != null) return extracted;
+      }
+      return null;
+    }
+
+    if (raw is Map) {
+      return _extractPhotoUrl(
+        raw['url'] ?? raw['image_url'] ?? raw['photo_url'] ?? raw['secure_url'],
+      );
+    }
+
+    return null;
+  }
+
+  String? _resolveAssignedCaseImageUrl(Map<String, dynamic> report) {
+    final moldReport = report['mold_report'] is Map
+        ? Map<String, dynamic>.from(report['mold_report'] as Map)
+        : <String, dynamic>{};
+
+    final caseDetailsRaw = report['case_details'] ?? moldReport['case_details'];
+    final caseDetails = caseDetailsRaw is List ? caseDetailsRaw : const <dynamic>[];
+
+    final candidates = <dynamic>[
+      report['cover_photo'],
+      report['coverPhoto'],
+      report['report_cover_photo'],
+      report['photo_url'],
+      moldReport['cover_photo'],
+      moldReport['coverPhoto'],
+      moldReport['report_cover_photo'],
+      moldReport['photo_url'],
+    ];
+
+    if (caseDetails.isNotEmpty && caseDetails.first is Map) {
+      final firstDetail = Map<String, dynamic>.from(caseDetails.first as Map);
+      candidates.add(firstDetail['cover_photo']);
+      candidates.add(firstDetail['photo_url']);
+    }
+
+    for (final candidate in candidates) {
+      final url = _extractPhotoUrl(candidate);
+      if (url != null) return url;
+    }
+
+    return null;
   }
 
   /// Fetch role-specific data (assigned cases for mycologists)
@@ -187,10 +261,20 @@ class _HomeScreenState extends State<HomeScreen> {
           limit: 3,
         );
 
-        // Extract snapshot from response { snapshot: [...], nextPageToken: ... }
-        final snapshot = casesResponse['snapshot'];
-        if (snapshot is List) {
-          final parsedCases = snapshot
+        // Accept the multiple response shapes the backend has used for this endpoint.
+        final dynamic rawCases = casesResponse['snapshot'] ?? casesResponse['cases'] ?? casesResponse['data'];
+        final List<dynamic> items = rawCases is List
+            ? rawCases
+            : rawCases is Map && rawCases['snapshot'] is List
+                ? rawCases['snapshot'] as List<dynamic>
+                : rawCases is Map && rawCases['cases'] is List
+                    ? rawCases['cases'] as List<dynamic>
+                    : rawCases is Map && rawCases['data'] is List
+                        ? rawCases['data'] as List<dynamic>
+                        : <dynamic>[];
+
+        if (items.isNotEmpty) {
+          final parsedCases = items
               .whereType<Map>()
               .map((c) => _normalizeMoldReport(Map<String, dynamic>.from(c)))
               .map((normalized) => MoldCase.fromJson(normalized))
@@ -561,6 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     caseName: case_.name,
                     dateSubmitted: case_.startDate.toString().split(' ')[0],
                     caseStatus: _caseStatusMap[case_.id] ?? 'unknown',
+                    imageUrl: case_.photoUrl,
                     imageHeight: 70.0,
                     imageWidth: 70.0,
                     onTap: () {

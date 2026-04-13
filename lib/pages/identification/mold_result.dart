@@ -745,36 +745,38 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
           );
         },
       ),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
-            /// 1. The image uploaded bu the user
-            Image.file(
-              File(widget.croppedImagePath),
-              height: MediaQuery.of(context).size.height * 0.4,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-
-            /// 2. The content container, padded from the top to create the overlap.
-            Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.35,
-              ),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: MoldifyColors.backgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40.0),
-                    topRight: Radius.circular(40.0),
-                  ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Stack(
+              children: [
+                /// 1. The image uploaded bu the user
+                Image.file(
+                  File(widget.croppedImagePath),
+                  height: MediaQuery.of(context).size.height * 0.4,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+
+                /// 2. The content container, padded from the top to create the overlap.
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height * 0.35,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.backgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(40.0),
+                        topRight: Radius.circular(40.0),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: AutoSizeText(
@@ -920,25 +922,26 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                                     MoldifyColors.accentColor,
                                                 fontWeight: FontWeight.bold,
                                               ),
+                                              ],
                                             ),
                                           ),
                                         ],
-                                      );
-                                    },
-                                  ) ??
-                                  false;
-
-                              if (!shouldProceed) {
-                                AppLogger.d(
-                                  'MoldResult: User cancelled save for unknown mold',
-                                );
-                                return;
-                              }
-                              AppLogger.d(
-                                'MoldResult: User confirmed save for unknown mold',
-                              );
-                            }
-
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_isSavingResult)
+                                  Positioned.fill(
+                                    child: Container(
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: MoldifyColors.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             setState(() => _isSavingResult = true);
                             final topPredictions = _buildTopPredictions();
                             final confidenceDecimal =

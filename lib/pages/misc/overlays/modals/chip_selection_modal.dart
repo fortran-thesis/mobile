@@ -750,117 +750,136 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontFamily: 'Bricolage-Grotesque-Bold',
-                      fontSize: 18,
-                      color: Colors.black87,
+    return AlertDialog(
+      backgroundColor: MoldifyColors.backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      contentPadding: EdgeInsets.zero,
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0, bottom: 10.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/moldify-logo-v2.png',
+                      width: 25,
+                      height: 25,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Search field
-                  TextField(
-                    controller: _searchController,
-                    onChanged: _updateFilter,
-                    decoration: InputDecoration(
-                      hintText: widget.searchHint,
-                      hintStyle: TextStyle(
-                        color: MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                    const SizedBox(width: 10),
+                    const AutoSizeText(
+                      'MOLDIFY',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Montserrat-Bold',
+                        color: MoldifyColors.accentColor,
                       ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: MoldifyColors.primaryColor
-                                    .withValues(alpha: 0.5),
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                _updateFilter('');
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
-                        ),
-                      ),
+                      maxLines: 1,
+                      minFontSize: 10,
                     ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: AutoSizeText(
+                  widget.title,
+                  style: const TextStyle(
+                    fontFamily: 'Montserrat-Black',
+                    fontSize: 20,
+                    color: MoldifyColors.primaryColor,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  minFontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: BuildTextBox(
+                  hintText: widget.searchHint,
+                  controller: _searchController,
+                  showPassword: false,
+                  onChanged: _updateFilter,
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            _updateFilter('');
+                          },
+                        )
+                      : Icon(
+                          Icons.search,
+                          color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                          size: 18,
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(15, 8, 15, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
                     'Selected: ${_selectedItems.length}',
                     style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Regular',
                       fontSize: 12,
-                      color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
-                      fontStyle: FontStyle.italic,
+                      color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            // Items list
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    if (_filteredItems.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'No items found',
-                          style: TextStyle(
-                            color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      if (_filteredItems.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            'No items found',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                            ),
                           ),
-                        ),
-                      )
-                    else
-                      ...List.generate(
-                        _filteredItems.length,
-                        (index) {
+                        )
+                      else
+                        ...List.generate(_filteredItems.length, (index) {
                           final item = _filteredItems[index];
                           final isSelected = _selectedItems.contains(item);
-                          return GestureDetector(
+                          final isLastItem = index == _filteredItems.length - 1;
+                          return InkWell(
                             onTap: () => _toggleSelection(item),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12,
-                                horizontal: 16,
+                                horizontal: 15,
                               ),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? MoldifyColors.primaryColor.withValues(alpha: 0.05)
+                                    ? MoldifyColors.primaryColor.withValues(alpha: 0.06)
                                     : Colors.transparent,
                                 border: Border(
                                   bottom: BorderSide(
-                                    color: MoldifyColors.primaryColor.withValues(alpha: 0.05),
+                                    color: isLastItem
+                                        ? Colors.transparent
+                                        : MoldifyColors.MoldifySoftGrey,
                                   ),
                                 ),
                               ),
@@ -869,7 +888,7 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
                                   widget.multiSelect
                                       ? Checkbox(
                                           value: isSelected,
-                                          onChanged: (value) => _toggleSelection(item),
+                                          onChanged: (_) => _toggleSelection(item),
                                           activeColor: MoldifyColors.primaryColor,
                                         )
                                       : Radio<bool>(
@@ -878,14 +897,14 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
                                           onChanged: (_) => _toggleSelection(item),
                                           activeColor: MoldifyColors.primaryColor,
                                         ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       item,
                                       style: const TextStyle(
-                                        fontSize: 14,
                                         fontFamily: 'Bricolage-Grotesque-Regular',
-                                        color: Colors.black87,
+                                        fontSize: 14,
+                                        color: MoldifyColors.MoldifyBlack,
                                       ),
                                     ),
                                   ),
@@ -893,82 +912,97 @@ class _SearchableSelectionModalState extends State<SearchableSelectionModal> {
                               ),
                             ),
                           );
-                        },
-                      ),
-                    if (_canCreateCustomOption)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: OutlinedButton.icon(
-                          onPressed: _createAndSelectCustomOption,
-                          icon: const Icon(Icons.add, size: 18),
-                          label: Text(
-                            '${widget.addCustomLabel} "${_searchController.text.trim()}"',
-                            style: const TextStyle(
-                              fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        }),
+                      if (_canCreateCustomOption)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(15, 10, 15, 4),
+                          child: OutlinedButton.icon(
+                            onPressed: _createAndSelectCustomOption,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: Text(
+                              '${widget.addCustomLabel} "${_searchController.text.trim()}"',
+                              style: const TextStyle(
+                                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                              ),
                             ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(44),
-                            side: BorderSide(
-                              color: MoldifyColors.primaryColor.withValues(alpha: 0.4),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(44),
+                              side: const BorderSide(
+                                color: MoldifyColors.primaryColor,
+                              ),
+                              foregroundColor: MoldifyColors.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                            foregroundColor: MoldifyColors.primaryColor,
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            // Footer buttons
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              const SizedBox(height: 10),
+              const Divider(
+                color: MoldifyColors.MoldifySoftGrey,
+                height: 1,
+              ),
+              Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color:
-                              MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(10.0),
+                          ),
                         ),
                       ),
                       child: Text(
                         widget.cancelButtonText,
-                        style: TextStyle(
-                          color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+                        style: const TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-SemiBold',
+                          fontSize: 16,
+                          color: MoldifyColors.MoldifyGrey,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  Container(
+                    width: 1,
+                    height: 50,
+                    color: MoldifyColors.MoldifySoftGrey,
+                  ),
                   Expanded(
-                    child: ElevatedButton(
+                    child: TextButton(
                       onPressed: _selectedItems.isEmpty
                           ? null
-                          : () => Navigator.pop(
-                                context,
-                                _selectedItems.toList(),
-                              ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: MoldifyColors.primaryColor,
-                        disabledBackgroundColor:
-                            MoldifyColors.primaryColor.withValues(alpha: 0.3),
+                          : () => Navigator.pop(context, _selectedItems.toList()),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(10.0),
+                          ),
+                        ),
                       ),
                       child: Text(
                         widget.confirmButtonText,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-ExtraBold',
+                          fontSize: 16,
+                          color: _selectedItems.isEmpty
+                              ? MoldifyColors.MoldifyGrey
+                              : MoldifyColors.primaryColor,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

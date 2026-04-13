@@ -598,10 +598,9 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                           ],
                         ),
 
-                        /// Assigned Mycologist (if available)
                         if (_mycologistName.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(top: 16.0),
+                            padding: const EdgeInsets.only(top: 24.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -609,37 +608,41 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   'Assigned Mycologist'.toUpperCase(),
                                   style: const TextStyle(
                                     fontSize: 10,
+                                    letterSpacing: 2.2,
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
-                                    letterSpacing: 1.0,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 12),
                                 Text(
                                   _mycologistName,
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 20,
                                     fontFamily: 'Montserrat-Black',
                                     color: MoldifyColors.primaryColor,
+                                    height: 1.1,
                                   ),
                                 ),
                                 if (_mycologistOccupation != null &&
-                                    _mycologistOccupation!.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
+                                    _mycologistOccupation!.isNotEmpty)
+                                  const SizedBox(height: 4),
+                                if (_mycologistOccupation != null &&
+                                    _mycologistOccupation!.isNotEmpty)
                                   Text(
                                     _mycologistOccupation!,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Bricolage-Grotesque-Regular',
-                                      color: MoldifyColors.MoldifyGrey,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontFamily:
+                                          'Bricolage-Grotesque-Regular',
+                                      color: MoldifyColors.primaryColor
+                                          .withValues(alpha: 0.5),
+                                      letterSpacing: 0.2,
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                           ),
 
-                        // Conditional UI based on case status
                         if (caseStatus == 'Resolved' || caseStatus == 'Closed')
                           Builder(
                             builder: (context) {
@@ -649,16 +652,16 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   );
                               final controlSections = parsedSections
                                   .where(
-                                    (section) =>
-                                        ReportViewParser.isPreventionControlSectionTitle(
+                                    (section) => ReportViewParser
+                                        .isPreventionControlSectionTitle(
                                           section['title'] ?? '',
                                         ),
                                   )
                                   .toList();
                               final noteSections = parsedSections
                                   .where(
-                                    (section) =>
-                                        !ReportViewParser.isPreventionControlSectionTitle(
+                                    (section) => !ReportViewParser
+                                        .isPreventionControlSectionTitle(
                                           section['title'] ?? '',
                                         ),
                                   )
@@ -672,32 +675,33 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                   : _preventionTacticsContent;
 
                               final tabs = <String>[
-                                'Prevention & Control',
                                 'Case Details',
-                                'Overview',
-                                'Hosts & Symptoms',
-                                'Disease Cycle & Impact',
+                                'Biological Description',
+                                'Host & Pathogen Impact',
+                                'Prevention & Treatment',
                               ];
 
-                              final maxIndex = tabs.length - 1;
                               final activeTabIndex = _selectedTabIndex
-                                  .clamp(0, maxIndex)
+                                  .clamp(0, tabs.length - 1)
                                   .toInt();
 
                               final tabContents = <Widget>[
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5.0,
-                                  ),
-                                  child: PreventionTacticsContent(
-                                    treatmentsContent: preventionContent,
-                                  ),
-                                ),
                                 _buildCaseDetailsTab(context),
                                 ReportOverviewTab(sections: noteSections),
-                                ReportHostsSymptomsTab(sections: noteSections),
-                                ReportDiseaseCycleImpactTab(
-                                  sections: noteSections,
+                                ListView(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  children: [
+                                    ReportHostsSymptomsTab(
+                                      sections: noteSections,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ReportDiseaseCycleImpactTab(
+                                      sections: noteSections,
+                                    ),
+                                  ],
+                                ),
+                                PreventionTacticsContent(
+                                  treatmentsContent: preventionContent,
                                 ),
                               ];
 
@@ -706,61 +710,61 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                 children: [
                                   if (_finalVerdictMoldName.trim().isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 18.0),
+                                      padding: const EdgeInsets.only(
+                                        top: 38.0,
+                                      ),
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
+                                          Container(
+                                            width: 40,
+                                            height: 1.5,
+                                            color: MoldifyColors.accentColor,
+                                          ),
+                                          const SizedBox(height: 16),
                                           const Text(
-                                            'DISEASE NAME',
+                                            'DISEASE IDENTIFICATION',
                                             style: TextStyle(
-                                              fontSize: 9,
-                                              letterSpacing: 2.0,
+                                              fontSize: 10,
+                                              letterSpacing: 2.2,
                                               fontFamily:
                                                   'Bricolage-Grotesque-Bold',
                                               color: MoldifyColors.primaryColor,
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
+                                          const SizedBox(height: 6),
                                           Row(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                                CrossAxisAlignment.baseline,
+                                            textBaseline:
+                                                TextBaseline.alphabetic,
                                             children: [
                                               Expanded(
                                                 child: Text(
                                                   _finalVerdictMoldName,
                                                   style: const TextStyle(
-                                                    fontSize: 24,
+                                                    fontSize: 26,
                                                     fontFamily:
                                                         'Bricolage-Grotesque-Bold',
                                                     color: MoldifyColors
                                                         .primaryColor,
-                                                    height: 1.1,
+                                                    height: 1.0,
                                                   ),
                                                 ),
                                               ),
                                               if (_finalVerdictConfidence
                                                   .trim()
                                                   .isNotEmpty)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        left: 12.0,
-                                                        top: 4.0,
-                                                      ),
-                                                  child: Text(
-                                                    _finalVerdictConfidence
-                                                        .trim(),
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontFamily:
-                                                          'Bricolage-Grotesque-Bold',
-                                                      color: MoldifyColors
-                                                          .accentColor,
-                                                      letterSpacing: 0.4,
-                                                    ),
+                                                Text(
+                                                  _finalVerdictConfidence
+                                                      .trim(),
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontFamily:
+                                                        'Bricolage-Grotesque-Bold',
+                                                    color: MoldifyColors
+                                                        .accentColor,
                                                   ),
                                                 ),
                                             ],
@@ -768,13 +772,20 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                         ],
                                       ),
                                     ),
+
                                   if (_linkedMoldipediaId != null)
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 12.0),
+                                      padding: const EdgeInsets.only(
+                                        top: 20.0,
+                                      ),
                                       child: GestureDetector(
-                                        onTap: () => Navigator.of(context).pushNamed(
+                                        onTap: () => Navigator.of(
+                                          context,
+                                        ).pushNamed(
                                           RouteNames.viewWikiMold,
-                                          arguments: {'id': _linkedMoldipediaId},
+                                          arguments: {
+                                            'id': _linkedMoldipediaId,
+                                          },
                                         ),
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
@@ -782,40 +793,50 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                             vertical: 10,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: MoldifyColors.primaryColor.withValues(alpha: 0.06),
-                                            borderRadius: BorderRadius.circular(10),
+                                            color: Colors.transparent,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             border: Border.all(
-                                              color: MoldifyColors.primaryColor.withValues(alpha: 0.2),
+                                              color: MoldifyColors.primaryColor
+                                                  .withValues(alpha: 0.15),
                                             ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(
-                                                Icons.menu_book_outlined,
-                                                size: 16,
-                                                color: MoldifyColors.primaryColor,
+                                              Icon(
+                                                Icons.menu_book_rounded,
+                                                size: 14,
+                                                color: MoldifyColors.primaryColor
+                                                    .withValues(alpha: 0.8),
                                               ),
-                                              const SizedBox(width: 8),
-                                              const Text(
-                                                'View WikiMold Reference',
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'WIKIMOLD REFERENCE',
                                                 style: TextStyle(
-                                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
-                                                  fontSize: 13,
-                                                  color: MoldifyColors.primaryColor,
+                                                  fontFamily:
+                                                      'Bricolage-Grotesque-Bold',
+                                                  fontSize: 11,
+                                                  letterSpacing: 1.2,
+                                                  color: MoldifyColors
+                                                      .primaryColor
+                                                      .withValues(alpha: 0.8),
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
+                                              const SizedBox(width: 8),
                                               Icon(
-                                                Icons.arrow_forward_ios,
-                                                size: 11,
-                                                color: MoldifyColors.primaryColor.withValues(alpha: 0.6),
+                                                Icons.arrow_outward_rounded,
+                                                size: 12,
+                                                color: MoldifyColors.primaryColor
+                                                    .withValues(alpha: 0.4),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ),
                                     ),
+
                                   ReportResolvedActionsRow(
                                     visible: caseStatus == 'Resolved',
                                     onCloseCase: _handleCloseCase,
@@ -833,7 +854,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                           _finalVerdictMoldName
                                               .trim()
                                               .isNotEmpty
-                                          ? 14.0
+                                          ? 32.0
                                           : 18.0,
                                     ),
                                     child: ScrollableTabBar(

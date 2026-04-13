@@ -228,6 +228,20 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     };
   }
 
+  bool _isVitroLogType(String type) {
+    final normalized = type.toLowerCase().replaceAll('_', '-').trim();
+    return normalized == 'vitro' ||
+        normalized == 'in-vitro' ||
+        normalized.contains('vitro');
+  }
+
+  bool _isVivoLogType(String type) {
+    final normalized = type.toLowerCase().replaceAll('_', '-').trim();
+    return normalized == 'vivo' ||
+        normalized == 'in-vivo' ||
+        normalized.contains('vivo');
+  }
+
   bool _didCultivationLogPersist(Map<String, dynamic>? macroPayload) {
     if (macroPayload == null) return false;
     if (macroPayload['cultivationLogSaved'] == true) return true;
@@ -767,7 +781,10 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
               sessionCookie: sessionCookie,
             );
 
-            final logsRaw = logsResponse['snapshot'];
+            final logsRaw =
+                logsResponse['snapshot'] ??
+                logsResponse['logs'] ??
+                logsResponse['data'];
             final logs = (logsRaw is List)
                 ? logsRaw
                       .whereType<Map>()
@@ -934,16 +951,16 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             moldCase.cultivationLogs!.isNotEmpty) {
           for (final log in moldCase.cultivationLogs!) {
             final entry = _mapCultivationLogToTimelineEntry(log);
-            if (log.type == 'vitro') {
+            if (_isVitroLogType(log.type)) {
               localInVitroEntries.add(entry);
-            } else if (log.type == 'vivo') {
+            } else if (_isVivoLogType(log.type)) {
               localInVivoEntries.add(entry);
             }
           }
 
           if (localInVitroEntries.isNotEmpty) {
             final firstVitroDate = moldCase.cultivationLogs!
-                .where((log) => log.type == 'vitro')
+                .where((log) => _isVitroLogType(log.type))
                 .map((log) => log.createdAt)
                 .firstWhere((value) => value != null, orElse: () => null);
             if (firstVitroDate != null) {
@@ -955,7 +972,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
           if (localInVivoEntries.isNotEmpty) {
             final firstVivoDate = moldCase.cultivationLogs!
-                .where((log) => log.type == 'vivo')
+                .where((log) => _isVivoLogType(log.type))
                 .map((log) => log.createdAt)
                 .firstWhere((value) => value != null, orElse: () => null);
             if (firstVivoDate != null) {

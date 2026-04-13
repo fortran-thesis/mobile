@@ -238,7 +238,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
                   child: Text(
-                    'Host Plant Affected',
+                    'Crop',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -278,7 +278,7 @@ class _SubmitReportScreenState extends State<SubmitReportScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: AutoSizeText(
-                    l10n.location,
+                    'Address',
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: 'Bricolage-Grotesque-SemiBold',

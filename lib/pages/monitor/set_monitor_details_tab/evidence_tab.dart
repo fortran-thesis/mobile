@@ -74,7 +74,7 @@ class EvidenceTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Location Gathered',
+          'Address',
           style: TextStyle(
             fontSize: 16,
             fontFamily: 'Bricolage-Grotesque-SemiBold',

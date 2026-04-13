@@ -22,17 +22,24 @@ class MoldCaseRepository {
     );
     AppLogger.d('MoldCaseRepository: raw API response: $result');
 
-    // Extract snapshot and nextPageToken
-    final snapshot = result['snapshot'];
+    // Extract snapshot and nextPageToken.
+    // The backend has returned a few shapes in the past, so accept all of them.
+    final dynamic rawSnapshot = result['snapshot'] ?? result['cases'] ?? result['data'];
     final nextPageTokenValue = result['nextPageToken'];
 
     List<dynamic> rawDataList = <dynamic>[];
-    if (snapshot is List) {
-      rawDataList = snapshot;
-    } else if (snapshot is Map) {
-      rawDataList = [snapshot];
-    } else {
-      rawDataList = <dynamic>[];
+    if (rawSnapshot is List) {
+      rawDataList = rawSnapshot;
+    } else if (rawSnapshot is Map) {
+      if (rawSnapshot['snapshot'] is List) {
+        rawDataList = rawSnapshot['snapshot'] as List<dynamic>;
+      } else if (rawSnapshot['cases'] is List) {
+        rawDataList = rawSnapshot['cases'] as List<dynamic>;
+      } else if (rawSnapshot['data'] is List) {
+        rawDataList = rawSnapshot['data'] as List<dynamic>;
+      } else {
+        rawDataList = [rawSnapshot];
+      }
     }
 
     AppLogger.d('MoldCaseRepository: normalized rawDataList (${rawDataList.length} items)');
@@ -43,7 +50,7 @@ class MoldCaseRepository {
     final List<MoldCase> cases = rawDataList
         .map((e) => _normalizeMoldReportFields(e as Map<String, dynamic>))
         .map((e) => MoldCase.fromJson(e))
-        .where((c) => c.mycologistId.isNotEmpty)
+      .where((c) => c.id.isNotEmpty)
         .toList();
 
     final String? nextToken = 
@@ -69,13 +76,19 @@ class MoldCaseRepository {
   /// Normalize field names from /api/v1/mold-case/assigned response
   /// to match MoldCase model expectations. Also handles legacy mold-report fields for compatibility.
   Map<String, dynamic> _normalizeMoldReportFields(Map<String, dynamic> json) {
+    final moldCase = json['mold_case'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['mold_case'] as Map)
+        : <String, dynamic>{};
+
     return {
       ...json,
-      // Map legacy mold-report field names to mold-case field names (backward compatibility)
-      if (json.containsKey('case_name')) 'name': json['case_name'],
-      if (json.containsKey('assigned_mycologist_id')) 'mycologist_id': json['assigned_mycologist_id'],
-      // The 'id' from mold-report endpoint is the report ID
-      if (json.containsKey('id') && !json.containsKey('mold_report_id')) 'mold_report_id': json['id'],
+      // Map legacy and alternate field names to the MoldCase model.
+      'id': json['id'] ?? json['_id'] ?? json['case_id'] ?? json['report_id'],
+      'name': json['case_name'] ?? json['name'] ?? json['title'] ?? moldCase['case_name'] ?? moldCase['name'],
+      'mycologist_id': json['assigned_mycologist_id'] ?? json['mycologist_id'] ?? moldCase['assigned_mycologist_id'] ?? moldCase['mycologist_id'],
+      'mold_report_id': json['mold_report_id'] ?? json['report_id'] ?? json['case_id'] ?? moldCase['mold_report_id'] ?? moldCase['report_id'],
+      'photo_url': json['photo_url'] ?? json['cover_photo'] ?? json['coverPhoto'] ?? json['report_cover_photo'] ?? moldCase['photo_url'] ?? moldCase['cover_photo'],
+      'crop_name': json['crop_name'] ?? json['host'] ?? moldCase['crop_name'] ?? moldCase['host'],
     };
   }
 
@@ -109,7 +122,7 @@ class MoldCaseRepository {
 
     return rawDataList
         .map((e) => MoldCase.fromJson(e as Map<String, dynamic>))
-        .where((c) => c.mycologistId.isNotEmpty)
+      .where((c) => c.id.isNotEmpty)
         .toList();
   }
 
