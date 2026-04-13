@@ -236,7 +236,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
     final moldStatus = resolvedDetails['status']?.toString();
     // When the user explicitly corrected the genus (via LowConfidenceCorrectionScreen),
-    // treat the mold as found regardless of draft status GÇö they selected it from the
+    // treat the mold as found regardless of draft status â€” they selected it from the
     // catalog and the document exists. For regular scans, draft molds are still hidden
     // because their data may be incomplete/unreviewed.
     final bool isCorrectedFlow =
@@ -320,7 +320,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
       // Update OVERVIEW to indicate mold not in database
       final overviewText = _isMoldNotFound
-          ? 'Most probably identified: $moldGenus ($confidenceLevel%) GÇö Not in Mold Database'
+          ? 'Most probably identified: $moldGenus ($confidenceLevel%) â€” Not in Mold Database'
           : 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
 
       _recommendationSections = {
@@ -554,7 +554,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       setState(() {
         _isMoldNotFound = true;
         _recommendationSections['OVERVIEW'] =
-            'Most probably identified: $moldGenus ($confidenceLevel%) GÇö Not in Mold Database';
+            'Most probably identified: $moldGenus ($confidenceLevel%) â€” Not in Mold Database';
       });
 
       if (!mounted) return;
@@ -745,38 +745,36 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
           );
         },
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Stack(
-              children: [
-                /// 1. The image uploaded bu the user
-                Image.file(
-                  File(widget.croppedImagePath),
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            /// 1. The image uploaded bu the user
+            Image.file(
+              File(widget.croppedImagePath),
+              height: MediaQuery.of(context).size.height * 0.4,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
 
-                /// 2. The content container, padded from the top to create the overlap.
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).size.height * 0.35,
+            /// 2. The content container, padded from the top to create the overlap.
+            Padding(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.35,
+              ),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: MoldifyColors.backgroundColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40.0),
+                    topRight: Radius.circular(40.0),
                   ),
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: MoldifyColors.backgroundColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(40.0),
-                        topRight: Radius.circular(40.0),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15.0),
                         child: AutoSizeText(
@@ -922,26 +920,25 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                                     MoldifyColors.accentColor,
                                                 fontWeight: FontWeight.bold,
                                               ),
-                                              ],
                                             ),
                                           ),
                                         ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (_isSavingResult)
-                                  Positioned.fill(
-                                    child: Container(
-                                      color: Colors.black.withValues(alpha: 0.35),
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          color: MoldifyColors.primaryColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                                      );
+                                    },
+                                  ) ??
+                                  false;
+
+                              if (!shouldProceed) {
+                                AppLogger.d(
+                                  'MoldResult: User cancelled save for unknown mold',
+                                );
+                                return;
+                              }
+                              AppLogger.d(
+                                'MoldResult: User confirmed save for unknown mold',
+                              );
+                            }
+
                             setState(() => _isSavingResult = true);
                             final topPredictions = _buildTopPredictions();
                             final confidenceDecimal =
