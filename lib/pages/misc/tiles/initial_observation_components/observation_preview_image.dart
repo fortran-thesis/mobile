@@ -25,35 +25,10 @@ class ObservationPreviewImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String normalizeImagePath(String value) {
-      var normalized = value.trim();
-      if (normalized.isEmpty) return '';
-
-      if ((normalized.startsWith('[') && normalized.endsWith(']')) ||
-          (normalized.startsWith('{') && normalized.endsWith('}'))) {
-        final firstHttp = RegExp(r'https?://[^\s"\]\}]+').firstMatch(normalized);
-        if (firstHttp != null) {
-          normalized = firstHttp.group(0) ?? normalized;
-        }
-      }
-
-      // Remove accidental wrapping quotes from serialized values.
-      if ((normalized.startsWith('"') && normalized.endsWith('"')) ||
-          (normalized.startsWith("'") && normalized.endsWith("'"))) {
-        normalized = normalized.substring(1, normalized.length - 1).trim();
-      }
-
-      return normalized;
-    }
-
-    final normalized = normalizeImagePath(imagePath);
+    final normalized = imagePath.trim();
     final isAsset = normalized.startsWith('assets/');
     final isRemote =
         normalized.startsWith('http://') || normalized.startsWith('https://');
-
-    if (normalized.isEmpty) {
-      return const _ImageFallback();
-    }
 
     if (isAsset) {
       return Image.asset(

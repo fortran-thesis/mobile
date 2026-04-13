@@ -236,7 +236,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     final resolvedDetails = MoldDetailAdapter.unwrapPayload(widget.moldDetails);
     final moldStatus = resolvedDetails['status']?.toString();
     // When the user explicitly corrected the genus (via LowConfidenceCorrectionScreen),
-    // treat the mold as found regardless of draft status â€” they selected it from the
+    // treat the mold as found regardless of draft status GÇö they selected it from the
     // catalog and the document exists. For regular scans, draft molds are still hidden
     // because their data may be incomplete/unreviewed.
     final bool isCorrectedFlow =
@@ -320,7 +320,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
 
       // Update OVERVIEW to indicate mold not in database
       final overviewText = _isMoldNotFound
-          ? 'Most probably identified: $moldGenus ($confidenceLevel%) â€” Not in Mold Database'
+          ? 'Most probably identified: $moldGenus ($confidenceLevel%) GÇö Not in Mold Database'
           : 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
 
       _recommendationSections = {
@@ -554,7 +554,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       setState(() {
         _isMoldNotFound = true;
         _recommendationSections['OVERVIEW'] =
-            'Most probably identified: $moldGenus ($confidenceLevel%) â€” Not in Mold Database';
+            'Most probably identified: $moldGenus ($confidenceLevel%) GÇö Not in Mold Database';
       });
 
       if (!mounted) return;
