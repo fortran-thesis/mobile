@@ -949,8 +949,9 @@ class MoldCaseService {
             ? responseBody['data'] as Map<String, dynamic>
             : responseBody;
 
-        await CacheConfig.clearAll();
-
+        // Emit targeted invalidation events so listeners (MoldCaseBloc, etc.)
+        // can refresh their state. A full cache flush is not needed here because
+        // all read paths use CachePolicy.refreshForceCache (network-first).
         _emitInvalidation(
           InvalidationEntity.moldCase,
           InvalidationOperation.update,

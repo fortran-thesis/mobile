@@ -304,24 +304,28 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           cases = dedupedByReport.values.toList();
 
-          // Fetch report statuses for each case
-          for (final case_ in cases) {
-            if (!mounted) break;
-            try {
-              final reportResponse = await reportService.getMoldReportById(
-                case_.moldReportId,
-                sessionCookie: sessionCookie,
-              );
-              final status =
-                  reportResponse['data']?['status'] as String? ?? 'unknown';
-              statusMap[case_.id] = status;
-            } catch (e) {
-              AppLogger.e(
-                'Failed to fetch report for case ${case_.id}',
-                error: e,
-              );
-              statusMap[case_.id] = 'unknown';
-            }
+          // Fetch report statuses for all cases in parallel instead of serially.
+          final statusEntries = await Future.wait(
+            cases.map((case_) async {
+              try {
+                final reportResponse = await reportService.getMoldReportById(
+                  case_.moldReportId,
+                  sessionCookie: sessionCookie,
+                );
+                final status =
+                    reportResponse['data']?['status'] as String? ?? 'unknown';
+                return MapEntry(case_.id, status);
+              } catch (e) {
+                AppLogger.e(
+                  'Failed to fetch report for case ${case_.id}',
+                  error: e,
+                );
+                return MapEntry(case_.id, 'unknown');
+              }
+            }),
+          );
+          for (final entry in statusEntries) {
+            statusMap[entry.key] = entry.value;
           }
         }
       } catch (e) {

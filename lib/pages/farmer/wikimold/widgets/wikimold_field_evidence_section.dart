@@ -98,6 +98,8 @@ class _WikiMoldFieldEvidenceSectionState
               final isExpanded = _expandedCaseIds.contains(caseKey);
 
               final details = _asMap(caseData['cultivation_details']);
+              final evidenceSummary = _asMap(caseData['evidence_summary']);
+              final initialSummary = _asMap(evidenceSummary['initial']);
               final initialMicroscopic = _asText(
                 details['initial_microscopic'],
               );
@@ -120,28 +122,36 @@ class _WikiMoldFieldEvidenceSectionState
                 inVitro?['characteristics'],
               );
 
-              final inVivoSummary = _asText(
-                inVivoCharacteristics['symptoms'] ??
-                    inVivoCharacteristics['characteristics'] ??
-                    inVivoCharacteristics['lesion_color'] ??
-                    inVivoCharacteristics['lesion_size'],
-              );
-              final inVitroSummary = _asText(
-                inVitroCharacteristics['characteristics'] ??
-                    inVitroCharacteristics['colony_color'] ??
-                    inVitroCharacteristics['colony_diameter'],
-              );
-              final initialDescription =
-                  initialMicroscopic.isNotEmpty || initialMacroscopic.isNotEmpty
-                  ? [
-                      initialMicroscopic,
-                      initialMacroscopic,
-                    ].where((t) => t.isNotEmpty).join(' | ')
-                  : (initialSymptoms.isNotEmpty
-                        ? initialSymptoms.join(', ')
-                        : (initialCharacteristics.isNotEmpty
-                              ? initialCharacteristics.join(', ')
-                              : 'No initial observation evidence recorded.'));
+              final inVivoSummary = [
+                _recordText(_asMap(evidenceSummary['in_vivo']), ['summary', 'notes']),
+                _recordText(inVivoCharacteristics, [
+                  'symptoms',
+                  'characteristics',
+                  'lesion_color',
+                  'lesion_size',
+                ]),
+                _asText(inVivoCharacteristics['additional_info']),
+              ].where((t) => t.isNotEmpty).join(' // ');
+              final inVitroSummary = [
+                _recordText(_asMap(evidenceSummary['in_vitro']), ['summary', 'notes']),
+                _recordText(inVitroCharacteristics, [
+                  'characteristics',
+                  'colony_color',
+                  'colony_diameter',
+                ]),
+                _asText(inVitroCharacteristics['additional_info']),
+              ].where((t) => t.isNotEmpty).join(' // ');
+              final initialDescriptionParts = [
+                _recordText(initialSummary, ['microscopic', 'macroscopic']),
+                initialMicroscopic,
+                initialMacroscopic,
+                _recordText(initialSummary, ['symptoms', 'characteristics']),
+                if (initialSymptoms.isNotEmpty) initialSymptoms.join(', '),
+                if (initialCharacteristics.isNotEmpty) initialCharacteristics.join(', '),
+              ].where((t) => t.isNotEmpty).toList();
+              final initialDescription = initialDescriptionParts.isNotEmpty
+                  ? initialDescriptionParts.join(' | ')
+                  : 'No initial observation evidence recorded.';
 
               final finalVerdictMap = _asMap(caseData['final_verdict']);
               final hasFinalVerdict = finalVerdictMap.isNotEmpty;
@@ -492,6 +502,14 @@ class _WikiMoldFieldEvidenceSectionState
       return value.map((key, val) => MapEntry(key.toString(), val));
     }
     return <String, dynamic>{};
+  }
+
+  String _recordText(Map<String, dynamic> record, List<String> fields) {
+    for (final field in fields) {
+      final text = _asText(record[field]);
+      if (text.isNotEmpty) return text;
+    }
+    return '';
   }
 
   String _normalizeLogType(dynamic rawType) {

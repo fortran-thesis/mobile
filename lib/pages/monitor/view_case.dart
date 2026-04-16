@@ -791,15 +791,31 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         if (moldCases.isNotEmpty) {
           moldCase = moldCases.first;
 
-          // Extract moldipedia_id from final_verdict (not stored on MoldCase model).
-          try {
-            final rawCase = await MoldCaseService().getMoldCaseById(
-              moldCase.id,
-              sessionCookie: sessionCookie,
-            );
-            final rawData = rawCase['data'] is Map
-                ? rawCase['data'] as Map
-                : rawCase;
+          // Fire getMoldCaseById (for moldipedia_id) and getCultivationLogs in
+          // parallel — both only need moldCase.id and are independent.
+          final caseService = MoldCaseService();
+          final fetchResults = await Future.wait([
+            caseService
+                .getMoldCaseById(moldCase.id, sessionCookie: sessionCookie)
+                .catchError((e) {
+              AppLogger.w('ViewCase: getMoldCaseById failed: $e');
+              return <String, dynamic>{};
+            }),
+            caseService
+                .getCultivationLogs(moldCase.id, sessionCookie: sessionCookie)
+                .catchError((e) {
+              AppLogger.w(
+                'ViewCase: getCultivationLogs failed for caseId=${moldCase.id}: $e',
+              );
+              return <String, dynamic>{};
+            }),
+          ]);
+
+          // Process getMoldCaseById result — extract moldipedia_id.
+          final rawCase = fetchResults[0];
+          if (rawCase.isNotEmpty) {
+            final rawData =
+                rawCase['data'] is Map ? rawCase['data'] as Map : rawCase;
             final verdict = rawData['final_verdict'];
             if (verdict is Map) {
               final mid = verdict['moldipedia_id']?.toString().trim();
@@ -807,17 +823,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                 setState(() => _linkedMoldipediaId = mid);
               }
             }
-          } catch (_) {
-            // Non-critical: silently skip if raw case fetch fails.
           }
 
-          try {
-            final moldCaseService = MoldCaseService();
-            final logsResponse = await moldCaseService.getCultivationLogs(
-              moldCase.id,
-              sessionCookie: sessionCookie,
-            );
-
+          // Process getCultivationLogs result.
+          final logsResponse = fetchResults[1];
+          if (logsResponse.isNotEmpty) {
             final logsRaw =
                 logsResponse['snapshot'] ??
                 logsResponse['logs'] ??
@@ -836,10 +846,6 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             moldCase = _cloneCaseWithLogs(moldCase, logs);
             AppLogger.d(
               'ViewCase: loaded ${logs.length} cultivation logs for caseId=${moldCase.id}',
-            );
-          } catch (e) {
-            AppLogger.w(
-              'ViewCase: failed to fetch cultivation logs for caseId=${moldCase.id}: $e',
             );
           }
         }

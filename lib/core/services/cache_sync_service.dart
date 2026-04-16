@@ -31,23 +31,29 @@ class CacheSyncService {
     AppLogger.d('Cache sync service initialized', tag: 'CacheSync');
   }
 
-  /// Handle a cache invalidation event by flushing the cache store.
+  /// Handle a cache invalidation event.
+  ///
+  /// Only [InvalidationEntity.authSession] events flush the entire store —
+  /// that covers logout and session switches where stale data from the
+  /// previous user must not survive.
+  ///
+  /// For all other entities (moldReport, moldCase, etc.) the cache does NOT
+  /// need to be cleared: every hot read path uses [CachePolicy.refreshForceCache]
+  /// (volatile), which always goes to the network first and only falls back to
+  /// the cached copy on errors. Clearing the store on every mutation would
+  /// evict unrelated entries and cause unnecessary network round-trips.
   Future<void> _onCacheInvalidationEvent(CacheInvalidationEvent event) async {
     AppLogger.d(
       'Cache invalidation event: ${event.entity} ${event.operation} (id: ${event.id})',
       tag: 'CacheSync',
     );
 
-    // Clear the entire in-memory cache to ensure fresh data on next request.
-    // For a more granular approach, we could selectively clear entries based on:
-    // - entity type (moldReport, moldCase, etc.)
-    // - specific cache keys (e.g., /api/v1/reports/${id})
-    // For now, we use the simpler clearAll approach for consistency and simplicity.
-    await CacheConfig.clearAll();
-    AppLogger.d(
-      'Cache cleared for ${event.entity} ${event.operation}',
-      tag: 'CacheSync',
-    );
+    if (event.entity == InvalidationEntity.authSession) {
+      await CacheConfig.clearAll();
+      AppLogger.d('Cache fully cleared on authSession invalidation', tag: 'CacheSync');
+    }
+    // For moldReport / moldCase / etc. the volatile cache policy already
+    // ensures the next fetch hits the network — no explicit eviction needed.
   }
 
   /// Dispose the service (cancel subscription).

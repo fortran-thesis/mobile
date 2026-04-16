@@ -39,8 +39,11 @@ void main() async {
   final authProvider = AppAuthProvider();
   await authProvider.loadCookie(); // <-- WAIT here!
 
-  // Initialise FCM (request permission, get token, register with backend)
-  await FCMService.instance.initialise(sessionCookie: authProvider.cookie);
+  // Initialise FCM in the background — permission prompt, token fetch, and
+  // backend registration do not need to block runApp. The pending-tap mechanism
+  // in FCMService stores any terminated-state notification until the widget
+  // tree subscribes, so no tap events are lost.
+  unawaited(FCMService.instance.initialise(sessionCookie: authProvider.cookie));
 
   // Initialize cache sync service to listen for invalidation events
   CacheSyncService.instance.initialize();
