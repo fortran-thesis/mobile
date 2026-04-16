@@ -22,6 +22,7 @@ import '../../../core/features/mold_case/repository/mold_case_repository.dart';
 import '../../../core/features/mold_case/service/mold_case_service.dart';
 import '../../../core/features/lookup/service/lookup_service.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/features/report_export/services/report_pdf_service.dart';
 import '../../../services/api_service.dart';
 import '../../../core/constants/api_url.dart';
 import '../../../core/utils/date_utils.dart';
@@ -360,6 +361,42 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         content: Text('Final verdict submitted and case marked as resolved.'),
       ),
     );
+  }
+
+  Future<void> _handleExportPdf() async {
+    final reportId = _reportId;
+    if (reportId == null || reportId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No report ID found for PDF export.')),
+      );
+      return;
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final payload = await MoldReportService().getPrintableReportPayload(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      await ReportPdfService().sharePdfFromPayload(
+        payload: payload,
+        fileName: 'laboratory-report-$reportId.pdf',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export PDF: $e')),
+      );
+    }
   }
 
   Future<void> _openAddInitialObservations() async {
@@ -1123,7 +1160,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             if (selectedItem == 'Give Recommendation') {
               await _handleGiveRecommendation();
             } else if (selectedItem == 'Export PDF') {
-              // Implement export PDF functionality here
+              await _handleExportPdf();
             }
           },
         ),

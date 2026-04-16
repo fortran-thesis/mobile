@@ -24,6 +24,7 @@ import '../../../providers/auth_provider.dart';
 import 'package:moldify/core/utils/logger.dart';
 import '../../../core/utils/mutation_result.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/features/report_export/services/report_pdf_service.dart';
 import 'report_view_parser.dart';
 
 // route names not used here
@@ -203,6 +204,42 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
 
     if (!mounted || !result.changed) return;
     await _loadReportFromArgs();
+  }
+
+  Future<void> _handleExportPdf() async {
+    final reportId = _report?.id;
+    if (reportId == null || reportId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No report ID found for PDF export.')),
+      );
+      return;
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final payload = await MoldReportService().getPrintableReportPayload(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      await ReportPdfService().sharePdfFromPayload(
+        payload: payload,
+        fileName: 'laboratory-report-$reportId.pdf',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export PDF: $e')),
+      );
+    }
   }
 
   Widget _buildCaseDetailsTab(BuildContext context) {
@@ -471,12 +508,12 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             if (caseStatus.toLowerCase() == 'resolved')
               FontAwesomeIcons.solidFilePdf,
           ],
-          onPopupMenuItemSelected: (index) {
+          onPopupMenuItemSelected: (index) async {
             // Handle the selection based on the index
 
             /// Export PDF
             if (index == 0) {
-              // Export PDF functionality
+              await _handleExportPdf();
             }
           },
         ),

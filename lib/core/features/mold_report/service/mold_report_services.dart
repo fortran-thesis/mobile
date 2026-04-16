@@ -224,6 +224,36 @@ class MoldReportService {
     throw Exception('Failed to fetch mold report $id: ${response.statusCode}');
   }
 
+  /// Get printable export payload for a mold report by id.
+  /// Endpoint: GET /:id/export
+  Future<Map<String, dynamic>> getPrintableReportPayload(
+    String id, {
+    String? sessionCookie,
+  }) async {
+    final response = await _apiService.get(
+      '/$id/export',
+      headers: {'Content-Type': 'application/json'},
+      sessionCookie: sessionCookie,
+      cacheOptions: CacheConfig.noCache,
+    );
+
+    if (response.statusCode == 200) {
+      final body = response.data;
+      if (body is Map<String, dynamic>) {
+        final dynamic data = body['data'];
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        return body;
+      }
+      throw Exception('Malformed printable payload response');
+    }
+
+    throw Exception(
+      'Failed to fetch printable report payload for $id: ${response.statusCode}',
+    );
+  }
+
   /// Post a case detail to a report (/:id/case-details)
   Future<Map<String, dynamic>> postCaseDetail(
     String reportId,
