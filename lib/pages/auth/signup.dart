@@ -85,6 +85,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'Business Owner',
   ];
 
+  String get _defaultOccupation => _occupationOptions.first;
+
   String? _passwordErrorText;
   String? _phoneErrorText;
 
@@ -101,6 +103,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     addressController.dispose();
     occupationController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    occupationController.text = _defaultOccupation;
   }
 
   void _showErrorSnackBar(String message) {

@@ -21,6 +21,8 @@ class FetchMoldReports extends MoldReportEvent {
   List<Object?> get props => [pageToken, sessionCookie, scope];
 }
 
+class ResetMoldReports extends MoldReportEvent {}
+
 class RefreshMoldReports extends MoldReportEvent {
   final String? sessionCookie;
   final String scope;
@@ -101,8 +103,13 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
     on<RefreshMoldReports>(_onRefresh);
     on<CreateMoldReportEvent>(_onCreate);
     on<SearchMoldReports>(_onSearch);
+    on<ResetMoldReports>(_onReset);
 
     _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      if (event.entity == InvalidationEntity.authSession) {
+        add(ResetMoldReports());
+        return;
+      }
       final shouldRefresh =
           event.entity == InvalidationEntity.moldReport ||
           event.entity == InvalidationEntity.moldCase;
@@ -119,6 +126,14 @@ class MoldReportBloc extends Bloc<MoldReportEvent, MoldReportState> {
         ),
       );
     });
+  }
+
+  void _onReset(ResetMoldReports event, Emitter<MoldReportState> emit) {
+    _lastSessionCookie = null;
+    _lastScope = 'own';
+    _allReports.clear();
+    _nextPageToken = null;
+    emit(MoldReportInitial());
   }
 
   Future<void> _onFetch(FetchMoldReports event, Emitter<MoldReportState> emit) async {

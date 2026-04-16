@@ -21,6 +21,8 @@ class FetchMoldCases extends MoldCaseEvent {
   List<Object?> get props => [pageToken, sessionCookie];
 }
 
+class ResetMoldCases extends MoldCaseEvent {}
+
 class RefreshMoldCases extends MoldCaseEvent {
   final String? sessionCookie;
   RefreshMoldCases({this.sessionCookie});
@@ -80,8 +82,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
     on<FetchMoldCases>(_onFetch);
     on<RefreshMoldCases>(_onRefresh);
     on<SearchMoldCases>(_onSearch);
+    on<ResetMoldCases>(_onReset);
 
     _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      if (event.entity == InvalidationEntity.authSession) {
+        add(ResetMoldCases());
+        return;
+      }
       final shouldRefresh =
           event.entity == InvalidationEntity.moldCase ||
           event.entity == InvalidationEntity.moldReport;
@@ -93,6 +100,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
 
       add(RefreshMoldCases(sessionCookie: _lastSessionCookie));
     });
+  }
+
+  void _onReset(ResetMoldCases event, Emitter<MoldCaseState> emit) {
+    _lastSessionCookie = null;
+    _allCases.clear();
+    _nextPageToken = null;
+    emit(MoldCaseInitial());
   }
 
   List<MoldCase> _dedupeByReportIdPreferHigherPriority(List<MoldCase> cases) {

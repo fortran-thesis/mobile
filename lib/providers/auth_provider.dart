@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:moldify/core/config/cache_config.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:moldify/services/api_service.dart';
 
@@ -51,6 +52,13 @@ class AppAuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     AppLogger.d('AppAuthProvider: Logging out user');
+    CacheInvalidationHub.instance.emit(
+      CacheInvalidationEvent(
+        entity: InvalidationEntity.authSession,
+        operation: InvalidationOperation.delete,
+        occurredAt: DateTime.now().toUtc(),
+      ),
+    );
     await CacheConfig.clearAll();
     await clearCookie();
   }

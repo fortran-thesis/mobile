@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String fullName = '';
   String role = '';
   String? occupation;
+  String? profilePhotoUrl;
 
   // Dashboard data
   Map<String, dynamic> _reportCounts = {};
@@ -424,9 +425,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? '${profile.role[0].toUpperCase()}${profile.role.substring(1).toLowerCase()}'
                 : '';
             occupation = profile.occupation;
+            profilePhotoUrl = profile.photoUrl;
           });
 
           await _loadDashboardData(authProvider.cookie, profile.role);
+        } else if (state is UserProfileInitial) {
+          setState(() {
+            fullName = '';
+            role = '';
+            occupation = null;
+            profilePhotoUrl = null;
+            _reportCounts = {};
+            _assignedCases = [];
+            _caseStatusMap = {};
+            _moldipediaArticles = [];
+            _isLoadingDashboard = true;
+          });
         }
       },
       child: Material(
@@ -547,7 +561,10 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       child: Row(
         children: [
-          const CircleAvatarImage(radius: 22.0),
+          CircleAvatarImage(
+            radius: 22.0,
+            profilePhotoUrl: profilePhotoUrl,
+          ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 minFontSize: 12,
               ),
               AutoSizeText(
-                role.toLowerCase() == 'farmer' && occupation != null && occupation!.isNotEmpty
+                occupation != null && occupation!.isNotEmpty
                     ? occupation!
                     : role,
                 style: const TextStyle(

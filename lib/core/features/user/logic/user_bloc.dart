@@ -20,6 +20,8 @@ class FetchUserProfile extends UserEvent {
   List<Object?> get props => [sessionCookie];
 }
 
+class ResetUserProfile extends UserEvent {}
+
 // States
 abstract class UserState extends Equatable {
   @override
@@ -49,11 +51,21 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   UserBloc({required this.userService}) : super(UserProfileInitial()) {
     on<FetchUserProfile>(_onFetchUserProfile);
+    on<ResetUserProfile>(_onResetUserProfile);
 
     _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      if (event.entity == InvalidationEntity.authSession) {
+        add(ResetUserProfile());
+        return;
+      }
       if (event.entity != InvalidationEntity.userProfile) return;
       add(FetchUserProfile(sessionCookie: _lastSessionCookie));
     });
+  }
+
+  void _onResetUserProfile(ResetUserProfile event, Emitter<UserState> emit) {
+    _lastSessionCookie = null;
+    emit(UserProfileInitial());
   }
 
   Future<void> _onFetchUserProfile(FetchUserProfile event, Emitter<UserState> emit) async {

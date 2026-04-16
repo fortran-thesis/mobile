@@ -60,7 +60,6 @@ dependencies:
   url_launcher: ^6.3.0
   shared_preferences: ^2.3.3
   pdf: ^3.11.3
-  printing: ^5.13.1
   flutter_localizations:
     sdk: flutter
 

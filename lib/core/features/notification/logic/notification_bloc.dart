@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moldify/core/features/notification/models/notification.dart';
 import 'package:moldify/core/features/notification/repository/notification_repository.dart';
+import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 // ── Events ──────────────────────────────────────────────────────────────────
@@ -20,6 +21,8 @@ class FetchNotifications extends NotificationEvent {
   @override
   List<Object?> get props => [pageToken, sessionCookie];
 }
+
+class ResetNotifications extends NotificationEvent {}
 
 class RefreshNotifications extends NotificationEvent {
   final String? sessionCookie;
@@ -98,6 +101,7 @@ class NotificationError extends NotificationState {
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final NotificationRepository repository;
   final int pageSize;
+  late final StreamSubscription<CacheInvalidationEvent> _invalidationSub;
 
   final List<AppNotification> _allNotifications = [];
   String? _nextPageToken;
@@ -111,6 +115,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<MarkNotificationRead>(_onMarkRead);
     on<MarkAllNotificationsRead>(_onMarkAllRead);
     on<DeleteNotificationEvent>(_onDelete);
+    on<ResetNotifications>(_onReset);
+
+    _invalidationSub = CacheInvalidationHub.instance.stream.listen((event) {
+      if (event.entity != InvalidationEntity.authSession) return;
+      add(ResetNotifications());
+    });
+  }
+
+  void _onReset(ResetNotifications event, Emitter<NotificationState> emit) {
+    _allNotifications.clear();
+    _nextPageToken = null;
+    _unreadCount = 0;
+    emit(NotificationInitial());
   }
 
   Future<void> _onFetch(FetchNotifications event, Emitter<NotificationState> emit) async {
@@ -260,5 +277,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     } catch (e) {
       AppLogger.e('NotificationBloc._onDelete error: $e');
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _invalidationSub.cancel();
+    return super.close();
   }
 }

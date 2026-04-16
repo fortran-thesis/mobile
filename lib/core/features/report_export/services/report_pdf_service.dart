@@ -1,8 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 class ReportPdfService {
   String _asText(dynamic value, {String fallback = 'N/A'}) {
@@ -197,6 +198,15 @@ class ReportPdfService {
     required String fileName,
   }) async {
     final bytes = await buildPdf(payload);
-    await Printing.sharePdf(bytes: bytes, filename: fileName);
+    
+    // Get the Downloads directory
+    final Directory? downloadsDir = await getDownloadsDirectory();
+    if (downloadsDir == null) {
+      throw Exception('Downloads directory not accessible');
+    }
+    
+    // Create the file in the Downloads directory
+    final file = File('${downloadsDir.path}/$fileName');
+    await file.writeAsBytes(bytes);
   }
 }

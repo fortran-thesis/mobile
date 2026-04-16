@@ -94,6 +94,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Business Owner',
   ];
 
+  String get _defaultOccupation => _occupationOptions.first;
+
   @override
   void initState() {
     super.initState();
@@ -132,7 +134,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!isExpert) {
         phoneNumController.text = _formatPhoneNumberForDisplay(profile.phoneNumber);
         addressController.text = profile.address;
-        occupationController.text = profile.occupation ?? '';
+        occupationController.text = profile.occupation ?? _defaultOccupation;
       }
 
       _isLoading = false;
@@ -309,17 +311,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (result['success'] == true) {
         AppFeedback.showSuccess(context, l10n.profileUpdated);
 
-        await Future.delayed(const Duration(milliseconds: 500));
-        // Refresh profile
-        if (!mounted) return;
-        if (mounted) {
-          context.read<UserBloc>().add(
-            FetchUserProfile(sessionCookie: sessionCookie),
-          );
-
-          await Future.delayed(const Duration(milliseconds: 500));
-          if (mounted) Navigator.pop(context, true);
+        final userBloc = context.read<UserBloc>();
+        final refreshedProfile = userBloc.stream.firstWhere(
+          (blocState) => blocState is UserProfileLoaded,
+        );
+        userBloc.add(FetchUserProfile(sessionCookie: sessionCookie));
+        try {
+          await refreshedProfile.timeout(const Duration(seconds: 10));
+        } catch (_) {
+          AppLogger.w('EditProfileScreen: profile refresh timed out after save');
         }
+
+        if (mounted) Navigator.pop(context, true);
       } else {
         AppLogger.e('❌ Failed: ${result['error']}');
         _showSnackBar(result['error'] != null ? l10n.failedToUpdateProfile(result['error']) : l10n.somethingWentWrong);

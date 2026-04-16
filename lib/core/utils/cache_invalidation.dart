@@ -5,6 +5,7 @@ enum InvalidationEntity {
   moldCase,
   userProfile,
   notification,
+  authSession,
 }
 
 enum InvalidationOperation {
