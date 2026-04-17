@@ -54,10 +54,18 @@ class _MainCaseTileState extends State<MainCaseTile> {
     const String defaultImageUrl = 'assets/images/Branding2.png';
     final String caseImageUrl = widget.imageUrl ?? '';
     final bool isNetworkImage = caseImageUrl.startsWith('http');
-    final bool hasValidPath = caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
+    final bool hasValidPath =
+        caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
+    final double logicalWidth = widget.imageWidth ?? 90;
+    final double logicalHeight = widget.imageHeight ?? 90;
+    final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final int cacheWidth = (logicalWidth * devicePixelRatio).round();
+    final int cacheHeight = (logicalHeight * devicePixelRatio).round();
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8)),
+      onTapDown: (_) => setState(
+        () => _containerColor = MoldifyColors.taupe.withValues(alpha: 0.8),
+      ),
       onTapUp: (_) {
         setState(() => _containerColor = MoldifyColors.taupe);
         widget.onTap();
@@ -82,19 +90,36 @@ class _MainCaseTileState extends State<MainCaseTile> {
                   child: isNetworkImage
                       ? Image.network(
                           caseImageUrl,
-                          width: 90,
-                          height: 90,
+                          width: logicalWidth,
+                          height: logicalHeight,
+                          cacheWidth: cacheWidth,
+                          cacheHeight: cacheHeight,
+                          gaplessPlayback: true,
+                          filterQuality: FilterQuality.low,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              Image.asset(defaultImageUrl, width: 90, height: 90, fit: BoxFit.cover),
+                              Image.asset(
+                                defaultImageUrl,
+                                width: logicalWidth,
+                                height: logicalHeight,
+                                fit: BoxFit.cover,
+                              ),
                         )
                       : Image.asset(
                           hasValidPath ? caseImageUrl : defaultImageUrl,
-                          width: 90,
-                          height: 90,
+                          width: logicalWidth,
+                          height: logicalHeight,
+                          cacheWidth: cacheWidth,
+                          cacheHeight: cacheHeight,
+                          filterQuality: FilterQuality.low,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
-                              Image.asset(defaultImageUrl, width: 90, height: 90, fit: BoxFit.cover),
+                              Image.asset(
+                                defaultImageUrl,
+                                width: logicalWidth,
+                                height: logicalHeight,
+                                fit: BoxFit.cover,
+                              ),
                         ),
                 ),
                 const SizedBox(width: 12),
@@ -102,10 +127,11 @@ class _MainCaseTileState extends State<MainCaseTile> {
                 // 2. Content Column
                 Expanded(
                   child: SizedBox(
-                    height: 90, 
+                    height: 90,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center, // Centers the entire group
+                      mainAxisAlignment:
+                          MainAxisAlignment.center, // Centers the entire group
                       children: [
                         // Text Group
                         Padding(
@@ -121,7 +147,7 @@ class _MainCaseTileState extends State<MainCaseTile> {
                             ),
                           ),
                         ),
-                        
+
                         // Bold Label with Regular Variable
                         Text.rich(
                           TextSpan(
@@ -132,26 +158,26 @@ class _MainCaseTileState extends State<MainCaseTile> {
                             ),
                             children: [
                               TextSpan(
-                                text: "${widget.dateLabel ?? AppLocalizations.of(context)!.dateLabel}: ",
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                text:
+                                    "${widget.dateLabel ?? AppLocalizations.of(context)!.dateLabel}: ",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              TextSpan(
-                                text: widget.dateSubmitted,
-                              ),
+                              TextSpan(text: widget.dateSubmitted),
                             ],
                           ),
                         ),
-                        
-                        const SizedBox(height: 12), // This creates the "Lift" for the tiles
 
+                        const SizedBox(
+                          height: 12,
+                        ), // This creates the "Lift" for the tiles
                         // 3. Status Tile
-                        Row(
-                          children: [
-                            StatusBox(status: widget.caseStatus),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 4), // Small buffer at the very bottom
+                        Row(children: [StatusBox(status: widget.caseStatus)]),
+
+                        const SizedBox(
+                          height: 4,
+                        ), // Small buffer at the very bottom
                       ],
                     ),
                   ),

@@ -11,10 +11,12 @@ class AppAuthProvider extends ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   String? _cookie;
   bool _hasSeenIntro = false;
-  late StreamSubscription<int> _authErrorSubscription;
+  StreamSubscription<int>? _authErrorSubscription;
+  bool _isHydrated = false;
 
   String? get cookie => _cookie;
   bool get hasSeenIntro => _hasSeenIntro;
+  bool get isHydrated => _isHydrated;
 
   Future<void> saveCookie(String? cookie) async {
     if (cookie != null) {
@@ -25,17 +27,32 @@ class AppAuthProvider extends ChangeNotifier {
   }
 
   Future<void> loadCookie() async {
-    _cookie = await _storage.read(key: 'auth_cookie');
-    _hasSeenIntro = await _storage.read(key: 'has_seen_intro') == 'true';
-    
-    // Listen to auth errors from API service
-    _authErrorSubscription = ApiService.authErrorStream.listen((statusCode) {
-      AppLogger.w('AppAuthProvider: Auth error detected - Status: $statusCode');
-      // Automatically logout and clear cookie on 401/403
-      logout();
-    });
-    
-    notifyListeners();
+    if (_isHydrated) return;
+
+    final stopwatch = Stopwatch()..start();
+    try {
+      _cookie = await _storage.read(key: 'auth_cookie');
+      _hasSeenIntro = await _storage.read(key: 'has_seen_intro') == 'true';
+
+      // Listen to auth errors from API service.
+      _authErrorSubscription ??= ApiService.authErrorStream.listen((
+        statusCode,
+      ) {
+        AppLogger.w(
+          'AppAuthProvider: Auth error detected - Status: $statusCode',
+        );
+        // Automatically logout and clear cookie on 401/403.
+        logout();
+      });
+    } finally {
+      _isHydrated = true;
+      stopwatch.stop();
+      AppLogger.d(
+        'AppAuthProvider hydrated in ${stopwatch.elapsedMilliseconds}ms',
+        tag: 'Startup',
+      );
+      notifyListeners();
+    }
   }
 
   Future<void> markIntroAsSeen() async {
@@ -65,7 +82,7 @@ class AppAuthProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _authErrorSubscription.cancel();
+    _authErrorSubscription?.cancel();
     ApiService.dispose();
     super.dispose();
   }

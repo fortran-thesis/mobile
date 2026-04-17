@@ -12,10 +12,14 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late final AppAuthProvider _authProvider;
+  bool _minimumDisplayComplete = false;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
@@ -34,40 +38,57 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1.0),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+    _authProvider.addListener(_handleAuthStateChanged);
 
     _controller.forward();
 
-    // Navigate after animation
-    Future.delayed(const Duration(milliseconds: 3500), () {
-      if (mounted) {
-        final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
-        final isAuthenticated = authProvider.cookie != null && authProvider.cookie!.isNotEmpty;
-        final hasSeenIntro = authProvider.hasSeenIntro;
+    Future.delayed(_controller.duration!, _markMinimumDisplayComplete);
+    _tryNavigate();
+  }
 
-        String route;
+  void _handleAuthStateChanged() {
+    _tryNavigate();
+  }
 
-        if (isAuthenticated) {
-          // User is logged in -> go to main
-          route = RouteNames.main;
-        } else if (hasSeenIntro) {
-          // Not logged in, but has seen intro -> go to login
-          route = RouteNames.login;
-        } else {
-          // First time user -> show welcome screen
-          route = RouteNames.welcome;
-        }
+  void _markMinimumDisplayComplete() {
+    if (!mounted) return;
+    _minimumDisplayComplete = true;
+    _tryNavigate();
+  }
 
-        Navigator.of(context).pushReplacementNamed(route);
-      }
-    });
+  void _tryNavigate() {
+    if (!mounted ||
+        _hasNavigated ||
+        !_minimumDisplayComplete ||
+        !_authProvider.isHydrated) {
+      return;
+    }
+
+    _hasNavigated = true;
+
+    final isAuthenticated =
+        _authProvider.cookie != null && _authProvider.cookie!.isNotEmpty;
+    final hasSeenIntro = _authProvider.hasSeenIntro;
+
+    String route;
+
+    if (isAuthenticated) {
+      route = RouteNames.main;
+    } else if (hasSeenIntro) {
+      route = RouteNames.login;
+    } else {
+      route = RouteNames.welcome;
+    }
+
+    Navigator.of(context).pushReplacementNamed(route);
   }
 
   @override
   void dispose() {
+    _authProvider.removeListener(_handleAuthStateChanged);
     _controller.dispose();
     super.dispose();
   }

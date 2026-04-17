@@ -32,12 +32,19 @@ import 'package:moldify/core/utils/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final startupWatch = Stopwatch()..start();
   ApiUrl.logConfig();
   await Firebase.initializeApp();
+  AppLogger.d(
+    'Firebase initialized in ${startupWatch.elapsedMilliseconds}ms',
+    tag: 'Startup',
+  );
 
-  // Create provider and WAIT for cookie to load
+  // Create provider and hydrate the cookie in the background so runApp can
+  // paint immediately. The splash screen waits for hydration before routing
+  // into the authenticated shell.
   final authProvider = AppAuthProvider();
-  await authProvider.loadCookie(); // <-- WAIT here!
+  unawaited(authProvider.loadCookie());
 
   // Initialise FCM in the background — permission prompt, token fetch, and
   // backend registration do not need to block runApp. The pending-tap mechanism
@@ -64,6 +71,13 @@ void main() async {
       child: const MyApp(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    AppLogger.d(
+      'First Flutter frame rendered in ${startupWatch.elapsedMilliseconds}ms',
+      tag: 'Startup',
+    );
+  });
 }
 
 final tabs = ['Home', 'Monitor'];
@@ -202,10 +216,7 @@ class _MyAppState extends State<MyApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('fil'),
-          ],
+          supportedLocales: const [Locale('en'), Locale('fil')],
           initialRoute: RouteNames.splash,
           onGenerateRoute: AppRoutes.generateRoute,
           navigatorKey: _rootNavigatorKey,
@@ -263,7 +274,9 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    final showNavChrome = selectedPosition == 0 ? _homeTabAtRoot : _workTabAtRoot;
+    final showNavChrome = selectedPosition == 0
+        ? _homeTabAtRoot
+        : _workTabAtRoot;
 
     return BlocListener<UserBloc, UserState>(
       listener: (context, state) {
@@ -285,7 +298,7 @@ class _MainPageState extends State<MainPage> {
           }
         }
       },
-        child: PopScope(
+      child: PopScope(
         // Keep pop handling centralized so tab-back and app-exit behavior is predictable.
         canPop: false,
         onPopInvokedWithResult: (didPop, result) {
@@ -295,8 +308,10 @@ class _MainPageState extends State<MainPage> {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           resizeToAvoidBottomInset: false,
-            extendBody: true,
-          drawer: showNavChrome && selectedPosition == 0 ? const AppDrawer() : null,
+          extendBody: true,
+          drawer: showNavChrome && selectedPosition == 0
+              ? const AppDrawer()
+              : null,
           body: IndexedStack(
             index: selectedPosition,
             children: [
@@ -328,7 +343,9 @@ class _MainPageState extends State<MainPage> {
               : null,
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerDocked,
-          bottomNavigationBar: showNavChrome ? _buildBottomNavigationBar() : null,
+          bottomNavigationBar: showNavChrome
+              ? _buildBottomNavigationBar()
+              : null,
         ),
       ),
     );
