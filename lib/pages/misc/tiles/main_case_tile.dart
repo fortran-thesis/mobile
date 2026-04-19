@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moldify/l10n/app_localizations.dart';
+import 'package:moldify/core/constants/api_url.dart';
 import '../buttons/popmenu_button.dart';
 import '../colors.dart';
 import 'status_tile.dart';
@@ -49,11 +50,39 @@ class MainCaseTile extends StatefulWidget {
 class _MainCaseTileState extends State<MainCaseTile> {
   Color _containerColor = MoldifyColors.taupe;
 
+  String? _normalizeImageUrl(String? rawUrl) {
+    final value = rawUrl?.trim();
+    if (value == null ||
+        value.isEmpty ||
+        value == 'no_image' ||
+        value == '[]' ||
+        value == 'null') {
+      return null;
+    }
+
+    final lower = value.toLowerCase();
+    if (lower.startsWith('http://') || lower.startsWith('https://')) {
+      return value;
+    }
+
+    if (value.startsWith('/')) {
+      return '${ApiUrl.baseUrl}$value';
+    }
+
+    if (!value.startsWith('assets/')) {
+      return '${ApiUrl.baseUrl}/$value';
+    }
+
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     const String defaultImageUrl = 'assets/images/Branding2.png';
-    final String caseImageUrl = widget.imageUrl ?? '';
-    final bool isNetworkImage = caseImageUrl.startsWith('http');
+    final String caseImageUrl = _normalizeImageUrl(widget.imageUrl) ?? '';
+    final bool isNetworkImage =
+        caseImageUrl.startsWith('http://') ||
+        caseImageUrl.startsWith('https://');
     final bool hasValidPath =
         caseImageUrl.isNotEmpty && caseImageUrl != 'no_image';
     final double logicalWidth = widget.imageWidth ?? 90;

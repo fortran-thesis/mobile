@@ -120,6 +120,37 @@ class MoldCase {
     return null;
   }
 
+  /// Create a copy of this MoldCase with optional field overrides
+  MoldCase copyWith({
+    String? id,
+    String? mycologistId,
+    String? name,
+    String? cropName,
+    String? moldReportId,
+    String? photoUrl,
+    String? priority,
+    DateTime? startDate,
+    DateTime? endDate,
+    CultivationDetails? cultivationDetails,
+    List<CultivationLog>? cultivationLogs,
+    bool? isArchived,
+  }) {
+    return MoldCase(
+      id: id ?? this.id,
+      mycologistId: mycologistId ?? this.mycologistId,
+      name: name ?? this.name,
+      cropName: cropName ?? this.cropName,
+      moldReportId: moldReportId ?? this.moldReportId,
+      photoUrl: photoUrl ?? this.photoUrl,
+      priority: priority ?? this.priority,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      cultivationDetails: cultivationDetails ?? this.cultivationDetails,
+      cultivationLogs: cultivationLogs ?? this.cultivationLogs,
+      isArchived: isArchived ?? this.isArchived,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

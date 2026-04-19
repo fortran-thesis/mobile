@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:moldify/core/features/culture/services/culture_session_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -147,9 +148,7 @@ class _CultureDashboardState extends State<CultureDashboard> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: MoldifyColors.primaryColor,
-                    ),
+                    child: AppLoadingSpinner(size: 32),
                   )
                 : _cultures.isEmpty
                 ? const Center(

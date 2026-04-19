@@ -29,9 +29,9 @@ class ResultActionSection extends StatelessWidget {
           buttonText: 'Save Result',
           backgroundColor: MoldifyColors.primaryColor,
           textColor: MoldifyColors.backgroundColor,
-          buttonHeight: 45,
+         buttonHeight: 62, 
           buttonWidth: double.infinity,
-          buttonRadius: 10,
+          buttonRadius: 18,
         ),
       ],
     );

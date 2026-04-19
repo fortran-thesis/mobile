@@ -44,7 +44,7 @@ class ReportHostsSymptomsTab extends StatelessWidget {
     final bool hasData = content.isNotEmpty;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 40.0 : 48.0),
+      padding: EdgeInsets.only(bottom: isLast ? 0.0 : 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,13 +119,12 @@ class ReportHostsSymptomsTab extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      // Consistent asymmetric padding
-      padding: const EdgeInsets.fromLTRB(25.0, 30.0, 25.0, 60.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: displayedSections,
-      ),
-    );
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(25.0, 20.0, 25.0, 0.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: displayedSections,
+        ),
+      );
   }
 }

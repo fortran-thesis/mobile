@@ -175,18 +175,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _selectOccupation() async {
     final l10n = AppLocalizations.of(context)!;
-    final selectedOccupation = await showChipSelectionModal(
+    final selectedOccupation = await showSearchableSingleSelectionModal(
       context: context,
       title: l10n.occupation,
       options: _occupationOptions,
       currentSelection: occupationController.text,
-      customInputHint: l10n.enterOccupation,
-      othersLabel: l10n.othersLabel,
-      isMultiLine: false,
+      searchHint: l10n.enterOccupation,
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: l10n.othersLabel,
     );
 
     if (selectedOccupation != null && selectedOccupation.isNotEmpty) {
       setState(() {
+        if (!_occupationOptions.contains(selectedOccupation)) {
+          _occupationOptions.add(selectedOccupation);
+          _occupationOptions.sort((a, b) => a.compareTo(b));
+        }
         occupationController.text = selectedOccupation;
       });
     }

@@ -9,6 +9,7 @@ import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/utils/logger.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -249,164 +250,251 @@ class _LowConfidenceCorrectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MoldifyColors.backgroundColor,
-      appBar: PrimaryAppBar(title: 'Low Confidence Result'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Scan image ---
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+    return Stack(
+      children: [
+        Scaffold(
+  backgroundColor: MoldifyColors.backgroundColor,
+  appBar: PrimaryAppBar(title: 'Low Confidence Result'),
+  body: SingleChildScrollView(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // --- Feature Image: Refined shadow and border ---
+        Center(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
               child: Image.file(
                 File(widget.croppedImagePath),
                 width: double.infinity,
-                height: 220,
+                height: 280, 
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 16),
+          ),
+        ),
+        const SizedBox(height: 32),
 
-            // --- Warning banner ---
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: MoldifyColors.MoldifyLightYellow.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: MoldifyColors.accentColor,
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        // --- Info Section: Translucent Material Design ---
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            // Using a very faint tint of the accent color instead of flat white
+            color: MoldifyColors.accentColor.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: MoldifyColors.accentColor.withOpacity(0.1),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
                   const Icon(
-                    FontAwesomeIcons.triangleExclamation,
+                    FontAwesomeIcons.circleExclamation,
                     color: MoldifyColors.accentColor,
                     size: 18,
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Confidence too low ($_confidenceDisplay%) — '
-                      'please verify the mold genus before proceeding.',
-                      style: const TextStyle(
-                        fontFamily: 'Bricolage-Grotesque-SemiBold',
-                        fontSize: 13,
-                        color: MoldifyColors.MoldifyBlack,
-                      ),
+                  Text(
+                    'VERIFICATION REQUIRED',
+                    style: TextStyle(
+                      fontFamily: 'Bricolage-Grotesque-Bold',
+                      fontSize: 13,
+                      letterSpacing: 1.2,
+                      color: MoldifyColors.accentColor,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 14),
+              Text(
+                'Our AI is only $_confidenceDisplay% confident in this result. Please verify the genus manually to ensure safety.',
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Regular',
+                  fontSize: 15,
+                  height: 1.5,
+                  color: MoldifyColors.MoldifyBlack.withOpacity(0.7),
+                ),
+              ),
 
-            // --- AI prediction (informational only) ---
-            if (_aiPredictedGenus.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: MoldifyColors.taupe,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Model predicted: $_aiPredictedGenus (not confirmed)',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage-Grotesque-Regular',
-                    fontSize: 13,
-                    color: MoldifyColors.MoldifyGrey,
+              // AI Prediction "Readout" - Styled like a diagnostic tag
+              if (_aiPredictedGenus.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: MoldifyColors.backgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: MoldifyColors.MoldifyGrey.withOpacity(0.1)),
                   ),
-                ),
-              ),
-            const SizedBox(height: 24),
-
-            // --- Section label ---
-            const Text(
-              'Select the correct mold genus',
-              style: TextStyle(
-                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                fontSize: 15,
-                color: MoldifyColors.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // --- Dropdown: full mold catalog ---
-            if (_isLoadingMoldOptions)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  color: MoldifyColors.primaryColor,
-                  backgroundColor: MoldifyColors.taupe,
-                ),
-              )
-            else if (_genusOptions.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: MoldifyColors.taupe,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _moldOptionsError ?? 'No mold options available.',
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          fontSize: 13,
+                  child: Row(
+                    children: [
+                      const Icon(FontAwesomeIcons.bacterium, size: 14, color: MoldifyColors.primaryColor),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Identified:',
+                        style: TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-SemiBold',
+                          fontSize: 14,
                           color: MoldifyColors.MoldifyGrey,
                         ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: _loadMoldOptions,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-            else
-              BuildDropdown(
-                key: ValueKey(_dropdownKey),
-                hintText: 'Select Genus',
-                items: _genusOptions,
-                initialValue: _selectedGenus,
-                onChanged: _handleMoldSelectionChanged,
-              ),
-
-            const SizedBox(height: 32),
-
-            // --- Confirm button ---
-            _isConfirming
-                ? const Center(child: CircularProgressIndicator())
-                : BuildButton(
-                    buttonText: 'Confirm Genus',
-                    onPressed: _canConfirm ? _onConfirm : () {},
-                    backgroundColor: _canConfirm
-                        ? MoldifyColors.primaryColor
-                        : MoldifyColors.MoldifyGrey,
-                    textColor: MoldifyColors.backgroundColor,
-                    buttonHeight: 48,
-                    buttonWidth: double.infinity,
-                    buttonRadius: 10,
+                      const SizedBox(width: 6),
+                      Text(
+                        _aiPredictedGenus,
+                        style: const TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-Bold',
+                          fontSize: 16,
+                          color: MoldifyColors.primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+              ],
+            ],
+          ),
+        ),
 
-            const SizedBox(height: 24),
+        const SizedBox(height: 40),
+
+        // --- Action Header: Clean and Minimal ---
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            Container(
+              width: 4,
+              height: 18,
+              decoration: BoxDecoration(
+                color: MoldifyColors.primaryColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Select Correct Genus',
+              style: TextStyle(
+                fontFamily: 'Bricolage-Grotesque-SemiBold',
+                fontSize: 18,
+                letterSpacing: -0.3,
+                color: MoldifyColors.primaryColor,
+              ),
+            ),
           ],
         ),
+        const SizedBox(height: 16),
+
+        // --- Dropdown Section ---
+        if (_isLoadingMoldOptions)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: AppLoadingSpinner(size: 32),
+            ),
+          )
+        else if (_genusOptions.isEmpty)
+          _buildErrorState()
+        else
+          // Wrapped in a subtle shadow container for depth
+          Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: BuildDropdown(
+              key: ValueKey(_dropdownKey),
+              hintText: 'Search the mold catalog...',
+              items: _genusOptions,
+              initialValue: _selectedGenus,
+              onChanged: _handleMoldSelectionChanged,
+            ),
+          ),
+
+        const SizedBox(height: 48),
+
+        // --- Confirmation Action: Elevated Modern Button ---
+        BuildButton(
+          buttonText: 'Confirm Identification',
+          onPressed: _canConfirm ? _onConfirm : () {},
+          backgroundColor: _canConfirm
+              ? MoldifyColors.primaryColor
+              : MoldifyColors.MoldifyGrey.withOpacity(0.2),
+          textColor: _canConfirm 
+              ? MoldifyColors.backgroundColor 
+              : MoldifyColors.MoldifyGrey,
+          buttonHeight: 62, 
+          buttonWidth: double.infinity,
+          buttonRadius: 18,
+        ),
+        const SizedBox(height: 50),
+      ],
+    ),
+  ),
+),
+        // Full-page loading overlay when confirming
+        if (_isConfirming)
+          const AppLoadingOverlay(
+            message: 'Processing...',
+            barrierColor: MoldifyColors.backgroundColor,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: MoldifyColors.taupe.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 20,
+            color: MoldifyColors.MoldifyGrey,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _moldOptionsError ?? 'No options found.',
+              style: TextStyle(
+                fontFamily: 'Bricolage-Grotesque-Regular',
+                fontSize: 13,
+                color: MoldifyColors.MoldifyGrey,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _loadMoldOptions,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
 }
+
+

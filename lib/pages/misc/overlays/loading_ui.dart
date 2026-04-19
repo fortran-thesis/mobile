@@ -109,52 +109,68 @@ class AppLoadingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: barrierColor ?? MoldifyColors.backgroundColor,
-      body: Stack(
+    return Container(
+      color: barrierColor ?? MoldifyColors.backgroundColor,
+      child: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const AppLoadingSpinner(),
-                const SizedBox(height: 40),
-                
-                // Main Header (Montserrat Black tracking)
-                Text(
-                  message!.toUpperCase(),
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat-Black',
-                    fontSize: 24,
-                    letterSpacing: -0.5,
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Editorial Metadata Label
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 20, height: 1, color: MoldifyColors.primaryColor.withOpacity(0.2)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Text(
-                        'SYNC IN PROGRESS',
-                        style: TextStyle(
-                          fontFamily: 'Bricolage-Grotesque',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 4,
-                          color: MoldifyColors.MoldifyGrey.withOpacity(0.4),
-                        ),
+                    const AppLoadingSpinner(size: 92),
+                    const SizedBox(height: 40),
+
+                    // Main Header (Montserrat Black tracking)
+                    Text(
+                      message!.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Montserrat-Black',
+                        fontSize: 24,
+                        letterSpacing: -0.5,
+                        color: MoldifyColors.primaryColor,
                       ),
                     ),
-                    Container(width: 20, height: 1, color: MoldifyColors.primaryColor.withOpacity(0.2)),
+
+                    const SizedBox(height: 12),
+
+                    // Editorial Metadata Label
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 1,
+                          color: MoldifyColors.primaryColor.withOpacity(0.2),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          child: Text(
+                            'SYNC IN PROGRESS',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 4,
+                              color: MoldifyColors.MoldifyGrey.withOpacity(
+                                0.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 20,
+                          height: 1,
+                          color: MoldifyColors.primaryColor.withOpacity(0.2),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
 

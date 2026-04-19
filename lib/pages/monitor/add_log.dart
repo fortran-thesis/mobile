@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -57,6 +59,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final List<String> _selectedSymptoms = [];
   final List<String> _selectedSigns = [];
   final List<String> _selectedCharacteristics = [];
+  
+  String _selectedColor = '';
+  String _selectedTexture = '';
 
   static const List<String> _defaultSymptomOptions = [
     'Leaf spots',
@@ -77,12 +82,37 @@ class _AddLogScreenState extends State<AddLogScreen> {
   ];
 
   static const List<String> _defaultCharacteristicOptions = [
-    'Cottony',
-    'Powdery',
-    'Slimy',
-    'Fuzzy',
-    'Water-soaked',
-    'Rapid spreading',
+    'Cotton-like',
+    'Powder-like',
+    'Slime-like',
+    'Fuzzy-like',
+    'Velvety-like',
+    'Smooth-like',
+    'Rough-like',
+    'Water-soaked-like',
+  ];
+
+  static const List<String> _defaultColorOptions = [
+    'White',
+    'Green',
+    'Black',
+    'Brown',
+    'Yellow',
+    'Orange',
+    'Pink',
+    'Purple',
+    'Red',
+  ];
+
+  static const List<String> _defaultTextureOptions = [
+    'Cotton-like',
+    'Powder-like',
+    'Slime-like',
+    'Fuzzy-like',
+    'Velvety-like',
+    'Smooth-like',
+    'Rough-like',
+    'Water-soaked-like',
   ];
 
   final List<String> _symptomOptions = List<String>.from(
@@ -91,6 +121,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
   final List<String> _signOptions = List<String>.from(_defaultSignOptions);
   final List<String> _characteristicOptions = List<String>.from(
     _defaultCharacteristicOptions,
+  );
+  final List<String> _colorOptions = List<String>.from(_defaultColorOptions);
+  final List<String> _textureOptions = List<String>.from(
+    _defaultTextureOptions,
   );
 
   late final String _sizeLabel;
@@ -208,10 +242,18 @@ class _AddLogScreenState extends State<AddLogScreen> {
       searchHint: 'Search symptoms...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add symptom',
     );
 
     if (selected == null || selected.isEmpty) return;
     setState(() {
+      for (final item in selected) {
+        if (!_symptomOptions.contains(item)) {
+          _symptomOptions.add(item);
+        }
+      }
+      _symptomOptions.sort((a, b) => a.compareTo(b));
       _selectedSymptoms
         ..clear()
         ..addAll(selected);
@@ -228,14 +270,74 @@ class _AddLogScreenState extends State<AddLogScreen> {
       searchHint: 'Search characteristics...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add characteristic',
     );
 
     if (selected == null || selected.isEmpty) return;
     setState(() {
+      for (final item in selected) {
+        if (!_characteristicOptions.contains(item)) {
+          _characteristicOptions.add(item);
+        }
+      }
+      _characteristicOptions.sort((a, b) => a.compareTo(b));
       _selectedCharacteristics
         ..clear()
         ..addAll(selected);
       _characteristicsController.text = selected.join(', ');
+    });
+  }
+
+  Future<void> _pickColor() async {
+    final selected = await showSearchableSelectionModal(
+      context: context,
+      title: 'Select Color',
+      options: _colorOptions,
+      currentSelections: _selectedColor.isEmpty ? [] : [_selectedColor],
+      searchHint: 'Search or add color...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      multiSelect: false,
+      addCustomLabel: 'Add color',
+    );
+
+    if (selected == null || selected.isEmpty) return;
+    setState(() {
+      final color = selected.first;
+      if (!_colorOptions.contains(color)) {
+        _colorOptions.add(color);
+        _colorOptions.sort((a, b) => a.compareTo(b));
+      }
+      _selectedColor = color;
+      _colorController.text = color;
+    });
+  }
+
+  Future<void> _pickTexture() async {
+    final selected = await showSearchableSelectionModal(
+      context: context,
+      title: 'Select Texture',
+      options: _textureOptions,
+      currentSelections: _selectedTexture.isEmpty ? [] : [_selectedTexture],
+      searchHint: 'Search or add texture...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      multiSelect: false,
+      addCustomLabel: 'Add texture',
+    );
+
+    if (selected == null || selected.isEmpty) return;
+    setState(() {
+      final texture = selected.first;
+      if (!_textureOptions.contains(texture)) {
+        _textureOptions.add(texture);
+        _textureOptions.sort((a, b) => a.compareTo(b));
+      }
+      _selectedTexture = texture;
+      _textureController.text = texture;
     });
   }
 
@@ -248,10 +350,18 @@ class _AddLogScreenState extends State<AddLogScreen> {
       searchHint: 'Search signs...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add sign',
     );
 
     if (selected == null || selected.isEmpty) return;
     setState(() {
+      for (final item in selected) {
+        if (!_signOptions.contains(item)) {
+          _signOptions.add(item);
+        }
+      }
+      _signOptions.sort((a, b) => a.compareTo(b));
       _selectedSigns
         ..clear()
         ..addAll(selected);
@@ -635,6 +745,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                               hintText: _colorHint,
                               controller: _colorController,
                               showPassword: false,
+                              readOnly: true,
+                              onTap: _pickColor,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              rightIconColor: MoldifyColors.accentColor,
                             ),
 
                             Padding(
@@ -655,6 +769,10 @@ class _AddLogScreenState extends State<AddLogScreen> {
                               hintText: _textureHint,
                               controller: _textureController,
                               showPassword: false,
+                              readOnly: true,
+                              onTap: _pickTexture,
+                              rightIcon: FontAwesomeIcons.angleRight,
+                              rightIconColor: MoldifyColors.accentColor,
                             ),
 
                             if (_isInitialMacroscopicMode) ...[
@@ -664,7 +782,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                   bottom: 8.0,
                                 ),
                                 child: const Text(
-                                  'Symptoms',
+                                  'Select Symptoms',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -679,6 +797,8 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 isMultiline: true,
                                 readOnly: true,
                                 onTap: _pickSymptoms,
+                                rightIcon: FontAwesomeIcons.angleRight,
+                                rightIconColor: MoldifyColors.accentColor,
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -686,7 +806,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                   bottom: 8.0,
                                 ),
                                 child: const Text(
-                                  'Signs',
+                                  'Select Signs',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -701,6 +821,8 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 isMultiline: true,
                                 readOnly: true,
                                 onTap: _pickSigns,
+                                rightIcon: FontAwesomeIcons.angleRight,
+                                rightIconColor: MoldifyColors.accentColor,
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -708,7 +830,7 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                   bottom: 8.0,
                                 ),
                                 child: const Text(
-                                  'Characteristics',
+                                  'Select Characteristics',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontFamily: 'Bricolage-Grotesque-SemiBold',
@@ -723,6 +845,8 @@ class _AddLogScreenState extends State<AddLogScreen> {
                                 isMultiline: true,
                                 readOnly: true,
                                 onTap: _pickCharacteristics,
+                                rightIcon: FontAwesomeIcons.angleRight,
+                                rightIconColor: MoldifyColors.accentColor,
                               ),
                             ] else ...[
                               /// Additional Notes Label
@@ -799,13 +923,9 @@ class _AddLogScreenState extends State<AddLogScreen> {
           // Full-screen loading overlay
           if (_isSaving)
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.3),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
+              child: const AppLoadingOverlay(
+                message: 'Saving log...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
             ),
         ],

@@ -178,22 +178,26 @@ class EvidenceTab extends StatelessWidget {
 
         GestureDetector(
           onTap: onCaptureMacro,
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: MoldifyColors.taupe, 
-              borderRadius: BorderRadius.circular(24),
-              // Use a subtle border in Primary Color to define the shape
-              border: Border.all(color: MoldifyColors.primaryColor.withValues(alpha: 0.15)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Image Header Area
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
-                  child: hasMacroscopicImage
-                      ? Stack(
+          child: hasMacroscopicImage
+              ? Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: MoldifyColors.taupe,
+                    borderRadius: BorderRadius.circular(24),
+                    // Use a subtle border in Primary Color to define the shape
+                    border: Border.all(
+                      color: MoldifyColors.primaryColor.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Image Header Area
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(23),
+                        ),
+                        child: Stack(
                           children: [
                             SizedBox(
                               height: 200,
@@ -209,79 +213,91 @@ class EvidenceTab extends StatelessWidget {
                               child: _buildGlassRetake(onCaptureMacro),
                             ),
                           ],
-                        )
-                      : const ObservationEmptyStateCard(
-                          message: 'Tap to capture initial macroscopic image',
                         ),
-                ),
+                      ),
 
-                // 2. Metadata Area
-              if (hasMacroscopicImage)
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Wrap Rows in IntrinsicHeight to equalize box heights
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
+                      // 2. Metadata Area
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ObservationDataTile(
-                              label: 'Color',
-                              value: macroColorController.text,
-                              icon: Icons.palette_outlined,
+                            // Wrap Rows in IntrinsicHeight to equalize box heights
+                            IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch, // Forces children to fill height
+                                children: [
+                                  ObservationDataTile(
+                                    label: 'Color',
+                                    value: macroColorController.text,
+                                    icon: Icons.palette_outlined,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  ObservationDataTile(
+                                    label: 'Texture',
+                                    value: macroTextureController.text,
+                                    icon: Icons.texture_rounded,
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 12),
-                            ObservationDataTile(
-                              label: 'Texture',
-                              value: macroTextureController.text,
-                              icon: Icons.texture_rounded,
+                            const SizedBox(height: 12),
+                            IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ObservationDataTile(
+                                    label: 'Symptoms',
+                                    value: macroSymptomsController.text,
+                                    icon: Icons.healing_outlined,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  ObservationDataTile(
+                                    label: 'Signs',
+                                    value: macroSignsController.text,
+                                    icon: Icons.visibility_outlined,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch, 
-                          children: [
-                            ObservationDataTile(
-                              label: 'Symptoms',
-                              value: macroSymptomsController.text,
-                              icon: Icons.healing_outlined,
+                            const SizedBox(height: 12),
+                            IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ObservationDataTile(
+                                    label: 'Characteristics',
+                                    value: macroCharacteristicsController.text,
+                                    icon: Icons.science_outlined,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(child: SizedBox.shrink()),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 12),
-                            ObservationDataTile(
-                              label: 'Signs',
-                              value: macroSignsController.text,
-                              icon: Icons.visibility_outlined,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ObservationDataTile(
-                              label: 'Characteristics',
-                              value: macroCharacteristicsController.text,
-                              icon: Icons.science_outlined,
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(child: SizedBox.shrink()),
                           ],
                         ),
                       ),
                     ],
                   ),
+                )
+              : AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: double.infinity,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: MoldifyColors.primaryColor.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: MoldifyColors.primaryColor.withOpacity(0.1),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const ObservationEmptyStateCard(
+                    message: 'Tap to capture initial macroscopic image',
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),      
+        ),
         const SizedBox(height: 40),
 
         Row(

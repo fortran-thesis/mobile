@@ -5,6 +5,7 @@ import 'package:moldify/pages/misc/functions/step_indicator.dart';
 import 'package:moldify/pages/misc/functions/scrollable_tab_bar.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/constants/morphology_schema.dart';
 import 'dart:typed_data';
@@ -208,8 +209,8 @@ class _InputCharacteristicsScreenState extends State<InputCharacteristicsScreen>
         context: context,
         barrierDismissible: false,
         useRootNavigator: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
+        builder: (context) => const AppLoadingDialog(
+          message: 'Processing data...',
         ),
       );
     }

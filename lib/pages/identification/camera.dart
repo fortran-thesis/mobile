@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import '../misc/colors.dart';
 import 'package:moldify/core/utils/logger.dart';
 
@@ -210,13 +211,9 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     if (cameraController == null || !cameraController!.value.isInitialized) {
-      return const Scaffold(
-          backgroundColor: MoldifyColors.backgroundColor,
-          body: Center(
-            child: CircularProgressIndicator(
-              color: MoldifyColors.primaryColor,
-            ),
-          )
+      return const AppLoadingOverlay(
+        message: 'Loading camera...',
+        barrierColor: MoldifyColors.backgroundColor,
       );
     }
 
@@ -347,12 +344,10 @@ class _CameraScreenState extends State<CameraScreen> {
           /// 5. Loading Indicator Overlay
           /// This appears on top of the screen while a picture is being processed.
           if (_isTakingPicture)
-            Container(
-              color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
+            const Positioned.fill(
+              child: AppLoadingOverlay(
+                message: 'Processing image...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
             ),
         ],

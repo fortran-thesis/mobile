@@ -28,6 +28,25 @@ class _ControlManagementTileState extends State<ControlManagementTile> {
   String? _cachedDescription;
   int? _cachedMaxLines;
 
+  List<String> _extractBulletItems(String value) {
+    final lines = value
+        .split(RegExp(r'\n+'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+    if (lines.isEmpty) return const <String>[];
+
+    final bulletPattern = RegExp(r'^[•\-*]\s+');
+    final allBulleted = lines.every((line) => bulletPattern.hasMatch(line));
+    if (!allBulleted) return const <String>[];
+
+    return lines
+        .map((line) => line.replaceFirst(bulletPattern, '').trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
   String _normalizeHtmlContent(String value) {
     return value
         .replaceAll('&amp;nbsp;', ' ')
@@ -122,6 +141,74 @@ class _ControlManagementTileState extends State<ControlManagementTile> {
                   'ul': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
                   'ol': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
                 },
+              ),
+            ),
+          ),
+          if (showToggle) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Text(
+                _isExpanded ? 'View Less' : 'View More',
+                style: const TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-Semibold',
+                  fontSize: 14,
+                  color: MoldifyColors.MoldifyBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    final bulletItems = _extractBulletItems(widget.description);
+    if (bulletItems.isNotEmpty) {
+      final visibleItems = _isExpanded
+          ? bulletItems
+          : bulletItems.take(widget.maxLines).toList();
+      final showToggle = bulletItems.length > widget.maxLines;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...visibleItems.asMap().entries.map(
+            (entry) => Padding(
+              padding: EdgeInsets.only(
+                bottom: entry.key == visibleItems.length - 1 ? 0 : 10,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, right: 10.0),
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: MoldifyColors.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      entry.value,
+                      textAlign: TextAlign.justify,
+                      style: const TextStyle(
+                        fontFamily: 'Bricolage-Grotesque-Regular',
+                        fontSize: 15,
+                        height: 1.6,
+                        color: MoldifyColors.MoldifyBlack,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

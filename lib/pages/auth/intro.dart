@@ -55,7 +55,7 @@ class IntroScreen extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 30.0),
                       child: BuildButton(
-                          buttonText: l10n.farmer,
+                          buttonText: 'Client',
                           onPressed: () {
                             Navigator.pushNamed(context, RouteNames.login, arguments: {'userRole': 'farmer'});
                           },

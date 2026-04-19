@@ -7,6 +7,7 @@ import 'package:moldify/pages/identification/mold_result_content/result_action_s
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/control_management_tile.dart';
 import '../misc/appbar/primary_app_bar.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
@@ -17,6 +18,7 @@ import 'package:moldify/providers/auth_provider.dart';
 
 import '../misc/tiles/bottom_sheet.dart';
 import '../misc/tiles/bottom_sheet_contents/correction_content.dart';
+import '../misc/overlays/modals/confirmation_dialog.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 class MoldResultScreen extends StatefulWidget {
@@ -460,6 +462,55 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         .replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  String _sanitizeDisplayText(String raw) {
+    var value = raw.trim();
+    if (value.isEmpty) return value;
+
+    value = value.replaceAll(r'\"', '"').replaceAll(r"\'", "'");
+
+    while (value.length >= 2 &&
+        ((value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'")))) {
+      value = value.substring(1, value.length - 1).trim();
+    }
+
+    return value;
+  }
+
+  String _normalizeControlBullets(String raw) {
+    final normalized = _sanitizeDisplayText(raw);
+    if (normalized.isEmpty) return normalized;
+
+    final lines = normalized
+        .split(RegExp(r'\n+'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+    if (lines.isEmpty) return normalized;
+
+    final allDashed =
+        lines.length > 1 && lines.every((line) => RegExp(r'^[-*•]\s+').hasMatch(line));
+    if (allDashed) {
+      return lines
+          .map(
+            (line) =>
+                '• ${_sanitizeDisplayText(line.replaceFirst(RegExp(r'^[-*•]\s*'), ''))}',
+          )
+          .join('\n');
+    }
+
+    return lines
+        .map((line) {
+          if (RegExp(r'^[-*]\s+').hasMatch(line)) {
+            final item = line.replaceFirst(RegExp(r'^[-*]\s*'), '').trim();
+            return '• ${_sanitizeDisplayText(item)}';
+          }
+          return line;
+        })
+        .join('\n');
+  }
+
   Future<void> _loadSupportedCorrectionOptions() async {
     try {
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
@@ -671,13 +722,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     return Column(
       children: _managementControls
           .map(
-            (item) => ControlManagementTile(
-              title: item['title'] ?? '',
-              description: (item['content'] ?? '').isNotEmpty
-                  ? item['content']!
-                  : 'No recommendation available yet.',
-              icon: _iconForControlType(item['type'] ?? ''),
-            ),
+            (item) {
+              final sanitizedDescription = _normalizeControlBullets(
+                item['content'] ?? '',
+              );
+
+              return ControlManagementTile(
+                title: item['title'] ?? '',
+                description: sanitizedDescription.isNotEmpty
+                    ? sanitizedDescription
+                    : 'No recommendation available yet.',
+                icon: _iconForControlType(item['type'] ?? ''),
+              );
+            },
           )
           .toList(),
     );
@@ -745,9 +802,11 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
           );
         },
       ),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: [
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Stack(
+              children: [
             /// 1. The image uploaded bu the user
             Image.file(
               File(widget.croppedImagePath),
@@ -884,45 +943,20 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     context: context,
                                     barrierDismissible: false,
                                     builder: (BuildContext dialogContext) {
-                                      return AlertDialog(
-                                        title: const Text(
-                                          'Mold Not in Database',
-                                          style: TextStyle(
-                                            fontFamily: 'Montserrat-Bold',
-                                            fontSize: 18,
-                                          ),
+                                      return BuildConfirmationDialog(
+                                        title: 'Mold Not in Database',
+                                        subtitle:
+                                            'This mold is not in our database. Would you like to save this result and help us add it?',
+                                        onCancel: () => Navigator.pop(
+                                          dialogContext,
+                                          false,
                                         ),
-                                        content: const Text(
-                                          'This mold is not in our database. Would you like to save this result and help us add it?',
-                                          style: TextStyle(
-                                            fontFamily:
-                                                'Bricolage-Grotesque-Regular',
-                                            fontSize: 14,
-                                          ),
+                                        onConfirm: () => Navigator.pop(
+                                          dialogContext,
+                                          true,
                                         ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(
-                                              dialogContext,
-                                              false,
-                                            ),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(
-                                              dialogContext,
-                                              true,
-                                            ),
-                                            child: const Text(
-                                              'Save & Report',
-                                              style: TextStyle(
-                                                color:
-                                                    MoldifyColors.accentColor,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Save & Report',
                                       );
                                     },
                                   ) ??
@@ -1109,19 +1143,17 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                 ),
               ),
             ),
-            if (_isSavingResult)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: MoldifyColors.primaryColor,
-                    ),
-                  ),
-                ),
+              ],
+            ),
+          ),
+          if (_isSavingResult)
+            Positioned.fill(
+              child: const AppLoadingOverlay(
+                message: 'Saving result...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

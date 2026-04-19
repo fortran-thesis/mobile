@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:moldify/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../misc/appbar/primary_app_bar.dart';
 import '../../misc/buttons/primary_button.dart';
 import '../../misc/colors.dart';
+import '../../misc/overlays/loading_ui.dart';
+import '../../misc/overlays/modals/chip_selection_modal.dart';
 import '../../misc/overlays/modals/confirmation_dialog.dart';
 import '../../misc/textboxes/textboxes.dart';
 import '../../misc/tiles/photo_uploader.dart';
@@ -23,6 +26,21 @@ class AddFollowUpScreen extends StatefulWidget {
 
 class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
   final TextEditingController _descController = TextEditingController();
+  final List<String> _selectedFollowUpIssues = [];
+
+  final List<String> _followUpIssueOptionsTagalog = [
+    'May lumalala na mantsa sa dahon',
+    'Dumarami pa rin ang amag sa halaman',
+    'Naninilaw at natutuyo ang mga dahon',
+    'Nabubulok pa rin ang bunga o tangkay',
+    'May mabahong amoy sa apektadong bahagi',
+    'Kumakalat pa rin ang sakit sa ibang halaman',
+    'Hindi umepekto ang unang paggamot',
+    'May bagong sintomas matapos maggamot',
+    'Nanghihina at nalalanta pa rin ang halaman',
+    'May puti/abong balahibo sa dahon o bunga',
+  ];
+
   List<File> uploadedPhotos = [];
   bool _isSubmitting = false;
 
@@ -155,12 +173,14 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
           appBar: PrimaryAppBar(
             title: l10n.addFollowUpTitle,
           ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          body: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   /// ----------- Add Follow Up Header -----------
                   Text(l10n.addFollowUpTitle,
                       style: TextStyle(
@@ -213,44 +233,76 @@ class _AddFollowUpScreenState extends State<AddFollowUpScreen> {
                     controller: _descController,
                     showPassword: false,
                     isMultiline: true,
+                    rightIcon: FontAwesomeIcons.angleRight,
+                    rightIconColor: MoldifyColors.accentColor,
+                    readOnly: true,
+                    onTap: () async {
+                      final selectedIssues = await showSearchableSelectionModal(
+                        context: context,
+                        title: 'Ano pa ang nangyayari sa tanim?',
+                        options: _followUpIssueOptionsTagalog,
+                        currentSelections: _selectedFollowUpIssues,
+                        searchHint: 'Maghanap ng sintomas o problema...',
+                        allowCustomOption: true,
+                        addCustomLabel: 'Magdagdag',
+                      );
+
+                      if (selectedIssues != null && selectedIssues.isNotEmpty) {
+                        setState(() {
+                          _selectedFollowUpIssues
+                            ..clear()
+                            ..addAll(selectedIssues);
+                          _descController.text = selectedIssues.join(', ');
+                        });
+                      }
+                    },
                   ),
 
                   /// Submit Report Button
-                  Padding(
-                    padding: const EdgeInsets.only(top: 50.0),
-                    child: BuildButton(
-                        onPressed: _isSubmitting ? () {} : () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (BuildContext context) {
-                              return BuildConfirmationDialog(
-                                title: l10n.confirmSubmitFollowUpTitle,
-                                subtitle: l10n.confirmSubmitFollowUpSubtitle,
-                                onConfirm: () {
-                                  Navigator.of(context).pop();
-                                  _submitFollowUp();
+                      Padding(
+                        padding: const EdgeInsets.only(top: 50.0),
+                        child: BuildButton(
+                            onPressed: _isSubmitting ? () {} : () {
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return BuildConfirmationDialog(
+                                    title: l10n.confirmSubmitFollowUpTitle,
+                                    subtitle: l10n.confirmSubmitFollowUpSubtitle,
+                                    onConfirm: () {
+                                      Navigator.of(context).pop();
+                                      _submitFollowUp();
+                                    },
+                                    onCancel: (){
+                                      Navigator.of(context).pop();
+                                    },
+                                    cancelText: l10n.no,
+                                    confirmText: l10n.yes,
+                                  );
                                 },
-                                onCancel: (){
-                                  Navigator.of(context).pop();
-                                },
-                                cancelText: l10n.no,
-                                confirmText: l10n.yes,
                               );
                             },
-                          );
-                        },
-                        buttonText: _isSubmitting ? l10n.submitting : l10n.submitFollowUp,
-                        backgroundColor: MoldifyColors.primaryColor,
-                        textColor: MoldifyColors.backgroundColor,
-                        buttonHeight: 45,
-                        buttonWidth: MediaQuery.of(context).size.width,
-                        buttonRadius: 10
-                    ),
-                  )
-                ],
+                            buttonText: l10n.submitFollowUp,
+                            backgroundColor: MoldifyColors.primaryColor,
+                            textColor: MoldifyColors.backgroundColor,
+                            buttonHeight: 45,
+                            buttonWidth: MediaQuery.of(context).size.width,
+                            buttonRadius: 10
+                        ),
+                      )
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (_isSubmitting)
+                const Positioned.fill(
+                  child: AppLoadingOverlay(
+                    message: 'Submitting follow up...',
+                    barrierColor: MoldifyColors.backgroundColor,
+                  ),
+                ),
+            ],
           )
       ),
     );
