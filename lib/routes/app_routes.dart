@@ -447,10 +447,12 @@ class AppRoutes {
                       },
                     )
                     .then((result) {
-                      if (result is Map<String, dynamic>) {
-                        final nextMicroPath = result['imagePath']?.toString();
+                      if (result is Map) {
+                        final resultMap = Map<String, dynamic>.from(result);
+                        final nextMicroPath = resultMap['imagePath']
+                            ?.toString();
                         final nextMicroResult = {
-                          ...result,
+                          ...resultMap,
                           if (captureCultureId != null &&
                               captureCultureId.trim().isNotEmpty)
                             'cultureId': captureCultureId,
@@ -501,8 +503,10 @@ class AppRoutes {
                       },
                     )
                     .then((result) {
-                      if (result is Map<String, dynamic>) {
-                        final nextMacroPath = result['imagePath']?.toString();
+                      if (result is Map) {
+                        final resultMap = Map<String, dynamic>.from(result);
+                        final nextMacroPath = resultMap['imagePath']
+                            ?.toString();
                         navigator.pushReplacementNamed(
                           RouteNames.addLogChoices,
                           arguments: {
@@ -512,7 +516,7 @@ class AppRoutes {
                             'microscopicImagePath': microscopicImagePath,
                             'macroscopicImagePath': nextMacroPath,
                             'microResult': microResult,
-                            'macroResult': result,
+                            'macroResult': resultMap,
                             'initialMicroIdentifiedMold':
                                 initialMicroIdentifiedMold,
                             'initialMacroColor': initialMacroColor,

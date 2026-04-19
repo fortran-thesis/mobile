@@ -42,8 +42,7 @@ class _SetMonitoringDetailsScreenState
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _initialSymptomsController =
       TextEditingController();
-    final TextEditingController _initialSignsController =
-      TextEditingController();
+  final TextEditingController _initialSignsController = TextEditingController();
   final TextEditingController _initialCharacteristicsController =
       TextEditingController();
   final TextEditingController _initialMicroscopicController =
@@ -515,11 +514,12 @@ class _SetMonitoringDetailsScreenState
         cultivationDetailsMap['initial_characteristics_csv'] =
             _selectedInitialCharacteristics.join(',');
       }
-        if (_selectedInitialSigns.isNotEmpty) {
-          cultivationDetailsMap['initial_signs'] = _selectedInitialSigns;
-          cultivationDetailsMap['initial_signs_csv'] = _selectedInitialSigns
-          .join(',');
-        }
+      if (_selectedInitialSigns.isNotEmpty) {
+        cultivationDetailsMap['initial_signs'] = _selectedInitialSigns;
+        cultivationDetailsMap['initial_signs_csv'] = _selectedInitialSigns.join(
+          ',',
+        );
+      }
       if (_initialMicroscopicController.text.trim().isNotEmpty) {
         cultivationDetailsMap['initial_microscopic'] =
             _initialMicroscopicController.text.trim();
@@ -625,27 +625,21 @@ class _SetMonitoringDetailsScreenState
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Show success and pop only if widget is still mounted
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Monitoring details updated successfully'),
-          ),
-        );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         Navigator.of(context).pop(
           const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
         );
-      }
-    } catch (e) {
+      });
+    } catch (e, stackTrace) {
+      AppLogger.e('Error updating mold case', error: e, stackTrace: stackTrace);
+
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      AppLogger.e('Error updating mold case', error: e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
     }
   }
 
@@ -959,9 +953,12 @@ class _SetMonitoringDetailsScreenState
         final parsedSigns = asStringList(result['signs']);
         _selectedInitialSigns
           ..clear()
-          ..addAll(parsedSigns.isNotEmpty ? parsedSigns : asStringList(signsDisplay));
-        _initialSignsController.text =
-            signsDisplay.isNotEmpty ? signsDisplay : _selectedInitialSigns.join(', ');
+          ..addAll(
+            parsedSigns.isNotEmpty ? parsedSigns : asStringList(signsDisplay),
+          );
+        _initialSignsController.text = signsDisplay.isNotEmpty
+            ? signsDisplay
+            : _selectedInitialSigns.join(', ');
         _initialMacroscopicCharacteristicsController.text =
             result['characteristicsDisplay']?.toString() ?? '';
         _initialMacroscopicController.text =
@@ -1070,8 +1067,7 @@ class _SetMonitoringDetailsScreenState
 
     // Determine if this is for start date, date of observation, or another date
     final isStartDate = targetController == _startDateController;
-    final isDateObservation =
-        targetController == _dateOfObservationController;
+    final isDateObservation = targetController == _dateOfObservationController;
 
     // For start date and date of observation, enforce end date as max bound.
     DateTime lastDateForPicker = DateTime(2101);
@@ -1087,13 +1083,14 @@ class _SetMonitoringDetailsScreenState
       }
     }
 
-    final DateTime firstDateForPicker =
-      (isStartDate || isDateObservation) ? todayDateOnly : DateTime(2000);
+    final DateTime firstDateForPicker = (isStartDate || isDateObservation)
+        ? todayDateOnly
+        : DateTime(2000);
 
     final DateTime initialDateForPicker =
         todayDateOnly.isAfter(lastDateForPicker)
-            ? lastDateForPicker
-            : todayDateOnly;
+        ? lastDateForPicker
+        : todayDateOnly;
 
     final DateTime? picked = await showDatePicker(
       context: context,

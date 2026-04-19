@@ -256,6 +256,61 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return microLog is Map<String, dynamic> && microLog.isNotEmpty;
   }
 
+  Map<String, dynamic>? _extractSavedCultivationLogPayload(
+    Map<String, dynamic> payload,
+  ) {
+    final macro = payload['macroResult'];
+    if (macro is Map) {
+      final macroMap = Map<String, dynamic>.from(macro);
+      final cultivationLog = macroMap['cultivationLog'];
+      if (cultivationLog is Map) {
+        return Map<String, dynamic>.from(cultivationLog);
+      }
+    }
+
+    final microCultivationLog = payload['microCultivationLog'];
+    if (microCultivationLog is Map) {
+      return Map<String, dynamic>.from(microCultivationLog);
+    }
+
+    return null;
+  }
+
+  bool _applySavedCultivationLogToState(
+    Map<String, dynamic> logPayload, {
+    required String sourceTab,
+  }) {
+    if (_case == null) return false;
+
+    final savedLog = CultivationLog.fromJson(
+      Map<String, dynamic>.from(logPayload),
+    );
+    final existingLogs = _case?.cultivationLogs ?? const <CultivationLog>[];
+    final updatedLogs = <CultivationLog>[
+      savedLog,
+      ...existingLogs.where((existing) => existing.id != savedLog.id),
+    ];
+    final updatedCase = _case!.copyWith(cultivationLogs: updatedLogs);
+    final entry = _mapCultivationLogToTimelineEntry(savedLog);
+    final isVitro = _isVitroLogType(savedLog.type) || sourceTab == 'in-vitro';
+    final isVivo = _isVivoLogType(savedLog.type) || sourceTab == 'in-vivo';
+
+    if (!mounted) return false;
+    setState(() {
+      _case = updatedCase;
+      if (isVitro) {
+        inVitroEntries = <Map<String, String>>[entry, ...inVitroEntries];
+        inVitroDateTime = _formatLogDate(savedLog.createdAt);
+      } else if (isVivo) {
+        inVivoEntries = <Map<String, String>>[entry, ...inVivoEntries];
+        inVivoDateTime = _formatLogDate(savedLog.createdAt);
+      }
+      _mutationOccurred = true;
+    });
+
+    return true;
+  }
+
   Future<void> _handleLogSaved(
     Map<String, dynamic> payload, {
     required String sourceTab,
@@ -264,6 +319,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final macroPersisted = _didCultivationLogPersist(macro);
     final microPersisted = _didMicroscopicLogPersist(payload);
     final persisted = macroPersisted || microPersisted;
+    final mutationResult = MutationResult.fromAny(payload);
+    final savedLogPayload = _extractSavedCultivationLogPayload(payload);
 
     AppLogger.d(
       'ViewCase: onLogSaved sourceTab=$sourceTab persisted=$persisted '
@@ -273,6 +330,13 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     if (!persisted) {
       final hadMacroAttempt = macro != null;
+      if (mutationResult.changed) {
+        await _refreshCaseAndPendingAnalysis(showLoader: false);
+        if (!mounted) return;
+        setState(() => _mutationOccurred = true);
+        return;
+      }
+
       if (hadMacroAttempt && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -283,10 +347,25 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       return;
     }
 
-    await _refreshCaseAndPendingAnalysis(showLoader: false);
-    if (!mounted) return;
+    final appliedLocally =
+        savedLogPayload != null &&
+        _applySavedCultivationLogToState(
+          savedLogPayload,
+          sourceTab: sourceTab,
+        );
 
-    setState(() => _mutationOccurred = true);
+    if (appliedLocally) {
+      unawaited(_computePendingAnalysisFromCurrentCase());
+    }
+
+    if (!appliedLocally) {
+      await _refreshCaseAndPendingAnalysis(showLoader: false);
+      if (!mounted) return;
+    }
+
+    if (mounted) {
+      setState(() => _mutationOccurred = true);
+    }
 
     if (mounted) {
       if (macro?['scanSaveError'] != null) {

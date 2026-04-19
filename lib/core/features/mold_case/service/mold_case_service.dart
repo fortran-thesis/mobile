@@ -484,7 +484,7 @@ class MoldCaseService {
         sessionCookie: sessionCookie,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
         if (responseData == null) {
           throw Exception('Empty response from server');

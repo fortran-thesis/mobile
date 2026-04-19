@@ -272,8 +272,8 @@ class ReportPdfService {
             _buildSection(
               'Initial Observation',
               '${_asText(initialObservation['microscopic_identification'])} '
-                  '(Confidence: ${_asText(initialObservation['confidence'])})\n'
-                  '${_asText(initialObservation['summary'])}',
+                  '(Confidence: ${_asText(initialObservation['microscopic_confidence'], fallback: _asText(initialObservation['confidence']))})\n'
+                  '${_asText(initialObservation['macroscopic_summary'], fallback: _asText(initialObservation['summary']))}',
             ),
             pw.SizedBox(height: 10),
             _buildSection(
@@ -313,7 +313,7 @@ class ReportPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      '${_asText(log['type'])} • ${_formatTimestamp(log['created_at'])}',
+                      '${_asText(log['type'])} • ${_formatTimestamp(log['observed_at'] ?? log['created_at'])}',
                       style: pw.TextStyle(
                         fontSize: 9,
                         fontWeight: pw.FontWeight.bold,
@@ -347,13 +347,19 @@ class ReportPdfService {
               ),
             ),
             pw.SizedBox(height: 6),
-            ...followUps.map(
-              (entry) => pw.Bullet(
+            ...followUps.map((entry) {
+              final photos = _asList(entry['cover_photo']);
+              final fallbackPhotos = photos.isEmpty
+                  ? _asList(entry['cover_photo_urls'])
+                  : photos;
+              final photoCount = fallbackPhotos.length;
+
+              return pw.Bullet(
                 text:
-                    '${_formatTimestamp(entry['timestamp'])}: ${_asText(entry['description'])}',
+                    '${_formatTimestamp(entry['observed_at'] ?? entry['timestamp'])}: ${_asText(entry['description'])}${photoCount > 0 ? ' (photos: $photoCount)' : ''}',
                 style: const pw.TextStyle(fontSize: 10),
-              ),
-            ),
+              );
+            }),
           ],
         ],
       ),
