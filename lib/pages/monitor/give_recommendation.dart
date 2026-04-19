@@ -106,30 +106,19 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
           )
           ..add('+ Add New Mold');
 
-        if (_selectedGenus != null && !_genusOptions.contains(_selectedGenus)) {
+        final selected = _resolveCatalogSelection(
+          preferredId: _selectedMoldId ?? _suggestedMoldId,
+          preferredName: _selectedGenus ?? _suggestedMoldName,
+        );
+
+        if (selected != null) {
+          _selectedGenus = selected.name;
+          _selectedMoldId = selected.id;
+          _applyCatalogDetails(selected);
+        } else {
           _selectedGenus = null;
           _selectedMoldId = null;
           _restoreBaseMoldDetails();
-        }
-
-        if ((_selectedGenus == null || _selectedGenus!.trim().isEmpty) &&
-            _suggestedMoldId != null &&
-            _suggestedMoldId!.trim().isNotEmpty) {
-          final suggested = _moldCatalogById[_suggestedMoldId!.trim()];
-          if (suggested != null) {
-            _selectedGenus = suggested.name;
-            _selectedMoldId = suggested.id;
-            _applyCatalogDetails(suggested);
-          }
-        }
-
-        if (_selectedGenus != null && _selectedGenus!.trim().isNotEmpty) {
-          final selected =
-              _moldCatalogByName[_selectedGenus!.trim().toLowerCase()];
-          if (selected != null) {
-            _selectedMoldId = selected.id;
-            _applyCatalogDetails(selected);
-          }
         }
 
         if (_genusOptions.isEmpty) {
@@ -153,6 +142,41 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
   String _normalizeLabel(String text) {
     return text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  MoldCatalogEntry? _resolveCatalogSelection({
+    String? preferredId,
+    String? preferredName,
+  }) {
+    final id = preferredId?.trim() ?? '';
+    if (id.isNotEmpty) {
+      final byId = _moldCatalogById[id];
+      if (byId != null) return byId;
+    }
+
+    final name = preferredName?.trim() ?? '';
+    if (name.isEmpty) return null;
+
+    final byExactName = _moldCatalogByName[name.toLowerCase()];
+    if (byExactName != null) return byExactName;
+
+    final normalizedTarget = _normalizeLabel(name);
+    if (normalizedTarget.isEmpty) return null;
+
+    for (final entry in _moldCatalogByName.values) {
+      final normalizedCandidate = _normalizeLabel(entry.name);
+      if (normalizedCandidate == normalizedTarget) return entry;
+    }
+
+    for (final entry in _moldCatalogByName.values) {
+      final normalizedCandidate = _normalizeLabel(entry.name);
+      if (normalizedCandidate.contains(normalizedTarget) ||
+          normalizedTarget.contains(normalizedCandidate)) {
+        return entry;
+      }
+    }
+
+    return null;
   }
 
   String _firstAdditionalInfoMatch(
@@ -568,8 +592,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   Widget _buildIPMControls() {
     IconData iconForTitle(String title) {
       final normalized = title.toLowerCase();
-      if (normalized.contains('mechanical'))
+      if (normalized.contains('mechanical')) {
         return Icons.settings_suggest_outlined;
+      }
       if (normalized.contains('biological')) return Icons.biotech_outlined;
       if (normalized.contains('chemical')) return Icons.science_outlined;
       if (normalized.contains('physical')) return Icons.build_outlined;
@@ -754,10 +779,13 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             final capturedMoldipediaId = moldipediaId;
 
             navigator.pop(
-              const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+              const MutationResult.changed(
+                tags: [MutationTags.moldCase],
+              ).toMap(),
             );
 
-            if (capturedMoldipediaId != null && capturedMoldipediaId.isNotEmpty) {
+            if (capturedMoldipediaId != null &&
+                capturedMoldipediaId.isNotEmpty) {
               messenger.showSnackBar(
                 SnackBar(
                   content: const Text('Verdict linked to a WikiMold article.'),

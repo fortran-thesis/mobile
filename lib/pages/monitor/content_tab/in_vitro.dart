@@ -169,7 +169,7 @@ class InVitroTab extends StatelessWidget {
                               'initialMacroColor': initialMacroColor,
                               'initialMacroTexture': initialMacroTexture,
                               'initialMacroSymptoms': initialMacroSymptoms,
-                                'initialMacroSigns': initialMacroSigns,
+                              'initialMacroSigns': initialMacroSigns,
                               'initialMacroCharacteristics':
                                   initialMacroCharacteristics,
                             },
@@ -221,24 +221,9 @@ class InVitroTab extends StatelessWidget {
                 cultureName: entry['cultureName'] ?? '',
                 isFirst: index == 0,
                 isLast: index == inVitroEntries.length - 1,
-                // Hide popup menu when the case is closed
-                popupMenuItems: isCaseClosed ? [] : ['Edit Log', 'Delete Log'],
-                popupMenuIcons: isCaseClosed
-                    ? []
-                    : [FontAwesomeIcons.pen, FontAwesomeIcons.trash],
-                onPopupMenuItemSelected: isCaseClosed
-                    ? null
-                    : (selectedIndex) {
-                        if (selectedIndex == 0) {
-                          Navigator.pushNamed(
-                            context,
-                            RouteNames.editLog,
-                            arguments: {'tabName': 'In Vitro'},
-                          );
-                        } else if (selectedIndex == 1) {
-                          // TODO: Handle delete
-                        }
-                      },
+                popupMenuItems: const [],
+                popupMenuIcons: const [],
+                onPopupMenuItemSelected: null,
               );
             }),
         ],

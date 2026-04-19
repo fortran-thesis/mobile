@@ -27,6 +27,7 @@ class MoldResultScreen extends StatefulWidget {
   final String? scanModality;
   final String? sourceTab;
   final String? caseId;
+
   /// When non-null the result was pre-corrected by [LowConfidenceCorrectionScreen].
   /// The genus is pre-populated and the flag button is hidden.
   final String? correctedGenus;
@@ -697,53 +698,57 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         // Hide the flag button when genus was already corrected upstream
         rightIcon: widget.correctedGenus != null ? null : Icon(Icons.flag),
         rightIconColor: MoldifyColors.MoldifyRed,
-        onRightIconPressed: widget.correctedGenus != null ? null : () {
-          // Define the save logic here so it can be referenced by both onSave and onConfirm
-          void onSave(String correctedText) {
-            AppLogger.d('Corrected Text: $correctedText');
-            _applyCorrectedGenus(correctedText);
-          }
+        onRightIconPressed: widget.correctedGenus != null
+            ? null
+            : () {
+                // Define the save logic here so it can be referenced by both onSave and onConfirm
+                void onSave(String correctedText) {
+                  AppLogger.d('Corrected Text: $correctedText');
+                  _applyCorrectedGenus(correctedText);
+                }
 
-          showModalBottomSheet(
-            context: context,
-            // Make it non-dismissible
-            isDismissible: false,
-            // Use true to prevent the keyboard from covering the text field
-            isScrollControlled: true,
-            builder: (context) {
-              return Padding(
-                // Add padding to account for the keyboard
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: BuildBottomSheet(
-                  child: CorrectionBottomSheetContent(
-                    correctedGenusController: correctedGenusController,
-                    presetGenusOptions: _presetGenusOptions,
-                    onClose: () {
-                      Navigator.of(context).pop();
-                    },
-                    onSave: onSave,
+                showModalBottomSheet(
+                  context: context,
+                  // Make it non-dismissible
+                  isDismissible: false,
+                  // Use true to prevent the keyboard from covering the text field
+                  isScrollControlled: true,
+                  builder: (context) {
+                    return Padding(
+                      // Add padding to account for the keyboard
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      child: BuildBottomSheet(
+                        child: CorrectionBottomSheetContent(
+                          correctedGenusController: correctedGenusController,
+                          presetGenusOptions: _presetGenusOptions,
+                          onClose: () {
+                            Navigator.of(context).pop();
+                          },
+                          onSave: onSave,
 
-                    /// This is for the confirmation dialog inside the bottom sheet
-                    /// You can implement the actual logic as needed
+                          /// This is for the confirmation dialog inside the bottom sheet
+                          /// You can implement the actual logic as needed
 
-                    /// This is the cancel action for the pop up dialog
-                    onCancel: () {
-                      AppLogger.d('MoldResult: Correction cancelled by user');
-                    },
+                          /// This is the cancel action for the pop up dialog
+                          onCancel: () {
+                            AppLogger.d(
+                              'MoldResult: Correction cancelled by user',
+                            );
+                          },
 
-                    /// This is the confirm action for the pop up dialog
-                    onConfirm: () {
-                      Navigator.of(context).pop();
-                      onSave(correctedGenusController.text);
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                          /// This is the confirm action for the pop up dialog
+                          onConfirm: () {
+                            Navigator.of(context).pop();
+                            onSave(correctedGenusController.text);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
       ),
       body: SingleChildScrollView(
         child: Stack(
@@ -876,6 +881,11 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                         child: ResultActionSection(
                           onSave: () async {
                             if (_isSavingResult) return;
+                            final authProvider = Provider.of<AppAuthProvider>(
+                              context,
+                              listen: false,
+                            );
+                            final navigator = Navigator.of(context);
 
                             // Show confirmation dialog if mold is not in database
                             if (_isMoldNotFound) {
@@ -952,11 +962,14 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                 .toUtc()
                                 .toIso8601String();
                             final thresholdDecimal =
-                              ScanConstants.lowConfidenceThreshold / 100;
+                                ScanConstants.lowConfidenceThreshold / 100;
 
                             final savePayload = <String, dynamic>{
                               'imagePath': widget.croppedImagePath,
                               'identifiedMold': moldGenus,
+                              'moldId':
+                                  widget.modelResult?['moldId'] ??
+                                  widget.modelResult?['mold_id'],
                               'confidence': confidenceLevel,
                               // Backward-compatible additions for mycologist decision support
                               'confidenceDecimal': confidenceDecimal,
@@ -983,10 +996,6 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                             };
 
                             try {
-                              final authProvider = Provider.of<AppAuthProvider>(
-                                context,
-                                listen: false,
-                              );
                               final cameraService = CameraService();
 
                               final scanRes = await cameraService
@@ -1009,8 +1018,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                                     capturedAt: nowIso,
                                     scannedResults: {
                                       'confidence_score': confidenceDecimal,
-                                      'flagged': confidenceDecimal <
-                                          thresholdDecimal,
+                                      'flagged':
+                                          confidenceDecimal < thresholdDecimal,
                                     },
                                     sessionCookie: authProvider.cookie,
                                   );
@@ -1097,10 +1106,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
                               }
                             }
 
-                            if (!context.mounted) return;
-                            if (context.mounted) {
-                              Navigator.of(context).pop(savePayload);
-                            }
+                            if (!mounted) return;
+                            navigator.pop(savePayload);
                           },
                         ),
                       ),

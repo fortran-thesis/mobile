@@ -375,9 +375,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     try {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Generating PDF...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
 
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
@@ -393,9 +393,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to export PDF: $e')));
     }
   }
 
@@ -780,6 +780,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         cultivationLogs: null,
         isArchived: false,
       );
+      String? localLinkedMoldipediaId;
 
       // Try to enrich with mold-case data (priority, cultivation details/logs).
       try {
@@ -798,29 +799,30 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             caseService
                 .getMoldCaseById(moldCase.id, sessionCookie: sessionCookie)
                 .catchError((e) {
-              AppLogger.w('ViewCase: getMoldCaseById failed: $e');
-              return <String, dynamic>{};
-            }),
+                  AppLogger.w('ViewCase: getMoldCaseById failed: $e');
+                  return <String, dynamic>{};
+                }),
             caseService
                 .getCultivationLogs(moldCase.id, sessionCookie: sessionCookie)
                 .catchError((e) {
-              AppLogger.w(
-                'ViewCase: getCultivationLogs failed for caseId=${moldCase.id}: $e',
-              );
-              return <String, dynamic>{};
-            }),
+                  AppLogger.w(
+                    'ViewCase: getCultivationLogs failed for caseId=${moldCase.id}: $e',
+                  );
+                  return <String, dynamic>{};
+                }),
           ]);
 
           // Process getMoldCaseById result — extract moldipedia_id.
           final rawCase = fetchResults[0];
           if (rawCase.isNotEmpty) {
-            final rawData =
-                rawCase['data'] is Map ? rawCase['data'] as Map : rawCase;
+            final rawData = rawCase['data'] is Map
+                ? rawCase['data'] as Map
+                : rawCase;
             final verdict = rawData['final_verdict'];
             if (verdict is Map) {
               final mid = verdict['moldipedia_id']?.toString().trim();
               if (mid != null && mid.isNotEmpty) {
-                setState(() => _linkedMoldipediaId = mid);
+                localLinkedMoldipediaId = mid;
               }
             }
           }
@@ -863,8 +865,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localContactNumber = '+63 917 123 4567';
       String localLocation = 'Unknown Location';
       final List<Map<String, dynamic>> localCaseEntries = [];
-
-      cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';
+      final localCropName =
+          reportPayload['host']?.toString() ??
+          reportPayload['crop_name']?.toString() ??
+          reportPayload['common_name']?.toString() ??
+          'Kamatis Tagalog';
 
       // Extract reporter details from the report
       final reporter = _asStringMap(reportPayload['reporter']);
@@ -951,6 +956,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localInVivoDateTime = 'No data';
       String localInVivoEnvironmentalTemperature = 'Not specified';
       List<Map<String, String>> localInVivoEntries = [];
+      Map<String, dynamic>? localLatestMicroscopicSnapshot;
 
       if (moldCase.cultivationDetails != null) {
         final cultivationDetails = moldCase.cultivationDetails!;
@@ -961,7 +967,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             cultivationDetails.initialMacroscopicImageUrl ?? '';
         _initIdentifiedMold = cultivationDetails.initialMicroscopic ?? '';
         final snapshot = cultivationDetails.microscopicAiSnapshot;
-        _latestMicroscopicSnapshot = snapshot;
+        localLatestMicroscopicSnapshot = snapshot;
         if (_initIdentifiedMold.trim().isEmpty && snapshot != null) {
           _initIdentifiedMold = snapshot['identified_mold']?.toString() ?? '';
         }
@@ -975,8 +981,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
         _initMacroSymptoms =
             cultivationDetails.initialMacroscopicSymptoms ?? '';
-        _initMacroSigns =
-          _displayText(cultivationDetails.initialSigns);
+        _initMacroSigns = _displayText(cultivationDetails.initialSigns);
         _initMacroCharacteristics =
             cultivationDetails.initialMacroscopicCharacteristics ?? '';
 
@@ -1066,6 +1071,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       setState(() {
         _case = moldCase;
+        _linkedMoldipediaId = localLinkedMoldipediaId;
+        _latestMicroscopicSnapshot = localLatestMicroscopicSnapshot;
         _latestReportLookupResults = parsedLookupResults;
         _reportId = resolvedReportId; // Store report ID for status updates
         caseStatus = localReportStatus;
@@ -1088,9 +1095,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         inVivoDateTime = localInVivoDateTime;
         inVivoEnvironmentalTemperature = localInVivoEnvironmentalTemperature;
         inVivoEntries = localInVivoEntries;
-        cropName = cropName;
-        _hasGivenRecommendation =
-            _hasGivenRecommendation || localHasRecommendation;
+        cropName = localCropName;
+        _hasGivenRecommendation = localHasRecommendation;
         _isLoading = false;
       });
     } catch (e, stackTrace) {

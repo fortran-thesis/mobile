@@ -200,12 +200,13 @@ class _LowConfidenceCorrectionScreenState
 
     final correctedModelResult = Map<String, dynamic>.from(widget.modelResult);
     correctedModelResult['predicted_class'] = entry.name;
+    correctedModelResult['moldId'] = entry.id;
+    correctedModelResult['moldName'] = entry.name;
 
     Map<String, dynamic> moldDetails = {'error': 'not_found'};
 
     try {
-      final authProvider =
-          Provider.of<AppAuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final cameraService = CameraService();
       final fetched = await cameraService.getMoldDetailsById(
         moldId: entry.id,

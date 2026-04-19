@@ -34,6 +34,21 @@ class ReportPdfService {
     return const [];
   }
 
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((key, entry) => MapEntry(key.toString(), entry));
+    }
+    return <String, dynamic>{};
+  }
+
+  String _formatTimestamp(dynamic value) {
+    if (value is! String) return 'N/A';
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    return parsed.toLocal().toString();
+  }
+
   pw.Widget _buildSection(String title, String content) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -49,10 +64,7 @@ class ReportPdfService {
         pw.SizedBox(height: 6),
         pw.Text(
           content,
-          style: const pw.TextStyle(
-            fontSize: 10.5,
-            lineSpacing: 3,
-          ),
+          style: const pw.TextStyle(fontSize: 10.5, lineSpacing: 3),
           textAlign: pw.TextAlign.justify,
         ),
       ],
@@ -62,13 +74,33 @@ class ReportPdfService {
   Future<Uint8List> buildPdf(Map<String, dynamic> payload) async {
     final pdf = pw.Document();
 
-    final report = (payload['report'] as Map?)?.cast<String, dynamic>() ??
+    final report =
+        (payload['report'] as Map?)?.cast<String, dynamic>() ??
         <String, dynamic>{};
     final identities =
         (payload['identities'] as Map?)?.cast<String, dynamic>() ??
-            <String, dynamic>{};
-    final sections = (payload['sections'] as Map?)?.cast<String, dynamic>() ??
         <String, dynamic>{};
+    final sections =
+        (payload['sections'] as Map?)?.cast<String, dynamic>() ??
+        <String, dynamic>{};
+    final followUps = payload['follow_ups'] is List
+        ? List<Map<String, dynamic>>.from(
+            (payload['follow_ups'] as List).whereType<Map>().map(
+              (entry) => _asMap(entry),
+            ),
+          )
+        : const <Map<String, dynamic>>[];
+    final investigation = _asMap(payload['investigation']);
+    final initialObservation = _asMap(investigation['initial_observation']);
+    final inVivoLatest = _asMap(investigation['in_vivo_latest']);
+    final inVitroLatest = _asMap(investigation['in_vitro_latest']);
+    final cultivationLogs = investigation['cultivation_logs'] is List
+        ? List<Map<String, dynamic>>.from(
+            (investigation['cultivation_logs'] as List).whereType<Map>().map(
+              (entry) => _asMap(entry),
+            ),
+          )
+        : const <Map<String, dynamic>>[];
 
     final affectedHosts = _asList(sections['affected_hosts']);
 
@@ -96,7 +128,10 @@ class ReportPdfService {
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
-                  _asText(report['case_name'], fallback: _asText(report['report_id'])),
+                  _asText(
+                    report['case_name'],
+                    fallback: _asText(report['report_id']),
+                  ),
                   style: const pw.TextStyle(
                     color: PdfColors.white,
                     fontSize: 14,
@@ -109,10 +144,14 @@ class ReportPdfService {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text('Report Date: ${_asText(report['report_date'])}',
-                  style: const pw.TextStyle(fontSize: 10)),
-              pw.Text('Date Observed: ${_asText(report['date_observed'])}',
-                  style: const pw.TextStyle(fontSize: 10)),
+              pw.Text(
+                'Report Date: ${_asText(report['report_date'])}',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+              pw.Text(
+                'Date Observed: ${_asText(report['date_observed'])}',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
             ],
           ),
           pw.SizedBox(height: 10),
@@ -125,18 +164,27 @@ class ReportPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Host Plant: ${_asText(report['host_plant_affected'])}'),
+                pw.Text(
+                  'Host Plant: ${_asText(report['host_plant_affected'])}',
+                ),
                 pw.Text('Case Status: ${_asText(report['case_status'])}'),
-                pw.Text('Confidence Level: ${_asText(report['confidence_level'])}'),
+                pw.Text(
+                  'Confidence Level: ${_asText(report['confidence_level'])}',
+                ),
                 pw.Text('Reporter: ${_asText(identities['reporter_name'])}'),
-                pw.Text('Mycologist: ${_asText(identities['mycologist_name'])}'),
+                pw.Text(
+                  'Mycologist: ${_asText(identities['mycologist_name'])}',
+                ),
                 pw.Text('Location: ${_asText(report['location'])}'),
               ],
             ),
           ),
           pw.SizedBox(height: 12),
           pw.Text(
-            _asText(sections['fungus_name'], fallback: 'Pending Identification'),
+            _asText(
+              sections['fungus_name'],
+              fallback: 'Pending Identification',
+            ),
             style: pw.TextStyle(
               fontSize: 20,
               fontWeight: pw.FontWeight.bold,
@@ -160,7 +208,10 @@ class ReportPdfService {
           ),
           pw.SizedBox(height: 6),
           if (affectedHosts.isEmpty)
-            pw.Text('No host records available.', style: const pw.TextStyle(fontSize: 10.5))
+            pw.Text(
+              'No host records available.',
+              style: const pw.TextStyle(fontSize: 10.5),
+            )
           else
             ...affectedHosts.map(
               (host) => pw.Bullet(
@@ -169,23 +220,141 @@ class ReportPdfService {
               ),
             ),
           pw.SizedBox(height: 10),
-          _buildSection('Symptoms and Signs', _asText(sections['symptoms_and_signs'])),
+          _buildSection(
+            'Symptoms and Signs',
+            _asText(sections['symptoms_and_signs']),
+          ),
           pw.SizedBox(height: 10),
           _buildSection('Disease Cycle', _asText(sections['disease_cycle'])),
           pw.SizedBox(height: 10),
           _buildSection('Impact', _asText(sections['impact'])),
           pw.SizedBox(height: 10),
-          _buildSection('Prevention Summary', _asText(sections['prevention_summary'])),
+          _buildSection(
+            'Prevention Summary',
+            _asText(sections['prevention_summary']),
+          ),
           pw.SizedBox(height: 12),
-          _buildSection('Physical Control', _asText(sections['physical_control'])),
+          _buildSection(
+            'Physical Control',
+            _asText(sections['physical_control']),
+          ),
           pw.SizedBox(height: 10),
-          _buildSection('Cultural Control', _asText(sections['cultural_control'])),
+          _buildSection(
+            'Cultural Control',
+            _asText(sections['cultural_control']),
+          ),
           pw.SizedBox(height: 10),
-          _buildSection('Biological Control', _asText(sections['biological_control'])),
+          _buildSection(
+            'Biological Control',
+            _asText(sections['biological_control']),
+          ),
           pw.SizedBox(height: 10),
-          _buildSection('Mechanical Control', _asText(sections['mechanical_control'])),
+          _buildSection(
+            'Mechanical Control',
+            _asText(sections['mechanical_control']),
+          ),
           pw.SizedBox(height: 10),
-          _buildSection('Chemical Control', _asText(sections['chemical_control'])),
+          _buildSection(
+            'Chemical Control',
+            _asText(sections['chemical_control']),
+          ),
+          if (investigation.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'Investigation Snapshot',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green900,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            _buildSection(
+              'Initial Observation',
+              '${_asText(initialObservation['microscopic_identification'])} '
+                  '(Confidence: ${_asText(initialObservation['confidence'])})\n'
+                  '${_asText(initialObservation['summary'])}',
+            ),
+            pw.SizedBox(height: 10),
+            _buildSection(
+              'Latest In Vivo',
+              '${_asText(inVivoLatest['identified_mold'])} '
+                  '(Confidence: ${_asText(inVivoLatest['confidence'])})\n'
+                  '${_asText(inVivoLatest['summary'])}',
+            ),
+            pw.SizedBox(height: 10),
+            _buildSection(
+              'Latest In Vitro',
+              '${_asText(inVitroLatest['identified_mold'])} '
+                  '(Confidence: ${_asText(inVitroLatest['confidence'])})\n'
+                  '${_asText(inVitroLatest['summary'])}',
+            ),
+          ],
+          if (cultivationLogs.isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Cultivation Logs',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green900,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            ...cultivationLogs.map(
+              (log) => pw.Container(
+                margin: const pw.EdgeInsets.only(bottom: 6),
+                padding: const pw.EdgeInsets.all(8),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey100,
+                  borderRadius: pw.BorderRadius.circular(4),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      '${_asText(log['type'])} • ${_formatTimestamp(log['created_at'])}',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.green900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 3),
+                    pw.Text(
+                      '${_asText(log['identified_mold'], fallback: 'Pending identification')} '
+                      '(Confidence: ${_asText(log['confidence'])})',
+                      style: const pw.TextStyle(fontSize: 9.5),
+                    ),
+                    pw.SizedBox(height: 3),
+                    pw.Text(
+                      _asText(log['summary']),
+                      style: const pw.TextStyle(fontSize: 9.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (followUps.isNotEmpty) ...[
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Follow-up Timeline',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green900,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            ...followUps.map(
+              (entry) => pw.Bullet(
+                text:
+                    '${_formatTimestamp(entry['timestamp'])}: ${_asText(entry['description'])}',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -198,13 +367,13 @@ class ReportPdfService {
     required String fileName,
   }) async {
     final bytes = await buildPdf(payload);
-    
+
     // Get the Downloads directory
     final Directory? downloadsDir = await getDownloadsDirectory();
     if (downloadsDir == null) {
       throw Exception('Downloads directory not accessible');
     }
-    
+
     // Create the file in the Downloads directory
     final file = File('${downloadsDir.path}/$fileName');
     await file.writeAsBytes(bytes);

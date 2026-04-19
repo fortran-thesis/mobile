@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/core/features/camera/services/camera_service.dart';
 import 'package:moldify/core/features/mold/service/mold_service.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/utils/mutation_result.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import 'package:moldify/pages/misc/overlays/modals/chip_selection_modal.dart';
 import 'package:moldify/providers/auth_provider.dart';
@@ -423,15 +424,18 @@ class _AddLogScreenState extends State<AddLogScreen> {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
-      Navigator.of(context).pop(result);
+      Navigator.of(context).pop({
+        ...result,
+        ...const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to prepare log: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to prepare log: $e')));
       }
     }
   }

@@ -11,6 +11,7 @@ import 'package:moldify/pages/monitor/add_treatment.dart';
 import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/terms_of_agreement.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/utils/mutation_result.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -166,8 +167,11 @@ class AppRoutes {
             final sourceFlow = _stringArg(args, 'sourceFlow');
             final scanModality = _stringArg(args, 'scanModality');
             final includeSize = _boolArg(args, 'includeSize', fallback: true);
-            final returnResult =
-                _boolArg(args, 'returnResult', fallback: false);
+            final returnResult = _boolArg(
+              args,
+              'returnResult',
+              fallback: false,
+            );
             return ImagePreviewScreen(
               imagePath: imagePath,
               source: source,
@@ -368,13 +372,13 @@ class AppRoutes {
             final String? initialMacroSymptoms =
                 args?['initialMacroSymptoms'] as String?;
             final String? initialMacroSigns =
-              args?['initialMacroSigns'] as String?;
+                args?['initialMacroSigns'] as String?;
             final String? initialMacroCharacteristics =
                 args?['initialMacroCharacteristics'] as String?;
             final String? selectedCultureId =
-              args?['selectedCultureId'] as String?;
+                args?['selectedCultureId'] as String?;
             final String? selectedCultureName =
-              args?['selectedCultureName'] as String?;
+                args?['selectedCultureName'] as String?;
 
             List<String> toStringList(dynamic value) {
               if (value is List) {
@@ -539,17 +543,17 @@ class AppRoutes {
                 final microImagePath =
                     microResult?['imagePath']?.toString().trim() ?? '';
                 final cultureId =
-                  (submitCultureId ??
-                   macroResult?['cultureId'] ??
-                   microResult?['cultureId'])
-                    ?.toString()
-                    .trim();
+                    (submitCultureId ??
+                            macroResult?['cultureId'] ??
+                            microResult?['cultureId'])
+                        ?.toString()
+                        .trim();
                 final cultureName =
-                  (submitCultureName ??
-                   macroResult?['cultureName'] ??
-                   microResult?['cultureName'])
-                    ?.toString()
-                    .trim();
+                    (submitCultureName ??
+                            macroResult?['cultureName'] ??
+                            microResult?['cultureName'])
+                        ?.toString()
+                        .trim();
 
                 // Persist a microscopic-only cultivation log when no macroscopic
                 // log was stored. This ensures microscopy entries appear in the
@@ -703,6 +707,9 @@ class AppRoutes {
                 if (!context.mounted) return;
 
                 Navigator.of(context).pop({
+                  ...const MutationResult.changed(
+                    tags: [MutationTags.moldCase],
+                  ).toMap(),
                   'sourceTab': sourceTab,
                   'microscopicImagePath': microscopicImagePath,
                   'macroscopicImagePath': macroscopicImagePath,
