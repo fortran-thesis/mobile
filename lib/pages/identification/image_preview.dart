@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'dart:typed_data';
 import '../misc/colors.dart';
 import 'dart:ui' as ui;
@@ -213,8 +214,8 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             builder: (BuildContext dialogContext) {
               AppLogger.d('🔷 ImagePreview: Dialog builder called');
               return BuildConfirmationDialog(
-                title: 'Improve Prediction',
-                subtitle: 'Do you want to input additional characteristics for a more accurate result?',
+                title: 'Add More Details?',
+                subtitle: 'Would you like to add more details before viewing your result?',
                 confirmText: 'Yes, Add Details',
                 cancelText: 'No, See Result',
                 onConfirm: () {
@@ -384,12 +385,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
         /// 5. Loading Indicator Overlay
         /// This appears on top of the screen while the image is being processed.
         if (_isProcessing)
-          Container(
-            color: Colors.black.withValues(alpha: 0.5),
-            child: const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
+          const Positioned.fill(
+            child: AppLoadingOverlay(
+              message: 'Processing image...',
+              barrierColor: MoldifyColors.backgroundColor,
             ),
           ),
       ],

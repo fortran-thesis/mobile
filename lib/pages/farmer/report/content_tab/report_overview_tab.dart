@@ -44,7 +44,7 @@ class ReportOverviewTab extends StatelessWidget {
     final bool hasData = content.isNotEmpty;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 24.0 : 30.0),
+      padding: EdgeInsets.only(bottom: isLast ? 0.0 : 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

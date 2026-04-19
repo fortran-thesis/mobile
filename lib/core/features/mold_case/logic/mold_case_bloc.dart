@@ -151,7 +151,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       final pageCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
 
-      final merged = <MoldCase>[..._allCases, ...pageCases];
+      // Enrich cases with crop names from mold reports if missing
+      final enrichedCases = await repository.enrichCasesWithCropNames(
+        pageCases,
+        sessionCookie: event.sessionCookie,
+      );
+
+      final merged = <MoldCase>[..._allCases, ...enrichedCases];
       final deduped = _dedupeByReportIdPreferHigherPriority(merged);
       AppLogger.d('MoldCaseBloc: fetched ${pageCases.length} cases, merged ${merged.length}, deduped to ${deduped.length} by mold_report_id');
 
@@ -184,7 +190,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       final pageCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
 
-      final deduped = _dedupeByReportIdPreferHigherPriority(pageCases);
+      // Enrich cases with crop names from mold reports if missing
+      final enrichedCases = await repository.enrichCasesWithCropNames(
+        pageCases,
+        sessionCookie: event.sessionCookie,
+      );
+
+      final deduped = _dedupeByReportIdPreferHigherPriority(enrichedCases);
       _allCases.addAll(deduped);
       _nextPageToken = nextToken;
       
@@ -212,7 +224,13 @@ class MoldCaseBloc extends Bloc<MoldCaseEvent, MoldCaseState> {
       final searchCases = result['cases'] as List<MoldCase>;
       final nextToken = result['nextPageToken'] as String?;
 
-      final deduped = _dedupeByReportIdPreferHigherPriority(searchCases);
+      // Enrich cases with crop names from mold reports if missing
+      final enrichedCases = await repository.enrichCasesWithCropNames(
+        searchCases,
+        sessionCookie: event.sessionCookie,
+      );
+
+      final deduped = _dedupeByReportIdPreferHigherPriority(enrichedCases);
       _allCases.addAll(deduped);
       _nextPageToken = nextToken;
       

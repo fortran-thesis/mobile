@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import '../misc/appbar/primary_app_bar.dart';
 import '../misc/colors.dart';
 import 'package:moldify/core/utils/logger.dart';
@@ -267,13 +268,9 @@ class _AddLogInstructionsScreenState extends State<AddLogInstructionsScreen> {
           ),
           if (_isProcessingImage)
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.5),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
+              child: const AppLoadingOverlay(
+                message: 'Processing image...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
             ),
         ],

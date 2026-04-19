@@ -9,6 +9,7 @@ import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/report_bug.dart';
 import 'package:moldify/pages/support/send_feedback.dart';
 import 'package:moldify/pages/misc/colors.dart';
+import 'package:moldify/pages/misc/overlays/modals/confirmation_dialog.dart';
 import 'package:moldify/pages/support/terms_of_agreement.dart';
 import '../../settings/main_account_settings.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +34,27 @@ class _AppDrawerState extends State<AppDrawer> {
   late UserBloc _userBloc;
   StreamSubscription? _userSub;
   bool _isExpert = false; // Default to non-expert
+
+  Future<bool> _showLogoutConfirmationDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final shouldLogout =
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            return BuildConfirmationDialog(
+              title: l10n.logOut,
+              subtitle: 'Are you sure you want to log out?',
+              onCancel: () => Navigator.of(dialogContext).pop(false),
+              onConfirm: () => Navigator.of(dialogContext).pop(true),
+              cancelText: l10n.no,
+              confirmText: l10n.yes,
+            );
+          },
+        ) ??
+        false;
+
+    return shouldLogout;
+  }
 
   @override
   void initState() {
@@ -346,6 +368,11 @@ class _AppDrawerState extends State<AppDrawer> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () async {
+                    final shouldLogout = await _showLogoutConfirmationDialog(
+                      context,
+                    );
+                    if (!shouldLogout || !mounted) return;
+
                     final authProvider = Provider.of<AppAuthProvider>(
                       context,
                       listen: false,

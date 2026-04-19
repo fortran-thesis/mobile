@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/dropdwon.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
@@ -45,7 +46,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   final String _screenSubtitle =
       'Finalize the entry and review the diagnostic overview';
 
-  /// Standard sections including HEALTH RISKS
+  /// Standard analysis sections shown above integrated controls.
   final Map<String, String> _analysisSections = {
     'OVERVIEW': '',
     'DESCRIPTION': '',
@@ -54,7 +55,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     'SYMPTOMS & SIGNS': '',
     'DISEASE CYCLE / SPREAD': '',
     'IMPACT': '',
-    'PREVENTION': '',
   };
 
   final List<Map<String, String>> _managementControls = [];
@@ -179,6 +179,58 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     return null;
   }
 
+  String _sanitizeDisplayText(String raw) {
+    var value = raw.trim();
+    if (value.isEmpty) return value;
+
+    // Remove escaped quotes from stringified payloads.
+    value = value.replaceAll(r'\"', '"').replaceAll(r"\'", "'");
+
+    // Strip repeated wrapping quotes only (keeps inner apostrophes/quotes).
+    while (value.length >= 2 &&
+        ((value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'")))) {
+      value = value.substring(1, value.length - 1).trim();
+    }
+
+    return value;
+  }
+
+  String _normalizeControlBullets(String raw) {
+    final normalized = _sanitizeDisplayText(raw);
+    if (normalized.isEmpty) return normalized;
+
+    final lines = normalized
+        .split(RegExp(r'\n+'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+    if (lines.isEmpty) return normalized;
+
+    final allDashed =
+        lines.length > 1 &&
+        lines.every((line) => RegExp(r'^[-*•]\s+').hasMatch(line));
+    if (allDashed) {
+      return lines
+          .map(
+            (line) =>
+                '• ${_sanitizeDisplayText(line.replaceFirst(RegExp(r'^[-*•]\s*'), ''))}',
+          )
+          .join('\n');
+    }
+
+    return lines
+        .map((line) {
+          if (RegExp(r'^[-*]\s+').hasMatch(line)) {
+            final item = line.replaceFirst(RegExp(r'^[-*]\s*'), '').trim();
+            return '• ${_sanitizeDisplayText(item)}';
+          }
+          return line;
+        })
+        .join('\n');
+  }
+
   String _firstAdditionalInfoMatch(
     MoldCatalogEntry entry,
     List<String> aliases,
@@ -217,10 +269,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
   void _applyCatalogDetails(MoldCatalogEntry entry) {
     final controls = _buildControlsFromCatalog(entry);
-    final preventionSummary = controls
-        .where((control) => (control['content'] ?? '').trim().isNotEmpty)
-        .map((control) => '${control['title']}: ${control['content']}')
-        .join('\n\n');
 
     _analysisSections['OVERVIEW'] = entry.overview.trim().isNotEmpty
         ? entry.overview.trim()
@@ -248,9 +296,6 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
         ? entry.diseaseCycleSpreadImpact.trim()
         : _firstAdditionalInfoMatch(entry, ['disease cycle', 'spread']);
     _analysisSections['IMPACT'] = _firstAdditionalInfoMatch(entry, ['impact']);
-    _analysisSections['PREVENTION'] = preventionSummary.isNotEmpty
-        ? preventionSummary
-        : entry.preventionSummary.trim();
 
     _managementControls
       ..clear()
@@ -452,120 +497,136 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     return Scaffold(
       backgroundColor: MoldifyColors.backgroundColor,
       appBar: const PrimaryAppBar(title: "Give Recommendation"),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _screenTitle,
-              style: const TextStyle(
-                fontSize: 36,
-                fontFamily: 'Montserrat-Black',
-                color: MoldifyColors.primaryColor,
-              ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15.0,
+              vertical: 30.0,
             ),
-            Text(
-              _screenSubtitle,
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                color: MoldifyColors.MoldifyBlack,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            _buildFormLabel("DISEASE NAME"),
-            const SizedBox(height: 12),
-            BuildTextBox(
-              hintText: "Enter disease name...",
-              controller: _diseaseController,
-              showPassword: false,
-              fontSize: 16,
-            ),
-            const SizedBox(height: 35),
-
-            _buildFormLabel("GENUS CLASSIFICATION"),
-            const SizedBox(height: 12),
-            if (_isLoadingMoldOptions)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  color: MoldifyColors.primaryColor,
-                  backgroundColor: MoldifyColors.taupe,
-                ),
-              )
-            else if (_genusOptions.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: MoldifyColors.taupe,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _moldOptionsError ?? 'No mold options available.',
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          fontSize: 13,
-                          color: MoldifyColors.MoldifyGrey,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _loadMoldOptions,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-            else
-              BuildDropdown(
-                key: ValueKey(_dropdownKey),
-                hintText: "Select Genus",
-                items: _genusOptions,
-                initialValue: _selectedGenus,
-                onChanged: _handleMoldSelectionChanged,
-              ),
-
-            const SizedBox(height: 50),
-
-            _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
-            const SizedBox(height: 30),
-
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: CircularProgressIndicator(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _screenTitle,
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontFamily: 'Montserrat-Black',
                     color: MoldifyColors.primaryColor,
                   ),
                 ),
-              )
-            else
-              ..._analysisSections.entries.map(
-                (entry) => _buildTextSection(
-                  entry.key,
-                  entry.value.trim().isNotEmpty
-                      ? entry.value
-                      : 'No data available yet.',
-                  isWarning: entry.key == 'HEALTH RISKS',
+                Text(
+                  _screenSubtitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    color: MoldifyColors.MoldifyBlack,
+                  ),
                 ),
+                const SizedBox(height: 40),
+
+                _buildFormLabel("DISEASE NAME"),
+                const SizedBox(height: 12),
+                BuildTextBox(
+                  hintText: "Enter disease name...",
+                  controller: _diseaseController,
+                  showPassword: false,
+                  fontSize: 16,
+                ),
+                const SizedBox(height: 35),
+
+                _buildFormLabel("GENUS CLASSIFICATION"),
+                const SizedBox(height: 12),
+                if (_isLoadingMoldOptions)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: LinearProgressIndicator(
+                      minHeight: 3,
+                      color: MoldifyColors.primaryColor,
+                      backgroundColor: MoldifyColors.taupe,
+                    ),
+                  )
+                else if (_genusOptions.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.taupe,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _moldOptionsError ?? 'No mold options available.',
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 13,
+                              color: MoldifyColors.MoldifyGrey,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _loadMoldOptions,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  BuildDropdown(
+                    key: ValueKey(_dropdownKey),
+                    hintText: "Select Genus",
+                    items: _genusOptions,
+                    initialValue: _selectedGenus,
+                    onChanged: _handleMoldSelectionChanged,
+                  ),
+
+                const SizedBox(height: 50),
+
+                _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
+                const SizedBox(height: 30),
+
+                if (_isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: CircularProgressIndicator(
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  )
+                else
+                  ..._analysisSections.entries
+                      .where((entry) => entry.key != 'PREVENTION')
+                      .map(
+                        (entry) => _buildTextSection(
+                          entry.key,
+                          entry.value.trim().isNotEmpty
+                              ? entry.value
+                              : 'No data available yet.',
+                          isWarning: entry.key == 'HEALTH RISKS',
+                        ),
+                      ),
+
+                _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
+                const SizedBox(height: 25),
+
+                _buildIPMControls(),
+
+                const SizedBox(height: 60),
+                _buildFooterAction(),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            const Positioned.fill(
+              child: AppLoadingOverlay(
+                message: 'Confirming diagnosis...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
-
-            _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
-            const SizedBox(height: 25),
-
-            _buildIPMControls(),
-
-            const SizedBox(height: 60),
-            _buildFooterAction(),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -605,10 +666,14 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     return Column(
       children: _managementControls.asMap().entries.map((entry) {
         final item = entry.value;
+        final sanitizedDescription = _normalizeControlBullets(
+          item['content'] ?? '',
+        );
+
         return ControlManagementTile(
           title: item['title'] ?? '',
-          description: (item['content'] ?? '').isNotEmpty
-              ? item['content']!
+          description: sanitizedDescription.isNotEmpty
+              ? sanitizedDescription
               : 'No recommendation available yet.',
           icon: iconForTitle(item['title'] ?? ''),
         );
@@ -621,9 +686,63 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
     String body, {
     bool isWarning = false,
   }) {
+    final normalizedBody = _sanitizeDisplayText(body);
+
     // If the body is the fallback text, we don't want the "warning" color/icon
     // because there isn't actually a risk identified yet.
-    final bool showWarningStyle = isWarning && body != 'No data available yet.';
+    final bool showWarningStyle =
+        isWarning && normalizedBody != 'No data available yet.';
+
+    final paragraphs = normalizedBody
+        .split(RegExp(r'\n\s*\n'))
+        .map((line) => _sanitizeDisplayText(line))
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+    final resolvedParagraphs = paragraphs.isEmpty
+        ? <String>[_sanitizeDisplayText(normalizedBody)]
+        : paragraphs;
+
+    List<String> parseBulletItems() {
+      if (normalizedBody.trim().isEmpty ||
+          normalizedBody.trim() == 'No data available yet.') {
+        return const <String>[];
+      }
+
+      if (label == 'AFFECTED CROPS / HOSTS') {
+        return normalizedBody
+            .split(RegExp(r'[,;\n]+'))
+            .map((item) => _sanitizeDisplayText(item))
+            .where((item) => item.isNotEmpty)
+            .toList();
+      }
+
+      if (label == 'HEALTH RISKS' || label == 'SYMPTOMS & SIGNS') {
+        final lines = normalizedBody
+            .split(RegExp(r'\n+'))
+            .map((line) => _sanitizeDisplayText(line))
+            .where((line) => line.isNotEmpty)
+            .map((line) => line.replaceFirst(RegExp(r'^[-*•]\s*'), '').trim())
+            .map((line) => _sanitizeDisplayText(line))
+            .where((line) => line.isNotEmpty)
+            .toList();
+
+        if (lines.length > 1) return lines;
+
+        return normalizedBody
+            .split(RegExp(r'\s+-\s+|;|\n'))
+            .map((item) => _sanitizeDisplayText(item))
+            .where((item) => item.isNotEmpty)
+            .toList();
+      }
+
+      return const <String>[];
+    }
+
+    final bulletItems = parseBulletItems();
+    final showBullets = bulletItems.length > 1;
+    final isAffectedSection = label == 'AFFECTED CROPS / HOSTS';
+    final affectedCount = isAffectedSection ? bulletItems.length : 0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0),
@@ -636,11 +755,11 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 label,
                 style: TextStyle(
                   fontFamily: 'Bricolage-Grotesque-Bold',
-                  fontSize: 12,
-                  letterSpacing: 1.0,
+                  fontSize: 16,
+                  letterSpacing: 1.2,
                   color: showWarningStyle
-                      ? Colors.redAccent.withValues(alpha: 0.8)
-                      : MoldifyColors.primaryColor.withValues(alpha: 0.7),
+                      ? MoldifyColors.MoldifyRed
+                      : MoldifyColors.primaryColor,
                 ),
               ),
               if (showWarningStyle) ...[
@@ -648,21 +767,80 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 const Icon(
                   Icons.warning_amber_rounded,
                   size: 14,
-                  color: Colors.redAccent,
+                  color: MoldifyColors.MoldifyRed,
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: TextStyle(
-              fontFamily: 'Bricolage-Grotesque-Regular',
-              fontSize: 16,
-              height: 1.6,
-              color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.9),
+          if (isAffectedSection)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Affected crops: $affectedCount',
+                style: TextStyle(
+                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                  fontSize: 16,
+                  color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.5),
+                ),
+              ),
             ),
-          ),
+          const SizedBox(height: 10),
+          if (showBullets)
+            ...bulletItems.asMap().entries.map(
+              (entry) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: entry.key == bulletItems.length - 1 ? 0 : 10,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, right: 10.0),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: MoldifyColors.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(
+                          fontFamily: 'Bricolage-Grotesque-Regular',
+                          fontSize: 16,
+                          height: 1.65,
+                          color: MoldifyColors.MoldifyBlack.withValues(
+                            alpha: 0.9,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...resolvedParagraphs.asMap().entries.map(
+              (entry) => Padding(
+                padding: EdgeInsets.only(
+                  bottom: entry.key == resolvedParagraphs.length - 1 ? 0 : 12,
+                ),
+                child: Text(
+                  entry.value,
+                  textAlign: TextAlign.justify,
+                  style: TextStyle(
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    fontSize: 16,
+                    height: 1.65,
+                    color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -673,9 +851,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       text,
       style: TextStyle(
         fontFamily: 'Bricolage-Grotesque-Bold',
-        fontSize: 12,
+        fontSize: 14,
         letterSpacing: 1.5,
-        color: MoldifyColors.primaryColor.withValues(alpha: 0.5),
+        color: MoldifyColors.primaryColor.withValues(alpha: 0.8),
       ),
     );
   }
@@ -685,6 +863,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       width: double.infinity,
       child: BuildButton(
         onPressed: () async {
+          if (_isLoading) return;
+          FocusScope.of(context).unfocus();
+
           final selectedEntry =
               (_selectedGenus == null || _selectedGenus!.trim().isEmpty)
               ? null
@@ -738,6 +919,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 .toDouble();
 
             final populatedSections = _analysisSections.entries
+                .where((entry) => entry.key != 'PREVENTION')
                 .where((entry) => entry.value.trim().isNotEmpty)
                 .map((entry) => '${entry.key}: ${entry.value.trim()}')
                 .toList();

@@ -1,5 +1,6 @@
 import 'package:moldify/core/features/mold_case/models/mold_case.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/features/mold_report/service/mold_report_services.dart';
 import 'package:moldify/core/utils/logger.dart';
 
 class MoldCaseRepository {
@@ -193,4 +194,53 @@ class MoldCaseRepository {
     );
     return result['cases'] as List<MoldCase>;
   }
+
+  /// Enrich mold cases with crop names from mold reports when missing.
+  /// For each case with null cropName, fetches the mold report and extracts the host.
+  /// Returns the enriched cases list (or original if report fetch fails).
+  Future<List<MoldCase>> enrichCasesWithCropNames(
+    List<MoldCase> cases, {
+    String? sessionCookie,
+  }) async {
+    if (cases.isEmpty) return cases;
+
+    final casesNeedingCropName = cases.where((c) => c.cropName == null || c.cropName!.isEmpty).toList();
+    if (casesNeedingCropName.isEmpty) return cases;
+
+    AppLogger.d('MoldCaseRepository: enriching ${casesNeedingCropName.length} cases with crop names');
+
+    final moldReportService = MoldReportService();
+    final enrichedCases = <MoldCase>[];
+
+    for (final moldCase in cases) {
+      // If case already has a crop name, keep it as is
+      if (moldCase.cropName != null && moldCase.cropName!.isNotEmpty) {
+        enrichedCases.add(moldCase);
+        continue;
+      }
+
+      try {
+        // Fetch the mold report to get the host/crop name
+        final reportData = await moldReportService.getMoldReportById(
+          moldCase.moldReportId,
+          sessionCookie: sessionCookie,
+        );
+
+        final host = reportData['host']?.toString().trim() ?? reportData['data']?['host']?.toString().trim();
+        if (host != null && host.isNotEmpty) {
+          // Enrich the case with the crop name
+          enrichedCases.add(moldCase.copyWith(cropName: host));
+          AppLogger.d('MoldCaseRepository: enriched case ${moldCase.id} with crop name: $host');
+        } else {
+          enrichedCases.add(moldCase);
+        }
+      } catch (e) {
+        AppLogger.w('MoldCaseRepository: failed to fetch crop name for case ${moldCase.id}: $e');
+        enrichedCases.add(moldCase); // Keep original if fetch fails
+      }
+    }
+
+    return enrichedCases;
+  }
 }
+

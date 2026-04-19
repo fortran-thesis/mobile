@@ -670,6 +670,30 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return 'Pending Analysis';
   }
 
+  String _buildIdentifiedMoldName() {
+    if (_lookupTopMoldName.trim().isNotEmpty) {
+      return _lookupTopMoldName.trim();
+    }
+
+    if (_initIdentifiedMold.trim().isNotEmpty) {
+      return _initIdentifiedMold.trim();
+    }
+
+    return 'Pending Analysis';
+  }
+
+  String _buildIdentifiedConfidenceLabel() {
+    if (_lookupTopConfidenceDisplay.trim().isNotEmpty) {
+      return _lookupTopConfidenceDisplay.trim();
+    }
+
+    if (_initConfidence.trim().isNotEmpty) {
+      return _initConfidence.trim();
+    }
+
+    return '';
+  }
+
   MoldCase _cloneCaseWithLogs(MoldCase source, List<CultivationLog>? logs) {
     return MoldCase(
       id: source.id,
@@ -1130,7 +1154,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
   Widget build(BuildContext context) {
     //Determine if the case is closed. This boolean will control the UI.
     final bool isCaseClosed = caseStatus == 'Closed';
-    final String identifiedFungi = _buildIdentifiedFungiLabel();
+    final String identifiedMoldName = _buildIdentifiedMoldName();
+    final String identifiedConfidence = _buildIdentifiedConfidenceLabel();
 
     String endDate = _case?.endDate != null
         ? DateFormat('MMMM dd, yyyy').format(_case!.endDate!)
@@ -1322,30 +1347,53 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
                                 const SizedBox(height: 25),
 
-                                // --- THE ANALYSIS HIGHLIGHT ---
+                                // --- DISEASE IDENTIFICATION ---
+                                Container(
+                                  width: 40,
+                                  height: 1.5,
+                                  color: MoldifyColors.accentColor,
+                                ),
+                                const SizedBox(height: 16),
                                 const Text(
-                                  "IDENTIFIED FUNGI",
+                                  'DISEASE IDENTIFICATION',
                                   style: TextStyle(
-                                    fontSize: 9,
-                                    letterSpacing: 2.0,
+                                    fontSize: 10,
+                                    letterSpacing: 2.2,
                                     fontFamily: 'Bricolage-Grotesque-Bold',
                                     color: MoldifyColors.primaryColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  identifiedFungi, // Using the variable
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontFamily: 'Bricolage-Grotesque-Bold',
-                                    color: MoldifyColors.primaryColor,
-                                    height: 1.1,
-                                  ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        identifiedMoldName,
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          fontFamily: 'Bricolage-Grotesque-Bold',
+                                          color: MoldifyColors.primaryColor,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                    if (identifiedConfidence.isNotEmpty)
+                                      Text(
+                                        identifiedConfidence,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontFamily: 'Bricolage-Grotesque-Bold',
+                                          color: MoldifyColors.accentColor,
+                                        ),
+                                      ),
+                                  ],
                                 ),
 
                                 // WikiMold reference button (visible when verdict links an article).
                                 if (_linkedMoldipediaId != null) ...[
-                                  const SizedBox(height: 14),
+                                  const SizedBox(height: 20),
                                   GestureDetector(
                                     onTap: () =>
                                         Navigator.of(context).pushNamed(
@@ -1360,38 +1408,39 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                         vertical: 10,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: MoldifyColors.primaryColor
-                                            .withValues(alpha: 0.06),
-                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: MoldifyColors.primaryColor
-                                              .withValues(alpha: 0.2),
+                                              .withValues(alpha: 0.15),
                                         ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(
-                                            Icons.menu_book_outlined,
-                                            size: 16,
-                                            color: MoldifyColors.primaryColor,
+                                          Icon(
+                                            Icons.menu_book_rounded,
+                                            size: 14,
+                                            color: MoldifyColors.primaryColor
+                                                .withValues(alpha: 0.8),
                                           ),
-                                          const SizedBox(width: 8),
-                                          const Text(
-                                            'View WikiMold Reference',
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'WIKIMOLD REFERENCE',
                                             style: TextStyle(
-                                              fontFamily:
-                                                  'Bricolage-Grotesque-SemiBold',
-                                              fontSize: 13,
-                                              color: MoldifyColors.primaryColor,
+                                              fontFamily: 'Bricolage-Grotesque-Bold',
+                                              fontSize: 11,
+                                              letterSpacing: 1.2,
+                                              color: MoldifyColors.primaryColor
+                                                  .withValues(alpha: 0.8),
                                             ),
                                           ),
-                                          const SizedBox(width: 6),
+                                          const SizedBox(width: 8),
                                           Icon(
-                                            Icons.arrow_forward_ios,
-                                            size: 11,
+                                            Icons.arrow_outward_rounded,
+                                            size: 12,
                                             color: MoldifyColors.primaryColor
-                                                .withValues(alpha: 0.6),
+                                                .withValues(alpha: 0.4),
                                           ),
                                         ],
                                       ),

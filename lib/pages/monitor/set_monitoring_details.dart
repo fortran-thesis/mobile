@@ -16,6 +16,7 @@ import 'set_monitor_details_tab/evidence_tab.dart';
 import 'set_monitor_details_tab/schedule_tab.dart';
 import 'set_monitor_details_tab/specimen_tab.dart';
 import '../misc/appbar/primary_app_bar.dart';
+import '../misc/overlays/loading_ui.dart';
 import '../misc/overlays/modals/chip_selection_modal.dart';
 import '../misc/overlays/modals/confirmation_dialog.dart';
 import '../../core/utils/mutation_result.dart';
@@ -674,22 +675,28 @@ class _SetMonitoringDetailsScreenState
   }
 
   Future<void> _pickSpecimenType() async {
-    final selectedTypes = await showMultiChipSelectionModal(
+    final selectedType = await showSearchableSingleSelectionModal(
       context: context,
       title: 'Select Specimen Type(s)',
       options: _specimenTypeOptions,
-      currentSelections: _selectedSpecimenTypes,
-      customInputHint: 'Add custom specimen type(s), comma-separated',
-      othersLabel: 'Others/Iba pa',
-      isMultiLine: true,
+      currentSelection: _specimenTypeController.text,
+      searchHint: 'Search specimen type...',
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add specimen type',
     );
 
-    if (selectedTypes != null && selectedTypes.isNotEmpty) {
+    if (selectedType != null && selectedType.isNotEmpty) {
       setState(() {
+        if (!_specimenTypeOptions.contains(selectedType)) {
+          _specimenTypeOptions.add(selectedType);
+          _specimenTypeOptions.sort((a, b) => a.compareTo(b));
+        }
         _selectedSpecimenTypes
           ..clear()
-          ..addAll(selectedTypes);
-        _specimenTypeController.text = selectedTypes.join(', ');
+          ..add(selectedType);
+        _specimenTypeController.text = selectedType;
       });
     }
   }
@@ -703,10 +710,19 @@ class _SetMonitoringDetailsScreenState
       searchHint: 'Search symptoms...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add symptom',
     );
 
     if (selectedSymptoms != null && selectedSymptoms.isNotEmpty) {
       setState(() {
+        for (final symptom in selectedSymptoms) {
+          if (!_initialSymptomsOptions.contains(symptom)) {
+            _initialSymptomsOptions.add(symptom);
+          }
+        }
+        _initialSymptomsOptions.sort((a, b) => a.compareTo(b));
+
         _selectedInitialSymptoms
           ..clear()
           ..addAll(selectedSymptoms);
@@ -724,10 +740,19 @@ class _SetMonitoringDetailsScreenState
       searchHint: 'Search characteristics...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add characteristic',
     );
 
     if (selectedCharacteristics != null && selectedCharacteristics.isNotEmpty) {
       setState(() {
+        for (final characteristic in selectedCharacteristics) {
+          if (!_initialCharacteristicsOptions.contains(characteristic)) {
+            _initialCharacteristicsOptions.add(characteristic);
+          }
+        }
+        _initialCharacteristicsOptions.sort((a, b) => a.compareTo(b));
+
         _selectedInitialCharacteristics
           ..clear()
           ..addAll(selectedCharacteristics);
@@ -747,10 +772,19 @@ class _SetMonitoringDetailsScreenState
       searchHint: 'Search signs...',
       confirmButtonText: 'Confirm',
       cancelButtonText: 'Cancel',
+      allowCustomOption: true,
+      addCustomLabel: 'Add sign',
     );
 
     if (selectedSigns != null && selectedSigns.isNotEmpty) {
       setState(() {
+        for (final sign in selectedSigns) {
+          if (!_initialSignsOptions.contains(sign)) {
+            _initialSignsOptions.add(sign);
+          }
+        }
+        _initialSignsOptions.sort((a, b) => a.compareTo(b));
+
         _selectedInitialSigns
           ..clear()
           ..addAll(selectedSigns);
@@ -1025,7 +1059,8 @@ class _SetMonitoringDetailsScreenState
   }
 
   /// Shows a date picker and writes the selected date into [targetController].
-  /// If selecting a start date, validates it does not exceed the end date.
+  /// If selecting a start date or date of observation, validates it does not
+  /// exceed the end date.
   Future<void> _selectDate(
     BuildContext context,
     TextEditingController targetController,
@@ -1033,12 +1068,15 @@ class _SetMonitoringDetailsScreenState
     final today = DateTime.now();
     final todayDateOnly = DateTime(today.year, today.month, today.day);
 
-    // Determine if this is for start date or another date
+    // Determine if this is for start date, date of observation, or another date
     final isStartDate = targetController == _startDateController;
+    final isDateObservation =
+        targetController == _dateOfObservationController;
 
-    // If setting start date and end date is set, use end date as the max
+    // For start date and date of observation, enforce end date as max bound.
     DateTime lastDateForPicker = DateTime(2101);
-    if (isStartDate && _endDateController.text.isNotEmpty) {
+    if ((isStartDate || isDateObservation) &&
+        _endDateController.text.isNotEmpty) {
       try {
         final endDate = DateFormat(
           'MMMM dd, yyyy',
@@ -1050,7 +1088,7 @@ class _SetMonitoringDetailsScreenState
     }
 
     final DateTime firstDateForPicker =
-        isStartDate ? todayDateOnly : DateTime(2000);
+      (isStartDate || isDateObservation) ? todayDateOnly : DateTime(2000);
 
     final DateTime initialDateForPicker =
         todayDateOnly.isAfter(lastDateForPicker)
@@ -1232,13 +1270,9 @@ class _SetMonitoringDetailsScreenState
           ),
           if (_isLoading)
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.35),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
+              child: const AppLoadingOverlay(
+                message: 'Saving monitoring details...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
             ),
         ],

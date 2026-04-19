@@ -731,7 +731,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                     ReportHostsSymptomsTab(
                                       sections: noteSections,
                                     ),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 8),
                                     ReportDiseaseCycleImpactTab(
                                       sections: noteSections,
                                     ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/core/features/culture/services/culture_session_service.dart';
 import 'package:moldify/pages/misc/appbar/primary_app_bar.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
+import 'package:moldify/pages/misc/overlays/loading_ui.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_data_tile.dart';
 import 'package:moldify/pages/misc/tiles/initial_observation_components/observation_empty_state_card.dart';
@@ -221,13 +222,9 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
           // Full-screen loading overlay
           if (_isSaving)
             Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: MoldifyColors.primaryColor,
-                  ),
-                ),
+              child: const AppLoadingOverlay(
+                message: 'Saving log...',
+                barrierColor: MoldifyColors.backgroundColor,
               ),
             ),
         ],
@@ -263,13 +260,9 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
 
   Widget _buildCultureAssignmentSection() {
     if (_isLoadingCultures) {
-      return const Text(
-        'Checking culture availability...',
-        style: TextStyle(
-          fontSize: 12,
-          fontFamily: 'Bricolage-Grotesque-Regular',
-          color: MoldifyColors.MoldifyGrey,
-        ),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: AppLoadingSpinner(size: 18),
       );
     }
 
@@ -388,6 +381,21 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   }
 
   Widget _buildMacroscopicEvidenceBlock(bool hasImage) {
+    if (!hasImage) {
+      return _buildCaptureCard(
+        hasImage: false,
+        imagePath: widget.macroscopicImagePath,
+        onTap: _isSaving
+            ? null
+            : () => widget.onCaptureMacro(
+                  _selectedCultureId,
+                  _selectedCultureName,
+                ),
+        statusText: "Macroscopic Specimen",
+        emptyMsg: "Tap to capture macroscopic view",
+      );
+    }
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
