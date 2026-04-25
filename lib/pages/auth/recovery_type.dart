@@ -1,0 +1,1 @@
+enum RecoveryType { username, password }

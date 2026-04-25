@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/code_recover_account.dart';
+import 'package:moldify/pages/auth/recovery_type.dart';
 import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
@@ -72,6 +73,28 @@ class AppRoutes {
     return fallback;
   }
 
+  static RecoveryType _recoveryTypeArg(
+    Map<String, dynamic>? args, {
+    String? pageTitle,
+  }) {
+    final value = args?['recoveryType'];
+    if (value is RecoveryType) return value;
+    if (value is String) {
+      switch (value.trim().toLowerCase()) {
+        case 'username':
+          return RecoveryType.username;
+        case 'password':
+          return RecoveryType.password;
+      }
+    }
+
+    final normalizedTitle = pageTitle?.trim().toLowerCase() ?? '';
+    if (normalizedTitle.contains('username')) {
+      return RecoveryType.username;
+    }
+    return RecoveryType.password;
+  }
+
   static Widget _routeArgError(String message) {
     return Scaffold(
       appBar: AppBar(title: const Text('Navigation Error')),
@@ -102,20 +125,23 @@ class AppRoutes {
           case RouteNames.signup:
             return SignUpScreen();
           case RouteNames.emailRecoverAccount:
-            final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null
-                ? args['pageTitle'] as String
-                : '';
-            return EmailRecoverAccountScreen(pageTitle: pageTitle);
+            final args = _mapArgs(settings);
+            final pageTitle = _stringArg(args, 'pageTitle') ?? '';
+            final recoveryType = _recoveryTypeArg(args, pageTitle: pageTitle);
+            return EmailRecoverAccountScreen(
+              pageTitle: pageTitle,
+              recoveryType: recoveryType,
+            );
           case RouteNames.codeRecoverAccount:
-            final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null
-                ? args['pageTitle'] as String
-                : '';
-            final email = args != null && args['email'] != null
-                ? args['email'] as String
-                : '';
-            return CodeRecoverAccountScreen(email: email, pageTitle: pageTitle);
+            final args = _mapArgs(settings);
+            final pageTitle = _stringArg(args, 'pageTitle') ?? '';
+            final email = _stringArg(args, 'email') ?? '';
+            final recoveryType = _recoveryTypeArg(args, pageTitle: pageTitle);
+            return CodeRecoverAccountScreen(
+              email: email,
+              pageTitle: pageTitle,
+              recoveryType: recoveryType,
+            );
           case RouteNames.intro:
             if (isAuthenticated) {
               return MainPage();
