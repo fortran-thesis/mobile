@@ -256,6 +256,61 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     return microLog is Map<String, dynamic> && microLog.isNotEmpty;
   }
 
+  Map<String, dynamic>? _extractSavedCultivationLogPayload(
+    Map<String, dynamic> payload,
+  ) {
+    final macro = payload['macroResult'];
+    if (macro is Map) {
+      final macroMap = Map<String, dynamic>.from(macro);
+      final cultivationLog = macroMap['cultivationLog'];
+      if (cultivationLog is Map) {
+        return Map<String, dynamic>.from(cultivationLog);
+      }
+    }
+
+    final microCultivationLog = payload['microCultivationLog'];
+    if (microCultivationLog is Map) {
+      return Map<String, dynamic>.from(microCultivationLog);
+    }
+
+    return null;
+  }
+
+  bool _applySavedCultivationLogToState(
+    Map<String, dynamic> logPayload, {
+    required String sourceTab,
+  }) {
+    if (_case == null) return false;
+
+    final savedLog = CultivationLog.fromJson(
+      Map<String, dynamic>.from(logPayload),
+    );
+    final existingLogs = _case?.cultivationLogs ?? const <CultivationLog>[];
+    final updatedLogs = <CultivationLog>[
+      savedLog,
+      ...existingLogs.where((existing) => existing.id != savedLog.id),
+    ];
+    final updatedCase = _case!.copyWith(cultivationLogs: updatedLogs);
+    final entry = _mapCultivationLogToTimelineEntry(savedLog);
+    final isVitro = _isVitroLogType(savedLog.type) || sourceTab == 'in-vitro';
+    final isVivo = _isVivoLogType(savedLog.type) || sourceTab == 'in-vivo';
+
+    if (!mounted) return false;
+    setState(() {
+      _case = updatedCase;
+      if (isVitro) {
+        inVitroEntries = <Map<String, String>>[entry, ...inVitroEntries];
+        inVitroDateTime = _formatLogDate(savedLog.createdAt);
+      } else if (isVivo) {
+        inVivoEntries = <Map<String, String>>[entry, ...inVivoEntries];
+        inVivoDateTime = _formatLogDate(savedLog.createdAt);
+      }
+      _mutationOccurred = true;
+    });
+
+    return true;
+  }
+
   Future<void> _handleLogSaved(
     Map<String, dynamic> payload, {
     required String sourceTab,
@@ -264,6 +319,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     final macroPersisted = _didCultivationLogPersist(macro);
     final microPersisted = _didMicroscopicLogPersist(payload);
     final persisted = macroPersisted || microPersisted;
+    final mutationResult = MutationResult.fromAny(payload);
+    final savedLogPayload = _extractSavedCultivationLogPayload(payload);
 
     AppLogger.d(
       'ViewCase: onLogSaved sourceTab=$sourceTab persisted=$persisted '
@@ -273,6 +330,13 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     if (!persisted) {
       final hadMacroAttempt = macro != null;
+      if (mutationResult.changed) {
+        await _refreshCaseAndPendingAnalysis(showLoader: false);
+        if (!mounted) return;
+        setState(() => _mutationOccurred = true);
+        return;
+      }
+
       if (hadMacroAttempt && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -283,10 +347,25 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       return;
     }
 
-    await _refreshCaseAndPendingAnalysis(showLoader: false);
-    if (!mounted) return;
+    final appliedLocally =
+        savedLogPayload != null &&
+        _applySavedCultivationLogToState(
+          savedLogPayload,
+          sourceTab: sourceTab,
+        );
 
-    setState(() => _mutationOccurred = true);
+    if (appliedLocally) {
+      unawaited(_computePendingAnalysisFromCurrentCase());
+    }
+
+    if (!appliedLocally) {
+      await _refreshCaseAndPendingAnalysis(showLoader: false);
+      if (!mounted) return;
+    }
+
+    if (mounted) {
+      setState(() => _mutationOccurred = true);
+    }
 
     if (mounted) {
       if (macro?['scanSaveError'] != null) {
@@ -375,9 +454,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
     try {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Generating PDF...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
 
       final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final sessionCookie = authProvider.cookie;
@@ -398,9 +477,9 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to export PDF: $e')));
     }
   }
 
@@ -809,6 +888,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         cultivationLogs: null,
         isArchived: false,
       );
+      String? localLinkedMoldipediaId;
 
       // Try to enrich with mold-case data (priority, cultivation details/logs).
       try {
@@ -827,29 +907,30 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             caseService
                 .getMoldCaseById(moldCase.id, sessionCookie: sessionCookie)
                 .catchError((e) {
-              AppLogger.w('ViewCase: getMoldCaseById failed: $e');
-              return <String, dynamic>{};
-            }),
+                  AppLogger.w('ViewCase: getMoldCaseById failed: $e');
+                  return <String, dynamic>{};
+                }),
             caseService
                 .getCultivationLogs(moldCase.id, sessionCookie: sessionCookie)
                 .catchError((e) {
-              AppLogger.w(
-                'ViewCase: getCultivationLogs failed for caseId=${moldCase.id}: $e',
-              );
-              return <String, dynamic>{};
-            }),
+                  AppLogger.w(
+                    'ViewCase: getCultivationLogs failed for caseId=${moldCase.id}: $e',
+                  );
+                  return <String, dynamic>{};
+                }),
           ]);
 
           // Process getMoldCaseById result — extract moldipedia_id.
           final rawCase = fetchResults[0];
           if (rawCase.isNotEmpty) {
-            final rawData =
-                rawCase['data'] is Map ? rawCase['data'] as Map : rawCase;
+            final rawData = rawCase['data'] is Map
+                ? rawCase['data'] as Map
+                : rawCase;
             final verdict = rawData['final_verdict'];
             if (verdict is Map) {
               final mid = verdict['moldipedia_id']?.toString().trim();
               if (mid != null && mid.isNotEmpty) {
-                setState(() => _linkedMoldipediaId = mid);
+                localLinkedMoldipediaId = mid;
               }
             }
           }
@@ -892,8 +973,11 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localContactNumber = '+63 917 123 4567';
       String localLocation = 'Unknown Location';
       final List<Map<String, dynamic>> localCaseEntries = [];
-
-      cropName = reportPayload['host']?.toString() ?? 'Kamatis Tagalog';
+      final localCropName =
+          reportPayload['host']?.toString() ??
+          reportPayload['crop_name']?.toString() ??
+          reportPayload['common_name']?.toString() ??
+          'Kamatis Tagalog';
 
       // Extract reporter details from the report
       final reporter = _asStringMap(reportPayload['reporter']);
@@ -980,6 +1064,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       String localInVivoDateTime = 'No data';
       String localInVivoEnvironmentalTemperature = 'Not specified';
       List<Map<String, String>> localInVivoEntries = [];
+      Map<String, dynamic>? localLatestMicroscopicSnapshot;
 
       if (moldCase.cultivationDetails != null) {
         final cultivationDetails = moldCase.cultivationDetails!;
@@ -990,7 +1075,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
             cultivationDetails.initialMacroscopicImageUrl ?? '';
         _initIdentifiedMold = cultivationDetails.initialMicroscopic ?? '';
         final snapshot = cultivationDetails.microscopicAiSnapshot;
-        _latestMicroscopicSnapshot = snapshot;
+        localLatestMicroscopicSnapshot = snapshot;
         if (_initIdentifiedMold.trim().isEmpty && snapshot != null) {
           _initIdentifiedMold = snapshot['identified_mold']?.toString() ?? '';
         }
@@ -1004,8 +1089,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         _initMacroTexture = cultivationDetails.initialMacroscopicTexture ?? '';
         _initMacroSymptoms =
             cultivationDetails.initialMacroscopicSymptoms ?? '';
-        _initMacroSigns =
-          _displayText(cultivationDetails.initialSigns);
+        _initMacroSigns = _displayText(cultivationDetails.initialSigns);
         _initMacroCharacteristics =
             cultivationDetails.initialMacroscopicCharacteristics ?? '';
 
@@ -1095,6 +1179,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
 
       setState(() {
         _case = moldCase;
+        _linkedMoldipediaId = localLinkedMoldipediaId;
+        _latestMicroscopicSnapshot = localLatestMicroscopicSnapshot;
         _latestReportLookupResults = parsedLookupResults;
         _reportId = resolvedReportId; // Store report ID for status updates
         caseStatus = localReportStatus;
@@ -1117,9 +1203,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         inVivoDateTime = localInVivoDateTime;
         inVivoEnvironmentalTemperature = localInVivoEnvironmentalTemperature;
         inVivoEntries = localInVivoEntries;
-        cropName = cropName;
-        _hasGivenRecommendation =
-            _hasGivenRecommendation || localHasRecommendation;
+        cropName = localCropName;
+        _hasGivenRecommendation = localHasRecommendation;
         _isLoading = false;
       });
     } catch (e, stackTrace) {

@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:moldify/core/config/cache_config.dart';
 import 'package:moldify/core/utils/cache_invalidation.dart';
 import 'package:moldify/core/utils/logger.dart';
+import 'package:moldify/core/services/fcm_service.dart';
 import 'package:moldify/services/api_service.dart';
 
 class AppAuthProvider extends ChangeNotifier {
@@ -22,6 +23,7 @@ class AppAuthProvider extends ChangeNotifier {
     if (cookie != null) {
       await _storage.write(key: 'auth_cookie', value: cookie);
       _cookie = cookie;
+      unawaited(FCMService.instance.updateSessionCookie(cookie));
       notifyListeners();
     }
   }
@@ -44,6 +46,8 @@ class AppAuthProvider extends ChangeNotifier {
         // Automatically logout and clear cookie on 401/403.
         logout();
       });
+
+      unawaited(FCMService.instance.updateSessionCookie(_cookie));
     } finally {
       _isHydrated = true;
       stopwatch.stop();
@@ -64,6 +68,7 @@ class AppAuthProvider extends ChangeNotifier {
   Future<void> clearCookie() async {
     await _storage.delete(key: 'auth_cookie');
     _cookie = null;
+    unawaited(FCMService.instance.updateSessionCookie(null));
     notifyListeners();
   }
 

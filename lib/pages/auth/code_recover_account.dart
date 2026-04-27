@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:moldify/core/constants/route_names.dart';
 import 'package:moldify/core/utils/auth_navigation.dart';
 import 'package:moldify/core/utils/route_utils.dart';
+import 'package:moldify/pages/auth/recovery_type.dart';
 import 'package:moldify/pages/misc/colors.dart';
 import 'package:moldify/pages/misc/textboxes/textboxes.dart';
 import '../misc/appbar/secondary_appbar.dart';
@@ -18,10 +19,14 @@ class CodeRecoverAccountScreen extends StatefulWidget {
   final String pageTitle;
   final String email;
 
+  /// Stable identifier for the recovery flow.
+  final RecoveryType recoveryType;
+
   const CodeRecoverAccountScreen({
     super.key,
     required this.email,
     required this.pageTitle,
+    required this.recoveryType,
   });
 
   @override
@@ -42,8 +47,7 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
   /// totalSteps is the total number of steps in the recovery process.
   late final int totalSteps;
 
-  /// title is the app bar title of the page, which is set based on the pageTitle passed to the widget.
-  /// It can be 'Forgot Username', 'Forgot Password'.
+  /// title is the app bar title of the page.
   late final String title;
 
   final AuthBloc _authBloc = AuthBloc(AuthService());
@@ -51,21 +55,24 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
   String? errorMessage;
   String? successMessage;
 
-  /// It initializes the title and totalSteps based on the pageTitle passed to the widget.
-  /// If the pageTitle is 'Forgot Username', it sets the title to 'Forgot Username' and totalSteps to 2.
-  /// If the pageTitle is 'Forgot Password', it sets the title to 'Forgot Password' and totalSteps to 3.
+  /// It initializes the title and totalSteps from the recovery type.
   @override
   void initState() {
     super.initState();
-    if (widget.pageTitle == 'Forgot Username') {
-      title = 'Forgot Username';
-      totalSteps = 2;
-    } else if (widget.pageTitle == 'Forgot Password') {
-      title = 'Forgot Password';
-      totalSteps = 3;
-    } else {
-      title = widget.pageTitle;
-      totalSteps = 0;
+    title = widget.pageTitle.isNotEmpty
+        ? widget.pageTitle
+        : switch (widget.recoveryType) {
+            RecoveryType.username => 'Forgot Username?',
+            RecoveryType.password => 'Forgot Password?',
+          };
+
+    switch (widget.recoveryType) {
+      case RecoveryType.username:
+        totalSteps = 2;
+        break;
+      case RecoveryType.password:
+        totalSteps = 3;
+        break;
     }
   }
 
@@ -171,27 +178,29 @@ class _CodeRecoverAccountScreenState extends State<CodeRecoverAccountScreen> {
       });
       return;
     }
-    if (title == 'Forgot Password') {
-      setState(() {
-        isLoading = false;
-        errorMessage = null;
-        successMessage = 'Code verified! You can now set a new password.';
-      });
-      if (!mounted) return;
-      navigateTo(
-        context,
-        RouteNames.setNewPassword,
-        arguments: {'token': result['data']},
-      );
-      return;
-    } else if (title == 'Forgot Username') {
-      setState(() {
-        isLoading = false;
-        errorMessage = null;
-        successMessage =
-            'Code verified! You may check your email to see your username!';
-      });
-      await _handleForgotUsername(result['data']);
+    switch (widget.recoveryType) {
+      case RecoveryType.password:
+        setState(() {
+          isLoading = false;
+          errorMessage = null;
+          successMessage = 'Code verified! You can now set a new password.';
+        });
+        if (!mounted) return;
+        navigateTo(
+          context,
+          RouteNames.setNewPassword,
+          arguments: {'token': result['data']},
+        );
+        return;
+      case RecoveryType.username:
+        setState(() {
+          isLoading = false;
+          errorMessage = null;
+          successMessage =
+              'Code verified! You may check your email to see your username!';
+        });
+        await _handleForgotUsername(result['data']);
+        return;
     }
   }
 

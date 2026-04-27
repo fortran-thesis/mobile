@@ -199,14 +199,29 @@ class _LowConfidenceCorrectionScreenState
       return;
     }
 
-    final correctedModelResult = Map<String, dynamic>.from(widget.modelResult);
-    correctedModelResult['predicted_class'] = entry.name;
+    final correctedModelResult = <String, dynamic>{
+      'predicted_class': entry.name,
+      'moldId': entry.id,
+      'mold_id': entry.id,
+      'moldName': entry.name,
+      // Keep only prediction metadata required downstream so stale sections
+      // from a previous mold do not leak into the corrected flow.
+      if (widget.modelResult.containsKey('probability'))
+        'probability': widget.modelResult['probability'],
+      if (widget.modelResult.containsKey('all_probabilities'))
+        'all_probabilities': widget.modelResult['all_probabilities'],
+      if (widget.modelResult.containsKey('model_source'))
+        'model_source': widget.modelResult['model_source'],
+      if (widget.modelResult.containsKey('used_fusion'))
+        'used_fusion': widget.modelResult['used_fusion'],
+      if (widget.modelResult.containsKey('used_ann'))
+        'used_ann': widget.modelResult['used_ann'],
+    };
 
     Map<String, dynamic> moldDetails = {'error': 'not_found'};
 
     try {
-      final authProvider =
-          Provider.of<AppAuthProvider>(context, listen: false);
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
       final cameraService = CameraService();
       final fetched = await cameraService.getMoldDetailsById(
         moldId: entry.id,
@@ -253,204 +268,213 @@ class _LowConfidenceCorrectionScreenState
     return Stack(
       children: [
         Scaffold(
-  backgroundColor: MoldifyColors.backgroundColor,
-  appBar: PrimaryAppBar(title: 'Low Confidence Result'),
-  body: SingleChildScrollView(
-    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // --- Feature Image: Refined shadow and border ---
-        Center(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Image.file(
-                File(widget.croppedImagePath),
-                width: double.infinity,
-                height: 280, 
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        // --- Info Section: Translucent Material Design ---
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            // Using a very faint tint of the accent color instead of flat white
-            color: MoldifyColors.accentColor.withOpacity(0.04),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: MoldifyColors.accentColor.withOpacity(0.1),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    FontAwesomeIcons.circleExclamation,
-                    color: MoldifyColors.accentColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'VERIFICATION REQUIRED',
-                    style: TextStyle(
-                      fontFamily: 'Bricolage-Grotesque-Bold',
-                      fontSize: 13,
-                      letterSpacing: 1.2,
-                      color: MoldifyColors.accentColor,
+          backgroundColor: MoldifyColors.backgroundColor,
+          appBar: PrimaryAppBar(title: 'Low Confidence Result'),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Feature Image: Refined shadow and border ---
+                Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.file(
+                        File(widget.croppedImagePath),
+                        width: double.infinity,
+                        height: 280,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Our AI is only $_confidenceDisplay% confident in this result. Please verify the genus manually to ensure safety.',
-                style: TextStyle(
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  fontSize: 15,
-                  height: 1.5,
-                  color: MoldifyColors.MoldifyBlack.withOpacity(0.7),
                 ),
-              ),
+                const SizedBox(height: 32),
 
-              // AI Prediction "Readout" - Styled like a diagnostic tag
-              if (_aiPredictedGenus.isNotEmpty) ...[
-                const SizedBox(height: 20),
+                // --- Info Section: Translucent Material Design ---
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: MoldifyColors.backgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: MoldifyColors.MoldifyGrey.withOpacity(0.1)),
+                    // Using a very faint tint of the accent color instead of flat white
+                    color: MoldifyColors.accentColor.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: MoldifyColors.accentColor.withOpacity(0.1),
+                      width: 1.5,
+                    ),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(FontAwesomeIcons.bacterium, size: 14, color: MoldifyColors.primaryColor),
-                      const SizedBox(width: 10),
+                      Row(
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.circleExclamation,
+                            color: MoldifyColors.accentColor,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'VERIFICATION REQUIRED',
+                            style: TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Bold',
+                              fontSize: 13,
+                              letterSpacing: 1.2,
+                              color: MoldifyColors.accentColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
                       Text(
-                        'Identified:',
+                        'Our AI is only $_confidenceDisplay% confident in this result. Please verify the genus manually to ensure safety.',
                         style: TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-SemiBold',
-                          fontSize: 14,
-                          color: MoldifyColors.MoldifyGrey,
+                          fontFamily: 'Bricolage-Grotesque-Regular',
+                          fontSize: 15,
+                          height: 1.5,
+                          color: MoldifyColors.MoldifyBlack.withOpacity(0.7),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _aiPredictedGenus,
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Bold',
-                          fontSize: 16,
-                          color: MoldifyColors.primaryColor,
+
+                      // AI Prediction "Readout" - Styled like a diagnostic tag
+                      if (_aiPredictedGenus.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: MoldifyColors.backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: MoldifyColors.MoldifyGrey.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                FontAwesomeIcons.bacterium,
+                                size: 14,
+                                color: MoldifyColors.primaryColor,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Identified:',
+                                style: TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-SemiBold',
+                                  fontSize: 14,
+                                  color: MoldifyColors.MoldifyGrey,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _aiPredictedGenus,
+                                style: const TextStyle(
+                                  fontFamily: 'Bricolage-Grotesque-Bold',
+                                  fontSize: 16,
+                                  color: MoldifyColors.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
-              ],
-            ],
-          ),
-        ),
 
-        const SizedBox(height: 40),
+                const SizedBox(height: 40),
 
-        // --- Action Header: Clean and Minimal ---
-        Row(
-          children: [
-            const SizedBox(width: 4),
-            Container(
-              width: 4,
-              height: 18,
-              decoration: BoxDecoration(
-                color: MoldifyColors.primaryColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Select Correct Genus',
-              style: TextStyle(
-                fontFamily: 'Bricolage-Grotesque-SemiBold',
-                fontSize: 18,
-                letterSpacing: -0.3,
-                color: MoldifyColors.primaryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // --- Dropdown Section ---
-        if (_isLoadingMoldOptions)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: AppLoadingSpinner(size: 32),
-            ),
-          )
-        else if (_genusOptions.isEmpty)
-          _buildErrorState()
-        else
-          // Wrapped in a subtle shadow container for depth
-          Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+                // --- Action Header: Clean and Minimal ---
+                Row(
+                  children: [
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 4,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: MoldifyColors.primaryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Select Correct Genus',
+                      style: TextStyle(
+                        fontFamily: 'Bricolage-Grotesque-SemiBold',
+                        fontSize: 18,
+                        letterSpacing: -0.3,
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 16),
+
+                // --- Dropdown Section ---
+                if (_isLoadingMoldOptions)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: AppLoadingSpinner(size: 32),
+                    ),
+                  )
+                else if (_genusOptions.isEmpty)
+                  _buildErrorState()
+                else
+                  // Wrapped in a subtle shadow container for depth
+                  Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: BuildDropdown(
+                      key: ValueKey(_dropdownKey),
+                      hintText: 'Search the mold catalog...',
+                      items: _genusOptions,
+                      initialValue: _selectedGenus,
+                      onChanged: _handleMoldSelectionChanged,
+                    ),
+                  ),
+
+                const SizedBox(height: 48),
+
+                // --- Confirmation Action: Elevated Modern Button ---
+                BuildButton(
+                  buttonText: 'Confirm Identification',
+                  onPressed: _canConfirm ? _onConfirm : () {},
+                  backgroundColor: _canConfirm
+                      ? MoldifyColors.primaryColor
+                      : MoldifyColors.MoldifyGrey.withOpacity(0.2),
+                  textColor: _canConfirm
+                      ? MoldifyColors.backgroundColor
+                      : MoldifyColors.MoldifyGrey,
+                  buttonHeight: 62,
+                  buttonWidth: double.infinity,
+                  buttonRadius: 18,
+                ),
+                const SizedBox(height: 50),
               ],
             ),
-            child: BuildDropdown(
-              key: ValueKey(_dropdownKey),
-              hintText: 'Search the mold catalog...',
-              items: _genusOptions,
-              initialValue: _selectedGenus,
-              onChanged: _handleMoldSelectionChanged,
-            ),
           ),
-
-        const SizedBox(height: 48),
-
-        // --- Confirmation Action: Elevated Modern Button ---
-        BuildButton(
-          buttonText: 'Confirm Identification',
-          onPressed: _canConfirm ? _onConfirm : () {},
-          backgroundColor: _canConfirm
-              ? MoldifyColors.primaryColor
-              : MoldifyColors.MoldifyGrey.withOpacity(0.2),
-          textColor: _canConfirm 
-              ? MoldifyColors.backgroundColor 
-              : MoldifyColors.MoldifyGrey,
-          buttonHeight: 62, 
-          buttonWidth: double.infinity,
-          buttonRadius: 18,
         ),
-        const SizedBox(height: 50),
-      ],
-    ),
-  ),
-),
         // Full-page loading overlay when confirming
         if (_isConfirming)
           const AppLoadingOverlay(
@@ -487,14 +511,9 @@ class _LowConfidenceCorrectionScreenState
               ),
             ),
           ),
-          TextButton(
-            onPressed: _loadMoldOptions,
-            child: const Text('Retry'),
-          ),
+          TextButton(onPressed: _loadMoldOptions, child: const Text('Retry')),
         ],
       ),
     );
   }
 }
-
-

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moldify/core/features/authentication/logic/auth_bloc.dart';
 import 'package:moldify/core/features/authentication/services/auth_service.dart';
+import 'package:moldify/pages/auth/recovery_type.dart';
 import 'package:moldify/pages/misc/buttons/primary_button.dart';
 import 'package:moldify/pages/misc/language_toggle.dart';
 import 'package:moldify/l10n/app_localizations.dart';
@@ -182,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+
                     /// Language Toggle (Top Right of header)
                     Positioned(
                       top: 10,
@@ -235,7 +237,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': l10n.forgotUsername},
+                            arguments: {
+                              'pageTitle': l10n.forgotUsername,
+                              'recoveryType': RecoveryType.username,
+                            },
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -294,7 +299,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           onTap: () => navigateTo(
                             context,
                             RouteNames.emailRecoverAccount,
-                            arguments: {'pageTitle': l10n.forgotPassword},
+                            arguments: {
+                              'pageTitle': l10n.forgotPassword,
+                              'recoveryType': RecoveryType.password,
+                            },
                           ),
                           borderRadius: BorderRadius.circular(8),
                           splashColor: MoldifyColors.primaryColor.withValues(
@@ -467,9 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: MoldifyColors.MoldifyBlack,
                               ),
                               children: [
-                                TextSpan(
-                                  text: l10n.loginTermsText,
-                                ),
+                                TextSpan(text: l10n.loginTermsText),
                                 TextSpan(
                                   text: l10n.termsOfAgreement,
                                   style: const TextStyle(
@@ -514,10 +520,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
-          if (isLoading)
-            const AppLoadingOverlay(
-              message: 'Logging you in...',
-            ),
+          if (isLoading) const AppLoadingOverlay(message: 'Logging you in...'),
         ],
       ),
     );

@@ -106,30 +106,19 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
           )
           ..add('+ Add New Mold');
 
-        if (_selectedGenus != null && !_genusOptions.contains(_selectedGenus)) {
+        final selected = _resolveCatalogSelection(
+          preferredId: _selectedMoldId ?? _suggestedMoldId,
+          preferredName: _selectedGenus ?? _suggestedMoldName,
+        );
+
+        if (selected != null) {
+          _selectedGenus = selected.name;
+          _selectedMoldId = selected.id;
+          _applyCatalogDetails(selected);
+        } else {
           _selectedGenus = null;
           _selectedMoldId = null;
           _restoreBaseMoldDetails();
-        }
-
-        if ((_selectedGenus == null || _selectedGenus!.trim().isEmpty) &&
-            _suggestedMoldId != null &&
-            _suggestedMoldId!.trim().isNotEmpty) {
-          final suggested = _moldCatalogById[_suggestedMoldId!.trim()];
-          if (suggested != null) {
-            _selectedGenus = suggested.name;
-            _selectedMoldId = suggested.id;
-            _applyCatalogDetails(suggested);
-          }
-        }
-
-        if (_selectedGenus != null && _selectedGenus!.trim().isNotEmpty) {
-          final selected =
-              _moldCatalogByName[_selectedGenus!.trim().toLowerCase()];
-          if (selected != null) {
-            _selectedMoldId = selected.id;
-            _applyCatalogDetails(selected);
-          }
         }
 
         if (_genusOptions.isEmpty) {
@@ -153,6 +142,41 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
   String _normalizeLabel(String text) {
     return text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  MoldCatalogEntry? _resolveCatalogSelection({
+    String? preferredId,
+    String? preferredName,
+  }) {
+    final id = preferredId?.trim() ?? '';
+    if (id.isNotEmpty) {
+      final byId = _moldCatalogById[id];
+      if (byId != null) return byId;
+    }
+
+    final name = preferredName?.trim() ?? '';
+    if (name.isEmpty) return null;
+
+    final byExactName = _moldCatalogByName[name.toLowerCase()];
+    if (byExactName != null) return byExactName;
+
+    final normalizedTarget = _normalizeLabel(name);
+    if (normalizedTarget.isEmpty) return null;
+
+    for (final entry in _moldCatalogByName.values) {
+      final normalizedCandidate = _normalizeLabel(entry.name);
+      if (normalizedCandidate == normalizedTarget) return entry;
+    }
+
+    for (final entry in _moldCatalogByName.values) {
+      final normalizedCandidate = _normalizeLabel(entry.name);
+      if (normalizedCandidate.contains(normalizedTarget) ||
+          normalizedTarget.contains(normalizedCandidate)) {
+        return entry;
+      }
+    }
+
+    return null;
   }
 
   String _sanitizeDisplayText(String raw) {
@@ -184,7 +208,8 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
     if (lines.isEmpty) return normalized;
 
-    final allDashed = lines.length > 1 &&
+    final allDashed =
+        lines.length > 1 &&
         lines.every((line) => RegExp(r'^[-*•]\s+').hasMatch(line));
     if (allDashed) {
       return lines
@@ -475,116 +500,119 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 30.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 15.0,
+              vertical: 30.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Text(
-              _screenTitle,
-              style: const TextStyle(
-                fontSize: 36,
-                fontFamily: 'Montserrat-Black',
-                color: MoldifyColors.primaryColor,
-              ),
-            ),
-            Text(
-              _screenSubtitle,
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Bricolage-Grotesque-Regular',
-                color: MoldifyColors.MoldifyBlack,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            _buildFormLabel("DISEASE NAME"),
-            const SizedBox(height: 12),
-            BuildTextBox(
-              hintText: "Enter disease name...",
-              controller: _diseaseController,
-              showPassword: false,
-              fontSize: 16,
-            ),
-            const SizedBox(height: 35),
-
-            _buildFormLabel("GENUS CLASSIFICATION"),
-            const SizedBox(height: 12),
-            if (_isLoadingMoldOptions)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  color: MoldifyColors.primaryColor,
-                  backgroundColor: MoldifyColors.taupe,
-                ),
-              )
-            else if (_genusOptions.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: MoldifyColors.taupe,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _moldOptionsError ?? 'No mold options available.',
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          fontSize: 13,
-                          color: MoldifyColors.MoldifyGrey,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _loadMoldOptions,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-            else
-              BuildDropdown(
-                key: ValueKey(_dropdownKey),
-                hintText: "Select Genus",
-                items: _genusOptions,
-                initialValue: _selectedGenus,
-                onChanged: _handleMoldSelectionChanged,
-              ),
-
-            const SizedBox(height: 50),
-
-            _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
-            const SizedBox(height: 30),
-
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: CircularProgressIndicator(
+                Text(
+                  _screenTitle,
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontFamily: 'Montserrat-Black',
                     color: MoldifyColors.primaryColor,
                   ),
                 ),
-              )
-            else
-              ..._analysisSections.entries
-                  .where((entry) => entry.key != 'PREVENTION')
-                  .map(
-                (entry) => _buildTextSection(
-                  entry.key,
-                  entry.value.trim().isNotEmpty
-                      ? entry.value
-                      : 'No data available yet.',
-                  isWarning: entry.key == 'HEALTH RISKS',
+                Text(
+                  _screenSubtitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Bricolage-Grotesque-Regular',
+                    color: MoldifyColors.MoldifyBlack,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 40),
 
-            _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
-            const SizedBox(height: 25),
+                _buildFormLabel("DISEASE NAME"),
+                const SizedBox(height: 12),
+                BuildTextBox(
+                  hintText: "Enter disease name...",
+                  controller: _diseaseController,
+                  showPassword: false,
+                  fontSize: 16,
+                ),
+                const SizedBox(height: 35),
 
-            _buildIPMControls(),
+                _buildFormLabel("GENUS CLASSIFICATION"),
+                const SizedBox(height: 12),
+                if (_isLoadingMoldOptions)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: LinearProgressIndicator(
+                      minHeight: 3,
+                      color: MoldifyColors.primaryColor,
+                      backgroundColor: MoldifyColors.taupe,
+                    ),
+                  )
+                else if (_genusOptions.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.taupe,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _moldOptionsError ?? 'No mold options available.',
+                            style: const TextStyle(
+                              fontFamily: 'Bricolage-Grotesque-Regular',
+                              fontSize: 13,
+                              color: MoldifyColors.MoldifyGrey,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _loadMoldOptions,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  BuildDropdown(
+                    key: ValueKey(_dropdownKey),
+                    hintText: "Select Genus",
+                    items: _genusOptions,
+                    initialValue: _selectedGenus,
+                    onChanged: _handleMoldSelectionChanged,
+                  ),
+
+                const SizedBox(height: 50),
+
+                _buildMajorSectionHeader("REVISED RESULTS ANALYSIS"),
+                const SizedBox(height: 30),
+
+                if (_isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: CircularProgressIndicator(
+                        color: MoldifyColors.primaryColor,
+                      ),
+                    ),
+                  )
+                else
+                  ..._analysisSections.entries
+                      .where((entry) => entry.key != 'PREVENTION')
+                      .map(
+                        (entry) => _buildTextSection(
+                          entry.key,
+                          entry.value.trim().isNotEmpty
+                              ? entry.value
+                              : 'No data available yet.',
+                          isWarning: entry.key == 'HEALTH RISKS',
+                        ),
+                      ),
+
+                _buildMajorSectionHeader("INTEGRATED MANAGEMENT CONTROLS"),
+                const SizedBox(height: 25),
+
+                _buildIPMControls(),
 
                 const SizedBox(height: 60),
                 _buildFooterAction(),
@@ -625,8 +653,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
   Widget _buildIPMControls() {
     IconData iconForTitle(String title) {
       final normalized = title.toLowerCase();
-      if (normalized.contains('mechanical'))
+      if (normalized.contains('mechanical')) {
         return Icons.settings_suggest_outlined;
+      }
       if (normalized.contains('biological')) return Icons.biotech_outlined;
       if (normalized.contains('chemical')) return Icons.science_outlined;
       if (normalized.contains('physical')) return Icons.build_outlined;
@@ -666,13 +695,12 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
     final paragraphs = normalizedBody
         .split(RegExp(r'\n\s*\n'))
-      .map((line) => _sanitizeDisplayText(line))
+        .map((line) => _sanitizeDisplayText(line))
         .where((line) => line.isNotEmpty)
         .toList();
 
-    final resolvedParagraphs =
-        paragraphs.isEmpty
-      ? <String>[_sanitizeDisplayText(normalizedBody)]
+    final resolvedParagraphs = paragraphs.isEmpty
+        ? <String>[_sanitizeDisplayText(normalizedBody)]
         : paragraphs;
 
     List<String> parseBulletItems() {
@@ -703,7 +731,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
 
         return normalizedBody
             .split(RegExp(r'\s+-\s+|;|\n'))
-          .map((item) => _sanitizeDisplayText(item))
+            .map((item) => _sanitizeDisplayText(item))
             .where((item) => item.isNotEmpty)
             .toList();
       }
@@ -785,7 +813,9 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                           fontFamily: 'Bricolage-Grotesque-Regular',
                           fontSize: 16,
                           height: 1.65,
-                          color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.9),
+                          color: MoldifyColors.MoldifyBlack.withValues(
+                            alpha: 0.9,
+                          ),
                         ),
                       ),
                     ),
@@ -889,7 +919,7 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
                 .toDouble();
 
             final populatedSections = _analysisSections.entries
-              .where((entry) => entry.key != 'PREVENTION')
+                .where((entry) => entry.key != 'PREVENTION')
                 .where((entry) => entry.value.trim().isNotEmpty)
                 .map((entry) => '${entry.key}: ${entry.value.trim()}')
                 .toList();
@@ -931,10 +961,13 @@ class _GiveRecommendationScreenState extends State<GiveRecommendationScreen> {
             final capturedMoldipediaId = moldipediaId;
 
             navigator.pop(
-              const MutationResult.changed(tags: [MutationTags.moldCase]).toMap(),
+              const MutationResult.changed(
+                tags: [MutationTags.moldCase],
+              ).toMap(),
             );
 
-            if (capturedMoldipediaId != null && capturedMoldipediaId.isNotEmpty) {
+            if (capturedMoldipediaId != null &&
+                capturedMoldipediaId.isNotEmpty) {
               messenger.showSnackBar(
                 SnackBar(
                   content: const Text('Verdict linked to a WikiMold article.'),

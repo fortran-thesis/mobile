@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:moldify/pages/auth/signup.dart';
 import 'package:moldify/pages/auth/email_recover_account.dart';
 import 'package:moldify/pages/auth/code_recover_account.dart';
+import 'package:moldify/pages/auth/recovery_type.dart';
 import 'package:moldify/pages/auth/intro.dart';
 import 'package:moldify/pages/identification/camera.dart';
 import 'package:moldify/pages/identification/image_preview.dart';
@@ -11,6 +12,7 @@ import 'package:moldify/pages/monitor/add_treatment.dart';
 import 'package:moldify/pages/support/privacy_policy.dart';
 import 'package:moldify/pages/support/terms_of_agreement.dart';
 import 'package:moldify/core/features/mold_case/service/mold_case_service.dart';
+import 'package:moldify/core/utils/mutation_result.dart';
 import '../pages/auth/login.dart';
 import '../core/constants/route_names.dart';
 import 'package:provider/provider.dart';
@@ -71,6 +73,28 @@ class AppRoutes {
     return fallback;
   }
 
+  static RecoveryType _recoveryTypeArg(
+    Map<String, dynamic>? args, {
+    String? pageTitle,
+  }) {
+    final value = args?['recoveryType'];
+    if (value is RecoveryType) return value;
+    if (value is String) {
+      switch (value.trim().toLowerCase()) {
+        case 'username':
+          return RecoveryType.username;
+        case 'password':
+          return RecoveryType.password;
+      }
+    }
+
+    final normalizedTitle = pageTitle?.trim().toLowerCase() ?? '';
+    if (normalizedTitle.contains('username')) {
+      return RecoveryType.username;
+    }
+    return RecoveryType.password;
+  }
+
   static Widget _routeArgError(String message) {
     return Scaffold(
       appBar: AppBar(title: const Text('Navigation Error')),
@@ -101,20 +125,23 @@ class AppRoutes {
           case RouteNames.signup:
             return SignUpScreen();
           case RouteNames.emailRecoverAccount:
-            final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null
-                ? args['pageTitle'] as String
-                : '';
-            return EmailRecoverAccountScreen(pageTitle: pageTitle);
+            final args = _mapArgs(settings);
+            final pageTitle = _stringArg(args, 'pageTitle') ?? '';
+            final recoveryType = _recoveryTypeArg(args, pageTitle: pageTitle);
+            return EmailRecoverAccountScreen(
+              pageTitle: pageTitle,
+              recoveryType: recoveryType,
+            );
           case RouteNames.codeRecoverAccount:
-            final args = settings.arguments as Map<String, dynamic>?;
-            final pageTitle = args != null && args['pageTitle'] != null
-                ? args['pageTitle'] as String
-                : '';
-            final email = args != null && args['email'] != null
-                ? args['email'] as String
-                : '';
-            return CodeRecoverAccountScreen(email: email, pageTitle: pageTitle);
+            final args = _mapArgs(settings);
+            final pageTitle = _stringArg(args, 'pageTitle') ?? '';
+            final email = _stringArg(args, 'email') ?? '';
+            final recoveryType = _recoveryTypeArg(args, pageTitle: pageTitle);
+            return CodeRecoverAccountScreen(
+              email: email,
+              pageTitle: pageTitle,
+              recoveryType: recoveryType,
+            );
           case RouteNames.intro:
             if (isAuthenticated) {
               return MainPage();
@@ -166,8 +193,11 @@ class AppRoutes {
             final sourceFlow = _stringArg(args, 'sourceFlow');
             final scanModality = _stringArg(args, 'scanModality');
             final includeSize = _boolArg(args, 'includeSize', fallback: true);
-            final returnResult =
-                _boolArg(args, 'returnResult', fallback: false);
+            final returnResult = _boolArg(
+              args,
+              'returnResult',
+              fallback: false,
+            );
             return ImagePreviewScreen(
               imagePath: imagePath,
               source: source,
@@ -368,13 +398,13 @@ class AppRoutes {
             final String? initialMacroSymptoms =
                 args?['initialMacroSymptoms'] as String?;
             final String? initialMacroSigns =
-              args?['initialMacroSigns'] as String?;
+                args?['initialMacroSigns'] as String?;
             final String? initialMacroCharacteristics =
                 args?['initialMacroCharacteristics'] as String?;
             final String? selectedCultureId =
-              args?['selectedCultureId'] as String?;
+                args?['selectedCultureId'] as String?;
             final String? selectedCultureName =
-              args?['selectedCultureName'] as String?;
+                args?['selectedCultureName'] as String?;
 
             List<String> toStringList(dynamic value) {
               if (value is List) {
@@ -443,10 +473,12 @@ class AppRoutes {
                       },
                     )
                     .then((result) {
-                      if (result is Map<String, dynamic>) {
-                        final nextMicroPath = result['imagePath']?.toString();
+                      if (result is Map) {
+                        final resultMap = Map<String, dynamic>.from(result);
+                        final nextMicroPath = resultMap['imagePath']
+                            ?.toString();
                         final nextMicroResult = {
-                          ...result,
+                          ...resultMap,
                           if (captureCultureId != null &&
                               captureCultureId.trim().isNotEmpty)
                             'cultureId': captureCultureId,
@@ -497,8 +529,10 @@ class AppRoutes {
                       },
                     )
                     .then((result) {
-                      if (result is Map<String, dynamic>) {
-                        final nextMacroPath = result['imagePath']?.toString();
+                      if (result is Map) {
+                        final resultMap = Map<String, dynamic>.from(result);
+                        final nextMacroPath = resultMap['imagePath']
+                            ?.toString();
                         navigator.pushReplacementNamed(
                           RouteNames.addLogChoices,
                           arguments: {
@@ -508,7 +542,7 @@ class AppRoutes {
                             'microscopicImagePath': microscopicImagePath,
                             'macroscopicImagePath': nextMacroPath,
                             'microResult': microResult,
-                            'macroResult': result,
+                            'macroResult': resultMap,
                             'initialMicroIdentifiedMold':
                                 initialMicroIdentifiedMold,
                             'initialMacroColor': initialMacroColor,
@@ -539,17 +573,17 @@ class AppRoutes {
                 final microImagePath =
                     microResult?['imagePath']?.toString().trim() ?? '';
                 final cultureId =
-                  (submitCultureId ??
-                   macroResult?['cultureId'] ??
-                   microResult?['cultureId'])
-                    ?.toString()
-                    .trim();
+                    (submitCultureId ??
+                            macroResult?['cultureId'] ??
+                            microResult?['cultureId'])
+                        ?.toString()
+                        .trim();
                 final cultureName =
-                  (submitCultureName ??
-                   macroResult?['cultureName'] ??
-                   microResult?['cultureName'])
-                    ?.toString()
-                    .trim();
+                    (submitCultureName ??
+                            macroResult?['cultureName'] ??
+                            microResult?['cultureName'])
+                        ?.toString()
+                        .trim();
 
                 // Persist a microscopic-only cultivation log when no macroscopic
                 // log was stored. This ensures microscopy entries appear in the
@@ -703,6 +737,9 @@ class AppRoutes {
                 if (!context.mounted) return;
 
                 Navigator.of(context).pop({
+                  ...const MutationResult.changed(
+                    tags: [MutationTags.moldCase],
+                  ).toMap(),
                   'sourceTab': sourceTab,
                   'microscopicImagePath': microscopicImagePath,
                   'macroscopicImagePath': macroscopicImagePath,

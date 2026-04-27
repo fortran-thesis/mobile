@@ -29,6 +29,7 @@ class MoldResultScreen extends StatefulWidget {
   final String? scanModality;
   final String? sourceTab;
   final String? caseId;
+
   /// When non-null the result was pre-corrected by [LowConfidenceCorrectionScreen].
   /// The genus is pre-populated and the flag button is hidden.
   final String? correctedGenus;
@@ -175,20 +176,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   }
 
   final String defaultDescription =
-      "Aspergillus is a genus of common molds that can be found in various environments, "
-      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
-      "Aspergillus is a genus of common molds that can be found in various environments, "
-      "both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a "
-      "range of health issues in humans, particularly those with weakened immune systems or pre-existing lung "
-      "conditions. These issues can range from allergic reactions and respiratory infections to more severe, "
-      "systemic infections. Aspergillus molds are characterized by their distinct, often fluffy or powdery, "
-      "appearance and can vary in color, including green, yellow, black, or brown. They reproduce through "
-      "airborne spores, which can be easily inhaled. In homes, Aspergillus is often found in damp or "
-      "water-damaged areas, such as basements, bathrooms, and around leaky pipes. It can grow on a "
-      "variety of materials, including walls, insulation, and stored food items. Proper ventilation "
-      "and moisture control are key to preventing its growth. Some species, like Aspergillus niger, "
-      "are also used commercially for the production of citric acid and other enzymes, highlighting "
-      "the genus's dual role as both a potential pathogen and a useful industrial microorganism.";
+      'This mold profile is still being curated. Add validated observations to complete the scientific description.';
 
   // Prevention tactics using structured format (pipe-delimited)
   final String _fallbackTreatmentsContent =
@@ -280,17 +268,17 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       healthContent = _readMoldDetailField(
         details,
         'health_risks',
-        'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.',
+        'Health risk data is not available for this mold yet.',
       );
       plantThreatContent = _readMoldDetailField(
         details,
         'affected_hosts',
-        'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.',
+        'Affected host data is not available for this mold yet.',
       );
       fullDescription = _readMoldDetailField(
         details,
         'overview',
-        'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.',
+        defaultDescription,
       );
 
       final String symptoms = _readMoldDetailSymptoms(details);
@@ -314,11 +302,11 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         'MoldResult: Mold not found in database, using model result only',
       );
       healthContent =
-          'Some Aspergillus species can cause allergic reactions, respiratory infections, and more severe diseases in immunocompromised individuals.';
+          'Health risk details are unavailable for this scan until the mold profile is reviewed.';
       plantThreatContent =
-          'Aspergillus can affect plants by causing diseases such as seedling blight, root rot, and fruit rot, leading to reduced crop yields.';
+          'Affected host details are unavailable for this scan until the mold profile is reviewed.';
       fullDescription =
-          'Aspergillus is a genus of common molds that can be found in various environments, both indoors and outdoors. While many species of Aspergillus are harmless, some can cause a range of health issues in humans, particularly those with weakened immune systems or pre-existing lung conditions.';
+          'This scan result is not yet linked to a reviewed mold profile. Save and flag this result to help complete the catalog entry.';
 
       // Update OVERVIEW to indicate mold not in database
       final overviewText = _isMoldNotFound
@@ -490,7 +478,8 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     if (lines.isEmpty) return normalized;
 
     final allDashed =
-        lines.length > 1 && lines.every((line) => RegExp(r'^[-*•]\s+').hasMatch(line));
+        lines.length > 1 &&
+        lines.every((line) => RegExp(r'^[-*•]\s+').hasMatch(line));
     if (allDashed) {
       return lines
           .map(
@@ -720,23 +709,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     }
 
     return Column(
-      children: _managementControls
-          .map(
-            (item) {
-              final sanitizedDescription = _normalizeControlBullets(
-                item['content'] ?? '',
-              );
+      children: _managementControls.map((item) {
+        final sanitizedDescription = _normalizeControlBullets(
+          item['content'] ?? '',
+        );
 
-              return ControlManagementTile(
-                title: item['title'] ?? '',
-                description: sanitizedDescription.isNotEmpty
-                    ? sanitizedDescription
-                    : 'No recommendation available yet.',
-                icon: _iconForControlType(item['type'] ?? ''),
-              );
-            },
-          )
-          .toList(),
+        return ControlManagementTile(
+          title: item['title'] ?? '',
+          description: sanitizedDescription.isNotEmpty
+              ? sanitizedDescription
+              : 'No recommendation available yet.',
+          icon: _iconForControlType(item['type'] ?? ''),
+        );
+      }).toList(),
     );
   }
 
@@ -754,395 +739,421 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         // Hide the flag button when genus was already corrected upstream
         rightIcon: widget.correctedGenus != null ? null : Icon(Icons.flag),
         rightIconColor: MoldifyColors.MoldifyRed,
-        onRightIconPressed: widget.correctedGenus != null ? null : () {
-          // Define the save logic here so it can be referenced by both onSave and onConfirm
-          void onSave(String correctedText) {
-            AppLogger.d('Corrected Text: $correctedText');
-            _applyCorrectedGenus(correctedText);
-          }
+        onRightIconPressed: widget.correctedGenus != null
+            ? null
+            : () {
+                // Define the save logic here so it can be referenced by both onSave and onConfirm
+                void onSave(String correctedText) {
+                  AppLogger.d('Corrected Text: $correctedText');
+                  _applyCorrectedGenus(correctedText);
+                }
 
-          showModalBottomSheet(
-            context: context,
-            // Make it non-dismissible
-            isDismissible: false,
-            // Use true to prevent the keyboard from covering the text field
-            isScrollControlled: true,
-            builder: (context) {
-              return Padding(
-                // Add padding to account for the keyboard
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: BuildBottomSheet(
-                  child: CorrectionBottomSheetContent(
-                    correctedGenusController: correctedGenusController,
-                    presetGenusOptions: _presetGenusOptions,
-                    onClose: () {
-                      Navigator.of(context).pop();
-                    },
-                    onSave: onSave,
+                showModalBottomSheet(
+                  context: context,
+                  // Make it non-dismissible
+                  isDismissible: false,
+                  // Use true to prevent the keyboard from covering the text field
+                  isScrollControlled: true,
+                  builder: (context) {
+                    return Padding(
+                      // Add padding to account for the keyboard
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      child: BuildBottomSheet(
+                        child: CorrectionBottomSheetContent(
+                          correctedGenusController: correctedGenusController,
+                          presetGenusOptions: _presetGenusOptions,
+                          onClose: () {
+                            Navigator.of(context).pop();
+                          },
+                          onSave: onSave,
 
-                    /// This is for the confirmation dialog inside the bottom sheet
-                    /// You can implement the actual logic as needed
+                          /// This is for the confirmation dialog inside the bottom sheet
+                          /// You can implement the actual logic as needed
 
-                    /// This is the cancel action for the pop up dialog
-                    onCancel: () {
-                      AppLogger.d('MoldResult: Correction cancelled by user');
-                    },
+                          /// This is the cancel action for the pop up dialog
+                          onCancel: () {
+                            AppLogger.d(
+                              'MoldResult: Correction cancelled by user',
+                            );
+                          },
 
-                    /// This is the confirm action for the pop up dialog
-                    onConfirm: () {
-                      Navigator.of(context).pop();
-                      onSave(correctedGenusController.text);
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                          /// This is the confirm action for the pop up dialog
+                          onConfirm: () {
+                            Navigator.of(context).pop();
+                            onSave(correctedGenusController.text);
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
       ),
       body: Stack(
         children: [
           SingleChildScrollView(
             child: Stack(
               children: [
-            /// 1. The image uploaded bu the user
-            Image.file(
-              File(widget.croppedImagePath),
-              height: MediaQuery.of(context).size.height * 0.4,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-
-            /// 2. The content container, padded from the top to create the overlap.
-            Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).size.height * 0.35,
-              ),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: MoldifyColors.backgroundColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40.0),
-                    topRight: Radius.circular(40.0),
-                  ),
+                /// 1. The image uploaded bu the user
+                Image.file(
+                  File(widget.croppedImagePath),
+                  height: MediaQuery.of(context).size.height * 0.4,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: AutoSizeText(
-                          'Most probably identified mold genus:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Bricolage-Grotesque-Regular',
-                            color: MoldifyColors.MoldifyGrey,
-                          ),
-                          maxLines: 1,
-                          minFontSize: 10,
-                        ),
-                      ),
 
-                      /// This is the Mold Genus Name
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: AutoSizeText(
-                          moldGenus,
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontFamily: 'Montserrat-Black',
-                            color: MoldifyColors.primaryColor,
-                          ),
-                          maxLines: 1,
-                          minFontSize: 24,
-                        ),
+                /// 2. The content container, padded from the top to create the overlap.
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height * 0.35,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: MoldifyColors.backgroundColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(40.0),
+                        topRight: Radius.circular(40.0),
                       ),
-
-                      /// Date and Confidence Level
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15.0,
-                          horizontal: 15.0,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            /// Date
-                            Row(
-                              children: [
-                                Icon(
-                                  FontAwesomeIcons.solidCalendar,
-                                  size: 16,
-                                  color: MoldifyColors.accentColor,
-                                ),
-                                SizedBox(width: 6),
-                                AutoSizeText(
-                                  today,
-                                  style: TextStyle(
-                                    color: MoldifyColors.primaryColor,
-                                    fontSize: 12,
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                  ),
-                                  maxLines: 1,
-                                  minFontSize: 8,
-                                ),
-                              ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15.0,
                             ),
-
-                            /// Confidence Level
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  FontAwesomeIcons.chartSimple,
-                                  size: 16,
-                                  color: MoldifyColors.accentColor,
-                                ),
-                                SizedBox(width: 6),
-                                AutoSizeText(
-                                  "Confidence level: $confidenceLevel%",
-                                  style: TextStyle(
-                                    color: MoldifyColors.primaryColor,
-                                    fontSize: 12,
-                                    fontFamily: 'Bricolage-Grotesque-Regular',
-                                  ),
-                                  maxLines: 1,
-                                  minFontSize: 8,
-                                ),
-                              ],
+                            child: AutoSizeText(
+                              'Most probably identified mold genus:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Bricolage-Grotesque-Regular',
+                                color: MoldifyColors.MoldifyGrey,
+                              ),
+                              maxLines: 1,
+                              minFontSize: 10,
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
 
-                      _buildSectionHeader('OVERVIEW ANALYSIS'),
-                      _buildSectionBody(
-                        RevisedResultsContent(
-                          sections: _recommendationSections,
-                        ),
-                      ),
+                          /// This is the Mold Genus Name
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 15),
+                            child: AutoSizeText(
+                              moldGenus,
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontFamily: 'Montserrat-Black',
+                                color: MoldifyColors.primaryColor,
+                              ),
+                              maxLines: 1,
+                              minFontSize: 24,
+                            ),
+                          ),
 
-                      _buildSectionHeader('TREATMENT MANAGEMENT CONTROLS'),
-                      _buildSectionBody(_buildManagementControls()),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                        child: ResultActionSection(
-                          onSave: () async {
-                            if (_isSavingResult) return;
-
-                            // Show confirmation dialog if mold is not in database
-                            if (_isMoldNotFound) {
-                              final shouldProceed =
-                                  await showDialog<bool>(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (BuildContext dialogContext) {
-                                      return BuildConfirmationDialog(
-                                        title: 'Mold Not in Database',
-                                        subtitle:
-                                            'This mold is not in our database. Would you like to save this result and help us add it?',
-                                        onCancel: () => Navigator.pop(
-                                          dialogContext,
-                                          false,
-                                        ),
-                                        onConfirm: () => Navigator.pop(
-                                          dialogContext,
-                                          true,
-                                        ),
-                                        cancelText: 'Cancel',
-                                        confirmText: 'Save & Report',
-                                      );
-                                    },
-                                  ) ??
-                                  false;
-
-                              if (!shouldProceed) {
-                                AppLogger.d(
-                                  'MoldResult: User cancelled save for unknown mold',
-                                );
-                                return;
-                              }
-                              AppLogger.d(
-                                'MoldResult: User confirmed save for unknown mold',
-                              );
-                            }
-
-                            setState(() => _isSavingResult = true);
-                            final topPredictions = _buildTopPredictions();
-                            final confidenceDecimal =
-                                (widget.modelResult?['probability'] as num?)
-                                    ?.toDouble() ??
-                                0.0;
-                            final predictedClassName = widget
-                                .modelResult?['predicted_class']
-                                ?.toString();
-                            final nowIso = DateTime.now()
-                                .toUtc()
-                                .toIso8601String();
-                            final thresholdDecimal =
-                              ScanConstants.lowConfidenceThreshold / 100;
-
-                            final savePayload = <String, dynamic>{
-                              'imagePath': widget.croppedImagePath,
-                              'identifiedMold': moldGenus,
-                              'confidence': confidenceLevel,
-                              // Backward-compatible additions for mycologist decision support
-                              'confidenceDecimal': confidenceDecimal,
-                              'topPredictions': topPredictions,
-                              'modelSource':
-                                  widget.modelResult?['model_source'],
-                              'usedFusion':
-                                  widget.modelResult?['used_fusion'] ?? false,
-                              'usedAnn':
-                                  widget.modelResult?['used_ann'] ?? false,
-                              'scanModality':
-                                  widget.scanModality ?? 'microscopic',
-                              'sourceFlow':
-                                  widget.sourceFlow ?? 'identification',
-                              'sourceTab': widget.sourceTab,
-                              'moldCaseId': widget.caseId,
-                              'predictedClassName': predictedClassName,
-                              'correctedGenus': _correctedGenus,
-                              'correctedPredictedClassName':
-                                  _correctedPredictedClassName,
-                              'correctedAt': _correctedAtIso,
-                              'isMoldNotFound':
-                                  _isMoldNotFound, // Flag for backend tracking
-                            };
-
-                            try {
-                              final authProvider = Provider.of<AppAuthProvider>(
-                                context,
-                                listen: false,
-                              );
-                              final cameraService = CameraService();
-
-                              final scanRes = await cameraService
-                                  .createScannedMold(
-                                    imagePath: widget.croppedImagePath,
-                                    imageFormat: _inferImageFormat(
-                                      widget.croppedImagePath,
+                          /// Date and Confidence Level
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 15.0,
+                              horizontal: 15.0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                /// Date
+                                Row(
+                                  children: [
+                                    Icon(
+                                      FontAwesomeIcons.solidCalendar,
+                                      size: 16,
+                                      color: MoldifyColors.accentColor,
                                     ),
-                                    scanModality:
-                                        (widget.scanModality ?? 'microscopic'),
-                                    sourceFlow:
-                                        (widget.sourceFlow ?? 'identification'),
-                                    sourceTab: widget.sourceTab,
-                                    moldCaseId: widget.caseId,
-                                    predictedClassName: predictedClassName,
-                                    correctedGenus: _correctedGenus,
-                                    correctedPredictedClassName:
-                                        _correctedPredictedClassName,
-                                    correctedAt: _correctedAtIso,
-                                    capturedAt: nowIso,
-                                    scannedResults: {
-                                      'confidence_score': confidenceDecimal,
-                                      'flagged': confidenceDecimal <
-                                          thresholdDecimal,
-                                    },
-                                    sessionCookie: authProvider.cookie,
+                                    SizedBox(width: 6),
+                                    AutoSizeText(
+                                      today,
+                                      style: TextStyle(
+                                        color: MoldifyColors.primaryColor,
+                                        fontSize: 12,
+                                        fontFamily:
+                                            'Bricolage-Grotesque-Regular',
+                                      ),
+                                      maxLines: 1,
+                                      minFontSize: 8,
+                                    ),
+                                  ],
+                                ),
+
+                                /// Confidence Level
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      FontAwesomeIcons.chartSimple,
+                                      size: 16,
+                                      color: MoldifyColors.accentColor,
+                                    ),
+                                    SizedBox(width: 6),
+                                    AutoSizeText(
+                                      "Confidence level: $confidenceLevel%",
+                                      style: TextStyle(
+                                        color: MoldifyColors.primaryColor,
+                                        fontSize: 12,
+                                        fontFamily:
+                                            'Bricolage-Grotesque-Regular',
+                                      ),
+                                      maxLines: 1,
+                                      minFontSize: 8,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          _buildSectionHeader('OVERVIEW ANALYSIS'),
+                          _buildSectionBody(
+                            RevisedResultsContent(
+                              sections: _recommendationSections,
+                            ),
+                          ),
+
+                          _buildSectionHeader('TREATMENT MANAGEMENT CONTROLS'),
+                          _buildSectionBody(_buildManagementControls()),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15.0,
+                            ),
+                            child: ResultActionSection(
+                              onSave: () async {
+                                if (_isSavingResult) return;
+                                final authProvider =
+                                    Provider.of<AppAuthProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                final navigator = Navigator.of(context);
+
+                                // Show confirmation dialog if mold is not in database
+                                if (_isMoldNotFound) {
+                                  final shouldProceed =
+                                      await showDialog<bool>(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (BuildContext dialogContext) {
+                                          return BuildConfirmationDialog(
+                                            title: 'Mold Not in Database',
+                                            subtitle:
+                                                'This mold is not in our database. Would you like to save this result and help us add it?',
+                                            onCancel: () => Navigator.pop(
+                                              dialogContext,
+                                              false,
+                                            ),
+                                            onConfirm: () => Navigator.pop(
+                                              dialogContext,
+                                              true,
+                                            ),
+                                            cancelText: 'Cancel',
+                                            confirmText: 'Save & Report',
+                                          );
+                                        },
+                                      ) ??
+                                      false;
+
+                                  if (!shouldProceed) {
+                                    AppLogger.d(
+                                      'MoldResult: User cancelled save for unknown mold',
+                                    );
+                                    return;
+                                  }
+                                  AppLogger.d(
+                                    'MoldResult: User confirmed save for unknown mold',
                                   );
+                                }
 
-                              if (scanRes['error'] != null) {
-                                AppLogger.e(
-                                  'MoldResult: Failed to persist scan: ${scanRes['error']}',
-                                );
-                                savePayload['scanSaveError'] = scanRes['error'];
-                              } else {
-                                final data = scanRes['data'];
-                                if (data is Map<String, dynamic>) {
-                                  savePayload['scanId'] = data['id']
-                                      ?.toString();
-                                  savePayload['savedScan'] = data;
+                                setState(() => _isSavingResult = true);
+                                final topPredictions = _buildTopPredictions();
+                                final confidenceDecimal =
+                                    (widget.modelResult?['probability'] as num?)
+                                        ?.toDouble() ??
+                                    0.0;
+                                final predictedClassName = widget
+                                    .modelResult?['predicted_class']
+                                    ?.toString();
+                                final nowIso = DateTime.now()
+                                    .toUtc()
+                                    .toIso8601String();
+                                final thresholdDecimal =
+                                    ScanConstants.lowConfidenceThreshold / 100;
 
-                                  // Create flag report if scan was auto-flagged (low confidence)
-                                  if (confidenceDecimal < thresholdDecimal) {
-                                    try {
-                                      final flagReportService =
-                                          FlagReportService();
-                                      await flagReportService.createFlagReport(
-                                        payload: {
-                                          'content_id': data['id'],
-                                          'content_type': 'mold_scan',
-                                          'reason': 'low_confidence_auto_flag',
-                                          'details': confidenceDecimal
-                                              .toString(),
+                                final savePayload = <String, dynamic>{
+                                  'imagePath': widget.croppedImagePath,
+                                  'identifiedMold': moldGenus,
+                                  'moldId':
+                                      widget.modelResult?['moldId'] ??
+                                      widget.modelResult?['mold_id'],
+                                  'confidence': confidenceLevel,
+                                  // Backward-compatible additions for mycologist decision support
+                                  'confidenceDecimal': confidenceDecimal,
+                                  'topPredictions': topPredictions,
+                                  'modelSource':
+                                      widget.modelResult?['model_source'],
+                                  'usedFusion':
+                                      widget.modelResult?['used_fusion'] ??
+                                      false,
+                                  'usedAnn':
+                                      widget.modelResult?['used_ann'] ?? false,
+                                  'scanModality':
+                                      widget.scanModality ?? 'microscopic',
+                                  'sourceFlow':
+                                      widget.sourceFlow ?? 'identification',
+                                  'sourceTab': widget.sourceTab,
+                                  'moldCaseId': widget.caseId,
+                                  'predictedClassName': predictedClassName,
+                                  'correctedGenus': _correctedGenus,
+                                  'correctedPredictedClassName':
+                                      _correctedPredictedClassName,
+                                  'correctedAt': _correctedAtIso,
+                                  'isMoldNotFound':
+                                      _isMoldNotFound, // Flag for backend tracking
+                                };
+
+                                try {
+                                  final cameraService = CameraService();
+
+                                  final scanRes = await cameraService
+                                      .createScannedMold(
+                                        imagePath: widget.croppedImagePath,
+                                        imageFormat: _inferImageFormat(
+                                          widget.croppedImagePath,
+                                        ),
+                                        scanModality:
+                                            (widget.scanModality ??
+                                            'microscopic'),
+                                        sourceFlow:
+                                            (widget.sourceFlow ??
+                                            'identification'),
+                                        sourceTab: widget.sourceTab,
+                                        moldCaseId: widget.caseId,
+                                        predictedClassName: predictedClassName,
+                                        correctedGenus: _correctedGenus,
+                                        correctedPredictedClassName:
+                                            _correctedPredictedClassName,
+                                        correctedAt: _correctedAtIso,
+                                        capturedAt: nowIso,
+                                        scannedResults: {
+                                          'confidence_score': confidenceDecimal,
+                                          'flagged':
+                                              confidenceDecimal <
+                                              thresholdDecimal,
                                         },
                                         sessionCookie: authProvider.cookie,
                                       );
-                                      AppLogger.d(
-                                        'MoldResult: Flag report created for low-confidence scan',
-                                      );
-                                    } catch (e, s) {
-                                      AppLogger.e(
-                                        'MoldResult: Failed to create flag report',
-                                        error: e,
-                                        stackTrace: s,
-                                      );
+
+                                  if (scanRes['error'] != null) {
+                                    AppLogger.e(
+                                      'MoldResult: Failed to persist scan: ${scanRes['error']}',
+                                    );
+                                    savePayload['scanSaveError'] =
+                                        scanRes['error'];
+                                  } else {
+                                    final data = scanRes['data'];
+                                    if (data is Map<String, dynamic>) {
+                                      savePayload['scanId'] = data['id']
+                                          ?.toString();
+                                      savePayload['savedScan'] = data;
+
+                                      // Create flag report if scan was auto-flagged (low confidence)
+                                      if (confidenceDecimal <
+                                          thresholdDecimal) {
+                                        try {
+                                          final flagReportService =
+                                              FlagReportService();
+                                          await flagReportService
+                                              .createFlagReport(
+                                                payload: {
+                                                  'content_id': data['id'],
+                                                  'content_type': 'mold_scan',
+                                                  'reason':
+                                                      'low_confidence_auto_flag',
+                                                  'details': confidenceDecimal
+                                                      .toString(),
+                                                },
+                                                sessionCookie:
+                                                    authProvider.cookie,
+                                              );
+                                          AppLogger.d(
+                                            'MoldResult: Flag report created for low-confidence scan',
+                                          );
+                                        } catch (e, s) {
+                                          AppLogger.e(
+                                            'MoldResult: Failed to create flag report',
+                                            error: e,
+                                            stackTrace: s,
+                                          );
+                                        }
+                                      }
+
+                                      if (_correctedGenus != null &&
+                                          (_correctedPredictedClassName ==
+                                                  null ||
+                                              _correctedPredictedClassName!
+                                                  .trim()
+                                                  .isEmpty)) {
+                                        try {
+                                          final flagReportService =
+                                              FlagReportService();
+                                          await flagReportService
+                                              .createFlagReport(
+                                                payload: {
+                                                  'content_id': data['id'],
+                                                  'content_type': 'mold_scan',
+                                                  'reason':
+                                                      'corrected_genus_not_found',
+                                                  'details': _correctedGenus,
+                                                },
+                                                sessionCookie:
+                                                    authProvider.cookie,
+                                              );
+                                          AppLogger.d(
+                                            'MoldResult: Flag report created for unsupported corrected genus',
+                                          );
+                                        } catch (e, s) {
+                                          AppLogger.e(
+                                            'MoldResult: Failed to create unsupported-genus flag report',
+                                            error: e,
+                                            stackTrace: s,
+                                          );
+                                        }
+                                      }
                                     }
                                   }
-
-                                  if (_correctedGenus != null &&
-                                      (_correctedPredictedClassName == null ||
-                                          _correctedPredictedClassName!
-                                              .trim()
-                                              .isEmpty)) {
-                                    try {
-                                      final flagReportService =
-                                          FlagReportService();
-                                      await flagReportService.createFlagReport(
-                                        payload: {
-                                          'content_id': data['id'],
-                                          'content_type': 'mold_scan',
-                                          'reason': 'corrected_genus_not_found',
-                                          'details': _correctedGenus,
-                                        },
-                                        sessionCookie: authProvider.cookie,
-                                      );
-                                      AppLogger.d(
-                                        'MoldResult: Flag report created for unsupported corrected genus',
-                                      );
-                                    } catch (e, s) {
-                                      AppLogger.e(
-                                        'MoldResult: Failed to create unsupported-genus flag report',
-                                        error: e,
-                                        stackTrace: s,
-                                      );
-                                    }
+                                } catch (e, s) {
+                                  AppLogger.e(
+                                    'MoldResult: Exception while persisting scan',
+                                    error: e,
+                                    stackTrace: s,
+                                  );
+                                  savePayload['scanSaveError'] = e.toString();
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isSavingResult = false);
                                   }
                                 }
-                              }
-                            } catch (e, s) {
-                              AppLogger.e(
-                                'MoldResult: Exception while persisting scan',
-                                error: e,
-                                stackTrace: s,
-                              );
-                              savePayload['scanSaveError'] = e.toString();
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isSavingResult = false);
-                              }
-                            }
 
-                            if (!context.mounted) return;
-                            if (context.mounted) {
-                              Navigator.of(context).pop(savePayload);
-                            }
-                          },
-                        ),
+                                if (!mounted) return;
+                                navigator.pop(savePayload);
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
               ],
             ),
           ),

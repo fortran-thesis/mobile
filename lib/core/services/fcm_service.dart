@@ -11,10 +11,7 @@ import 'package:moldify/core/utils/logger.dart';
 /// engine can invoke it in a dedicated isolate.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  AppLogger.d(
-    'Background message received: ${message.messageId}',
-    tag: 'FCM',
-  );
+  AppLogger.d('Background message received: ${message.messageId}', tag: 'FCM');
 }
 
 /// Notification tap event data for deep linking
@@ -41,12 +38,15 @@ class FCMService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final NotificationService _notificationService = NotificationService();
-  final _notificationTapController = StreamController<NotificationTapEvent>.broadcast();
+  final _notificationTapController =
+      StreamController<NotificationTapEvent>.broadcast();
   NotificationTapEvent? _pendingTapEvent;
 
   String? _currentToken;
+  String? _sessionCookie;
   String? get currentToken => _currentToken;
-  Stream<NotificationTapEvent> get notificationTaps => _notificationTapController.stream;
+  Stream<NotificationTapEvent> get notificationTaps =>
+      _notificationTapController.stream;
 
   NotificationTapEvent? consumePendingNotificationTap() {
     final pending = _pendingTapEvent;
@@ -64,6 +64,8 @@ class FCMService {
     String? sessionCookie,
     void Function(RemoteMessage)? onForegroundMessage,
   }) async {
+    _sessionCookie = sessionCookie;
+
     // Background / terminated handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
@@ -86,12 +88,20 @@ class FCMService {
     );
 
     // Obtain the token
-    await _fetchAndRegisterToken(sessionCookie: sessionCookie);
+    await _fetchAndRegisterToken();
 
     // Listen for token refresh
     _messaging.onTokenRefresh.listen((newToken) {
       AppLogger.d('FCM token refreshed', tag: 'FCM');
-      _registerToken(newToken, sessionCookie: sessionCookie);
+      _currentToken = newToken;
+      if (_sessionCookie != null && _sessionCookie!.isNotEmpty) {
+        _registerToken(newToken, sessionCookie: _sessionCookie);
+      } else {
+        AppLogger.d(
+          'FCM token refreshed before an authenticated session was available; caching only',
+          tag: 'FCM',
+        );
+      }
     });
 
     // Foreground message handler
@@ -105,10 +115,7 @@ class FCMService {
 
     // Handle notification taps (app was in background)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      AppLogger.d(
-        'Notification tap (background): ${message.data}',
-        tag: 'FCM',
-      );
+      AppLogger.d('Notification tap (background): ${message.data}', tag: 'FCM');
       _handleNotificationTap(message);
     });
 
@@ -123,13 +130,40 @@ class FCMService {
     }
   }
 
+  /// Update the authenticated session cookie used for backend registration.
+  ///
+  /// When the cookie becomes available after app start or login, the cached FCM
+  /// token is registered immediately.
+  Future<void> updateSessionCookie(String? sessionCookie) async {
+    _sessionCookie = sessionCookie;
+
+    if (sessionCookie == null || sessionCookie.isEmpty) {
+      return;
+    }
+
+    final token = _currentToken ?? await _messaging.getToken();
+    if (token == null) {
+      return;
+    }
+
+    _currentToken = token;
+    await _registerToken(token, sessionCookie: sessionCookie);
+  }
+
   /// Get the current FCM token and register with backend.
-  Future<void> _fetchAndRegisterToken({String? sessionCookie}) async {
+  Future<void> _fetchAndRegisterToken() async {
     try {
       final token = await _messaging.getToken();
       if (token != null) {
         _currentToken = token;
-        await _registerToken(token, sessionCookie: sessionCookie);
+        if (_sessionCookie != null && _sessionCookie!.isNotEmpty) {
+          await _registerToken(token, sessionCookie: _sessionCookie);
+        } else {
+          AppLogger.d(
+            'FCM token cached; waiting for an authenticated session before registering',
+            tag: 'FCM',
+          );
+        }
       }
     } catch (e) {
       AppLogger.e('Failed to get FCM token', tag: 'FCM', error: e);
