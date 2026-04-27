@@ -98,20 +98,31 @@ class _WikiMoldFieldEvidenceSectionState
               final isExpanded = _expandedCaseIds.contains(caseKey);
 
               final details = _asMap(caseData['cultivation_details']);
+              final initialObservations = _asMap(
+                details['initial_observations'] ?? details['initial_observation'],
+              );
               final evidenceSummary = _asMap(caseData['evidence_summary']);
               final initialSummary = _asMap(evidenceSummary['initial']);
               final initialMicroscopic = _asText(
-                details['initial_microscopic'],
+                initialObservations['microscopic_description'] ??
+                    initialObservations['microscopic_identification'] ??
+                    initialObservations['identified_mold'] ??
+                    initialObservations['identifiedMold'] ??
+                    details['initial_microscopic'],
               );
               final initialMacroscopic = _asText(
-                details['initial_macroscopic'],
+                initialObservations['macroscopic_description'] ??
+                    initialObservations['macroscopic_summary'] ??
+                    details['initial_macroscopic'],
               );
               final initialSymptoms = _asTextList(
-                details['initial_symptoms'] ??
+                initialObservations['symptoms'] ??
+                    details['initial_symptoms'] ??
                     details['initial_macroscopic_symptoms'],
               );
               final initialCharacteristics = _asTextList(
-                details['initial_characteristics'] ??
+                initialObservations['characteristics'] ??
+                    details['initial_characteristics'] ??
                     details['initial_macroscopic_characteristics'],
               );
 
@@ -143,10 +154,31 @@ class _WikiMoldFieldEvidenceSectionState
               ].where((t) => t.isNotEmpty).join(' // ');
               final initialDescriptionParts = [
                 _recordText(initialSummary, ['microscopic', 'macroscopic']),
+                _recordText(initialObservations, [
+                  'microscopic_description',
+                  'microscopic_identification',
+                  'identified_mold',
+                  'identifiedMold',
+                ]),
                 initialMicroscopic,
+                _recordText(initialObservations, [
+                  'macroscopic_description',
+                  'macroscopic_summary',
+                  'initial_macroscopic',
+                ]),
                 initialMacroscopic,
                 _recordText(initialSummary, ['symptoms', 'characteristics']),
+                _recordText(initialObservations, [
+                  'symptoms',
+                  'initial_symptoms',
+                  'initial_macroscopic_symptoms',
+                ]),
                 if (initialSymptoms.isNotEmpty) initialSymptoms.join(', '),
+                _recordText(initialObservations, [
+                  'characteristics',
+                  'initial_characteristics',
+                  'initial_macroscopic_characteristics',
+                ]),
                 if (initialCharacteristics.isNotEmpty) initialCharacteristics.join(', '),
               ].where((t) => t.isNotEmpty).toList();
               final initialDescription = initialDescriptionParts.isNotEmpty

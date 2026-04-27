@@ -520,6 +520,31 @@ class MoldCaseService {
     }
   }
 
+  /// Delete a cultivation log from a mold case.
+  /// Endpoint: DELETE /:caseId/logs/:logId
+  Future<void> deleteCultivationLog(
+    String caseId,
+    String logId, {
+    String? sessionCookie,
+  }) async {
+    final response = await _caseApi.delete(
+      '/$caseId/logs/$logId',
+      sessionCookie: sessionCookie,
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception(
+        'Failed to delete cultivation log $logId: ${response.statusCode} ${response.data}',
+      );
+    }
+
+    _emitInvalidation(
+      InvalidationEntity.moldCase,
+      InvalidationOperation.update,
+      id: caseId,
+    );
+  }
+
   /// Get cultivation logs for a mold case from subcollection
   /// Endpoint: GET /:caseId/logs
   Future<Map<String, dynamic>> getCultivationLogs(

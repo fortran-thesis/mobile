@@ -127,6 +127,10 @@ class ReportPdfService {
         : const <Map<String, dynamic>>[];
 
     final affectedHosts = _asList(sections['affected_hosts']);
+    final hasInvestigationSnapshot = initialObservation.isNotEmpty ||
+        inVivoLatest.isNotEmpty ||
+        inVitroLatest.isNotEmpty ||
+        cultivationLogs.isNotEmpty;
 
     pdf.addPage(
       pw.MultiPage(
@@ -245,6 +249,274 @@ class ReportPdfService {
           _buildSection('Mechanical Control', _asText(sections['mechanical_control'])),
           pw.SizedBox(height: 10),
           _buildSection('Chemical Control', _asText(sections['chemical_control'])),
+          if (followUps.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'Follow-up Timeline',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green900,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            ...followUps.asMap().entries.map((entry) {
+              final followUpIndex = entry.key;
+              final followUp = entry.value;
+              final photos = _asList(followUp['cover_photo']);
+
+              return pw.Container(
+                margin: const pw.EdgeInsets.only(bottom: 8),
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Follow-up ${followUpIndex + 1} • ${_formatTimestamp(followUp['observed_at'])}',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.green900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      _pdfSafeText(followUp['description'], fallback: 'N/A'),
+                      style: const pw.TextStyle(fontSize: 10.5, lineSpacing: 2.5),
+                      textAlign: pw.TextAlign.justify,
+                    ),
+                    if (photos.isNotEmpty) ...[
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Photo attachments: ${photos.length}',
+                        style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey700),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+          ],
+          if (hasInvestigationSnapshot) ...[
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'Investigation Snapshot',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.green900,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Initial Observation',
+                    style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.green900,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    'Microscopic: ${_asText(initialObservation['microscopic_identification'], fallback: _asText(initialObservation['microscopic']))}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Confidence: ${_asText(initialObservation['microscopic_confidence'], fallback: _asText(initialObservation['confidence']))}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Macroscopic: ${_asText(initialObservation['macroscopic_summary'], fallback: _asText(initialObservation['summary']))}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Symptoms: ${_asList(initialObservation['symptoms']).join(', ')}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Signs: ${_asList(initialObservation['signs']).join(', ')}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Characteristics: ${_asList(initialObservation['characteristics']).join(', ')}',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+            if (inVivoLatest.isNotEmpty) ...[
+              pw.SizedBox(height: 8),
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Latest In Vivo',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.green900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Observed At: ${_formatTimestamp(inVivoLatest['observed_at'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Identified Mold: ${_asText(inVivoLatest['identified_mold'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Confidence: ${_asText(inVivoLatest['confidence'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Summary: ${_asText(inVivoLatest['summary'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Additional Info: ${_asText(inVivoLatest['additional_info'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Culture Name: ${_asText(inVivoLatest['culture_name'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (inVitroLatest.isNotEmpty) ...[
+              pw.SizedBox(height: 8),
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Latest In Vitro',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.green900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Observed At: ${_formatTimestamp(inVitroLatest['observed_at'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Identified Mold: ${_asText(inVitroLatest['identified_mold'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Confidence: ${_asText(inVitroLatest['confidence'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Summary: ${_asText(inVitroLatest['summary'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Additional Info: ${_asText(inVitroLatest['additional_info'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Text(
+                      'Culture Name: ${_asText(inVitroLatest['culture_name'])}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (cultivationLogs.isNotEmpty) ...[
+              pw.SizedBox(height: 8),
+              pw.Text(
+                'Cultivation Logs',
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.green900,
+                ),
+              ),
+              pw.SizedBox(height: 6),
+              ...cultivationLogs.asMap().entries.map((entry) {
+                final log = entry.value;
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 6),
+                  child: pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          '${_asText(log['type']).toUpperCase()} • ${_formatTimestamp(log['observed_at'])}',
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.green900,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Identified Mold: ${_asText(log['identified_mold'], fallback: 'Pending identification')}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'Confidence: ${_asText(log['confidence'])}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'Summary: ${_asText(log['summary'])}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'Additional Info: ${_asText(log['additional_info'])}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        pw.Text(
+                          'Culture Name: ${_asText(log['culture_name'])}',
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ],
         ],
       ),
     );

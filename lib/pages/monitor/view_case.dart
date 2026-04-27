@@ -215,6 +215,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
     ]);
 
     return {
+      'logId': log.id,
       'date': _formatLogDate(log.createdAt),
       'microscopicImagePath': microscopicImage,
       'macroscopicImagePath': macroscopicImage,

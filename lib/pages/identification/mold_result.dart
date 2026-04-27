@@ -175,6 +175,35 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         : _fallbackTreatmentsContent;
   }
 
+  void _applyUnknownMoldFallback(String overviewText) {
+    healthContent =
+        'Health risk details are unavailable for this scan until the mold profile is reviewed.';
+    plantThreatContent =
+        'Affected host details are unavailable for this scan until the mold profile is reviewed.';
+    fullDescription =
+        'This scan result is not yet linked to a reviewed mold profile. Save and flag this result to help complete the catalog entry.';
+
+    _recommendationSections
+      ..clear()
+      ..addAll({
+        'OVERVIEW': overviewText,
+        'DESCRIPTION': fullDescription,
+        'HEALTH RISKS': healthContent,
+        'AFFECTED CROPS / HOSTS': plantThreatContent,
+        'SYMPTOMS & SIGNS':
+            'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+        'DISEASE CYCLE / SPREAD':
+            'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+        'IMPACT': '$healthContent\n\n$plantThreatContent',
+        'PREVENTION':
+            'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+      });
+
+    _managementControls
+      ..clear()
+      ..addAll(_parseManagementControls(_fallbackTreatmentsContent));
+  }
+
   final String defaultDescription =
       'This mold profile is still being curated. Add validated observations to complete the scientific description.';
 
@@ -301,31 +330,33 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
       AppLogger.d(
         'MoldResult: Mold not found in database, using model result only',
       );
-      healthContent =
-          'Health risk details are unavailable for this scan until the mold profile is reviewed.';
-      plantThreatContent =
-          'Affected host details are unavailable for this scan until the mold profile is reviewed.';
-      fullDescription =
-          'This scan result is not yet linked to a reviewed mold profile. Save and flag this result to help complete the catalog entry.';
-
       // Update OVERVIEW to indicate mold not in database
       final overviewText = _isMoldNotFound
           ? 'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database'
           : 'Most probably identified mold genus: $moldGenus with confidence level $confidenceLevel%.';
 
+      healthContent =
+        'Health risk details are unavailable for this scan until the mold profile is reviewed.';
+      plantThreatContent =
+        'Affected host details are unavailable for this scan until the mold profile is reviewed.';
+      fullDescription =
+        'This scan result is not yet linked to a reviewed mold profile. Save and flag this result to help complete the catalog entry.';
+
       _recommendationSections = {
-        'OVERVIEW': overviewText,
-        'DESCRIPTION': fullDescription,
-        'HEALTH RISKS': healthContent,
-        'AFFECTED CROPS / HOSTS': plantThreatContent,
-        'SYMPTOMS & SIGNS':
-            'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
-        'DISEASE CYCLE / SPREAD':
-            'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
-        'IMPACT': '$healthContent\n\n$plantThreatContent',
-        'PREVENTION':
-            'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
+      'OVERVIEW': overviewText,
+      'DESCRIPTION': fullDescription,
+      'HEALTH RISKS': healthContent,
+      'AFFECTED CROPS / HOSTS': plantThreatContent,
+      'SYMPTOMS & SIGNS':
+        'This mold may present as powdery, cottony, or discolored growth with visible tissue damage depending on host and conditions.',
+      'DISEASE CYCLE / SPREAD':
+        'Spores spread through air, tools, water splash, and contaminated surfaces, especially in moist or poorly ventilated environments.',
+      'IMPACT': '$healthContent\n\n$plantThreatContent',
+      'PREVENTION':
+        'Use integrated management controls and monitor treatment response regularly to reduce recurrence.',
       };
+
+      _managementControls = _parseManagementControls(_fallbackTreatmentsContent);
     }
 
     _managementControls = _parseManagementControls(
@@ -593,8 +624,9 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     if (predictedClassName == null) {
       setState(() {
         _isMoldNotFound = true;
-        _recommendationSections['OVERVIEW'] =
-            'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database';
+        _applyUnknownMoldFallback(
+          'Most probably identified: $moldGenus ($confidenceLevel%) — Not in Mold Database',
+        );
       });
 
       if (!mounted) return;
