@@ -7,6 +7,8 @@ class PopupMenu extends StatelessWidget {
   final List<String> items;
   final List<IconData>? icons;
   final ValueChanged<int>? onItemSelected;
+  final VoidCallback? onOpened;
+  final VoidCallback? onCanceled;
   final Widget? popMenuIcon;
   final Color? popMenuColor;
   final double offset;
@@ -16,6 +18,8 @@ class PopupMenu extends StatelessWidget {
     required this.items,
     this.icons,
     this.onItemSelected,
+    this.onOpened,
+    this.onCanceled,
     this.offset = 40.0,
     this.popMenuIcon,
     this.popMenuColor,
@@ -31,6 +35,8 @@ class PopupMenu extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
+      onOpened: onOpened,
+      onCanceled: onCanceled,
       onSelected: onItemSelected,
       child: Container(
         padding: const EdgeInsets.all(6),

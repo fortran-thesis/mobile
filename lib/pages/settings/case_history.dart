@@ -8,6 +8,7 @@ import '../../../core/features/user/logic/user_bloc.dart';
 
 import '../../../core/features/mold_report/models/closed_mold_report.dart';
 import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/features/report_export/services/report_pdf_service.dart';
 import '../../../core/utils/role_routing.dart' as role_routing;
 import '../../../core/utils/date_utils.dart';
 import '../../../providers/auth_provider.dart';
@@ -186,6 +187,46 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
     }
   }
 
+  Future<void> _handleExportPdf(String reportId) async {
+    if (reportId.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No report ID found for PDF export.')),
+      );
+      return;
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final payload = await _moldReportService.getPrintableReportPayload(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
+        payload: payload,
+        fileName: 'laboratory-report-$reportId.pdf',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export PDF: $e')),
+      );
+    }
+  }
+
   String _toTitleCase(String value) {
     final normalized = value.trim().replaceAll('_', ' ').toLowerCase();
     if (normalized.isEmpty) return 'Rejected';
@@ -319,11 +360,13 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
                             showPopupMenu: true,
                             popupMenuItems: ['Export PDF'],
                             popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
-                            onPopupMenuItemSelected: (index) {
+                            onPopupMenuItemSelected: (index) async {
                               // Handle the selection based on the index
 
                               /// Export PDF
-                              if (index == 0) {}
+                              if (index == 0) {
+                                await _handleExportPdf(report.id);
+                              }
 
                               /// End of Export PDF
                             },

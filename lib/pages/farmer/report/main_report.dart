@@ -15,6 +15,8 @@ import '../../misc/tiles/main_case_tile.dart';
 import '../../../core/features/mold_report/logic/mold_report_bloc.dart';
 import '../../../core/features/mold_report/models/mold_report.dart';
 import '../../../core/features/mold_report/repository/mold_report_repository.dart';
+import '../../../core/features/mold_report/service/mold_report_services.dart';
+import '../../../core/features/report_export/services/report_pdf_service.dart';
 import '../../../core/utils/mutation_result.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -29,6 +31,7 @@ class _MainReportScreenState extends State<MainReportScreen> {
   final TextEditingController searchController = TextEditingController();
   late final MoldReportRepository _repository;
   late final MoldReportBloc _bloc;
+  final MoldReportService _reportService = MoldReportService();
   final ScrollController _scrollController = ScrollController();
   
   // Search and filter state
@@ -198,6 +201,46 @@ class _MainReportScreenState extends State<MainReportScreen> {
       if (!mounted) return;
       setState(() {});
     });
+  }
+
+  Future<void> _handleExportPdf(String reportId) async {
+    if (reportId.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No report ID found for PDF export.')),
+      );
+      return;
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final payload = await _reportService.getPrintableReportPayload(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
+        payload: payload,
+        fileName: 'laboratory-report-$reportId.pdf',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export PDF: $e')),
+      );
+    }
   }
 
   @override
@@ -398,9 +441,9 @@ class _MainReportScreenState extends State<MainReportScreen> {
                                         showPopupMenu: true,
                                         popupMenuItems: ['Export PDF'],
                                         popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
-                                        onPopupMenuItemSelected: (menuIndex) {
+                                        onPopupMenuItemSelected: (menuIndex) async {
                                           if (menuIndex == 0) {
-                                            // export
+                                            await _handleExportPdf(report.id);
                                           }
                                         },
                                       ),

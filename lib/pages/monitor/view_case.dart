@@ -387,9 +387,14 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         sessionCookie: sessionCookie,
       );
 
-      await ReportPdfService().sharePdfFromPayload(
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
         payload: payload,
         fileName: 'laboratory-report-$reportId.pdf',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
       );
     } catch (e) {
       if (!mounted) return;

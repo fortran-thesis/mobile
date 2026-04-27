@@ -16,6 +16,7 @@ import '../../core/features/mold_case/logic/mold_case_bloc.dart';
 import '../../core/features/mold_case/models/mold_case.dart';
 import '../../core/features/mold_case/repository/mold_case_repository.dart';
 import '../../core/features/mold_report/service/mold_report_services.dart';
+import '../../core/features/report_export/services/report_pdf_service.dart';
 import '../../core/utils/mutation_result.dart';
 import '../../providers/auth_provider.dart';
 
@@ -170,6 +171,47 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
     setState(() {
       _caseStatusMap = Map<String, String>.fromEntries(statusEntries);
     });
+  }
+
+  Future<void> _handleExportPdfForCase(MoldCase moldCase) async {
+    final reportId = moldCase.moldReportId.trim();
+    if (reportId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No report ID found for PDF export.')),
+      );
+      return;
+    }
+
+    try {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF...')),
+      );
+
+      final authProvider = Provider.of<AppAuthProvider>(context, listen: false);
+      final sessionCookie = authProvider.cookie;
+
+      final payload = await _reportService.getPrintableReportPayload(
+        reportId,
+        sessionCookie: sessionCookie,
+      );
+
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
+        payload: payload,
+        fileName: 'laboratory-report-$reportId.pdf',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export PDF: $e')),
+      );
+    }
   }
 
   String _getCaseFilterStatus(MoldCase moldCase) {
@@ -491,7 +533,7 @@ class _MainMonitorScreenState extends State<MainMonitorScreen> {
                                             popupMenuIcons: [FontAwesomeIcons.solidFilePdf],
                                             onPopupMenuItemSelected: (menuIndex) async {
                                               if (menuIndex == 0) {
-                                                // Export PDF
+                                                await _handleExportPdfForCase(moldCase);
                                               }
                                             }
                                         ),
