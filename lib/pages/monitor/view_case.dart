@@ -466,9 +466,16 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
         sessionCookie: sessionCookie,
       );
 
-      await ReportPdfService().sharePdfFromPayload(
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
         payload: payload,
         fileName: 'laboratory-report-$reportId.pdf',
+        share: true,
+        shareText: 'Laboratory report for case $reportId',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -1434,7 +1441,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
-                                  'DISEASE IDENTIFICATION',
+                                  'GENUS IDENTIFIED',
                                   style: TextStyle(
                                     fontSize: 10,
                                     letterSpacing: 2.2,

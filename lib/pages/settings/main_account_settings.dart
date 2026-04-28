@@ -261,22 +261,22 @@ class _MainAccountSettingsScreenState extends State<MainAccountSettingsScreen> {
                           ),
 
                         /// Flagged Tile (Mycologist only)
-                        if (isMycologist)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: BuildAccountSettingsTiles(
-                              leftIcon: FontAwesomeIcons.solidFlag,
-                              rightIcon: FontAwesomeIcons.angleRight,
-                              title: l10n.flagHistory,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const FlagHistoryScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                        // if (isMycologist)
+                        //   Padding(
+                        //     padding: const EdgeInsets.symmetric(vertical: 10.0),
+                        //     child: BuildAccountSettingsTiles(
+                        //       leftIcon: FontAwesomeIcons.solidFlag,
+                        //       rightIcon: FontAwesomeIcons.angleRight,
+                        //       title: l10n.flagHistory,
+                        //       onTap: () {
+                        //         Navigator.of(context).push(
+                        //           MaterialPageRoute(
+                        //             builder: (context) => const FlagHistoryScreen(),
+                        //           ),
+                        //         );
+                        //       },
+                        //     ),
+                        //   ),
                       ],
                     ),
                   ),

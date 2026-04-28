@@ -292,6 +292,17 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
         DropdownButtonFormField<String>(
           key: ValueKey(_selectedCultureId ?? '_none'),
           value: _selectedCultureId,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: MoldifyColors.primaryColor.withValues(alpha: 0.7),
+          ),
+          dropdownColor: MoldifyColors.backgroundColor, 
+          borderRadius: BorderRadius.circular(12),
+          style: const TextStyle(
+            fontSize: 15,
+            fontFamily: 'Bricolage-Grotesque-Regular',
+            color: MoldifyColors.MoldifyBlack,
+          ),
           items: _availableCultures
               .map(
                 (culture) => DropdownMenuItem<String>(
@@ -312,9 +323,35 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
                     _selectedCultureName = selected.name;
                   });
                 },
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
             hintText: 'Select culture',
+            hintStyle: TextStyle(
+              color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.3),
+              fontFamily: 'Bricolage-Grotesque-Regular',
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            filled: true,
+            fillColor: MoldifyColors.backgroundColor,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: MoldifyColors.primaryColor,
+                width: 1.5,
+              ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: MoldifyColors.MoldifyBlack.withValues(alpha: 0.05),
+              ),
+            ),
           ),
         ),
       ],
@@ -445,20 +482,22 @@ class _AddLogChoicesScreenState extends State<AddLogChoicesScreen> {
   }
 
   Widget _buildDataRow({
-    required String l1, required String v1, required IconData i1,
-    required String l2, required String v2, required IconData i2,
+    required String l1,
+    required String v1,
+    required IconData i1,
+    required String l2,
+    required String v2,
+    required IconData i2,
   }) {
     final hasSecondTile = l2.trim().isNotEmpty;
     return IntrinsicHeight(
       child: Row(
         children: [
           Expanded(child: ObservationDataTile(label: l1, value: v1, icon: i1)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: hasSecondTile
-                ? ObservationDataTile(label: l2, value: v2, icon: i2)
-                : const SizedBox.shrink(),
-          ),
+          if (hasSecondTile) ...[
+            const SizedBox(width: 12),
+            Expanded(child: ObservationDataTile(label: l2, value: v2, icon: i2)),
+          ],
         ],
       ),
     );

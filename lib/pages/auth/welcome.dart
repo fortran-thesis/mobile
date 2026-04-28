@@ -231,6 +231,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   /// WELCOME PAGE LAYOUT
   /// ===============================
   Widget _buildWelcomePage(OnboardingPageData page, double screenHeight) {
+    final bottomSectionHeight = screenHeight * 0.35;
+    final contentVerticalPadding = (bottomSectionHeight * 0.08).clamp(8.0, 18.0).toDouble();
+    final contentHorizontalPadding = (bottomSectionHeight * 0.12).clamp(20.0, 30.0).toDouble();
+    final introFontSize = (screenHeight * 0.018).clamp(12.0, 16.0).toDouble();
+    final titleFontSize = (screenHeight * 0.048).clamp(28.0, 42.0).toDouble();
+    final subtitleFontSize = (screenHeight * 0.017).clamp(12.0, 16.0).toDouble();
+
     return Stack(
       children: [
         // Farmer illustration
@@ -253,43 +260,46 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: ClipPath(
             clipper: CurvedTopClipper(),
             child: Container(
-              height: screenHeight * 0.35,
+              height: bottomSectionHeight,
               width: double.infinity,
               decoration: const BoxDecoration(color: MoldifyColors.primaryColor),
               child: Padding(
-                padding: const EdgeInsets.only(
-                  top: 60,
-                  left: 30,
-                  right: 30,
-                  bottom: 100,
+                padding: EdgeInsets.only(
+                  top: contentVerticalPadding,
+                  left: contentHorizontalPadding,
+                  right: contentHorizontalPadding,
+                  bottom: contentVerticalPadding,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       page.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: MoldifyColors.backgroundColor,
                         fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 16,
+                        fontSize: introFontSize,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       page.titleLarge ?? '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: MoldifyColors.backgroundColor,
                         fontFamily: 'Montserrat-Black',
-                        fontSize: 48,
+                        fontSize: titleFontSize,
                         letterSpacing: 2,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       page.subtitle,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: MoldifyColors.backgroundColor,
                         fontFamily: 'Bricolage-Grotesque-Regular',
-                        fontSize: 16,
+                        fontSize: subtitleFontSize,
                         height: 1.5,
                       ),
                     ),

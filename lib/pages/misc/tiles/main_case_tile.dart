@@ -49,6 +49,7 @@ class MainCaseTile extends StatefulWidget {
 
 class _MainCaseTileState extends State<MainCaseTile> {
   Color _containerColor = MoldifyColors.taupe;
+  bool _isPopupMenuOpen = false;
 
   String? _normalizeImageUrl(String? rawUrl) {
     final value = rawUrl?.trim();
@@ -97,7 +98,9 @@ class _MainCaseTileState extends State<MainCaseTile> {
       ),
       onTapUp: (_) {
         setState(() => _containerColor = MoldifyColors.taupe);
-        widget.onTap();
+        if (!_isPopupMenuOpen) {
+          widget.onTap();
+        }
       },
       onTapCancel: () => setState(() => _containerColor = MoldifyColors.taupe),
       child: AnimatedContainer(
@@ -223,7 +226,12 @@ class _MainCaseTileState extends State<MainCaseTile> {
                   popMenuIcon: widget.popupMenuIcon,
                   items: widget.popupMenuItems!,
                   icons: widget.popupMenuIcons,
-                  onItemSelected: widget.onPopupMenuItemSelected!,
+                  onOpened: () => setState(() => _isPopupMenuOpen = true),
+                  onCanceled: () => setState(() => _isPopupMenuOpen = false),
+                  onItemSelected: (index) {
+                    setState(() => _isPopupMenuOpen = false);
+                    widget.onPopupMenuItemSelected?.call(index);
+                  },
                 ),
               ),
 

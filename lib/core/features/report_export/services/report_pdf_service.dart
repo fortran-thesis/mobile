@@ -1,11 +1,36 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 class ReportPdfService {
+  static const MethodChannel _downloadChannel = MethodChannel(
+    'com.fortranthesis.moldify/pdf_export',
+  );
+
+  String _pdfSafeText(dynamic value, {String fallback = 'N/A'}) {
+    final text = _asText(value, fallback: fallback);
+
+    return text
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('₂', '2')
+        .replaceAll('₁', '1')
+        .replaceAll('₃', '3')
+        .replaceAll('₄', '4')
+        .replaceAll('₅', '5')
+        .replaceAll('₆', '6')
+        .replaceAll('₇', '7')
+        .replaceAll('₈', '8')
+        .replaceAll('₉', '9')
+        .replaceAll('₀', '0');
+  }
+
   String _asText(dynamic value, {String fallback = 'N/A'}) {
     if (value is String) {
       final trimmed = value.trim();
@@ -128,10 +153,7 @@ class ReportPdfService {
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
-                  _asText(
-                    report['case_name'],
-                    fallback: _asText(report['report_id']),
-                  ),
+                  _asText(report['case_name'], fallback: _asText(report['report_id'])),
                   style: const pw.TextStyle(
                     color: PdfColors.white,
                     fontSize: 14,
@@ -144,14 +166,10 @@ class ReportPdfService {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text(
-                'Report Date: ${_asText(report['report_date'])}',
-                style: const pw.TextStyle(fontSize: 10),
-              ),
-              pw.Text(
-                'Date Observed: ${_asText(report['date_observed'])}',
-                style: const pw.TextStyle(fontSize: 10),
-              ),
+              pw.Text('Report Date: ${_asText(report['report_date'])}',
+                  style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('Date Observed: ${_asText(report['date_observed'])}',
+                  style: const pw.TextStyle(fontSize: 10)),
             ],
           ),
           pw.SizedBox(height: 10),
@@ -164,27 +182,18 @@ class ReportPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  'Host Plant: ${_asText(report['host_plant_affected'])}',
-                ),
+                pw.Text('Host Plant: ${_asText(report['host_plant_affected'])}'),
                 pw.Text('Case Status: ${_asText(report['case_status'])}'),
-                pw.Text(
-                  'Confidence Level: ${_asText(report['confidence_level'])}',
-                ),
+                pw.Text('Confidence Level: ${_asText(report['confidence_level'])}'),
                 pw.Text('Reporter: ${_asText(identities['reporter_name'])}'),
-                pw.Text(
-                  'Mycologist: ${_asText(identities['mycologist_name'])}',
-                ),
+                pw.Text('Mycologist: ${_asText(identities['mycologist_name'])}'),
                 pw.Text('Location: ${_asText(report['location'])}'),
               ],
             ),
           ),
           pw.SizedBox(height: 12),
           pw.Text(
-            _asText(
-              sections['fungus_name'],
-              fallback: 'Pending Identification',
-            ),
+            _asText(sections['fungus_name'], fallback: 'Pending Identification'),
             style: pw.TextStyle(
               fontSize: 20,
               fontWeight: pw.FontWeight.bold,
@@ -192,11 +201,11 @@ class ReportPdfService {
             ),
           ),
           pw.SizedBox(height: 10),
-          _buildSection('Overview', _asText(sections['overview'])),
+          _buildSection('Overview', _pdfSafeText(sections['overview'])),
           pw.SizedBox(height: 10),
-          _buildSection('Description', _asText(sections['description'])),
+          _buildSection('Description', _pdfSafeText(sections['description'])),
           pw.SizedBox(height: 10),
-          _buildSection('Health Risks', _asText(sections['health_risks'])),
+          _buildSection('Health Risks', _pdfSafeText(sections['health_risks'])),
           pw.SizedBox(height: 10),
           pw.Text(
             'Affected Crops and Hosts',
@@ -213,154 +222,30 @@ class ReportPdfService {
               style: const pw.TextStyle(fontSize: 10.5),
             )
           else
-            ...affectedHosts.map(
+              ...affectedHosts.map(
               (host) => pw.Bullet(
-                text: host,
+                text: _pdfSafeText(host),
                 style: const pw.TextStyle(fontSize: 10.5),
               ),
             ),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Symptoms and Signs',
-            _asText(sections['symptoms_and_signs']),
-          ),
+          _buildSection('Symptoms and Signs', _asText(sections['symptoms_and_signs'])),
           pw.SizedBox(height: 10),
-          _buildSection('Disease Cycle', _asText(sections['disease_cycle'])),
+          _buildSection('Disease Cycle', _pdfSafeText(sections['disease_cycle'])),
           pw.SizedBox(height: 10),
-          _buildSection('Impact', _asText(sections['impact'])),
+          _buildSection('Impact', _pdfSafeText(sections['impact'])),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Prevention Summary',
-            _asText(sections['prevention_summary']),
-          ),
+          _buildSection('Prevention Summary', _asText(sections['prevention_summary'])),
           pw.SizedBox(height: 12),
-          _buildSection(
-            'Physical Control',
-            _asText(sections['physical_control']),
-          ),
+          _buildSection('Physical Control', _asText(sections['physical_control'])),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Cultural Control',
-            _asText(sections['cultural_control']),
-          ),
+          _buildSection('Cultural Control', _asText(sections['cultural_control'])),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Biological Control',
-            _asText(sections['biological_control']),
-          ),
+          _buildSection('Biological Control', _asText(sections['biological_control'])),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Mechanical Control',
-            _asText(sections['mechanical_control']),
-          ),
+          _buildSection('Mechanical Control', _asText(sections['mechanical_control'])),
           pw.SizedBox(height: 10),
-          _buildSection(
-            'Chemical Control',
-            _asText(sections['chemical_control']),
-          ),
-          if (investigation.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            pw.Text(
-              'Investigation Snapshot',
-              style: pw.TextStyle(
-                fontSize: 14,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.green900,
-              ),
-            ),
-            pw.SizedBox(height: 8),
-            _buildSection(
-              'Initial Observation',
-              '${_asText(initialObservation['microscopic_identification'])} '
-                  '(Confidence: ${_asText(initialObservation['microscopic_confidence'], fallback: _asText(initialObservation['confidence']))})\n'
-                  '${_asText(initialObservation['macroscopic_summary'], fallback: _asText(initialObservation['summary']))}',
-            ),
-            pw.SizedBox(height: 10),
-            _buildSection(
-              'Latest In Vivo',
-              '${_asText(inVivoLatest['identified_mold'])} '
-                  '(Confidence: ${_asText(inVivoLatest['confidence'])})\n'
-                  '${_asText(inVivoLatest['summary'])}',
-            ),
-            pw.SizedBox(height: 10),
-            _buildSection(
-              'Latest In Vitro',
-              '${_asText(inVitroLatest['identified_mold'])} '
-                  '(Confidence: ${_asText(inVitroLatest['confidence'])})\n'
-                  '${_asText(inVitroLatest['summary'])}',
-            ),
-          ],
-          if (cultivationLogs.isNotEmpty) ...[
-            pw.SizedBox(height: 12),
-            pw.Text(
-              'Cultivation Logs',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.green900,
-              ),
-            ),
-            pw.SizedBox(height: 6),
-            ...cultivationLogs.map(
-              (log) => pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 6),
-                padding: const pw.EdgeInsets.all(8),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.grey100,
-                  borderRadius: pw.BorderRadius.circular(4),
-                ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      '${_asText(log['type'])} • ${_formatTimestamp(log['observed_at'] ?? log['created_at'])}',
-                      style: pw.TextStyle(
-                        fontSize: 9,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.green900,
-                      ),
-                    ),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      '${_asText(log['identified_mold'], fallback: 'Pending identification')} '
-                      '(Confidence: ${_asText(log['confidence'])})',
-                      style: const pw.TextStyle(fontSize: 9.5),
-                    ),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      _asText(log['summary']),
-                      style: const pw.TextStyle(fontSize: 9.5),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (followUps.isNotEmpty) ...[
-            pw.SizedBox(height: 12),
-            pw.Text(
-              'Follow-up Timeline',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.green900,
-              ),
-            ),
-            pw.SizedBox(height: 6),
-            ...followUps.map((entry) {
-              final photos = _asList(entry['cover_photo']);
-              final fallbackPhotos = photos.isEmpty
-                  ? _asList(entry['cover_photo_urls'])
-                  : photos;
-              final photoCount = fallbackPhotos.length;
-
-              return pw.Bullet(
-                text:
-                    '${_formatTimestamp(entry['observed_at'] ?? entry['timestamp'])}: ${_asText(entry['description'])}${photoCount > 0 ? ' (photos: $photoCount)' : ''}',
-                style: const pw.TextStyle(fontSize: 10),
-              );
-            }),
-          ],
+          _buildSection('Chemical Control', _asText(sections['chemical_control'])),
         ],
       ),
     );
@@ -368,20 +253,58 @@ class ReportPdfService {
     return pdf.save();
   }
 
-  Future<void> sharePdfFromPayload({
+  Future<String> sharePdfFromPayload({
     required Map<String, dynamic> payload,
     required String fileName,
+    bool share = false,
+    String? shareText,
   }) async {
     final bytes = await buildPdf(payload);
-
-    // Get the Downloads directory
-    final Directory? downloadsDir = await getDownloadsDirectory();
+    // Resolve the appropriate Downloads directory for the platform
+    final Directory? downloadsDir = await _resolveDownloadsDirectory();
     if (downloadsDir == null) {
       throw Exception('Downloads directory not accessible');
     }
 
+    // Ensure the directory exists
+    await downloadsDir.create(recursive: true);
+
     // Create the file in the Downloads directory
-    final file = File('${downloadsDir.path}/$fileName');
+    final file = File('${downloadsDir.path}${Platform.pathSeparator}$fileName');
     await file.writeAsBytes(bytes);
+
+    if (share) {
+      try {
+        final xfile = XFile(file.path);
+        await Share.shareXFiles([xfile], text: shareText ?? 'Laboratory report');
+      } catch (_) {
+        // If sharing fails, still return the saved path for fallback.
+      }
+    }
+
+    return file.path;
+  }
+
+  Future<Directory?> _resolveDownloadsDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        // Try to get the public Downloads directory on Android
+        final dirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+        if (dirs != null && dirs.isNotEmpty) return dirs.first;
+
+        // Fallback to external storage directory (app-specific)
+        return await getExternalStorageDirectory();
+      }
+
+      if (Platform.isIOS) {
+        // iOS does not expose a public Downloads folder; use Documents
+        return await getApplicationDocumentsDirectory();
+      }
+
+      // Desktop platforms: use the downloads directory if available
+      return await getDownloadsDirectory();
+    } catch (e) {
+      return null;
+    }
   }
 }

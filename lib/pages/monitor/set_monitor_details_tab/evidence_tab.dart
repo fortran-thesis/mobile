@@ -270,8 +270,6 @@ class EvidenceTab extends StatelessWidget {
                                     value: macroCharacteristicsController.text,
                                     icon: Icons.science_outlined,
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(child: SizedBox.shrink()),
                                 ],
                               ),
                             ),

@@ -229,9 +229,16 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         sessionCookie: sessionCookie,
       );
 
-      await ReportPdfService().sharePdfFromPayload(
+      final savedPath = await ReportPdfService().sharePdfFromPayload(
         payload: payload,
         fileName: 'laboratory-report-$reportId.pdf',
+        share: true,
+        shareText: 'Laboratory report for case $reportId',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('PDF saved to: $savedPath')),
       );
     } catch (e) {
       if (!mounted) return;
