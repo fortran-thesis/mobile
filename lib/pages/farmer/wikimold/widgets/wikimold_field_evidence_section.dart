@@ -606,7 +606,6 @@ class _WikiMoldFieldEvidenceSectionState
     required Color accentColor,
   }) {
     final moldName = _asText(verdict['moldName'] ?? verdict['mold_name']);
-    final confidenceValue = _asDouble(verdict['confidence']);
     final notes = _asText(verdict['mycologist_notes'] ?? '');
     final verdictTs =
         verdict['verdict_timestamp'] ?? verdict['verdictTimestamp'];
@@ -634,11 +633,6 @@ class _WikiMoldFieldEvidenceSectionState
 
     final summaryParts = <String>[];
     if (moldName.isNotEmpty) summaryParts.add('Identified Mold: $moldName');
-    if (confidenceValue != null) {
-      summaryParts.add(
-        'Confidence: ${(confidenceValue * 100).toStringAsFixed(1)}%',
-      );
-    }
     if (verdictDateStr.isNotEmpty) {
       summaryParts.add('Verdict Date: $verdictDateStr');
     }

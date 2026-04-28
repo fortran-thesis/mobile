@@ -64,7 +64,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
   static const List<String> _fallbackPresetGenusOptions = [
     'Alternaria',
     'Aspergillus Flavi',
-    'Aspergillus Section Nigri',
+    'Aspergillus Niger',
     'Fusarium',
     'Penicillium',
     'Rhizopus',
@@ -215,9 +215,7 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
     // Extract genus from predicted_class as fallback display name
     final predictedClass =
         widget.modelResult?['predicted_class']?.toString() ?? '';
-    moldGenus = predictedClass.contains('_')
-        ? predictedClass.split('_')[0]
-        : predictedClass;
+    moldGenus = _displayNameFromPredictedClass(predictedClass);
     AppLogger.d(
       'MoldResult: Predicted class: $predictedClass, Genus: $moldGenus',
     );
@@ -450,6 +448,45 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         .replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  String _displayNameFromPredictedClass(String value) {
+    final normalized = _normalizeCorrectionKey(value);
+    if (normalized.isEmpty) return value.trim();
+
+    switch (normalized) {
+      case 'alternaria spp':
+      case 'alternaria':
+        return 'Alternaria';
+      case 'aspergillus section flavi':
+      case 'aspergillus flavi':
+        return 'Aspergillus Flavi';
+      case 'aspergillus section nigri':
+      case 'aspergillus nigri':
+      case 'aspergillus niger':
+        return 'Aspergillus Niger';
+      case 'fusarium spp':
+      case 'fusarium':
+        return 'Fusarium';
+      case 'penicillium spp':
+      case 'penicillium':
+        return 'Penicillium';
+      case 'rhizopus spp':
+      case 'rhizopus':
+        return 'Rhizopus';
+      default:
+        final withoutSuffix = normalized.replaceFirst(RegExp(r'\s+spp$'), '');
+        final cleaned = withoutSuffix
+            .replaceAll(RegExp(r'\bsection\b'), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        return cleaned
+            .split(' ')
+            .where((part) => part.isNotEmpty)
+            .map((part) => part[0].toUpperCase() + part.substring(1))
+            .join(' ');
+    }
+  }
+
   String _sanitizeDisplayText(String raw) {
     var value = raw.trim();
     if (value.isEmpty) return value;
@@ -540,11 +577,19 @@ class _MoldResultScreenState extends State<MoldResultScreen> {
         if (normalizedKey == 'aspergillus section flavi' ||
             normalizedKey == 'aspergillus flavi') {
           displayName = 'Aspergillus Flavi';
+        } else if (normalizedKey == 'aspergillus section nigri' ||
+            normalizedKey == 'aspergillus nigri' ||
+            normalizedKey == 'aspergillus niger') {
+          displayName = 'Aspergillus Niger';
         }
 
         nextMap[normalizedKey] = predictedClassName;
         if (normalizedKey == 'aspergillus section flavi') {
           nextMap['aspergillus flavi'] = predictedClassName;
+        }
+        if (normalizedKey == 'aspergillus section nigri') {
+          nextMap['aspergillus nigri'] = predictedClassName;
+          nextMap['aspergillus niger'] = predictedClassName;
         }
         if (!nextOptions.contains(displayName)) {
           nextOptions.add(displayName);

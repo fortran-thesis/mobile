@@ -137,7 +137,6 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
   String _mycologistName = '';
   String? _mycologistOccupation;
   String _finalVerdictMoldName = '';
-  String _finalVerdictConfidence = '';
   String _finalVerdictNotes = '';
   String? _linkedMoldipediaId;
   String _preventionTacticsContent = _defaultPreventionTacticsContent;
@@ -361,7 +360,6 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
       );
 
       String localVerdictMoldName = '';
-      String localVerdictConfidence = '';
       String localVerdictNotes = '';
       String localPreventionTacticsContent = _defaultPreventionTacticsContent;
 
@@ -378,9 +376,6 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
         final finalVerdict = casePayload['final_verdict'];
         if (finalVerdict is Map<String, dynamic>) {
           localVerdictMoldName = finalVerdict['moldName']?.toString() ?? '';
-          localVerdictConfidence = ReportViewParser.formatConfidence(
-            finalVerdict['confidence'],
-          );
           localVerdictNotes =
               finalVerdict['mycologist_notes']?.toString() ?? '';
           final mid = finalVerdict['moldipedia_id']?.toString().trim() ?? '';
@@ -460,7 +455,6 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
             ? report.caseDetails.first.coverPhoto.first
             : null;
         _finalVerdictMoldName = localVerdictMoldName;
-        _finalVerdictConfidence = localVerdictConfidence;
         _finalVerdictNotes = localVerdictNotes;
         _preventionTacticsContent = localPreventionTacticsContent;
         AppLogger.d(
@@ -790,20 +784,7 @@ class _ViewReportScreenState extends State<ViewReportScreen> {
                                                   ),
                                                 ),
                                               ),
-                                              if (_finalVerdictConfidence
-                                                  .trim()
-                                                  .isNotEmpty)
-                                                Text(
-                                                  _finalVerdictConfidence
-                                                      .trim(),
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontFamily:
-                                                        'Bricolage-Grotesque-Bold',
-                                                    color: MoldifyColors
-                                                        .accentColor,
-                                                  ),
-                                                ),
+
                                             ],
                                           ),
                                         ],

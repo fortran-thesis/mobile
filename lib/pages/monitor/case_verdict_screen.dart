@@ -347,27 +347,6 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
                       color: MoldifyColors.primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        'Confidence: ',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Bricolage-Grotesque-Regular',
-                          color: MoldifyColors.MoldifyGrey,
-                        ),
-                      ),
-                      Text(
-                        '${confidence.toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Bricolage-Grotesque-SemiBold',
-                          color: _getConfidenceColor(confidence),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -466,15 +445,6 @@ class _CaseVerdictScreenState extends State<CaseVerdictScreen> {
                   fontSize: 16,
                   fontFamily: 'Bricolage-Grotesque-SemiBold',
                   color: MoldifyColors.accentColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Confidence: ${confidence.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontFamily: 'Bricolage-Grotesque-Regular',
-                  color: MoldifyColors.MoldifyGrey,
                 ),
               ),
             ],
