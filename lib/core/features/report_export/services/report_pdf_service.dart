@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 class ReportPdfService {
   static const MethodChannel _downloadChannel = MethodChannel(
@@ -255,19 +256,55 @@ class ReportPdfService {
   Future<String> sharePdfFromPayload({
     required Map<String, dynamic> payload,
     required String fileName,
+    bool share = false,
+    String? shareText,
   }) async {
     final bytes = await buildPdf(payload);
-    
-    // Get the Downloads directory
-    final Directory? downloadsDir = await getDownloadsDirectory();
+    // Resolve the appropriate Downloads directory for the platform
+    final Directory? downloadsDir = await _resolveDownloadsDirectory();
     if (downloadsDir == null) {
       throw Exception('Downloads directory not accessible');
     }
-    
+
+    // Ensure the directory exists
+    await downloadsDir.create(recursive: true);
+
     // Create the file in the Downloads directory
-    final file = File('${downloadsDir.path}/$fileName');
+    final file = File('${downloadsDir.path}${Platform.pathSeparator}$fileName');
     await file.writeAsBytes(bytes);
 
+    if (share) {
+      try {
+        final xfile = XFile(file.path);
+        await Share.shareXFiles([xfile], text: shareText ?? 'Laboratory report');
+      } catch (_) {
+        // If sharing fails, still return the saved path for fallback.
+      }
+    }
+
     return file.path;
+  }
+
+  Future<Directory?> _resolveDownloadsDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        // Try to get the public Downloads directory on Android
+        final dirs = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+        if (dirs != null && dirs.isNotEmpty) return dirs.first;
+
+        // Fallback to external storage directory (app-specific)
+        return await getExternalStorageDirectory();
+      }
+
+      if (Platform.isIOS) {
+        // iOS does not expose a public Downloads folder; use Documents
+        return await getApplicationDocumentsDirectory();
+      }
+
+      // Desktop platforms: use the downloads directory if available
+      return await getDownloadsDirectory();
+    } catch (e) {
+      return null;
+    }
   }
 }

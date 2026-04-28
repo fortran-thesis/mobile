@@ -134,22 +134,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             color: MoldifyColors.primaryColor,
                           ),
                         ),
-                        if (state is NotificationLoaded && state.unreadCount > 0)
-                          GestureDetector(
-                            onTap: () {
-                              context.read<NotificationBloc>().add(
-                                MarkAllNotificationsRead(sessionCookie: cookie),
-                              );
-                            },
-                            child: Text(
-                              'Mark All Read',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'Bricolage-Grotesque-ExtraBold',
-                                color: MoldifyColors.MoldifyBlue,
-                              ),
-                            ),
-                          ),
+                        // if (state is NotificationLoaded && state.unreadCount > 0)
+                        //   GestureDetector(
+                        //     onTap: () {
+                        //       context.read<NotificationBloc>().add(
+                        //         MarkAllNotificationsRead(sessionCookie: cookie),
+                        //       );
+                        //     },
+                        //     child: Text(
+                        //       'Mark All Read',
+                        //       style: TextStyle(
+                        //         fontSize: 14,
+                        //         fontFamily: 'Bricolage-Grotesque-ExtraBold',
+                        //         color: MoldifyColors.MoldifyBlue,
+                        //       ),
+                        //     ),
+                        //   ),
                       ],
                     ),
                     Text(

@@ -610,7 +610,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: AutoSizeText(
-                        AppLocalizations.of(context)!.locationLabel,
+                        'Farm Location',
                         style: const TextStyle(
                           fontSize: 16,
                           fontFamily: 'Bricolage-Grotesque-SemiBold',

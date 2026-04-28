@@ -213,6 +213,8 @@ class _CaseHistoryScreenState extends State<CaseHistoryScreen> {
       final savedPath = await ReportPdfService().sharePdfFromPayload(
         payload: payload,
         fileName: 'laboratory-report-$reportId.pdf',
+        share: true,
+        shareText: 'Laboratory report for case $reportId',
       );
 
       if (!mounted) return;

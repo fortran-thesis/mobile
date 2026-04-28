@@ -540,7 +540,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 20.0),
                             child: AutoSizeText(
-                              l10n.locationLabel,
+                              'l10n.locationLabel',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontFamily: 'Bricolage-Grotesque-SemiBold',

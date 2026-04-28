@@ -469,6 +469,8 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
       final savedPath = await ReportPdfService().sharePdfFromPayload(
         payload: payload,
         fileName: 'laboratory-report-$reportId.pdf',
+        share: true,
+        shareText: 'Laboratory report for case $reportId',
       );
 
       if (!mounted) return;
@@ -1439,7 +1441,7 @@ class _ViewCaseScreenState extends State<ViewCaseScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
-                                  'DISEASE IDENTIFICATION',
+                                  'GENUS IDENTIFIED',
                                   style: TextStyle(
                                     fontSize: 10,
                                     letterSpacing: 2.2,

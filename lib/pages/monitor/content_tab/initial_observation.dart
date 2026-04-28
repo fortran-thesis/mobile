@@ -115,7 +115,9 @@ class InitialObservationTab extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (!isCaseClosed && onAddInitialObservations != null)
+                if (!isCaseClosed &&
+                    onAddInitialObservations != null &&
+                    !hasAnyObservation)
                   BuildButton(
                     buttonText: 'ADD INITIAL',
                     onPressed: onAddInitialObservations!,
@@ -320,8 +322,6 @@ class InitialObservationTab extends StatelessWidget {
                                 value: macroCharacteristics,
                                 icon: Icons.science_outlined,
                               ),
-                              const SizedBox(width: 12),
-                              const Expanded(child: SizedBox.shrink()),
                             ],
                           ),
                         ),
